@@ -664,7 +664,7 @@ def test_gen_muskingum_kfac1():
     """
     Checks generating Muskingum Kfac option 1
     """
-    print("TEST 14: TEST GENERATE MUSKINGUM KFAC OPTION 1")
+    print("TEST 15: TEST GENERATE MUSKINGUM KFAC OPTION 1")
     generated_kfac_file = os.path.join(OUTPUT_DATA_PATH,
                                        "kfac1.csv")
     #rapid_connect
@@ -694,7 +694,7 @@ def test_gen_muskingum_x_drainage():
     """
     Checks generating Muskingum X from draiange line
     """
-    print("TEST 15: TEST GENERATE MUSKINGUM X FROM DRAINAGE LINE")
+    print("TEST 16: TEST GENERATE MUSKINGUM X FROM DRAINAGE LINE")
     generated_x_file = os.path.join(OUTPUT_DATA_PATH,
                                     "x_drain.csv")
 
@@ -714,7 +714,7 @@ def test_weight_table_with_invalid_polygon():
     """
     Checks generating weight table with invalid polygon
     """
-    print("TEST 16: TEST GENERATE WEIGHT TABLE WITH INVALID POLYGON")
+    print("TEST 17: TEST GENERATE WEIGHT TABLE WITH INVALID POLYGON")
     generated_weight_table_file = os.path.join(OUTPUT_DATA_PATH,
                                                "weight_polygons.csv")
     # rapid_connect
@@ -742,7 +742,7 @@ def test_weight_table_with_area_id():
     """
     Checks generating weight table with area id
     """
-    print("TEST 17: TEST GENERATE WEIGHT TABLE WITH INVALID POLYGON")
+    print("TEST 18: TEST GENERATE WEIGHT TABLE WITH INVALID POLYGON")
     generated_weight_table_file = os.path.join(OUTPUT_DATA_PATH,
                                                "weight_area.csv")
     # rapid_connect
@@ -770,7 +770,7 @@ def test_gen_weight_table_era5_land_mask():
     """
     Checks generating weight table for ERA5 grid with land mask.
     """
-    print("TEST 18: TEST GENERATE WEIGHT TABLE FOR ERA5 GRID WITH LAND MASK.")
+    print("TEST 19: TEST GENERATE WEIGHT TABLE FOR ERA5 GRID WITH LAND MASK.")
     generated_weight_table_file = os.path.join(
         OUTPUT_DATA_PATH, "weight_mendocino_era5_land_mask.csv")
 
@@ -796,6 +796,44 @@ def test_gen_weight_table_era5_land_mask():
         COMPARE_DATA_PATH, 'mendocino_nhdplus_catchment',
         'weight_mendocino_era5_land_mask.csv')
     
+    assert (compare_csv_decimal_files(generated_weight_table_file,
+                                      generated_weight_table_file_solution))
+
+    remove_files(generated_weight_table_file)
+
+def test_gen_weight_table_lis_land_mask():
+    """
+    Checks generating weight table for LIS grid with land mask.
+    """
+    print("TEST 20: TEST GENERATE WEIGHT TABLE FOR LIS GRID WITH LAND MASK.")
+    generated_weight_table_file = os.path.join(
+        OUTPUT_DATA_PATH, "weight_lis_land_fraction_mendocino_subset.csv")
+
+    #rapid_connect
+    rapid_connect_file = os.path.join(
+        COMPARE_DATA_PATH, "mendocino_nhdplus_catchment",
+        "rapid_connectivity_mendocino_sample.csv")
+
+    lsm_grid = os.path.join(LSM_INPUT_DATA_PATH, "lis_land_mask",
+                            "lisglobalmask557ww_mendocino_subset.nc")
+    
+    CreateWeightTableLDAS(
+            in_ldas_nc=lsm_grid,
+            in_nc_lon_var='lon',
+            in_nc_lat_var='lat',
+            in_catchment_shapefile=os.path.join(
+                              GIS_INPUT_DATA_PATH,
+                              'mendocino_nhdplus_catchment',
+                              'NHDCat_mendocino_watershed_hopland_sample.shp'),
+            river_id='FEATUREID',
+            in_connectivity_file=rapid_connect_file,
+            out_weight_table=generated_weight_table_file,
+            in_land_area_fraction_var='LANDMASK')
+
+    generated_weight_table_file_solution = os.path.join(
+        COMPARE_DATA_PATH, 'mendocino_nhdplus_catchment',
+        'weight_lis_land_fraction_mendocino_subset.csv')
+
     assert (compare_csv_decimal_files(generated_weight_table_file,
                                       generated_weight_table_file_solution))
 

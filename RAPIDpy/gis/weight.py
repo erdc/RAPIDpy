@@ -431,11 +431,11 @@ def CreateWeightTableLDAS(in_ldas_nc,
                         .format(variables_list))
     ldas_lon = data_ldas_nc.variables[in_nc_lon_var][:]  # assume [-180, 180]
     ldas_lat = data_ldas_nc.variables[in_nc_lat_var][:]  # assume [-90,90]
-    data_ldas_nc.close()
 
     if in_land_area_fraction_var is not None:
         if in_land_area_fraction_var in variables_list:
-            land_area_fraction = data_ldas_nc.variables[in_ecmwf_mask_var][0,:,:]
+            land_area_fraction = data_ldas_nc.variables[
+                in_land_area_fraction_var][:]
         else:
             print('Variable "{}" not found in {}.'.format(
                 in_land_area_fraction_var, in_ldas_nc))
@@ -443,6 +443,8 @@ def CreateWeightTableLDAS(in_ldas_nc,
             land_area_fraction = None
     else:
         land_area_fraction = None
+
+    data_ldas_nc.close()
 
     rtree_create_weight_table(ldas_lat, ldas_lon,
                               in_catchment_shapefile, river_id,

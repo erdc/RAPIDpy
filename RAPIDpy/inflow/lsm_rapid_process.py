@@ -180,6 +180,9 @@ def identify_lsm_grid(lsm_grid_path):
     elif 'Y' in dim_list:
         # FLDAS
         latitude_dim = 'Y'
+    elif 'ny' in dim_list:
+        # U of A Imerg or NLDAS
+        latitude_dim = 'ny'
 
     longitude_dim = "lon"
     if 'longitude' in dim_list:
@@ -199,6 +202,9 @@ def identify_lsm_grid(lsm_grid_path):
     elif 'X' in dim_list:
         # FLDAS
         longitude_dim = 'X'
+    elif 'nx' in dim_list:
+        # U of A Imerg or NLDAS
+        longitude_dim = 'nx'
 
     time_dim = None
     if 'time' in dim_list:
@@ -298,6 +304,12 @@ def identify_lsm_grid(lsm_grid_path):
         elif var == "total runoff":
             # CMIP5 data
             total_runoff_var = var
+        elif var == "RUNSF":
+            # IMERG / U of A data
+            surface_runoff_var = var
+        elif var == 'RUNSB':
+            # IMERG / U of A data
+            subsurface_runoff_var = var
 
     # IDENTIFY GRID TYPE
     lsm_file_data = {
@@ -482,6 +494,13 @@ def identify_lsm_grid(lsm_grid_path):
             lsm_example_file.close()
             raise Exception("Unsupported runoff grid.")
 
+    elif surface_runoff_var.startswith("RUNSF") \
+            and subsurface_runoff_var.startswith("RUNSB"):
+        lsm_file_data["model_name"] = "u_of_a"
+        lsm_file_data["description"] = "IMERG or GLDAS"
+        lsm_file_data["weight_file_name"] = r'weight_nldas\.csv'
+        lsm_file_data["grid_type"] = 'nldas'
+
     else:
         title = ""
         try:
@@ -536,7 +555,7 @@ def determine_start_end_timestep(lsm_file_list,
         lsm_grid_info = identify_lsm_grid(lsm_file_list[0])
 
     if None in (lsm_grid_info['time_var'], lsm_grid_info['time_dim'])\
-            or lsm_grid_info['model_name'] in ('era_20cm', 'erai'):
+            or lsm_grid_info['model_name'] in ('era_20cm', 'erai', 'u_of_a'):
         # NOTE: the ERA20CM and ERA 24hr time variables
         # in the tests are erroneous
         if None in (file_re_match, file_datetime_pattern):

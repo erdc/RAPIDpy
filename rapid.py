@@ -1,27 +1,14 @@
 # -*- coding: utf-8 -*-
-from csv import reader as csvreader
+
 import datetime
 from multiprocessing import cpu_count
 import os
 from subprocess import Popen, PIPE
 
 #local
+from helper_functions import csv_to_list
 from make_CF_RAPID_output import ConvertRAPIDOutputToCF
 
-#------------------------------------------------------------------------------
-# HELPER FUNCTIONS
-#------------------------------------------------------------------------------
-def csv_to_list(csv_file, delimiter=','):
-    """
-    Reads in a CSV file and returns the contents as list,
-    where every row is stored as a sublist, and each element
-    in the sublist represents 1 cell in the table.
-
-    """
-    with open(csv_file, 'rb') as csv_con:
-        reader = csvreader(csv_con, delimiter=delimiter)
-        return list(reader)
-        
 #------------------------------------------------------------------------------
 #Main Dataset Manager Class
 #------------------------------------------------------------------------------

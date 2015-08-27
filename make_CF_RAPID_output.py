@@ -53,7 +53,8 @@ import os
 from netCDF4 import Dataset
 import numpy as np
 
-from rapid import csv_to_list
+#local
+from helper_functions import csv_to_list
 
 def log(message, severity, print_debug=True):
     """Logs, prints, or raises a message.

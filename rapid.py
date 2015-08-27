@@ -1,8 +1,27 @@
 # -*- coding: utf-8 -*-
+from csv import reader as csvreader
 import datetime
 from multiprocessing import cpu_count
 import os
 from subprocess import Popen, PIPE
+
+#local
+from make_CF_RAPID_output import ConvertRAPIDOutputToCF
+
+#------------------------------------------------------------------------------
+# HELPER FUNCTIONS
+#------------------------------------------------------------------------------
+def csv_to_list(csv_file, delimiter=','):
+    """
+    Reads in a CSV file and returns the contents as list,
+    where every row is stored as a sublist, and each element
+    in the sublist represents 1 cell in the table.
+
+    """
+    with open(csv_file, 'rb') as csv_con:
+        reader = csvreader(csv_con, delimiter=delimiter)
+        return list(reader)
+        
 #------------------------------------------------------------------------------
 #Main Dataset Manager Class
 #------------------------------------------------------------------------------
@@ -159,6 +178,20 @@ class RAPID(object):
             else:
                 raise Exception("Invalid RAPID parameter %s." % key)
     
+    def update_reach_number_data(self):
+        """
+        Updates the reach number data based on input files
+        """
+        #get rapid connect info
+        rapid_connect_table = csv_to_list(self.rapid_connect_file)
+        self.IS_riv_tot = len(rapid_connect_table)
+        self.IS_max_up = max([int(float(row[2])) for row in rapid_connect_table])
+    
+        #get riv_bas_id info
+        riv_bas_id_table = csv_to_list(self.riv_bas_id_file)
+        self.IS_riv_bas = len(riv_bas_id_table)
+
+
     def generate_namelist_file(self, file_path):
         """
         Generate rapid_namelist file
@@ -207,7 +240,26 @@ class RAPID(object):
             self.generate_input_file(file_path)
         else:
             raise Exception("RAPID namelist file to update not found.")
-    
+            
+    def make_output_CF_compliant(self, 
+                                 simulation_start_datetime,
+                                 comid_lat_lon_z_file="",
+                                 project_name="Normal RAPID project"):
+        """
+        Converts RAPID output to be CF compliant
+        """
+        cv = ConvertRAPIDOutputToCF(self.Qfinal_file, #location of timeseries output file
+                                   simulation_start_datetime, #time of the start of the simulation time
+                                   self.ZS_TauR, #time step of simulation in seconds
+                                   qinit_file=self.Qinit_file, #RAPID qinit file
+                                   comid_lat_lon_z_file=comid_lat_lon_z_file, #path to comid_lat_lon_z file
+                                   project_name=project_name, #name of your project
+                                   output_id_dim_name='COMID', #name of ID dimension in output file, typically COMID or FEATUREID
+                                   output_flow_var_name='Qout', #name of streamflow variable in output file, typically Qout or m3_riv
+                                   print_debug=False)
+        cv.convert()
+        
+        
     def run(self, rapid_namelist_file=""):
         """
         Run AutoRoute program and generate file based on inputs

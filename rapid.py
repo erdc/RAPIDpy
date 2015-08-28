@@ -17,129 +17,6 @@ class RAPID(object):
     This class is designed to prepare the rapid_namelist file and run 
     the RAPID program.
     """
-    #*******************************************************************************
-    #Runtime options 
-    #*******************************************************************************
-    BS_opt_Qinit = False
-    #!.false. --> no read initial flow    .true. --> read initial flow
-    BS_opt_Qfinal = False
-    #!.false. --> no write final flow     .true. --> write final flow 
-    BS_opt_dam = False
-    #!.false. --> no dam model used       .true. --> dam model used
-    BS_opt_for = False
-    #!.false. --> no forcing              .true. --> forcing
-    BS_opt_influence = False
-    #!.false. --> no output influence     .true. --> output influence
-    IS_opt_routing = 1
-    #!1       --> matrix-based Muskingum  2      --> traditional Muskingum
-    #!3       --> Transbnd. matrix-based
-    IS_opt_run = 1
-    #!1       --> regular run             2      --> parameter optimization
-    IS_opt_phi = 1
-    #!1       --> phi1                    2      --> phi2
-    
-    #*******************************************************************************
-    #Temporal information
-    #*******************************************************************************
-    #NOTE: ALL TIME IN SECONDS!
-    #ALWAYS USED
-    ZS_TauR = 0 #duration of routing procedure (time step of runoff data)
-    ZS_dtR = 0 #internal routing time step
-    #ONLY FOR REGULAR RUN
-    ZS_TauM = 0 #total simulation time 
-    ZS_dtM = 0 #input time step 
-    #ONLY FOR OPTIMIZATION RUN
-    ZS_TauO = 0 #total optimization time  
-    ZS_dtO = 0 #observation time step
-    #FORCING MODE (replace some values with observations) 
-    ZS_dtF = 0 #time step of forcing data
-    
-    #*******************************************************************************
-    #Domain in which input data is available
-    #*******************************************************************************
-    IS_riv_tot = 0 #number of river reaches in rapid connect file
-    rapid_connect_file = '' #path to rapid_connect file
-    IS_max_up = 2 #maximum number of ustream segments
-    Vlat_file = '' #path to runoff file
-    
-    #*******************************************************************************
-    #Domain in which model runs
-    #*******************************************************************************
-    IS_riv_bas = 0 #number of river reaches in subbasin
-    riv_bas_id_file = '' #subbasin reach id file
-    
-    #*******************************************************************************
-    #Initial instantaneous flow file
-    #*******************************************************************************
-    Qinit_file = '' #initial flow file (same order as rapid_connect)
-    
-    #*******************************************************************************
-    #Final instantaneous flow file
-    #*******************************************************************************
-    Qfinal_file = '' #path to output final flow file
-    
-    #*******************************************************************************
-    #Available dam data
-    #*******************************************************************************
-    IS_dam_tot = 0 #number of dams
-    dam_tot_id_file = '' #ids of dam location
-    
-    #*******************************************************************************
-    #Dam data used
-    #*******************************************************************************
-    IS_dam_use = 0 #number in subset of dam data to use
-    dam_use_id_file = '' #ids of subset of dams
-    
-    #*******************************************************************************
-    #Available forcing data
-    #*******************************************************************************
-    IS_for_tot = 0
-    for_tot_id_file = ''
-    Qfor_file = ''
-    
-    #*******************************************************************************
-    #Forcing data used as model runs
-    #*******************************************************************************
-    IS_for_use = 0
-    for_use_id_file = ''
-    
-    #*******************************************************************************
-    #File where max (min) of absolute values of b (QoutR) are stored
-    #*******************************************************************************
-    babsmax_file = ''
-    QoutRabsmin_file = ''
-    QoutRabsmax_file = ''
-    
-    #*******************************************************************************
-    #Regular model run
-    #*******************************************************************************
-    k_file = ''
-    x_file = ''
-    Qout_file = ''
-    
-    #*******************************************************************************
-    #Optimization
-    #*******************************************************************************
-    ZS_phifac = 0
-    #------------------------------------------------------------------------------
-    #Routing parameters
-    #------------------------------------------------------------------------------
-    kfac_file = ''
-    xfac_file = '' 
-    ZS_knorm_init = 0
-    ZS_xnorm_init = 0
-    #------------------------------------------------------------------------------
-    #Gage observations
-    #------------------------------------------------------------------------------
-    IS_obs_tot = 0
-    obs_tot_id_file = ''
-    Qobs_file = ''
-    Qobsbarrec_file = ''
-    IS_obs_use = 0
-    obs_use_id_file = ''
-    IS_strt_opt = 0
-
-    
     def __init__(self, rapid_executable_location, num_processors=1, 
                  use_all_processors=False, **kwargs):
         """
@@ -151,6 +28,130 @@ class RAPID(object):
         if use_all_processors == True:
             self._num_processors = cpu_count()
             
+        #*******************************************************************************
+        #Runtime options 
+        #*******************************************************************************
+        self.BS_opt_Qinit = False
+        #!.false. --> no read initial flow    .true. --> read initial flow
+        self.BS_opt_Qfinal = False
+        #!.false. --> no write final flow     .true. --> write final flow 
+        self.BS_opt_dam = False
+        #!.false. --> no dam model used       .true. --> dam model used
+        self.BS_opt_for = False
+        #!.false. --> no forcing              .true. --> forcing
+        self.BS_opt_influence = False
+        #!.false. --> no output influence     .true. --> output influence
+        self.IS_opt_routing = 1
+        #!1       --> matrix-based Muskingum  2      --> traditional Muskingum
+        #!3       --> Transbnd. matrix-based
+        self.IS_opt_run = 1
+        #!1       --> regular run             2      --> parameter optimization
+        self.IS_opt_phi = 1
+        #!1       --> phi1                    2      --> phi2
+        
+        #*******************************************************************************
+        #Temporal information
+        #*******************************************************************************
+        #NOTE: ALL TIME IN SECONDS!
+        #ALWAYS USED
+        self.ZS_TauR = 0 #duration of routing procedure (time step of runoff data)
+        self.ZS_dtR = 0 #internal routing time step
+        #ONLY FOR REGULAR RUN
+        self.ZS_TauM = 0 #total simulation time 
+        self.ZS_dtM = 0 #input time step 
+        #ONLY FOR OPTIMIZATION RUN
+        self.ZS_TauO = 0 #total optimization time  
+        self.ZS_dtO = 0 #observation time step
+        #FORCING MODE (replace some values with observations) 
+        self.ZS_dtF = 0 #time step of forcing data
+        
+        #*******************************************************************************
+        #Domain in which input data is available
+        #*******************************************************************************
+        self.IS_riv_tot = 0 #number of river reaches in rapid connect file
+        self.rapid_connect_file = '' #path to rapid_connect file
+        self.IS_max_up = 2 #maximum number of ustream segments
+        self.Vlat_file = '' #path to runoff file
+        
+        #*******************************************************************************
+        #Domain in which model runs
+        #*******************************************************************************
+        self.IS_riv_bas = 0 #number of river reaches in subbasin
+        self.riv_bas_id_file = '' #subbasin reach id file
+        
+        #*******************************************************************************
+        #Initial instantaneous flow file
+        #*******************************************************************************
+        self.Qinit_file = '' #initial flow file (same order as rapid_connect)
+        
+        #*******************************************************************************
+        #Final instantaneous flow file
+        #*******************************************************************************
+        self.Qfinal_file = '' #path to output final flow file
+        
+        #*******************************************************************************
+        #Available dam data
+        #*******************************************************************************
+        self.IS_dam_tot = 0 #number of dams
+        self.dam_tot_id_file = '' #ids of dam location
+        
+        #*******************************************************************************
+        #Dam data used
+        #*******************************************************************************
+        self.IS_dam_use = 0 #number in subset of dam data to use
+        self.dam_use_id_file = '' #ids of subset of dams
+        
+        #*******************************************************************************
+        #Available forcing data
+        #*******************************************************************************
+        self.IS_for_tot = 0
+        self.for_tot_id_file = ''
+        self.Qfor_file = ''
+        
+        #*******************************************************************************
+        #Forcing data used as model runs
+        #*******************************************************************************
+        self.IS_for_use = 0
+        self.for_use_id_file = ''
+        
+        #*******************************************************************************
+        #File where max (min) of absolute values of b (QoutR) are stored
+        #*******************************************************************************
+        self.babsmax_file = ''
+        self.QoutRabsmin_file = ''
+        self.QoutRabsmax_file = ''
+        
+        #*******************************************************************************
+        #Regular model run
+        #*******************************************************************************
+        self.k_file = ''
+        self.x_file = ''
+        self.Qout_file = ''
+        
+        #*******************************************************************************
+        #Optimization
+        #*******************************************************************************
+        self.ZS_phifac = 0
+        #------------------------------------------------------------------------------
+        #Routing parameters
+        #------------------------------------------------------------------------------
+        self.kfac_file = ''
+        self.xfac_file = '' 
+        self.ZS_knorm_init = 0
+        self.ZS_xnorm_init = 0
+        #------------------------------------------------------------------------------
+        #Gage observations
+        #------------------------------------------------------------------------------
+        self.IS_obs_tot = 0
+        self.obs_tot_id_file = ''
+        self.Qobs_file = ''
+        self.Qobsbarrec_file = ''
+        self.IS_obs_use = 0
+        self.obs_use_id_file = ''
+        self.IS_strt_opt = 0
+        
+        
+        
         self.update_parameters(**kwargs)
         
 
@@ -183,7 +184,7 @@ class RAPID(object):
         """
         Generate rapid_namelist file
         """
-        print "Generating AutoRoute input file ..."
+        print "Generating RAPID namelist file ..."
         try:
             os.remove(file_path)
         except OSError:
@@ -193,8 +194,13 @@ class RAPID(object):
             new_file.write('&NL_namelist\n')
             for attr, value in self.__dict__.iteritems():
                 if not attr.startswith('_') and value:
-                    new_file.write("%s = %s\n" % (attr, value))
-
+                    if attr.startswith('BS'):
+                        new_file.write("%s = .%s.\n" % (attr, str(value).lower()))
+                    elif isinstance(value, int):
+                        new_file.write("%s = %s\n" % (attr, value))
+                    else:
+                        new_file.write("%s = \'%s\'\n" % (attr, value))
+            new_file.write("/\n")
         
     def update_namelist_file(self, file_path):
         """
@@ -249,7 +255,7 @@ class RAPID(object):
         
     def run(self, rapid_namelist_file=""):
         """
-        Run AutoRoute program and generate file based on inputs
+        Run RAPID program and generate file based on inputs
         """
     
         time_start = datetime.datetime.utcnow()
@@ -257,15 +263,16 @@ class RAPID(object):
         if not rapid_namelist_file or not os.path.exists(rapid_namelist_file):
             #generate input file if it does not exist
             if not rapid_namelist_file:
-                rapid_namelist_file = "rapid_namelist"
+                rapid_namelist_file = os.path.join(os.getcwd(), "rapid_namelist")
             self.generate_namelist_file(rapid_namelist_file)
         else:
             #update existing file
             self.update_namelist_file(rapid_namelist_file)
 
-        local_rapid_executable_location = os.path.join(os.path.basename(rapid_namelist_file), "rapid")
+        local_rapid_executable_location = os.path.join(os.path.dirname(rapid_namelist_file), "rapid")
         #create link to RAPID
-        os.symlink(self._rapid_executable_location, local_rapid_executable_location)
+        if not os.path.exists(local_rapid_executable_location):
+            os.symlink(self._rapid_executable_location, local_rapid_executable_location)
 
 
         def rapid_cleanup(local_rapid_executable, rapid_namelist_file):
@@ -289,11 +296,11 @@ class RAPID(object):
         print "Running RAPID ..."
         run_rapid_command = []
         if self._num_processors > 1:
-            run_rapid_command = ["mpiexec", "-n", self._num_processors]
+            run_rapid_command = ["mpiexec", "-n", str(self._num_processors)]
         run_rapid_command.append(local_rapid_executable_location)
         run_rapid_command.append("-ksp_type")
         run_rapid_command.append("richardson")
-                                 
+        
         process = Popen(run_rapid_command, 
                         stdout=PIPE, stderr=PIPE, shell=False)
         out, err = process.communicate()

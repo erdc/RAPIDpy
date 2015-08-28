@@ -321,17 +321,37 @@ class RAPID(object):
         print "Time to run RAPID: %s" % (datetime.datetime.utcnow()-time_start)
 
 
+"""
 if __name__ == "__main__":
-    input_folder = "/Users/rdchlads/autorapid/rapid-io/input/nfie_texas_gulf_region-huc_2_12"
-    rapid_mng = RAPID('/Users/rdchlads/autorapid/rapid/run/rapid',
-                      stream_file=os.path.join(input_folder, "streamflow_raster.tif"),
-                      dem_file=os.path.join(input_folder, "Korea_DEMs", "merged_dems.tif"),
-                      spatial_units="deg",
-                      SHP_Out_File=os.path.join(input_folder,"tmp", "flood.tif"),
-                      SHP_Out_Shapefile=os.path.join(input_folder,"tmp", "flood_Shp.shp"),
-                     )
-                         
-    rapid_mng.run(autoroute_input_file=os.path.join(input_folder, "Flood", "AUTOROUTE_INPUT_FILE.txt"))
-            
+    rapid_manager = RAPID(rapid_executable_location=rapid_executable_location,
+                          use_all_processors=True,                          
+                          ZS_TauR = 24*3600, #duration of routing procedure (time step of runoff data)
+                          ZS_dtR = 15*60, #internal routing time step
+                          ZS_TauM = len(era_interim_file_list)*24*3600, #total simulation time 
+                          ZS_dtM = 24*3600 #input time step 
+                         )
+    era_rapid_output_file = os.path.join(master_watershed_output_directory,
+                                                           'Qout_erai.nc')
+    rapid_manager.update_parameters(rapid_connect_file=case_insensitive_file_search(master_watershed_input_directory,
+                                                                                 r'rapid_connect\.csv'),
+                                    Vlat_file=master_rapid_runoff_file,
+                                    riv_bas_id_file=case_insensitive_file_search(master_watershed_input_directory,
+                                                                                 r'riv_bas_id\.csv'),
+                                    k_file=case_insensitive_file_search(master_watershed_input_directory,
+                                                                        r'k\.csv'),
+                                    x_file=case_insensitive_file_search(master_watershed_input_directory,
+                                                                        r'x\.csv'),
+                                    Qout_file=era_rapid_output_file
+                                    )
+
+    comid_lat_lon_z_file = case_insensitive_file_search(master_watershed_input_directory,
+                                                        r'comid_lat_lon_z\.csv')
+
+    rapid_manager.update_reach_number_data()
+    rapid_manager.run()
+    rapid_manager.make_output_CF_compliant(simulation_start_datetime=datetime.datetime(1980, 1, 1),
+                                           comid_lat_lon_z_file=comid_lat_lon_z_file,
+                                           project_name="ERA Interim Historical flows by US Army ERDC")     
+"""
             
             

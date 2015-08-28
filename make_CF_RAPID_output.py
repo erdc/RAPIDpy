@@ -115,7 +115,7 @@ class ConvertRAPIDOutputToCF(object):
     
         Remarks: Raises exception if file doesn't validate.
         """
-    
+
         self.raw_nc = Dataset(self.rapid_output_file)
         dims = self.raw_nc.dimensions
         if 'COMID' in dims:
@@ -157,8 +157,7 @@ class ConvertRAPIDOutputToCF(object):
         return id_dim_name, id_len, time_len, q_var_name
 
 
-    def _initialize_output(self, id_dim_name, time_len,
-                          id_len, time_step_seconds):
+    def _initialize_output(self, time_len, id_len):
         """Creates netCDF file with CF dimensions and variables, but no data.
     
         Arguments:
@@ -209,7 +208,7 @@ class ConvertRAPIDOutputToCF(object):
                                      '(GCMD) Earth Science Keywords. Version ' +
                                      '8.0.0.0.0')
         self.cf_nc.keywords = 'DISCHARGE/FLOW'
-        self.cf_nc.comment = 'Result time step (seconds): ' + str(time_step_seconds)
+        self.cf_nc.comment = 'Result time step (seconds): ' + str(self.time_step)
     
         timestamp = datetime.utcnow().isoformat() + 'Z'
         self.cf_nc.date_created = timestamp
@@ -220,11 +219,12 @@ class ConvertRAPIDOutputToCF(object):
         # Create dimensions
         log('    dimming', 'DEBUG', self.print_debug)
         self.cf_nc.createDimension('time', time_len)
-        self.cf_nc.createDimension(id_dim_name, id_len)
+        self.cf_nc.createDimension(self.output_id_dim_name, id_len)
     
         # Create variables
         log('    timeSeries_var', 'DEBUG', self.print_debug)
-        timeSeries_var = self.cf_nc.createVariable(id_dim_name, 'i4', (id_dim_name,))
+        timeSeries_var = self.cf_nc.createVariable(self.output_id_dim_name, 'i4', 
+                                                   (self.output_id_dim_name,))
         timeSeries_var.long_name = (
             'Unique NHDPlus COMID identifier for each river reach feature')
         timeSeries_var.cf_role = 'timeseries_id'
@@ -237,7 +237,7 @@ class ConvertRAPIDOutputToCF(object):
         time_var.axis = 'T'
     
         log('    lat_var', 'DEBUG', self.print_debug)
-        lat_var = self.cf_nc.createVariable('lat', 'f8', (id_dim_name,),
+        lat_var = self.cf_nc.createVariable('lat', 'f8', (self.output_id_dim_name,),
                                        fill_value=-9999.0)
         lat_var.long_name = 'latitude'
         lat_var.standard_name = 'latitude'
@@ -245,7 +245,7 @@ class ConvertRAPIDOutputToCF(object):
         lat_var.axis = 'Y'
     
         log('    lon_var', 'DEBUG', self.print_debug)
-        lon_var = self.cf_nc.createVariable('lon', 'f8', (id_dim_name,),
+        lon_var = self.cf_nc.createVariable('lon', 'f8', (self.output_id_dim_name,),
                                        fill_value=-9999.0)
         lon_var.long_name = 'longitude'
         lon_var.standard_name = 'longitude'
@@ -253,7 +253,7 @@ class ConvertRAPIDOutputToCF(object):
         lon_var.axis = 'X'
     
         log('    z_var', 'DEBUG', self.print_debug)
-        z_var = self.cf_nc.createVariable('z', 'f8', (id_dim_name,),
+        z_var = self.cf_nc.createVariable('z', 'f8', (self.output_id_dim_name,),
                                      fill_value=-9999.0)
         z_var.long_name = ('Elevation referenced to the North American ' +
                            'Vertical Datum of 1988 (NAVD88)')
@@ -387,8 +387,7 @@ class ConvertRAPIDOutputToCF(object):
 
             # Validate the raw netCDF file
             log('validating input netCDF file', 'INFO')
-            input_id_dim_name, id_len, time_len, input_flow_var_name = (
-                self._validate_raw_nc())
+            input_id_dim_name, id_len, time_len, input_flow_var_name = self._validate_raw_nc()
 
             # Initialize the output file (create dimensions and variables)
             log('initializing output', 'INFO')
@@ -438,6 +437,7 @@ class ConvertRAPIDOutputToCF(object):
                 os.remove(self.cf_compliant_file)
             except OSError:
                 pass
+            raise
             log('Conversion Error %s' % e, 'ERROR')
 
 

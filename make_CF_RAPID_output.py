@@ -365,15 +365,15 @@ class ConvertRAPIDOutputToCF(object):
         q_var.comment = ('lat, lon, and z values taken at midpoint of river ' +
                          'reach feature')
         log('Copying streamflow values', 'INFO')
-        q_var[:][1:] = self.raw_nc.variables[input_flow_var_name][:].transpose()
+        q_var[:,1:] = self.raw_nc.variables[input_flow_var_name][:].transpose()
         
         #add initial flow to file
         if self.qinit_file:
             for index, init_flow in enumerate(csv_to_list(self.qinit_file)):
-                q_var[index][0] = float(init_flow)
+                q_var[index,0] = float(init_flow)
         else:
             for index, comid in enumerate(self.cf_nc.variables[self.output_id_dim_name][:]):
-                q_var[index][0] = 0
+                q_var[index,0] = 0
                 
 
     def convert(self):

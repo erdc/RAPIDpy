@@ -396,14 +396,14 @@ class ConvertRAPIDOutputToCF(object):
             # Populate time values
             log('writing times', 'INFO')
             total_seconds = self.time_step * time_len
-            end_date = (self.start_date +
+            end_date = (self.start_datetime +
                         timedelta(seconds=(total_seconds - self.time_step)))
             d1970 = datetime(1970, 1, 1)
-            secs_start = int((self.start_date - d1970).total_seconds())
+            secs_start = int((self.start_datetime - d1970).total_seconds())
             secs_end = secs_start + total_seconds
             self.cf_nc.variables['time'][:] = np.arange(
                 secs_start, secs_end, self.time_step)
-            self.cf_nc.time_coverage_start = self.start_date.isoformat() + 'Z'
+            self.cf_nc.time_coverage_start = self.start_datetime.isoformat() + 'Z'
             self.cf_nc.time_coverage_end = end_date.isoformat() + 'Z'
 
             # Populate comid, lat, lon, z

@@ -241,15 +241,16 @@ class RAPID(object):
         """
         Converts RAPID output to be CF compliant
         """
-        cv = ConvertRAPIDOutputToCF(self.Qfinal_file, #location of timeseries output file
-                                   simulation_start_datetime, #time of the start of the simulation time
-                                   self.ZS_TauR, #time step of simulation in seconds
-                                   qinit_file=self.Qinit_file, #RAPID qinit file
-                                   comid_lat_lon_z_file=comid_lat_lon_z_file, #path to comid_lat_lon_z file
-                                   project_name=project_name, #name of your project
-                                   output_id_dim_name='COMID', #name of ID dimension in output file, typically COMID or FEATUREID
-                                   output_flow_var_name='Qout', #name of streamflow variable in output file, typically Qout or m3_riv
-                                   print_debug=False)
+        print self.Qout_file
+        cv = ConvertRAPIDOutputToCF(rapid_output_file=self.Qout_file, #location of timeseries output file
+                                    start_datetime=simulation_start_datetime, #time of the start of the simulation time
+                                    time_step=self.ZS_TauR, #time step of simulation in seconds
+                                    qinit_file=self.Qinit_file, #RAPID qinit file
+                                    comid_lat_lon_z_file=comid_lat_lon_z_file, #path to comid_lat_lon_z file
+                                    project_name=project_name, #name of your project
+                                    output_id_dim_name='COMID', #name of ID dimension in output file, typically COMID or FEATUREID
+                                    output_flow_var_name='Qout', #name of streamflow variable in output file, typically Qout or m3_riv
+                                    print_debug=False)
         cv.convert()
         
         
@@ -270,10 +271,13 @@ class RAPID(object):
             self.update_namelist_file(rapid_namelist_file)
 
         local_rapid_executable_location = os.path.join(os.path.dirname(rapid_namelist_file), "rapid")
-        #create link to RAPID
-        if not os.path.exists(local_rapid_executable_location):
-            os.symlink(self._rapid_executable_location, local_rapid_executable_location)
 
+        #create link to RAPID if needed
+        temp_link_to_rapid = ""
+        if not os.path.exists(local_rapid_executable_location) \
+            and not self._rapid_executable_location == local_rapid_executable_location:
+            os.symlink(self._rapid_executable_location, local_rapid_executable_location)
+            temp_link_to_rapid = local_rapid_executable_location
 
         def rapid_cleanup(local_rapid_executable, rapid_namelist_file):
             """
@@ -306,14 +310,14 @@ class RAPID(object):
         out, err = process.communicate()
         if err:
             print err
-            rapid_cleanup(local_rapid_executable_location, rapid_namelist_file)
+            rapid_cleanup(temp_link_to_rapid, rapid_namelist_file)
             raise
         else:
             print 'RAPID output:'
             for line in out.split('\n'):
                 print line
 
-        rapid_cleanup(local_rapid_executable_location, rapid_namelist_file)
+        rapid_cleanup(temp_link_to_rapid, rapid_namelist_file)
         print "Time to run RAPID: %s" % (datetime.datetime.utcnow()-time_start)
 
 

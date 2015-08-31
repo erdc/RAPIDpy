@@ -41,13 +41,13 @@ $ exit
 
 Example:
 ```python
-   rapid_manager = RAPID(rapid_executable_location='~/work/rapid/run/rapid'
-                         use_all_processors=True,                          
-                         ZS_TauR = 24*3600, #duration of routing procedure (time step of runoff data)
-                         ZS_dtR = 15*60, #internal routing time step
-                         ZS_TauM = len(era_interim_file_list)*24*3600, #total simulation time 
-                         ZS_dtM = 24*3600 #input time step 
-                         )
+rapid_manager = RAPID(rapid_executable_location='~/work/rapid/run/rapid'
+                     use_all_processors=True,                          
+                     ZS_TauR = 24*3600, #duration of routing procedure (time step of runoff data)
+                     ZS_dtR = 15*60, #internal routing time step
+                     ZS_TauM = len(era_interim_file_list)*24*3600, #total simulation time 
+                     ZS_dtM = 24*3600 #input time step 
+                     )
 ```
 
 ## Step 2 (optional): Add/update additional parameters later
@@ -56,13 +56,13 @@ You can add or update parameters using the *update_parameters* function by using
 
 Example:
 ```python
-    rapid_manager.update_parameters(rapid_connect_file='../rapid_input_directory/rapid_connect.csv',
-                                    Vlat_file='../rapid_input_directory/m3_riv.nc',
-                                    riv_bas_id_file='../rapid_input_directory/riv_bas_id.csv,
-                                    k_file='../rapid_input_directory/k.csv',
-                                    x_file='../rapid_input_directory/x.csv',
-                                    Qout_file='../OUTPUT/Qout.nc'
-                                    )
+rapid_manager.update_parameters(rapid_connect_file='../rapid_input_directory/rapid_connect.csv',
+                                Vlat_file='../rapid_input_directory/m3_riv.nc',
+                                riv_bas_id_file='../rapid_input_directory/riv_bas_id.csv,
+                                k_file='../rapid_input_directory/k.csv',
+                                x_file='../rapid_input_directory/x.csv',
+                                Qout_file='../OUTPUT/Qout.nc'
+                                )
 ```
 ## Step 4 (optional): Update reach number data
 If you don't want to manually count the numbers for the rapid_connect or riv_bas_id files, use the *update_reach_number_data* function.
@@ -87,9 +87,9 @@ Additionally, it prepends time zero to you simulation. If no qinit file is given
 
 Example:
 ```python
-    rapid_manager.make_output_CF_compliant(simulation_start_datetime=datetime.datetime(1980, 1, 1),
-                                           comid_lat_lon_z_file='../rapid_input_directory/comid_lat_lon_z.csv',
-                                           project_name="ERA Interim Historical flows by US Army ERDC") 
+rapid_manager.make_output_CF_compliant(simulation_start_datetime=datetime.datetime(1980, 1, 1),
+                                       comid_lat_lon_z_file='../rapid_input_directory/comid_lat_lon_z.csv',
+                                       project_name="ERA Interim Historical flows by US Army ERDC") 
 ```
 
 

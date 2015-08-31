@@ -44,10 +44,10 @@ Example:
 from RAPIDpy.rapid import RAPID
 rapid_manager = RAPID(rapid_executable_location='~/work/rapid/run/rapid'
                      use_all_processors=True,                          
-                     ZS_TauR = 24*3600, #duration of routing procedure (time step of runoff data)
-                     ZS_dtR = 15*60, #internal routing time step
-                     ZS_TauM = len(era_interim_file_list)*24*3600, #total simulation time 
-                     ZS_dtM = 24*3600 #input time step 
+                     ZS_TauR=24*3600, #duration of routing procedure (time step of runoff data)
+                     ZS_dtR=15*60, #internal routing time step
+                     ZS_TauM=365*24*3600, #total simulation time 
+                     ZS_dtM=24*3600 #input time step 
                      )
 ```
 

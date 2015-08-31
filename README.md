@@ -41,6 +41,7 @@ $ exit
 
 Example:
 ```python
+from RAPIDpy.rapid import RAPID
 rapid_manager = RAPID(rapid_executable_location='~/work/rapid/run/rapid'
                      use_all_processors=True,                          
                      ZS_TauR = 24*3600, #duration of routing procedure (time step of runoff data)

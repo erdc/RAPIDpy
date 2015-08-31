@@ -30,6 +30,12 @@ $ sudo su
 $ pip install numpy netCDF4
 $ exit
 ```
+##Step 3: Install RAPIDpy
+```
+$ sudo su
+$ pip install RAPIDpy
+$ exit
+```
 
 #How to use
 

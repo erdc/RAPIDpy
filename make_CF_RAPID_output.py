@@ -85,6 +85,7 @@ class ConvertRAPIDOutputToCF(object):
                        time_step, #time step of simulation in seconds
                        qinit_file="", #RAPID qinit file
                        comid_lat_lon_z_file="", #path to comid_lat_lon_z file
+                       rapid_connect_file="", #path to RAPID connect file
                        project_name="Default RAPID Project", #name of your project
                        output_id_dim_name='COMID', #name of ID dimension in output file, typically COMID or FEATUREID
                        output_flow_var_name='Qout', #name of streamflow variable in output file, typically Qout or m3_riv
@@ -96,6 +97,7 @@ class ConvertRAPIDOutputToCF(object):
        self.time_step = time_step
        self.qinit_file = qinit_file
        self.comid_lat_lon_z_file = comid_lat_lon_z_file
+       self.rapid_connect_file = rapid_connect_file
        self.project_name = project_name
        self.output_id_dim_name = output_id_dim_name
        self.output_flow_var_name = output_flow_var_name
@@ -367,10 +369,20 @@ class ConvertRAPIDOutputToCF(object):
         log('Copying streamflow values', 'INFO')
         q_var[:,1:] = self.raw_nc.variables[input_flow_var_name][:].transpose()
         
-        #add initial flow to file
-        if self.qinit_file:
-            for index, init_flow in enumerate(csv_to_list(self.qinit_file)):
-                q_var[index,0] = float(init_flow)
+        #add initial flow to RAPID output file
+        if self.qinit_file and self.rapid_connect_file:
+            lookup_table = csv_to_list(self.rapid_connect_file)
+            lookup_comids = np.array([int(float(row[0])) for row in lookup_table])
+            
+            init_flow_table = csv_to_list(self.qinit_file)
+            
+            for index, comid in enumerate(self.cf_nc.variables[self.output_id_dim_name][:]):
+                try:
+                    lookup_index = np.where(lookup_comids == comid)[0][0]
+                except Exception:
+                    log('COMID %s misssing in rapid_connect file' % comid,
+                        'ERROR')
+                q_var[index,0] = float(init_flow_table[lookup_index])
         else:
             for index, comid in enumerate(self.cf_nc.variables[self.output_id_dim_name][:]):
                 q_var[index,0] = 0

@@ -247,6 +247,7 @@ class RAPID(object):
                                     time_step=self.ZS_TauR, #time step of simulation in seconds
                                     qinit_file=self.Qinit_file, #RAPID qinit file
                                     comid_lat_lon_z_file=comid_lat_lon_z_file, #path to comid_lat_lon_z file
+                                    rapid_connect_file=self.rapid_connect_file, #path to RAPID connect file
                                     project_name=project_name, #name of your project
                                     output_id_dim_name='COMID', #name of ID dimension in output file, typically COMID or FEATUREID
                                     output_flow_var_name='Qout', #name of streamflow variable in output file, typically Qout or m3_riv

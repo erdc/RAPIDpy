@@ -80,9 +80,9 @@ class ConvertRAPIDOutputToCF(object):
     """
     Class to convert RAPID output to be CF compliant        
     """
-    def __init__(self, rapid_output_file, #location of timeseries output file
+    def __init__(self, rapid_output_file, #location of timeseries output file(s)
                        start_datetime, #time of the start of the simulation time
-                       time_step, #time step of simulation in seconds
+                       time_step, #time step(s) of simulation in seconds
                        qinit_file="", #RAPID qinit file
                        comid_lat_lon_z_file="", #path to comid_lat_lon_z file
                        rapid_connect_file="", #path to RAPID connect file
@@ -92,9 +92,17 @@ class ConvertRAPIDOutputToCF(object):
                        print_debug=False
                        ):
 
-       self.rapid_output_file = rapid_output_file
+       if not isinstance(rapid_output_file, list): 
+           self.rapid_output_file_list = [rapid_output_file]
+       else:
+           self.rapid_output_file_list = rapid_output_file
        self.start_datetime = start_datetime
-       self.time_step = time_step
+       
+       if not isinstance(rapid_output_file, list): 
+           self.time_step_array = [time_step]
+       else:
+           self.time_step_array = time_step
+           
        self.qinit_file = qinit_file
        self.comid_lat_lon_z_file = comid_lat_lon_z_file
        self.rapid_connect_file = rapid_connect_file
@@ -102,7 +110,7 @@ class ConvertRAPIDOutputToCF(object):
        self.output_id_dim_name = output_id_dim_name
        self.output_flow_var_name = output_flow_var_name
        self.print_debug = print_debug
-       self.cf_compliant_file = '%s_CF.nc' % os.path.splitext(self.rapid_output_file)[0]
+       self.cf_compliant_file = '%s_CF.nc' % os.path.splitext(self.rapid_output_file_list[0])[0]
 
     def _validate_raw_nc(self):
         """Checks that raw netCDF file has the right dimensions and variables.
@@ -118,45 +126,72 @@ class ConvertRAPIDOutputToCF(object):
         Remarks: Raises exception if file doesn't validate.
         """
 
-        self.raw_nc = Dataset(self.rapid_output_file)
-        dims = self.raw_nc.dimensions
-        if 'COMID' in dims:
-            id_dim_name = 'COMID'
-        elif 'FEATUREID' in dims:
-            id_dim_name = 'FEATUREID'
-        else:
-            msg = 'Could not find ID dimension. Looked for COMID and FEATUREID.'
-            raise Exception(msg)
-        id_len = len(dims[id_dim_name])
-    
-        if 'Time' not in dims:
-            msg = 'Could not find time dimension. Looked for Time.'
-            raise Exception(msg)
+        self.raw_nc_list = []
+        total_time_len = 0  
+        initial_file = True
+        id_dim_name_list = []
+        id_len_list = []
+        q_var_name_list = []
+        self.time_len_array = []
+        for rapid_output_file in self.rapid_output_file_list:
+            raw_nc = Dataset(rapid_output_file)
+            dims = raw_nc.dimensions
+            if 'COMID' in dims:
+                id_dim_name = 'COMID'
+            elif 'FEATUREID' in dims:
+                id_dim_name = 'FEATUREID'
+            else:
+                msg = 'Could not find ID dimension. Looked for COMID and FEATUREID.'
+                raise Exception(msg)
+            id_dim_name_list.append(id_dim_name)
+
+            id_len_list.append(len(dims[id_dim_name]))
+
+            if 'Time' not in dims:
+                msg = 'Could not find time dimension. Looked for Time.'
+                raise Exception(msg)
+                
+            time_len = len(dims['Time'])
+            if initial_file:
+                time_len += 1 #add one for the first flow value RAPID
+                            #does not include
+                initial_file = False
+            total_time_len += time_len
+            self.time_len_array.append(time_len)
             
-        time_len = len(dims['Time'])+1 #add one for the first flow value RAPID
-                                       #does not include
-    
-        variables = self.raw_nc.variables
-        id_var_name = None
-        if 'COMID' in dims:
-            id_var_name = 'COMID'
-        elif 'FEATUREID' in dims:
-            id_var_name = 'FEATUREID'
-        if id_var_name is not None and id_var_name != id_dim_name:
-            msg = ('ID dimension name (' + id_dim_name + ') does not equal ID ' +
-                   'variable name (' + id_var_name + ').')
-            log(msg, 'WARNING')
-    
-        if 'Qout' in variables:
-            q_var_name = 'Qout'
-        elif 'm3_riv' in variables:
-            q_var_name = 'm3_riv'
-        else:
-            log('Could not find flow variable. Looked for Qout and m3_riv.',
-                'ERROR')
+            variables = raw_nc.variables
+            id_var_name = None
+            if 'COMID' in dims:
+                id_var_name = 'COMID'
+            elif 'FEATUREID' in dims:
+                id_var_name = 'FEATUREID'
+            if id_var_name is not None and id_var_name != id_dim_name:
+                msg = ('ID dimension name (' + id_dim_name + ') does not equal ID ' +
+                       'variable name (' + id_var_name + ').')
+                log(msg, 'WARNING')
+        
+            if 'Qout' in variables:
+                q_var_name = 'Qout'
+            elif 'm3_riv' in variables:
+                q_var_name = 'm3_riv'
+            else:
+                log('Could not find flow variable. Looked for Qout and m3_riv.',
+                    'ERROR')
+            q_var_name_list.append(q_var_name)
             
-    
-        return id_dim_name, id_len, time_len, q_var_name
+            #make sure all id_dim_names same
+            if not all(x == id_dim_name_list[0] for x in id_dim_name_list):
+                log('ID dimension name not same for all files.', 'ERROR')
+            #make sure all q var_names same       
+            if not all(x == id_len_list[0] for x in id_len_list):
+                log('ID dimension length not same for all files.', 'ERROR')
+            #make sure all q var_names same       
+            if not all(x == q_var_name_list[0] for x in q_var_name_list):
+                log('Q variable name not same for all files.', 'ERROR')
+            
+            self.raw_nc_list.append(raw_nc)
+            
+        return id_dim_name, id_len_list[0], total_time_len, q_var_name
 
 
     def _initialize_output(self, time_len, id_len):
@@ -210,7 +245,7 @@ class ConvertRAPIDOutputToCF(object):
                                      '(GCMD) Earth Science Keywords. Version ' +
                                      '8.0.0.0.0')
         self.cf_nc.keywords = 'DISCHARGE/FLOW'
-        self.cf_nc.comment = 'Result time step (seconds): ' + str(self.time_step)
+        self.cf_nc.comment = 'Result time step(s) (seconds): ' + str(self.time_step_array)
     
         timestamp = datetime.utcnow().isoformat() + 'Z'
         self.cf_nc.date_created = timestamp
@@ -349,7 +384,36 @@ class ConvertRAPIDOutputToCF(object):
             if z_max is not None:
                 self.cf_nc.geospatial_vertical_max = z_max
         else:
-            log('No comid_lat_lon_z file. Not adding values ...', 'INFO')            
+            log('No comid_lat_lon_z file. Not adding values ...', 'INFO')
+            
+    def _generate_time_values(self):
+        """
+        Generates time values for out nc file
+        """
+        # Populate time values
+        log('writing times', 'INFO')
+        total_seconds = 0
+        d1970 = datetime(1970, 1, 1)
+        time_array = []
+
+        for index, time_len in enumerate(self.time_len_array):
+            if index > 0:
+                total_seconds += self.time_step_array[index]
+                
+            secs_start = int((self.start_datetime - d1970 + timedelta(seconds=total_seconds)).total_seconds())
+            time_delta = self.time_step_array[index] * time_len
+            total_seconds += time_delta
+            if index < len(self.time_len_array)-1:
+                #push back total seconds to time of next run
+                total_seconds -= self.time_step_array[index]
+            secs_end = secs_start + time_delta
+                
+            time_array.append(np.arange(secs_start, secs_end, self.time_step_array[index]))
+
+        end_date = (self.start_datetime + timedelta(seconds=total_seconds))
+        self.cf_nc.variables['time'][:] = np.concatenate(time_array)
+        self.cf_nc.time_coverage_start = self.start_datetime.isoformat() + 'Z'
+        self.cf_nc.time_coverage_end = end_date.isoformat() + 'Z'
 
     def _copy_streamflow_values(self, input_flow_var_name):
         """
@@ -367,7 +431,15 @@ class ConvertRAPIDOutputToCF(object):
         q_var.comment = ('lat, lon, and z values taken at midpoint of river ' +
                          'reach feature')
         log('Copying streamflow values', 'INFO')
-        q_var[:,1:] = self.raw_nc.variables[input_flow_var_name][:].transpose()
+        begin_time_step_index = 1
+        end_time_step_index = -1
+        for raw_nc_index, raw_nc in enumerate(self.raw_nc_list):
+            if raw_nc_index == 0:
+                end_time_step_index = self.time_len_array[raw_nc_index]
+            else:
+                end_time_step_index = begin_time_step_index + self.time_len_array[raw_nc_index]
+            q_var[:,begin_time_step_index:end_time_step_index] = raw_nc.variables[input_flow_var_name][:].transpose()
+            begin_time_step_index = end_time_step_index
         
         #add initial flow to RAPID output file
         if self.qinit_file and self.rapid_connect_file:
@@ -394,7 +466,7 @@ class ConvertRAPIDOutputToCF(object):
         """
    
         try:
-            log('Processing %s' % self.rapid_output_file, 'INFO')
+            log('Processing %s ...' % self.rapid_output_file_list[0], 'INFO')
             time_start_conversion = datetime.utcnow()
 
             # Validate the raw netCDF file
@@ -405,23 +477,12 @@ class ConvertRAPIDOutputToCF(object):
             log('initializing output', 'INFO')
             self._initialize_output(time_len, id_len)
 
-            # Populate time values
-            log('writing times', 'INFO')
-            total_seconds = self.time_step * time_len
-            end_date = (self.start_datetime +
-                        timedelta(seconds=(total_seconds - self.time_step)))
-            d1970 = datetime(1970, 1, 1)
-            secs_start = int((self.start_datetime - d1970).total_seconds())
-            secs_end = secs_start + total_seconds
-            self.cf_nc.variables['time'][:] = np.arange(
-                secs_start, secs_end, self.time_step)
-            self.cf_nc.time_coverage_start = self.start_datetime.isoformat() + 'Z'
-            self.cf_nc.time_coverage_end = end_date.isoformat() + 'Z'
-
+            self._generate_time_values()
+            
             # Populate comid, lat, lon, z
             log('writing comid lat lon z', 'INFO')
             lookup_start = datetime.now()
-            self.cf_nc.variables[self.output_id_dim_name][:] = self.raw_nc.variables[input_id_dim_name][:]
+            self.cf_nc.variables[self.output_id_dim_name][:] = self.raw_nc_list[0].variables[input_id_dim_name][:]
             
             self._write_comid_lat_lon_z()
             duration = str((datetime.now() - lookup_start).total_seconds())
@@ -431,17 +492,21 @@ class ConvertRAPIDOutputToCF(object):
             # previous steps if we do it earlier.
             log('Creating streamflow variable', 'INFO')
             self._copy_streamflow_values(input_flow_var_name)
-
-            self.raw_nc.close()
+            
+            #close files
+            for raw_nc in self.raw_nc_list:
+                raw_nc.close()
             self.cf_nc.close()
+            
             #delete original RAPID output
             try:
-                os.remove(self.rapid_output_file)
+                for raw_rapid_file in self.rapid_output_file_list:
+                    os.remove(raw_rapid_file)
             except OSError:
                 pass
 
             #rename nc compliant file to original name
-            os.rename(self.cf_compliant_file, self.rapid_output_file)
+            os.rename(self.cf_compliant_file, self.rapid_output_file_list[0])
             log('Time to process %s' % (datetime.utcnow()-time_start_conversion), 'INFO')
         except Exception, e:
             #delete cf RAPID output
@@ -449,7 +514,4 @@ class ConvertRAPIDOutputToCF(object):
                 os.remove(self.cf_compliant_file)
             except OSError:
                 pass
-            raise
             log('Conversion Error %s' % e, 'ERROR')
-
-

@@ -2,6 +2,8 @@
 
 import datetime
 from multiprocessing import cpu_count
+from netCDF4 import Dataset
+import numpy as np
 import os
 from subprocess import Popen, PIPE
 
@@ -241,7 +243,6 @@ class RAPID(object):
         """
         Converts RAPID output to be CF compliant
         """
-        print self.Qout_file
         cv = ConvertRAPIDOutputToCF(rapid_output_file=self.Qout_file, #location of timeseries output file
                                     start_datetime=simulation_start_datetime, #time of the start of the simulation time
                                     time_step=self.ZS_TauR, #time step of simulation in seconds
@@ -321,6 +322,46 @@ class RAPID(object):
         rapid_cleanup(temp_link_to_rapid, rapid_namelist_file)
         print "Time to run RAPID: %s" % (datetime.datetime.utcnow()-time_start)
 
+    def generate_qinit_from_past_qout(self, qinit_file):
+        """
+        Generate qinit from qout file
+        """
+        print "Generating qinit file from qout file ..."
+        print "Extracting data ..."
+        #get information from datasets
+        data_nc = Dataset(self.Qout_file, mode="r")
+        riv_bas_id_array = data_nc.variables['COMID'][:]
+        qout_dimensions = data_nc.variables['Qout'].dimensions
+        if qout_dimensions[0].lower() == 'time' and qout_dimensions[1].lower() == 'comid':
+            #data is raw rapid output
+            data_values = data_nc.variables['Qout'][-1,:]
+        elif qout_dimensions[1].lower() == 'time' and qout_dimensions[0].lower() == 'comid':
+            #the data is CF compliant and has time=0 added to output
+            data_values = data_nc.variables['Qout'][:,-1]
+        else:
+            data_nc.close()
+            raise Exception( "Invalid ECMWF forecast file %s" % self.Qout_file)
+        data_nc.close()
+    
+        print "Reordering data..."
+        rapid_connect_array = csv_to_list(self.rapid_connect_file)
+        stream_id_array = np.array([int(float(row[0])) for row in rapid_connect_array])
+        init_flows_array = np.zeros(len(rapid_connect_array))
+        for riv_bas_index, riv_bas_id in enumerate(riv_bas_id_array):
+            try:
+                data_index = np.where(stream_id_array==riv_bas_id)[0][0]
+                init_flows_array[data_index] = data_values[riv_bas_index]
+            except Exception:
+                raise Exception ('riv bas id %s not found in connectivity list.' % riv_bas_id)
+        
+        print "Writing to file ..."
+        with open(qinit_file, 'wb') as qinit_out:
+            for init_flow in init_flows_array:
+                qinit_out.write('{}\n'.format(init_flow))
+
+        self.Qinit_file = qinit_file
+        self.BS_opt_Qinit = True
+        print "Initialization Complete!"
 
 """
 if __name__ == "__main__":

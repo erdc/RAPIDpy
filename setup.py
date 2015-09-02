@@ -2,7 +2,7 @@ from distutils.core import setup
 
 setup(
     name='RAPIDpy',
-    version='1.0.0',
+    version='1.0.1',
     description='Python scripting interface for the RAPID progam. More information about installation and the input parameters can be found at http://rapid-hub.org. The source code for RAPID is located at https://github.com/c-h-david/rapid/.',
     keywords='RAPID',
     author='Alan Dee Snow',

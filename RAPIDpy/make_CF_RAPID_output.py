@@ -454,7 +454,7 @@ class ConvertRAPIDOutputToCF(object):
                 except Exception:
                     log('COMID %s misssing in rapid_connect file' % comid,
                         'ERROR')
-                q_var[index,0] = float(init_flow_table[lookup_index])
+                q_var[index,0] = float(init_flow_table[lookup_index][0])
         else:
             for index, comid in enumerate(self.cf_nc.variables[self.output_id_dim_name][:]):
                 q_var[index,0] = 0

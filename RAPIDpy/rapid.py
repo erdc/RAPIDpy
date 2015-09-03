@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
-
+from csv import writer as csvwriter
 import datetime
+from dateutil.parser import parse
+from dateutil.tz import tzoffset
 from multiprocessing import cpu_count
 from netCDF4 import Dataset
 import numpy as np
 import os
+from pytz import utc
+from requests import get
 from subprocess import Popen, PIPE
 
 #local
@@ -195,7 +199,7 @@ class RAPID(object):
         with open(file_path,'w') as new_file:
             new_file.write('&NL_namelist\n')
             for attr, value in self.__dict__.iteritems():
-                if not attr.startswith('_') and value:
+                if not attr.startswith('_'):
                     if attr.startswith('BS'):
                         new_file.write("%s = .%s.\n" % (attr, str(value).lower()))
                     elif isinstance(value, int):
@@ -362,6 +366,105 @@ class RAPID(object):
         self.Qinit_file = qinit_file
         self.BS_opt_Qinit = True
         print "Initialization Complete!"
+
+    def generate_usgs_avg_daily_flows_opt(self, reach_id_gage_id_file,
+                                          start_datetime, end_datetime,
+                                          out_streamflow_file, out_stream_id_file):
+        """
+        Generate streamflow file and stream id file required for optimization 
+        based on usgs gage ids associated with stream ids
+        """
+        print "Generating avg streamflow file and stream id file required for optimization ..."
+        reach_id_gage_id_list = csv_to_list(reach_id_gage_id_file) 
+        if start_datetime.tzinfo is None or start_datetime.tzinfo.utcoffset(start_datetime) is None:
+            start_datetime.replace(tzinfo=utc)
+        if end_datetime.tzinfo is None or end_datetime.tzinfo.utcoffset(end_datetime) is None:
+            end_datetime.replace(tzinfo=utc)
+            
+        gage_data_matrix = []
+        valid_comid_list = []
+        num_days_needed = (end_datetime-start_datetime).days
+    
+        gage_id_list = []
+        for row in reach_id_gage_id_list[1:]:
+            station_id = row[1]
+            if len(row[1]) == 7:
+                station_id = '0' + row[1]
+            gage_id_list.append(station_id)
+        
+        num_gage_id_list = np.array(gage_id_list, dtype=np.int32)
+        print "Querying Server for Data ..."                            
+    
+        #print station_id
+        query_params = {
+                        'format': 'json',
+                        'sites': ",".join(gage_id_list),
+                        'startDT': start_datetime.astimezone(tzoffset(None, -18000)).strftime("%Y-%m-%d"),
+                        'endDT': end_datetime.astimezone(tzoffset(None, -18000)).strftime("%Y-%m-%d"),
+                        'parameterCd': '00060', #streamflow
+                        'statCd': '00003' #average
+                       }
+        response = get("http://waterservices.usgs.gov/nwis/dv", params=query_params)
+        if response.ok:
+            data_valid = True
+            try:
+                requested_data = response.json()['value']['timeSeries']
+            except IndexError:
+                data_valid = False
+                pass
+            
+            if data_valid:
+                for time_series in enumerate(requested_data):
+                    usgs_station_full_name = time_series[1]['name']
+                    usgs_station_id = usgs_station_full_name.split(":")[1]
+                    gage_data = []
+                    for time_step in time_series[1]['values'][0]['value']:
+                        local_datetime = parse(time_step['dateTime'])
+                        if local_datetime > end_datetime:
+                            break
+                        
+                        if local_datetime >= start_datetime:
+                            if not time_step['value']:
+                                print "MISSING DATA", station_id, local_datetime, time_step['value']
+                            gage_data.append(float(time_step['value'])/35.3146667)
+    
+                    try:
+                        #get where streamids assocated with USGS sation id is
+                        streamid_index = np.where(num_gage_id_list==int(float(usgs_station_id)))[0][0]+1
+                    except Exception:
+                        print "USGS Station", usgs_station_id, "not found in list ..."
+                        raise
+                        
+                    if len(gage_data) == num_days_needed:
+                        gage_data_matrix.append(gage_data)
+                        valid_comid_list.append(reach_id_gage_id_list[streamid_index][0])
+                    else:
+                        print "StreamID", reach_id_gage_id_list[streamid_index][0], "USGS Station", \
+                              usgs_station_id, "MISSING", num_days_needed-len(gage_data), "DATA VALUES"
+            if gage_data_matrix and valid_comid_list:
+                print "Writing Output ..."                            
+                np_array = np.array(gage_data_matrix).transpose()  
+                with open(out_streamflow_file, 'wb') as gage_data:
+                    wf = csvwriter(gage_data)
+                    for row in np_array:
+                        wf.writerow(row)
+                        
+                with open(out_stream_id_file, 'wb') as comid_data:
+                    cf = csvwriter(comid_data)
+                    for row in valid_comid_list:
+                        cf.writerow([int(float(row))])
+                        
+                #set parameters for RAPID run
+                self.IS_obs_tot = len(valid_comid_list)
+                self.obs_tot_id_file = out_stream_id_file
+                self.Qobs_file = out_streamflow_file
+                self.IS_obs_use = len(valid_comid_list)
+                self.obs_use_id_file = out_stream_id_file
+            else:
+                print "No valid data returned ..."
+        else:
+            print "USGS query error ..."
+
 
 """
 if __name__ == "__main__":

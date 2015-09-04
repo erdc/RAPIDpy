@@ -377,9 +377,9 @@ class RAPID(object):
         print "Generating avg streamflow file and stream id file required for optimization ..."
         reach_id_gage_id_list = csv_to_list(reach_id_gage_id_file) 
         if start_datetime.tzinfo is None or start_datetime.tzinfo.utcoffset(start_datetime) is None:
-            start_datetime.replace(tzinfo=utc)
+            start_datetime = start_datetime.replace(tzinfo=utc)
         if end_datetime.tzinfo is None or end_datetime.tzinfo.utcoffset(end_datetime) is None:
-            end_datetime.replace(tzinfo=utc)
+            end_datetime = end_datetime.replace(tzinfo=utc)
             
         gage_data_matrix = []
         valid_comid_list = []
@@ -468,13 +468,18 @@ class RAPID(object):
 
 """
 if __name__ == "__main__":
-    rapid_manager = RAPID(rapid_executable_location=rapid_executable_location,
+    rapid_manager = RAPID(rapid_executable_location="",
                           use_all_processors=True,                          
                           ZS_TauR = 24*3600, #duration of routing procedure (time step of runoff data)
                           ZS_dtR = 15*60, #internal routing time step
-                          ZS_TauM = len(era_interim_file_list)*24*3600, #total simulation time 
+                          ZS_TauM = 12*24*3600, #total simulation time 
                           ZS_dtM = 24*3600 #input time step 
                          )
+    rapid_manager.generate_usgs_avg_daily_flows_opt(reach_id_gage_id_file='mississippi_usgsgage_id_comid.csv',
+                                                    start_datetime=datetime.datetime(2000,1,1),
+                                                    end_datetime=datetime.datetime(2009,1,1),
+                                                    out_streamflow_file="usgs_streamflow.csv",
+                                                    out_stream_id_file="stream_id_file.csv")
     era_rapid_output_file = os.path.join(master_watershed_output_directory,
                                                            'Qout_erai.nc')
     rapid_manager.update_parameters(rapid_connect_file=case_insensitive_file_search(master_watershed_input_directory,

@@ -6,13 +6,31 @@ The source code for RAPID is located at https://github.com/c-h-david/rapid/.
 #Installation
 
 ##Step 1: Install RAPID
-**For Ubuntu:**
+### **For Ubuntu:**
 ```
 $ apt-get install gfortran g++
 ```
-Follow the instructions on page 10-14: http://rapid-hub.org/docs/RAPID_Azure.pdf.
-
 Here is a script to download prereqs: http://rapid-hub.org/data/rapid_install_prereqs.sh.gz
+
+### **For Windows with Cygwin:**
+Downloaded Cygwin (64-bit) (https://www.cygwin.com/) with these dependencies:
+- dos2unix
+- gcc-core
+- gcc-fortran
+- gcc-g++
+- gdb
+- git
+- make
+- openmpi
+- time
+
+Follow the instructions on page 10-14: http://rapid-hub.org/docs/RAPID_Azure.pdf.
+**Special Instructions for Installation of PETSc (ONLY FOR petsc-3.3-p7): **
+
+In the configure command for petsc-3.3-p7, add to the options in the configure command:
+```
+--with-windows-graphics=0
+```
 
 ##Step 2: Install netCDF4-python
 ###Install on Ubuntu:
@@ -49,11 +67,23 @@ Example:
 ```python
 from RAPIDpy.rapid import RAPID
 rapid_manager = RAPID(rapid_executable_location='~/work/rapid/run/rapid'
-                     use_all_processors=True,                          
-                     ZS_TauR=24*3600, #duration of routing procedure (time step of runoff data)
-                     ZS_dtR=15*60, #internal routing time step
-                     ZS_TauM=365*24*3600, #total simulation time 
-                     ZS_dtM=24*3600 #input time step 
+                      use_all_processors=True,                          
+                      ZS_TauR=24*3600, #duration of routing procedure (time step of runoff data)
+                      ZS_dtR=15*60, #internal routing time step
+                      ZS_TauM=365*24*3600, #total simulation time 
+                      ZS_dtM=24*3600 #input time step 
+                     )
+```
+If you are using Cygwin on Windows:
+```python
+from RAPIDpy.rapid import RAPID
+rapid_manager = RAPID(rapid_executable_location='C:\\cygwin64\\home\\username\\work\\rapid\\run\\rapid',
+                      cygwin_bin_location='C:\\cygwin64\\bin',
+                      use_all_processors=True,                          
+                      ZS_TauR=24*3600, #duration of routing procedure (time step of runoff data)
+                      ZS_dtR=15*60, #internal routing time step
+                      ZS_TauM=365*24*3600, #total simulation time 
+                      ZS_dtM=24*3600 #input time step 
                      )
 ```
 

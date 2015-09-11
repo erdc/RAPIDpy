@@ -8,7 +8,7 @@ setup(
     author='Alan Dee Snow',
     author_email='alan.d.snow@usace.army.mil',
     url='https://github.com/erdc-cm/RAPIDpy',
-    download_url='https://github.com/erdc-cm/RAPIDpy/tarballs/1.0.4',
+    download_url='https://github.com/erdc-cm/RAPIDpy/tarballs/1.1.0',
     license='MIT',
     packages=['RAPIDpy'],
     install_requires=['netCDF4', 'numpy', 'requests'],

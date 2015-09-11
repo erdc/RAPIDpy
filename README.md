@@ -25,7 +25,9 @@ Downloaded Cygwin (64-bit) (https://www.cygwin.com/) with these dependencies:
 - time
 
 Follow the instructions on page 10-14: http://rapid-hub.org/docs/RAPID_Azure.pdf.
-**Special Instructions for Installation of PETSc (ONLY FOR petsc-3.3-p7): **
+
+
+*Special Instructions for Installation of PETSc (ONLY FOR petsc-3.3-p7): *
 
 In the configure command for petsc-3.3-p7, add to the options in the configure command:
 ```

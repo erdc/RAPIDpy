@@ -369,7 +369,6 @@ class RAPID(object):
                                  local_rapid_executable_location, 
                                  "-ksp_type", "richardson"]
 
-        """
         process = Popen(run_rapid_command, 
                         stdout=PIPE, stderr=PIPE, shell=False)
         out, err = process.communicate()
@@ -380,7 +379,6 @@ class RAPID(object):
             print 'RAPID output:'
             for line in out.split('\n'):
                 print line
-        """
         rapid_cleanup(temp_link_to_rapid, rapid_namelist_file, run_rapid_script)
         print "Time to run RAPID: %s" % (datetime.datetime.utcnow()-time_start)
 
@@ -524,6 +522,9 @@ class RAPID(object):
             print "USGS query error ..."
 
     def compare_qout_files(dataset1_path, dataset2_path, Qout_var="Qout"):
+        """
+        This function compares the output of RAPID Qout and tells you where they are different.
+        """
         d1 = Dataset(dataset1_path)
         d2 = Dataset(dataset2_path)
         if not np.unique(d1.variables['COMID'][:] != d2.variables['COMID'][:]).all():

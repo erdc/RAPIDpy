@@ -8,7 +8,7 @@ The source code for RAPID is located at https://github.com/c-h-david/rapid/.
 ##Step 1: Install RAPID
 ### **For Ubuntu:**
 ```
-$ apt-get install gfortran g++
+$ apt-get install gfortran g++ openmpi-bin
 ```
 Here is a script to download prereqs: http://rapid-hub.org/data/rapid_install_prereqs.sh.gz
 

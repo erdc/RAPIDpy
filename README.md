@@ -9,11 +9,11 @@ The source code for RAPID is located at https://github.com/c-h-david/rapid/.
 - Here is a script to download prereqs: http://rapid-hub.org/data/rapid_install_prereqs.tar.gz
 - Follow the instructions on page 10-14: http://rapid-hub.org/docs/RAPID_Azure.pdf
 
-### **For Ubuntu:**
+### Additional Before Prereq Installation Steps for Ubuntu:
 ```
 $ apt-get install gfortran g++ openmpi-bin
 ```
-### **For Windows with Cygwin:**
+### Additional Before Prereq Installation Steps for Windows with Cygwin:
 Downloaded Cygwin (64-bit) (https://www.cygwin.com/) with these dependencies:
 - dos2unix
 - gcc-core

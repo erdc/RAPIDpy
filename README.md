@@ -33,13 +33,17 @@ In the configure command for petsc-3.3-p7, add to the options in the configure c
 ```
 
 ##Step 2: Install netCDF4
-###Install on Ubuntu:
+###On Ubuntu:
 ```
 $ apt-get install python-dev zlib1g-dev libhdf5-serial-dev libnetcdf-dev
 ```
-###Install on Redhat:
+###On Redhat:
 ```
 $ yum install netcdf4-python hdf5-devel netcdf-devel
+```
+###On OSX:
+```
+$ brew install homebrew/science/netcdf
 ```
 ##Step 3: Install RAPIDpy
 ```

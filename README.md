@@ -5,11 +5,9 @@ The source code for RAPID is located at https://github.com/c-h-david/rapid/.
 
 #Installation
 
-##Step 1: Install RAPID Prereqs
-- Here is a script to download prereqs: http://rapid-hub.org/data/rapid_install_prereqs.tar.gz
-- Follow the instructions on page 10-14: http://rapid-hub.org/docs/RAPID_Azure.pdf
+##Step 1: Install RAPID
 
-### Additional Before Prereq Installation Steps:
+### Before Installation Steps:
 #### Ubuntu:
 ```
 $ apt-get install gfortran g++ openmpi-bin
@@ -26,12 +24,9 @@ Downloaded Cygwin (64-bit) (https://www.cygwin.com/) with these dependencies:
 - openmpi
 - time
 
-*Special Instructions for Installation of PETSc (ONLY FOR petsc-3.3-p7):*
-
-In the configure command for petsc-3.3-p7, add to the options in the configure command:
-```
---with-windows-graphics=0
-```
+### Installation Steps:
+- Here is a script to download and install prereqs: http://rapid-hub.org/data/rapid_install_prereqs.tar.gz
+- Follow the instructions on page 10-14: http://rapid-hub.org/docs/RAPID_Azure.pdf
 
 ##Step 2: Install netCDF4
 ###On Ubuntu:

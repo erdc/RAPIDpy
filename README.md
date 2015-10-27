@@ -5,13 +5,14 @@ The source code for RAPID is located at https://github.com/c-h-david/rapid/.
 
 #Installation
 
-##Step 1: Install RAPID
+##Step 1: Install RAPID Prereqs
+- Here is a script to download prereqs: http://rapid-hub.org/data/rapid_install_prereqs.tar.gz
+- Follow the instructions on page 10-14: http://rapid-hub.org/docs/RAPID_Azure.pdf
+
 ### **For Ubuntu:**
 ```
 $ apt-get install gfortran g++ openmpi-bin
 ```
-Here is a script to download prereqs: http://rapid-hub.org/data/rapid_install_prereqs.sh.gz
-
 ### **For Windows with Cygwin:**
 Downloaded Cygwin (64-bit) (https://www.cygwin.com/) with these dependencies:
 - dos2unix
@@ -24,9 +25,6 @@ Downloaded Cygwin (64-bit) (https://www.cygwin.com/) with these dependencies:
 - openmpi
 - time
 
-Follow the instructions on page 10-14: http://rapid-hub.org/docs/RAPID_Azure.pdf.
-
-
 *Special Instructions for Installation of PETSc (ONLY FOR petsc-3.3-p7):*
 
 In the configure command for petsc-3.3-p7, add to the options in the configure command:
@@ -34,29 +32,21 @@ In the configure command for petsc-3.3-p7, add to the options in the configure c
 --with-windows-graphics=0
 ```
 
-##Step 2: Install netCDF4-python
+##Step 2: Install netCDF4
 ###Install on Ubuntu:
 ```
 $ apt-get install python-dev zlib1g-dev libhdf5-serial-dev libnetcdf-dev
-$ sudo su
-$ pip install numpy netCDF4
-$ exit
 ```
 ###Install on Redhat:
-*Note: this tool was desgined and tested in Ubuntu*
 ```
 $ yum install netcdf4-python hdf5-devel netcdf-devel
-$ sudo su
-$ pip install numpy netCDF4
-$ exit
 ```
 ##Step 3: Install RAPIDpy
 ```
 $ sudo su
-$ pip install RAPIDpy
+$ pip install netCDF4 RAPIDpy
 $ exit
 ```
-
 #How to use
 
 ## Step 1: Initialize the RAPID manager class. 

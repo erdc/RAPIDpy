@@ -134,8 +134,8 @@ COMID, USGS_GAGE_ID
 Example:
 ```python
 rapid_manager.generate_usgs_avg_daily_flows_opt(reach_id_gage_id_file=join(main,"mississippi_usgsgage_id_comid.csv"),
-												                        start_datetime=datetime(2000,1,1),
-											                          end_datetime=datetime(2014,12,31),
-												                        out_streamflow_file=join(main,"streamflow_2000_2014.csv"), 
-												                        out_stream_id_file=join(main,"streamid_2000_2014.csv"))
+												start_datetime=datetime(2000,1,1),
+												end_datetime=datetime(2014,12,31),
+												out_streamflow_file=join(main,"streamflow_2000_2014.csv"), 
+												out_stream_id_file=join(main,"streamid_2000_2014.csv"))
 ```

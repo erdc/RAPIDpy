@@ -93,7 +93,7 @@ rapid_manager.update_parameters(rapid_connect_file='../rapid_input_directory/rap
                                 Qout_file='../OUTPUT/Qout.nc'
                                 )
 ```
-## Step 4 (optional): Update reach number data
+## Step 3 (optional): Update reach number data
 If you don't want to manually count the numbers for the rapid_connect or riv_bas_id files, use the *update_reach_number_data* function.
 
 
@@ -102,7 +102,7 @@ Example:
 rapid_manager.update_reach_number_data()
 ```
 
-## Step 5: Run RAPID
+## Step 4: Run RAPID
 This will generate your rapid_namelist file and run RAPID from wherever you call this script (your working directory).
 
 Example:
@@ -110,7 +110,7 @@ Example:
 rapid_manager.run()
 ```
 
-##Step 6 (optional): Convert RAPID output to be CF Compliant
+##Step 5 (optional): Convert RAPID output to be CF Compliant
 This will convert the RAPID output to be CF compliant. This will require a comid_lat_lon_z file.
 Additionally, it prepends time zero to you simulation. If no qinit file is given, a value of zero is added.
 

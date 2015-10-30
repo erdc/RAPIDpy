@@ -358,16 +358,29 @@ class RAPID(object):
             with open(run_rapid_script, "w") as run_rapid:
                 run_rapid.write("#!/bin/sh\n")
                 run_rapid.write("cd {}\n".format(self._get_cygwin_path(os.getcwd())))
-                run_rapid.write("mpiexec -np {} ./rapid -ksp_type richardson\n".format(self._num_processors))
+                if self._num_processors > 1:
+                    run_rapid.write("mpiexec -np {0} {1} -ksp_type richardson\n".format(self._num_processors, 
+                                                                                        local_rapid_executable_location))
+                else:
+                    #htcondor will not allow mpiexec for single processor jobs
+                    #this was added for that purpose
+                    run_rapid.write("{} -ksp_type richardson\n".format(local_rapid_executable_location))
+                
             
             self._dos2unix_cygwin(run_rapid_script)
             run_rapid_command = [self._cygwin_bash_exe_location, "-l", "-c", 
                                  self._get_cygwin_path(run_rapid_script)]
 
         else:
-            run_rapid_command = ["mpiexec", "-n", str(self._num_processors), 
-                                 local_rapid_executable_location, 
+            #htcondor will not allow mpiexec for single processor jobs
+            #this was added for that purpose
+            run_rapid_command = [local_rapid_executable_location, 
                                  "-ksp_type", "richardson"]
+                                 
+            if self._num_processors > 1:
+                run_rapid_command = ["mpiexec", "-n", str(self._num_processors), 
+                                     local_rapid_executable_location, 
+                                     "-ksp_type", "richardson"]
 
         process = Popen(run_rapid_command, 
                         stdout=PIPE, stderr=PIPE, shell=False)

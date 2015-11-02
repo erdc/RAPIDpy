@@ -48,8 +48,8 @@ $ pip install netCDF4 RAPIDpy
 $ exit
 ```
 #How to use
-
-## Step 1: Initialize the RAPID manager class. 
+##Running RAPID
+### Step 1: Initialize the RAPID manager class. 
 - First, add the path to you rapid executable location. 
 - Next, you need to either tell it how many processors to use using the *num_processors* input variable or to use all available processors set *use_all_processors* to true.
 - After that, add any other parameters you would like to use that would normally be in the rapid namelist file (this is case sensitive).
@@ -79,7 +79,7 @@ rapid_manager = RAPID(rapid_executable_location='C:\\cygwin64\\home\\username\\w
                      )
 ```
 
-## Step 2 (optional): Add/update additional parameters later
+### Step 2 (optional): Add/update additional parameters later
 You can add or update parameters using the *update_parameters* function by using the name of the variable in the rapid namelist file (this is case sensitive).
 
 
@@ -93,7 +93,7 @@ rapid_manager.update_parameters(rapid_connect_file='../rapid_input_directory/rap
                                 Qout_file='../OUTPUT/Qout.nc'
                                 )
 ```
-## Step 3 (optional): Update reach number data
+### Step 3 (optional): Update reach number data
 If you don't want to manually count the numbers for the rapid_connect or riv_bas_id files, use the *update_reach_number_data* function.
 
 
@@ -102,7 +102,7 @@ Example:
 rapid_manager.update_reach_number_data()
 ```
 
-## Step 4: Run RAPID
+### Step 4: Run RAPID
 This will generate your rapid_namelist file and run RAPID from wherever you call this script (your working directory).
 
 Example:
@@ -110,7 +110,7 @@ Example:
 rapid_manager.run()
 ```
 
-##Step 5 (optional): Convert RAPID output to be CF Compliant
+###Step 5 (optional): Convert RAPID output to be CF Compliant
 This will convert the RAPID output to be CF compliant. This will require a comid_lat_lon_z file.
 Additionally, it prepends time zero to you simulation. If no qinit file is given, a value of zero is added.
 
@@ -120,5 +120,24 @@ rapid_manager.make_output_CF_compliant(simulation_start_datetime=datetime.dateti
                                        comid_lat_lon_z_file='../rapid_input_directory/comid_lat_lon_z.csv',
                                        project_name="ERA Interim Historical flows by US Army ERDC") 
 ```
+##Getting USGS Daily Gage Data
+You can use this to download USGS daily avg flow data. BE CAREFUL because overuse will get you blocked from downloading data.
 
 
+Example reach_id_gage_id_file:
+```
+COMID, USGS_GAGE_ID
+2000, 503944
+...
+```
+
+Example:
+```python
+from os.path import join
+main = "/home/username/data"
+rapid_manager.generate_usgs_avg_daily_flows_opt(reach_id_gage_id_file=join(main,"mississippi_usgsgage_id_comid.csv"),
+												start_datetime=datetime.datetime(2000,1,1),
+												end_datetime=datetime.datetime(2014,12,31),
+												out_streamflow_file=join(main,"streamflow_2000_2014.csv"), 
+												out_stream_id_file=join(main,"streamid_2000_2014.csv"))
+```

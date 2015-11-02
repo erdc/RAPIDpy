@@ -325,7 +325,7 @@ class RAPID(object):
             #update existing file
             self.update_namelist_file(rapid_namelist_file)
 
-        local_rapid_executable_location = os.path.join(os.path.dirname(rapid_namelist_file), "rapid")
+        local_rapid_executable_location = os.path.join(os.path.dirname(rapid_namelist_file), "rapid_exe_symlink")
 
         def rapid_cleanup(*args):
             """
@@ -360,11 +360,11 @@ class RAPID(object):
                 run_rapid.write("cd {}\n".format(self._get_cygwin_path(os.getcwd())))
                 if self._num_processors > 1:
                     run_rapid.write("mpiexec -np {0} {1} -ksp_type richardson\n".format(self._num_processors, 
-                                                                                        local_rapid_executable_location))
+                                                                                        self._get_cygwin_path(local_rapid_executable_location)))
                 else:
                     #htcondor will not allow mpiexec for single processor jobs
                     #this was added for that purpose
-                    run_rapid.write("{} -ksp_type richardson\n".format(local_rapid_executable_location))
+                    run_rapid.write("{} -ksp_type richardson\n".format(self._get_cygwin_path(local_rapid_executable_location)))
                 
             
             self._dos2unix_cygwin(run_rapid_script)

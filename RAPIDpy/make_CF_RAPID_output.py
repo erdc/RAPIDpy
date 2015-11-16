@@ -98,7 +98,7 @@ class ConvertRAPIDOutputToCF(object):
            self.rapid_output_file_list = rapid_output_file
        self.start_datetime = start_datetime
        
-       if not isinstance(rapid_output_file, list): 
+       if not isinstance(time_step, list): 
            self.time_step_array = [time_step]
        else:
            self.time_step_array = time_step

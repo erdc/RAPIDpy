@@ -33,8 +33,9 @@ Downloaded Cygwin (64-bit) (https://www.cygwin.com/) with these dependencies:
 ```
 $ apt-get install python-dev zlib1g-dev libhdf5-serial-dev libnetcdf-dev
 ```
-###On Redhat:
+###On Redhat/CentOS:
 ```
+$ yum install epel-release
 $ yum install netcdf4-python hdf5-devel netcdf-devel
 ```
 ###On OSX:

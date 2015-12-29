@@ -1,4 +1,10 @@
-# -*- coding: utf-8 -*-
+##
+##  rapid.py
+##  RAPIDpy
+##
+##  Created by Alan D Snow, 2015.
+##  Copyright © 2015 Alan D Snow. All rights reserved.
+##
 from csv import writer as csvwriter
 import datetime
 from dateutil.parser import parse

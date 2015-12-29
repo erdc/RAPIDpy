@@ -1,4 +1,12 @@
 #!/usr/bin/env python
+##
+##  make_CF_output.py
+##  RAPIDpy
+##
+##  Created by Alan D Snow, 2015.
+##  Copyright © 2015 Alan D Snow. All rights reserved.
+##
+
 """Copies data from RAPID netCDF output to a CF-compliant netCDF file.
 Code originated from Tim Whitaker at University of Texas. The code was
 modified by Alan Snow at US Army ERDC.

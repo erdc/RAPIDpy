@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ##
 ##  make_CF_output.py
 ##  RAPIDpy

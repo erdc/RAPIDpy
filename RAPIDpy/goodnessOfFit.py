@@ -6,15 +6,16 @@
 ##  Copyright © 2015 Alan D Snow. All rights reserved.
 ##
 __author__ = 'Alan D. Snow'
-from csv import reader as csvreader
 from csv import writer as csvwriter
 import datetime
 from netCDF4 import Dataset
 import numpy as np
 from pytz import utc
 
+from helper_functions import csv_to_list
+
 #------------------------------------------------------------------------------
-#functions
+#statistic functions
 #------------------------------------------------------------------------------
 ## FUNCTIONS FROM http://pydoc.net/Python/ambhas/0.4.0/ambhas.errlib/
 def filter_nan(s,o):
@@ -182,17 +183,9 @@ def assimilation_eff(assimilated, simulated, observed):
     return Eff
 ## END FUNCTIONS FROM http://pydoc.net/Python/ambhas/0.4.0/ambhas.errlib/
 
-def csv_to_list(csv_file, delimiter=','):
-    """
-        Reads in a CSV file and returns the contents as list,
-        where every row is stored as a sublist, and each element
-        in the sublist represents 1 cell in the table.
-        
-        """
-    with open(csv_file, 'rb') as csv_con:
-        reader = csvreader(csv_con, delimiter=delimiter)
-        return list(reader)
-
+#------------------------------------------------------------------------------
+#Time Series comparison functions
+#------------------------------------------------------------------------------
 def find_goodness_of_fit(reach_id_file, rapid_qout_file, observed_file,
                          out_analysis_file, daily=False):
     """
@@ -273,6 +266,13 @@ def find_goodness_of_fit(reach_id_file, rapid_qout_file, observed_file,
 def find_goodness_of_fit_csv(observed_simulated_file):
     """
         Finds the goodness of fit comparing observed and simulated flows
+        In file:
+        observed_flow, simulated flow
+        
+        Ex.
+        
+        33.5, 77.2
+        34.7, 73.0
     """
     flow_table = csv_to_list(observed_simulated_file)
     

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 ##
 ##  helper_functions.py
 ##  RAPIDpy

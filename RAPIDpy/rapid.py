@@ -591,6 +591,58 @@ class RAPID(object):
         
         else:
             print "Output Qout data is the same."
+
+def write_flows_to_csv(path_to_file, ind=None, reach_id=None, daily=False, out_var='Qout'):
+    """
+        Write out RAPID output to CSV file
+    """
+    data_nc = NET.Dataset(path_to_file)
+    if reach_id != None:
+        reach_ids = data_nc.variables['COMID'][:]
+        ind = np.where(reach_ids==reach_id)[0][0]
+        print ind, reach_id
+    nc_vars = data_nc.variables.keys()
+
+    #analyze and write
+    if 'time' in nc_vars:
+        if daily:
+            current_day = datetime.datetime.fromtimestamp(data_nc.variables['time'][0], tz=utc)
+            flow = 0
+            num_days = 0
+            qout_arr = data_nc.variables[out_var][ind, :]
+            
+            with open(os.path.join(os.path.dirname(path_to_file), "daily_flows.csv"), 'w') as outcsv:
+                writer = csv.writer(outcsv)
+                for idx, t in enumerate(data_nc.variables['time'][:]):
+                    var_time = datetime.datetime.fromtimestamp(t, tz=utc)
+                    if current_day.day == var_time.day:
+                        flow += qout_arr[idx]
+                        num_days += 1
+                    else:
+                        if num_days > 0:
+                            #write last average
+                            writer.writerow([current_day.strftime("%Y/%m/%d"), flow/num_days])
+                        
+                        #start new average
+                        current_day = var_time
+                        num_days = 1
+                        flow = qout_arr[idx]
+        else:
+            qout = data_nc.variables[out_var][ind, :]
+            time = data_nc.variables['time'][:]
+            with open(os.path.join(os.path.dirname(path_to_file), "flows.csv"), 'w') as outcsv:
+                writer = csv.writer(outcsv)
+                for index in xrange(len(qout)):
+                    var_time = datetime.datetime.fromtimestamp(time[index], tz=utc)
+                    writer.writerow([var_time.strftime("%Y/%m/%d %H:00"), qout[index]])
+
+    else:
+        qout = data_nc.variables[out_var][:, ind]
+        with open(os.path.join(os.path.dirname(path_to_file), "flows.csv"), 'w') as outcsv:
+            writer = csv.writer(outcsv)
+            for index in xrange(len(qout)):
+                writer.writerow([index, qout[index]])
+
 """
 if __name__ == "__main__":
     rapid_manager = RAPID(rapid_executable_location="",

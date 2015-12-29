@@ -1,4 +1,10 @@
-# -*- coding: utf-8 -*-
+##
+##  helper_functions.py
+##  RAPIDpy
+##
+##  Created by Alan D Snow, 2015.
+##  Copyright © 2015 Alan D Snow. All rights reserved.
+##
 from csv import reader as csvreader
 #------------------------------------------------------------------------------
 # HELPER FUNCTIONS

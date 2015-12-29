@@ -599,7 +599,7 @@ def write_flows_to_csv(path_to_file, ind=None, reach_id=None, daily=False, out_v
     """
         Write out RAPID output to CSV file
     """
-    data_nc = NET.Dataset(path_to_file)
+    data_nc = Dataset(path_to_file)
     if reach_id != None:
         reach_ids = data_nc.variables['COMID'][:]
         ind = np.where(reach_ids==reach_id)[0][0]
@@ -634,7 +634,7 @@ def write_flows_to_csv(path_to_file, ind=None, reach_id=None, daily=False, out_v
             qout = data_nc.variables[out_var][ind, :]
             time = data_nc.variables['time'][:]
             with open(os.path.join(os.path.dirname(path_to_file), "flows.csv"), 'w') as outcsv:
-                writer = csv.writer(outcsv)
+                writer = csvwriter(outcsv)
                 for index in xrange(len(qout)):
                     var_time = datetime.datetime.fromtimestamp(time[index], tz=utc)
                     writer.writerow([var_time.strftime("%Y/%m/%d %H:00"), qout[index]])
@@ -642,7 +642,7 @@ def write_flows_to_csv(path_to_file, ind=None, reach_id=None, daily=False, out_v
     else:
         qout = data_nc.variables[out_var][:, ind]
         with open(os.path.join(os.path.dirname(path_to_file), "flows.csv"), 'w') as outcsv:
-            writer = csv.writer(outcsv)
+            writer = csvwriter(outcsv)
             for index in xrange(len(qout)):
                 writer.writerow([index, qout[index]])
 

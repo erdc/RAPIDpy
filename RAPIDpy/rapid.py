@@ -595,6 +595,9 @@ def compare_qout_files(dataset1_path, dataset2_path, Qout_var="Qout"):
     else:
         print "Output Qout data is the same."
 
+    d1.close()
+    d2.close()
+
 def write_flows_to_csv(path_to_file, ind=None, reach_id=None, daily=False, out_var='Qout'):
     """
         Write out RAPID output to CSV file
@@ -615,7 +618,7 @@ def write_flows_to_csv(path_to_file, ind=None, reach_id=None, daily=False, out_v
             qout_arr = data_nc.variables[out_var][ind, :]
             
             with open(os.path.join(os.path.dirname(path_to_file), "daily_flows.csv"), 'w') as outcsv:
-                writer = csv.writer(outcsv)
+                writer = csvwriter(outcsv)
                 for idx, t in enumerate(data_nc.variables['time'][:]):
                     var_time = datetime.datetime.fromtimestamp(t, tz=utc)
                     if current_day.day == var_time.day:
@@ -645,6 +648,8 @@ def write_flows_to_csv(path_to_file, ind=None, reach_id=None, daily=False, out_v
             writer = csvwriter(outcsv)
             for index in xrange(len(qout)):
                 writer.writerow([index, qout[index]])
+
+    data_nc.close()
 
 """
 if __name__ == "__main__":

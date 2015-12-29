@@ -534,63 +534,66 @@ class RAPID(object):
         else:
             print "USGS query error ..."
 
-    def compare_qout_files(dataset1_path, dataset2_path, Qout_var="Qout"):
-        """
-        This function compares the output of RAPID Qout and tells you where they are different.
-        """
-        d1 = Dataset(dataset1_path)
-        d2 = Dataset(dataset2_path)
-        if not np.unique(d1.variables['COMID'][:] != d2.variables['COMID'][:]).all():
-            print "WARNING: COMID order is different in each dataset. Reordering data for comparison."
-            if len(d1.variables['COMID'][:]) != len(d2.variables['COMID'][:]):
-                raise Exception("Length of COMID input not the same.")
-                
-            d2_comid_list = d2.variables['COMID'][:]
-            d2_reordered_comid_list = []
-            for comid in d1.variables['COMID'][:]:
-                d2_reordered_comid_list.append(np.where(d2_comid_list==comid)[0][0])
-            qout_dimensions = d1.variables[Qout_var].dimensions
-            if qout_dimensions[0].lower() == 'time' and \
-               qout_dimensions[1].lower() == 'comid':
-                d2_reordered_qout = d2.variables[Qout_var][:,d2_reordered_comid_list]
-            elif qout_dimensions[1].lower() == 'time' and \
-                 qout_dimensions[0].lower() == 'comid':
-                d2_reordered_qout = d2.variables[Qout_var][d2_reordered_comid_list,:]
-            else:
-                raise Exception("Invalid RAPID Qout file.")
-        else:
-            d2_reordered_qout = d2.variables[Qout_var][:]
+#------------------------------------------------------------------------------
+#Useful Functions
+#------------------------------------------------------------------------------
+def compare_qout_files(dataset1_path, dataset2_path, Qout_var="Qout"):
+    """
+    This function compares the output of RAPID Qout and tells you where they are different.
+    """
+    d1 = Dataset(dataset1_path)
+    d2 = Dataset(dataset2_path)
+    if not np.unique(d1.variables['COMID'][:] != d2.variables['COMID'][:]).all():
+        print "WARNING: COMID order is different in each dataset. Reordering data for comparison."
+        if len(d1.variables['COMID'][:]) != len(d2.variables['COMID'][:]):
+            raise Exception("Length of COMID input not the same.")
             
-        #get where the files are different
-        where_diff = np.where(d1.variables[Qout_var][:] != d2_reordered_qout)
-        un_where_diff = np.unique(where_diff[0])
-        
-        #if different, check to see how different
-        if un_where_diff.any():
-            decimal_test = 7
-            while decimal_test > 0:
-                try:
-                    np.testing.assert_almost_equal(d1.variables[Qout_var][:], 
-                                                   d2_reordered_qout, 
-                                                   decimal=decimal_test)
-                    print "\nALMOST EQUAL to", decimal_test, "decimal places.\n"
-                    decimal_test=-1
-                except AssertionError as ex:
-                    if decimal_test <= 1:
-                        print ex
-                    decimal_test-=1
-                    pass
-            print "Number of different timeseries:", len(un_where_diff)
-            print "COMID idexes where different:"
-            print un_where_diff
-            index = un_where_diff[0]
-            print "Dataset 1 example. COMID index:", index
-            print d1.variables[Qout_var][index, :]
-            print "Dataset 2 example. COMID index:", index
-            print d2_reordered_qout[index, :]
-        
+        d2_comid_list = d2.variables['COMID'][:]
+        d2_reordered_comid_list = []
+        for comid in d1.variables['COMID'][:]:
+            d2_reordered_comid_list.append(np.where(d2_comid_list==comid)[0][0])
+        qout_dimensions = d1.variables[Qout_var].dimensions
+        if qout_dimensions[0].lower() == 'time' and \
+           qout_dimensions[1].lower() == 'comid':
+            d2_reordered_qout = d2.variables[Qout_var][:,d2_reordered_comid_list]
+        elif qout_dimensions[1].lower() == 'time' and \
+             qout_dimensions[0].lower() == 'comid':
+            d2_reordered_qout = d2.variables[Qout_var][d2_reordered_comid_list,:]
         else:
-            print "Output Qout data is the same."
+            raise Exception("Invalid RAPID Qout file.")
+    else:
+        d2_reordered_qout = d2.variables[Qout_var][:]
+        
+    #get where the files are different
+    where_diff = np.where(d1.variables[Qout_var][:] != d2_reordered_qout)
+    un_where_diff = np.unique(where_diff[0])
+    
+    #if different, check to see how different
+    if un_where_diff.any():
+        decimal_test = 7
+        while decimal_test > 0:
+            try:
+                np.testing.assert_almost_equal(d1.variables[Qout_var][:], 
+                                               d2_reordered_qout, 
+                                               decimal=decimal_test)
+                print "\nALMOST EQUAL to", decimal_test, "decimal places.\n"
+                decimal_test=-1
+            except AssertionError as ex:
+                if decimal_test <= 1:
+                    print ex
+                decimal_test-=1
+                pass
+        print "Number of different timeseries:", len(un_where_diff)
+        print "COMID idexes where different:"
+        print un_where_diff
+        index = un_where_diff[0]
+        print "Dataset 1 example. COMID index:", index
+        print d1.variables[Qout_var][index, :]
+        print "Dataset 2 example. COMID index:", index
+        print d2_reordered_qout[index, :]
+    
+    else:
+        print "Output Qout data is the same."
 
 def write_flows_to_csv(path_to_file, ind=None, reach_id=None, daily=False, out_var='Qout'):
     """

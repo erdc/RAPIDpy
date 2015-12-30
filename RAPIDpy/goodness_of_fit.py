@@ -229,7 +229,7 @@ def find_goodness_of_fit(reach_id_file, rapid_qout_file, observed_file,
         elif steps_per_group > 1:
             flow_data = data_nc.variables['Qout'][:, reach_index]
             daily_qout = []
-            for step_index in xrange(len(flow_data),steps_per_group):
+            for step_index in xrange(0, len(flow_data), steps_per_group):
                 flows_slice = flow_data[step_index:step_index + steps_per_group]
                 daily_qout.append(np.mean(flows_slice))
             

@@ -141,6 +141,7 @@ rapid_manager.generate_usgs_avg_daily_flows_opt(reach_id_gage_id_file=join(main,
 												end_datetime=datetime.datetime(2014,12,31),
 												out_streamflow_file=join(main,"streamflow_2000_2014.csv"), 
 												out_stream_id_file=join(main,"streamid_2000_2014.csv"))
+```
 												
 ##Merge RAPID output
 You can use this to combine consecutive RAPID output files into one file. WARNING: This code replaces the first file with the combined output and deletes the second file. BACK UP YOUR FILES!!!!

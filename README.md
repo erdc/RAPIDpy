@@ -141,4 +141,25 @@ rapid_manager.generate_usgs_avg_daily_flows_opt(reach_id_gage_id_file=join(main,
 												end_datetime=datetime.datetime(2014,12,31),
 												out_streamflow_file=join(main,"streamflow_2000_2014.csv"), 
 												out_stream_id_file=join(main,"streamid_2000_2014.csv"))
+												
+##Merge RAPID output
+You can use this to combine consecutive RAPID output files into one file. WARNING: This code replaces the first file with the combined output and deletes the second file. BACK UP YOUR FILES!!!!
+
+Example:
+```python
+import datetime
+from RAPIDpy.make_CF_RAPID_output import ConvertRAPIDOutputToCF
+file1 = ""
+file2 = ""
+cv = ConvertRAPIDOutputToCF(rapid_output_file=[file1, file2],
+                            start_datetime=datetime.datetime(2005,1,1),
+                            time_step=[3*3600, 3*3600],
+                            qinit_file="",
+                            comid_lat_lon_z_file="",
+                            rapid_connect_file="",
+                            project_name="NLDAS(VIC)-RAPID historical flows by US Army ERDC",
+                            output_id_dim_name='COMID',
+                            output_flow_var_name='Qout',
+                            print_debug=False)
+cv.convert()
 ```

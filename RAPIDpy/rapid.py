@@ -402,7 +402,7 @@ class RAPID(object):
         rapid_cleanup(temp_link_to_rapid, rapid_namelist_file, run_rapid_script)
         print "Time to run RAPID: %s" % (datetime.datetime.utcnow()-time_start)
 
-    def generate_qinit_from_past_qout(self, qinit_file):
+    def generate_qinit_from_past_qout(self, qinit_file, timestep=-1):
         """
         Generate qinit from qout file
         """
@@ -414,10 +414,10 @@ class RAPID(object):
         qout_dimensions = data_nc.variables['Qout'].dimensions
         if qout_dimensions[0].lower() == 'time' and qout_dimensions[1].lower() == 'comid':
             #data is raw rapid output
-            data_values = data_nc.variables['Qout'][-1,:]
+            data_values = data_nc.variables['Qout'][timestep,:]
         elif qout_dimensions[1].lower() == 'time' and qout_dimensions[0].lower() == 'comid':
             #the data is CF compliant and has time=0 added to output
-            data_values = data_nc.variables['Qout'][:,-1]
+            data_values = data_nc.variables['Qout'][:,timestep]
         else:
             data_nc.close()
             raise Exception( "Invalid ECMWF forecast file %s" % self.Qout_file)

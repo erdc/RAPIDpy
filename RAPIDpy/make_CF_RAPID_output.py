@@ -3,8 +3,8 @@
 ##  make_CF_output.py
 ##  RAPIDpy
 ##
-##  Created by Alan D Snow, 2015.
-##  Copyright © 2015 Alan D Snow. All rights reserved.
+##  Created by Alan D Snow & Tim Whitaker, 2015.
+##  Copyright © 2015 Alan D Snow & Tim Whitaker. All rights reserved.
 ##
 
 """Copies data from RAPID netCDF output to a CF-compliant netCDF file.

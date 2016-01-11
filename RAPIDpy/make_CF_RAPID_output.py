@@ -95,7 +95,7 @@ class ConvertRAPIDOutputToCF(object):
                        comid_lat_lon_z_file="", #path to comid_lat_lon_z file
                        rapid_connect_file="", #path to RAPID connect file
                        project_name="Default RAPID Project", #name of your project
-                       output_id_dim_name='COMID', #name of ID dimension in output file, typically COMID or FEATUREID
+                       output_id_dim_name='rivid', #name of ID dimension in output file, typically COMID or FEATUREID
                        output_flow_var_name='Qout', #name of streamflow variable in output file, typically Qout or m3_riv
                        print_debug=False
                        ):
@@ -144,7 +144,9 @@ class ConvertRAPIDOutputToCF(object):
         for rapid_output_file in self.rapid_output_file_list:
             raw_nc = Dataset(rapid_output_file)
             dims = raw_nc.dimensions
-            if 'COMID' in dims:
+            if 'rivid' in dims:
+                id_dim_name = 'rivid'
+            elif 'COMID' in dims:
                 id_dim_name = 'COMID'
             elif 'FEATUREID' in dims:
                 id_dim_name = 'FEATUREID'
@@ -155,11 +157,11 @@ class ConvertRAPIDOutputToCF(object):
 
             id_len_list.append(len(dims[id_dim_name]))
 
-            if 'Time' not in dims:
+            if 'time' not in dims:
                 msg = 'Could not find time dimension. Looked for Time.'
                 raise Exception(msg)
                 
-            time_len = len(dims['Time'])
+            time_len = len(dims['time'])
             if initial_file:
                 time_len += 1 #add one for the first flow value RAPID
                             #does not include
@@ -168,15 +170,6 @@ class ConvertRAPIDOutputToCF(object):
             self.time_len_array.append(time_len)
             
             variables = raw_nc.variables
-            id_var_name = None
-            if 'COMID' in dims:
-                id_var_name = 'COMID'
-            elif 'FEATUREID' in dims:
-                id_var_name = 'FEATUREID'
-            if id_var_name is not None and id_var_name != id_dim_name:
-                msg = ('ID dimension name (' + id_dim_name + ') does not equal ID ' +
-                       'variable name (' + id_var_name + ').')
-                log(msg, 'WARNING')
         
             if 'Qout' in variables:
                 q_var_name = 'Qout'
@@ -185,6 +178,21 @@ class ConvertRAPIDOutputToCF(object):
             else:
                 log('Could not find flow variable. Looked for Qout and m3_riv.',
                     'ERROR')
+
+            var_dims = variables[q_var_name].dimensions
+            id_var_name = None
+            if 'rivid' in var_dims:
+                id_var_name = 'rivid'
+            elif 'COMID' in var_dims:
+                id_var_name = 'COMID'
+            elif 'FEATUREID' in var_dims:
+                id_var_name = 'FEATUREID'
+    
+            if id_var_name is not None and id_var_name != id_dim_name:
+                msg = ('ID dimension name (' + id_dim_name + ') does not equal ID ' +
+                       'variable name (' + id_var_name + ').')
+                log(msg, 'WARNING')
+
             q_var_name_list.append(q_var_name)
             
             #make sure all id_dim_names same

@@ -164,3 +164,16 @@ cv = ConvertRAPIDOutputToCF(rapid_output_file=[file1, file2],
                             print_debug=False)
 cv.convert()
 ```
+##Write Qout timeseries to csv file
+```python
+from RAPIDpy.rapid import write_flows_to_csv
+path_to_file = '/p/work1/u4hfraat/rapid_projects/output_mississippi-nfie/Qout_k3v1_2005to2009.nc'
+#for writing entire time series to file
+write_flows_to_csv(path_to_file, 
+		   reach_id=3624735) #COMID or rivid
+		   
+#if file is CF compliant, you can write out daily average
+write_flows_to_csv(path_to_file, 
+		   ind=20, #index of COMID or rivid (example if you already know index instead if reach_id)
+		   daily=True) #if file is CF compliant, write out daily flows
+```

@@ -1,5 +1,5 @@
 # RAPIDpy
-Python scripting interface for the RAPID progam.
+Python scripting interface for the RAPID program.
 More information about installation and the input parameters can be found at http://rapid-hub.org.
 The source code for RAPID is located at https://github.com/c-h-david/rapid/.
 

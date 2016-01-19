@@ -1,0 +1,96 @@
+#*******************************************************************************
+#.travis.yml
+#*******************************************************************************
+
+#Purpose:
+#Travis CI is a hosted continuous integration service, that is, it allows 
+#running code directly from a repository and checking that the code acts as 
+#expected. The purpose of the .travis.yml file is to give instructions to Travis 
+#CI on how to do the work.
+#Authors:
+#Alan D. Snow, 2016, based on initial .yml file by Cedric H. David
+
+
+#*******************************************************************************
+#System specifications for Travis CI
+#*******************************************************************************
+sudo: false        #Activates the new Travis CI container-based infrastructure
+language: python      #Sets the language to C++
+python:
+  - "2.7"
+#*******************************************************************************
+#Before installing RAPIDpy
+#*******************************************************************************
+
+before_install:
+- sudo apt-get update -qq
+- sudo apt-get install -y g++ gfortran python-dev zlib1g-dev libhdf5-serial-dev libnetcdf-dev
+
+#install netCDF4
+- pip install netCDF4
+#-------------------------------------------------------------------------------
+#Creating directory for installation of libraries used by RAPID
+#-------------------------------------------------------------------------------
+- cd $TRAVIS_BUILD_DIR
+- mkdir ../installz
+- cd ../installz
+- export INSTALLZ_DIR=$PWD
+
+#-------------------------------------------------------------------------------
+#Installing netCDF 3.6.3
+#-------------------------------------------------------------------------------
+- cd $INSTALLZ_DIR
+- wget "ftp://ftp.unidata.ucar.edu/pub/netcdf/netcdf-3.6.3.tar.gz"
+- mkdir netcdf-3.6.3-install
+- tar -xf netcdf-3.6.3.tar.gz
+- cd netcdf-3.6.3
+- ./configure --prefix=$INSTALLZ_DIR/netcdf-3.6.3-install
+- make check
+- make install
+
+#-------------------------------------------------------------------------------
+#Installing PETSc 3.6.2
+#-------------------------------------------------------------------------------
+- cd $INSTALLZ_DIR
+- wget "http://ftp.mcs.anl.gov/pub/petsc/release-snapshots/petsc-3.6.2.tar.gz" 
+- tar -xf petsc-3.6.2.tar.gz
+- cd petsc-3.6.2
+- ./configure PETSC_DIR=$PWD PETSC_ARCH=linux-gcc-cxx --download-fblaslapack=1 --download-mpich=1 --with-cc=gcc --with-cxx=g++ --with-fc=gfortran --with-clanguage=cxx --with-debugging=0
+- make PETSC_DIR=$PWD PETSC_ARCH=linux-gcc-cxx all
+- make PETSC_DIR=$PWD PETSC_ARCH=linux-gcc-cxx test
+
+#-------------------------------------------------------------------------------
+#Exporting environment variables 
+#-------------------------------------------------------------------------------
+- cd $INSTALLZ_DIR
+- export TACC_NETCDF_LIB=$INSTALLZ_DIR/netcdf-3.6.3-install/lib
+- export TACC_NETCDF_INC=$INSTALLZ_DIR/netcdf-3.6.3-install/include
+- export PETSC_DIR=$INSTALLZ_DIR/petsc-3.6.2
+- export PETSC_ARCH='linux-gcc-cxx'
+
+#-------------------------------------------------------------------------------
+#Exporting directories with library-related executables to $PATH
+#-------------------------------------------------------------------------------
+- export PATH=$PATH:/$PETSC_DIR/$PETSC_ARCH/bin
+- export PATH=$PATH:$INSTALLZ_DIR/netcdf-3.6.3-install/bin
+
+
+#-------------------------------------------------------------------------------
+#Installing RAPID
+#-------------------------------------------------------------------------------
+- cd $TRAVIS_BUILD_DIR
+- cd ..
+- git clone https://github.com/c-h-david/rapid.git
+- cd ./rapid/src/
+- make rapid
+
+#*******************************************************************************
+#Installing RAPIDpy
+#*******************************************************************************
+install:
+- cd $TRAVIS_BUILD_DIR
+- python setup.py develop
+#*******************************************************************************
+#Testing RAPIDpy
+#*******************************************************************************
+script: nosetests

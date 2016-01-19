@@ -5,7 +5,7 @@ The source code for RAPID is located at https://github.com/c-h-david/rapid/.
 
 License: BSD-3 clause
 
-https://travis-ci.org/erdc-cm/RAPIDpy.svg?branch=master
+[![Build Status](https://travis-ci.org/erdc-cm/RAPIDpy.svg?branch=master)](https://travis-ci.org/erdc-cm/RAPIDpy)
 
 #Installation
 

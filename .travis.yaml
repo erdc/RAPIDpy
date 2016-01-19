@@ -16,6 +16,8 @@
 #*******************************************************************************
 sudo: false        #Activates the new Travis CI container-based infrastructure
 language: cpp      #Sets the language to C++
+python:
+  - "2.7"
 addons:
   apt:
     packages:

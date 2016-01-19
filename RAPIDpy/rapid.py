@@ -410,12 +410,18 @@ class RAPID(object):
         print "Extracting data ..."
         #get information from datasets
         data_nc = Dataset(self.Qout_file, mode="r")
-        riv_bas_id_array = data_nc.variables['COMID'][:]
+        
+        dims = data_nc.dimensions
+        id_dim_name = 'COMID'
+        if 'rivid' in dims:
+            id_dim_name = 'rivid'
+
+        riv_bas_id_array = data_nc.variables[id_dim_name][:]
         qout_dimensions = data_nc.variables['Qout'].dimensions
-        if qout_dimensions[0].lower() == 'time' and qout_dimensions[1].lower() == 'comid':
+        if qout_dimensions[0].lower() == 'time' and qout_dimensions[1].lower() == id_dim_name.lower():
             #data is raw rapid output
             data_values = data_nc.variables['Qout'][time_index,:]
-        elif qout_dimensions[1].lower() == 'time' and qout_dimensions[0].lower() == 'comid':
+        elif qout_dimensions[1].lower() == 'time' and qout_dimensions[0].lower() == id_dim_name.lower():
             #the data is CF compliant and has time=0 added to output
             data_values = data_nc.variables['Qout'][:,time_index]
         else:
@@ -549,22 +555,31 @@ def compare_qout_files(dataset1_path, dataset2_path, Qout_var="Qout"):
     This function compares the output of RAPID Qout and tells you where they are different.
     """
     d1 = Dataset(dataset1_path)
+    dims1 = d1.dimensions
+    id_dim_name1 = 'COMID'
+    if 'rivid' in dims1:
+        id_dim_name1 = 'rivid'
     d2 = Dataset(dataset2_path)
-    if not np.unique(d1.variables['COMID'][:] != d2.variables['COMID'][:]).all():
+    dims2 = d2.dimensions
+    id_dim_name2 = 'COMID'
+    if 'rivid' in dims2:
+        id_dim_name2 = 'rivid'
+
+    if not np.unique(d1.variables[id_dim_name1][:] != d2.variables[id_dim_name2][:]).all():
         print "WARNING: COMID order is different in each dataset. Reordering data for comparison."
-        if len(d1.variables['COMID'][:]) != len(d2.variables['COMID'][:]):
+        if len(d1.variables[id_dim_name1][:]) != len(d2.variables[id_dim_name2][:]):
             raise Exception("Length of COMID input not the same.")
             
-        d2_comid_list = d2.variables['COMID'][:]
+        d2_comid_list = d2.variables[id_dim_name2][:]
         d2_reordered_comid_list = []
-        for comid in d1.variables['COMID'][:]:
+        for comid in d1.variables[id_dim_name1][:]:
             d2_reordered_comid_list.append(np.where(d2_comid_list==comid)[0][0])
         qout_dimensions = d1.variables[Qout_var].dimensions
         if qout_dimensions[0].lower() == 'time' and \
-           qout_dimensions[1].lower() == 'comid':
+           qout_dimensions[1].lower() == id_dim_name1.lower():
             d2_reordered_qout = d2.variables[Qout_var][:,d2_reordered_comid_list]
         elif qout_dimensions[1].lower() == 'time' and \
-             qout_dimensions[0].lower() == 'comid':
+             qout_dimensions[0].lower() == id_dim_name1.lower():
             d2_reordered_qout = d2.variables[Qout_var][d2_reordered_comid_list,:]
         else:
             raise Exception("Invalid RAPID Qout file.")
@@ -610,8 +625,13 @@ def write_flows_to_csv(path_to_file, ind=None, reach_id=None, daily=False, out_v
         Write out RAPID output to CSV file
     """
     data_nc = Dataset(path_to_file)
+    
     if reach_id != None:
-        reach_ids = data_nc.variables['COMID'][:]
+        dims = data_nc.dimensions
+        id_dim_name = 'COMID'
+        if 'rivid' in dims:
+            id_dim_name = 'rivid'
+        reach_ids = data_nc.variables[id_dim_name][:]
         ind = np.where(reach_ids==reach_id)[0][0]
         print ind, reach_id
     nc_vars = data_nc.variables.keys()

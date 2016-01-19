@@ -3,6 +3,8 @@ Python scripting interface for the RAPID program.
 More information about installation and the input parameters can be found at http://rapid-hub.org.
 The source code for RAPID is located at https://github.com/c-h-david/rapid/.
 
+License: BSD-3 clause
+
 #Installation
 
 ##Step 1: Install RAPID

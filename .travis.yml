@@ -14,7 +14,6 @@
 #*******************************************************************************
 #System specifications for Travis CI
 #*******************************************************************************
-sudo: false        #Activates the new Travis CI container-based infrastructure
 language: python      #Sets the language to C++
 python:
   - "2.7"

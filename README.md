@@ -1,11 +1,14 @@
 # RAPIDpy
+
 Python scripting interface for the RAPID program.
 More information about installation and the input parameters can be found at http://rapid-hub.org.
 The source code for RAPID is located at https://github.com/c-h-david/rapid/.
 
-License: BSD-3 clause
+[![DOI](https://zenodo.org/badge/19918/erdc-cm/RAPIDpy.svg)](https://zenodo.org/badge/latestdoi/19918/erdc-cm/RAPIDpy)
 
 [![Build Status](https://travis-ci.org/erdc-cm/RAPIDpy.svg?branch=master)](https://travis-ci.org/erdc-cm/RAPIDpy)
+
+[![License (3-Clause BSD)](https://img.shields.io/badge/license-BSD%203--Clause-yellow.svg)](https://github.com/erdc-cm/RAPIDpy/blob/master/LICENSE)
 
 #Installation
 

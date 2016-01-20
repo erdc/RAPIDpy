@@ -578,7 +578,7 @@ def compare_qout_files(dataset1_path, dataset2_path, Qout_var="Qout"):
     if len(d1.variables[id_dim_name1][:]) != len(d2.variables[id_dim_name2][:]):
         raise Exception("Length of COMID/rivid input not the same.")
 
-    if not (d1.variables[id_dim_name1][:] != d2.variables[id_dim_name2][:]).all():
+    if not (d1.variables[id_dim_name1][:] == d2.variables[id_dim_name2][:]).all():
         print "WARNING: COMID/rivid order is different in each dataset. Reordering data for comparison."
         
         d2_comid_list = d2.variables[id_dim_name2][:]

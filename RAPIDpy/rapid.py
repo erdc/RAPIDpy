@@ -276,11 +276,19 @@ class RAPID(object):
                 line = line.strip()
                 if not line[:1].isalpha() or not line:
                     continue
-                line_split = line.split()
-                attr = line_split[0]
+                line_split = line.split("=")
+                attr = line_split[0].strip()
                 value = None
                 if len(line_split)>1:
-                    value = line_split[1]
+                    value = line_split[1].strip().replace("'", "").replace('"', "")
+                    #convert integers to integers
+                    try:
+                        value = int(value)
+                    except Exception:
+                        pass
+                    #remove dots from beginning & end of value
+                    if attr.startswith('BS'):
+                        value = value.replace(".", "") 
                 elif attr in self._no_value_attr_list:
                     value = True
                 #add attribute if exists
@@ -293,7 +301,7 @@ class RAPID(object):
                     print "Invalid argument" , attr, ". Skipping ..."
             old_file.close()
             
-            self.generate_input_file(file_path)
+            self.generate_namelist_file(file_path)
         else:
             raise Exception("RAPID namelist file to update not found.")
             

@@ -1,8 +1,0 @@
-&NL_namelist
-IS_riv_bas = 67313
-IS_max_up = 3
-ZS_dtM = 10800
-ZS_dtR = 900
-ZS_TauM = 86400
-ZS_TauR = 10800
-/

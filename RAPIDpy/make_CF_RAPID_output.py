@@ -151,7 +151,7 @@ class ConvertRAPIDOutputToCF(object):
             elif 'FEATUREID' in dims:
                 id_dim_name = 'FEATUREID'
             else:
-                msg = 'Could not find ID dimension. Looked for COMID and FEATUREID.'
+                msg = 'Could not find ID dimension. Looked for rivid, COMID and FEATUREID.'
                 raise Exception(msg)
             id_dim_name_list.append(id_dim_name)
 

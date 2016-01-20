@@ -157,7 +157,7 @@ def test_update_rapid_numbers_input_file():
     rapid_manager.update_reach_number_data()
                           
     rapid_manager.update_parameters(rapid_connect_file='rapid_connect.csv',
-                                    Vlat_file='m3_riv_bas_erai_t255_3.nc',
+                                    Vlat_file='m3_riv_bas_erai_t511_3hr_19800101to19800101.nc',
                                     riv_bas_id_file='riv_bas_id.csv',
                                     k_file='k.csv',
                                     x_file='x.csv',

@@ -11,5 +11,5 @@ setup(
     download_url='https://github.com/erdc-cm/RAPIDpy/tarballs/1.1.3',
     license='MIT',
     packages=['RAPIDpy'],
-    install_requires=['netCDF4', 'numpy', 'requests'],
+    install_requires=['netCDF4', 'numpy', 'requests', 'dateutil'],
 )

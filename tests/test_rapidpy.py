@@ -269,6 +269,8 @@ def test_convert_file_to_be_cf_compliant():
     ok_(d1.variables.keys() == d2.variables.keys())
     ok_((d1.variables['time'][:] == d1.variables['time'][:]).all())
     ok_((d1.variables['rivid'][:] == d1.variables['rivid'][:]).all())
+    ok_((d1.variables['lat'][:] == d1.variables['lat'][:]).all())
+    ok_((d1.variables['lon'][:] == d1.variables['lon'][:]).all())
     d1.close()
     d2.close()
     

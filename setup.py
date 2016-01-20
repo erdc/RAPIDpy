@@ -11,5 +11,5 @@ setup(
     download_url='https://github.com/erdc-cm/RAPIDpy/tarballs/2.0.0',
     license='MIT',
     packages=['RAPIDpy'],
-    install_requires=['dateutil', 'netCDF4', 'numpy', 'pytz', 'requests'],
+    install_requires=['python-dateutil', 'netCDF4', 'numpy', 'pytz', 'requests'],
 )

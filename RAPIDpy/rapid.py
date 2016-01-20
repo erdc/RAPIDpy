@@ -562,6 +562,8 @@ def compare_qout_files(dataset1_path, dataset2_path, Qout_var="Qout"):
     """
     This function compares the output of RAPID Qout and tells you where they are different.
     """
+    qout_same = False
+    
     d1 = Dataset(dataset1_path)
     dims1 = d1.dimensions
     id_dim_name1 = 'COMID'
@@ -573,21 +575,22 @@ def compare_qout_files(dataset1_path, dataset2_path, Qout_var="Qout"):
     if 'rivid' in dims2:
         id_dim_name2 = 'rivid'
 
-    if not np.unique(d1.variables[id_dim_name1][:] != d2.variables[id_dim_name2][:]).all():
-        print "WARNING: COMID order is different in each dataset. Reordering data for comparison."
-        if len(d1.variables[id_dim_name1][:]) != len(d2.variables[id_dim_name2][:]):
-            raise Exception("Length of COMID input not the same.")
-            
+    if len(d1.variables[id_dim_name1][:]) != len(d2.variables[id_dim_name2][:]):
+        raise Exception("Length of COMID/rivid input not the same.")
+
+    if not (d1.variables[id_dim_name1][:] != d2.variables[id_dim_name2][:]).all():
+        print "WARNING: COMID/rivid order is different in each dataset. Reordering data for comparison."
+        
         d2_comid_list = d2.variables[id_dim_name2][:]
         d2_reordered_comid_list = []
         for comid in d1.variables[id_dim_name1][:]:
             d2_reordered_comid_list.append(np.where(d2_comid_list==comid)[0][0])
-        qout_dimensions = d1.variables[Qout_var].dimensions
+        qout_dimensions = d2.variables[Qout_var].dimensions
         if qout_dimensions[0].lower() == 'time' and \
-           qout_dimensions[1].lower() == id_dim_name1.lower():
+           qout_dimensions[1].lower() == id_dim_name2.lower():
             d2_reordered_qout = d2.variables[Qout_var][:,d2_reordered_comid_list]
         elif qout_dimensions[1].lower() == 'time' and \
-             qout_dimensions[0].lower() == id_dim_name1.lower():
+             qout_dimensions[0].lower() == id_dim_name2.lower():
             d2_reordered_qout = d2.variables[Qout_var][d2_reordered_comid_list,:]
         else:
             raise Exception("Invalid RAPID Qout file.")
@@ -607,6 +610,7 @@ def compare_qout_files(dataset1_path, dataset2_path, Qout_var="Qout"):
                                                d2_reordered_qout, 
                                                decimal=decimal_test)
                 print "\nALMOST EQUAL to", decimal_test, "decimal places.\n"
+                qout_same = True
                 decimal_test=-1
             except AssertionError as ex:
                 if decimal_test <= 1:
@@ -623,10 +627,12 @@ def compare_qout_files(dataset1_path, dataset2_path, Qout_var="Qout"):
         print d2_reordered_qout[index, :]
     
     else:
+        qout_same = True
         print "Output Qout data is the same."
 
     d1.close()
     d2.close()
+    return qout_same
 
 def write_flows_to_csv(path_to_file, ind=None, reach_id=None, daily=False, out_var='Qout'):
     """

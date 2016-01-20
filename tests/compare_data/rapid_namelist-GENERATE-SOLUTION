@@ -1,0 +1,36 @@
+&NL_namelist
+IS_strt_opt = 0
+rapid_connect_file = 'rapid_connect.csv'
+riv_bas_id_file = 'riv_bas_id.csv'
+IS_riv_bas = 0
+Vlat_file = 'm3_riv.nc'
+ZS_xnorm_init = 0
+BS_opt_Qfinal = .false.
+ZS_knorm_init = 0
+IS_obs_use = 0
+x_file = 'x.csv'
+IS_opt_phi = 1
+IS_for_tot = 0
+Qout_file = 'Qout.nc'
+IS_max_up = 2
+IS_obs_tot = 0
+BS_opt_dam = .false.
+ZS_dtF = 0
+BS_opt_Qinit = .false.
+IS_dam_tot = 0
+IS_dam_use = 0
+BS_opt_influence = .false.
+ZS_dtO = 0
+ZS_dtM = 86400
+BS_opt_for = .false.
+IS_opt_run = 1
+IS_opt_routing = 1
+ZS_dtR = 900
+ZS_phifac = 0
+ZS_TauM = 1036800
+ZS_TauO = 0
+IS_riv_tot = 0
+k_file = 'k.csv'
+IS_for_use = 0
+ZS_TauR = 86400
+/

@@ -144,37 +144,39 @@ def test_update_rapid_numbers_input_file():
     main_tests_folder = os.path.dirname(os.path.abspath(__file__))
     
     compare_data_path = os.path.join(main_tests_folder, 'compare_data')
-    input_data_path = os.path.join(main_tests_folder, 'input_data')
+    input_data_path = os.path.join(main_tests_folder, 'input_data',
+                                   'nfie_texas_gulf_region-huc_2_12')
     output_data_path = os.path.join(main_tests_folder, 'tmp_output_files')
 
     print "TEST 2: UPDATE NAMELIST FILE"
     rapid_manager = RAPID(rapid_executable_location="",
-                          use_all_processors=True,                          
+                          use_all_processors=True,
+                          rapid_connect_file=os.path.join(input_data_path, 'rapid_connect.csv'),
+                          riv_bas_id_file=os.path.join(input_data_path, 'riv_bas_id.csv'),
                          )
+    rapid_manager.update_reach_number_data()
+                          
     rapid_manager.update_parameters(rapid_connect_file='rapid_connect.csv',
-                                    Vlat_file='m3_riv.nc',
+                                    Vlat_file='m3_riv_bas_erai_t255_3.nc',
                                     riv_bas_id_file='riv_bas_id.csv',
                                     k_file='k.csv',
                                     x_file='x.csv',
                                     Qout_file='Qout.nc'
                                     )
 
-    original_input_file = os.path.join(input_data_path, 
-                                      "rapid_namelist_valid")
-    
-    updated_input_file = os.path.join(output_data_path, 
-                                      "rapid_namelist-UPDATE")
+    generated_input_file = os.path.join(output_data_path, 
+                                      "rapid_namelist-GENERATE-NUMBERS")
 
-    copy(original_input_file, updated_input_file)
-    rapid_manager.update_namelist_file(updated_input_file)
-    updated_input_file_solution = os.path.join(compare_data_path, 
-                                               "rapid_namelist-UPDATE-SOLUTION")
+    rapid_manager.generate_namelist_file(generated_input_file)
+                          
+    generated_input_file_solution = os.path.join(compare_data_path, 
+                                               "rapid_namelist-GENERATE-NUMBERS-SOLUTION")
 
 
-    ok_(fcmp(updated_input_file, updated_input_file_solution))
+    ok_(fcmp(generated_input_file, generated_input_file_solution))
     
     try:
-        os.remove(updated_input_file)
+        os.remove(generated_input_file)
     except OSError:
         pass
 

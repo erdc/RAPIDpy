@@ -215,7 +215,19 @@ def test_run_rapid_simulation():
     generated_qout_file_solution = os.path.join(COMPARE_DATA_PATH,
                                                 'Qout_erai_t511_3hr_19800101.nc')
 
-    ok_(fcmp(generated_qout_file, generated_qout_file_solution))
+    #check Qout    
+    ok_(compare_qout_files(generated_qout_file, generated_qout_file_solution))
+
+    #check other info in netcdf file
+    d1 = Dataset(generated_qout_file)
+    d2 = Dataset(generated_qout_file_solution)
+    ok_(d1.dimensions.keys() == d2.dimensions.keys())
+    ok_(d1.variables.keys() == d2.variables.keys())
+    ok_((d1.variables['time'][:] == d1.variables['time'][:]).all())
+    ok_((d1.variables['rivid'][:] == d1.variables['rivid'][:]).all())
+    d1.close()
+    d2.close()
+
     try:
         os.remove(generated_qout_file)
     except OSError:

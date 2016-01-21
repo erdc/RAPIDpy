@@ -172,6 +172,7 @@ def test_qout_same():
     """
     Test function to compare RAPID simulation Qout
     """
+    print "TEST 5: TEST COMPARE RAPID QOUT"
     input_qout_file = os.path.join(COMPARE_DATA_PATH, 'Qout_erai_t511_3hr_19800101.nc')
     input_qout_file_cf = os.path.join(COMPARE_DATA_PATH, 'Qout_erai_t511_3hr_19800101_CF.nc')
    
@@ -182,6 +183,7 @@ def test_run_rapid_simulation():
     Test Running RAPID Simulation
     """
     
+    print "TEST 6: TEST RUNNING RAPID SIMULATION"
     rapid_executable_location = os.path.join(MAIN_TESTS_FOLDER,
                                              "..", "..",
                                              "rapid", "src", "rapid")
@@ -190,7 +192,6 @@ def test_run_rapid_simulation():
 
 
 
-    print "TEST 5: TEST RUNNING RAPID SIMULATION"
     rapid_manager = RAPID(rapid_executable_location,
                           num_processors=1,
                           rapid_connect_file=os.path.join(INPUT_DATA_PATH, 'rapid_connect.csv'),
@@ -219,7 +220,6 @@ def test_run_rapid_simulation():
     ok_(d1.dimensions.keys() == d2.dimensions.keys())
     ok_(d1.variables.keys() == d2.variables.keys())
     ok_((d1.variables['rivid'][:] == d2.variables['rivid'][:]).all())
-    ok_((d1.variables['time'][:] == d2.variables['time'][:]).all())
     d1.close()
     d2.close()
 
@@ -232,7 +232,7 @@ def test_convert_file_to_be_cf_compliant():
     """
     Test Convert RAPID Output to be CF Compliant
     """
-    print "TEST 6: TEST CONVERT RAPID OUTPUT TO CF COMPLIANT (COMID_LAT_LON_Z)"
+    print "TEST 7: TEST CONVERT RAPID OUTPUT TO CF COMPLIANT (COMID_LAT_LON_Z)"
 
     input_qout_file = os.path.join(COMPARE_DATA_PATH, 'Qout_erai_t511_3hr_19800101.nc')
     temp_qout_file = os.path.join(OUTPUT_DATA_PATH, 'Qout_erai_t511_3hr_19800101_test_cf.nc')
@@ -274,8 +274,48 @@ def test_generate_qinit_file():
     """
     This tests the qinit file function to create an input qinit file for RAPID
     """
+    print "TEST 8: TEST GENERATE QINIT FILE"
+    rapid_manager = RAPID(rapid_executable_location="",
+                          rapid_connect_file=os.path.join(INPUT_DATA_PATH, 'rapid_connect.csv')
+                         )
 
+    #test with original rapid outpur
+    input_qout_file = os.path.join(COMPARE_DATA_PATH, 'Qout_erai_t511_3hr_19800101.nc')
+    original_qout_file = os.path.join(OUTPUT_DATA_PATH, 'Qout_erai_t511_3hr_19800101.nc')
+    copy(input_qout_file, original_qout_file)
 
+    qinit_original_rapid_qout = os.path.join(OUTPUT_DATA_PATH, 'qinit_original_rapid_qout.csv')
+    rapid_manager.update_parameters(Qout_file=original_qout_file)
+    rapid_manager.generate_qinit_from_past_qout(qinit_file=qinit_original_rapid_qout)
+    
+    qinit_original_rapid_qout_solution = os.path.join(COMPARE_DATA_PATH, 'qinit_original_rapid_qout-SOLUTION.csv')
+    ok_(fcmp(qinit_original_rapid_qout, qinit_original_rapid_qout_solution))
+
+    #test with CF rapid output and alternate time index
+    cf_input_qout_file = os.path.join(COMPARE_DATA_PATH, 'Qout_erai_t511_3hr_19800101_CF.nc')
+    cf_qout_file = os.path.join(OUTPUT_DATA_PATH, 'Qout_erai_t511_3hr_19800101_CF.nc')
+    copy(cf_input_qout_file, cf_qout_file)
+
+    qinit_cf_rapid_qout = os.path.join(OUTPUT_DATA_PATH, 'qinit_cf_rapid_qout.csv')
+    rapid_manager.update_parameters(Qout_file=cf_qout_file)
+    rapid_manager.generate_qinit_from_past_qout(qinit_file=qinit_cf_rapid_qout,
+                                                time_index=5)
+                                                
+    qinit_cf_rapid_qout_solution = os.path.join(COMPARE_DATA_PATH, 'qinit_cf_rapid_qout-SOLUTION.csv')
+    ok_(fcmp(qinit_cf_rapid_qout, qinit_cf_rapid_qout_solution))
+    
+    def remove_files(*args):
+        for arg in args:
+            try:
+                os.remove(arg)
+            except OSError:
+                pass
+
+    remove_files(original_qout_file, 
+                 qinit_original_rapid_qout,
+                 cf_qout_file,
+                 qinit_cf_rapid_qout
+                 )
 
 if __name__ == '__main__':
     import nose

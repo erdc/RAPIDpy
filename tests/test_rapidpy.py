@@ -16,7 +16,8 @@ from shutil import copy
 
 
 #local import
-from RAPIDpy.rapid import RAPID, compare_qout_files
+from RAPIDpy.rapid import RAPID
+from RAPIDpy.helper_functions import compare_qout_files, write_flows_to_csv
 
 
 #GLOBAL VARIABLES
@@ -217,7 +218,6 @@ def test_run_rapid_simulation():
     d2 = Dataset(generated_qout_file_solution)
     ok_(d1.dimensions.keys() == d2.dimensions.keys())
     ok_(d1.variables.keys() == d2.variables.keys())
-    ok_((d1.variables['time'][:] == d1.variables['time'][:]).all())
     ok_((d1.variables['rivid'][:] == d1.variables['rivid'][:]).all())
     d1.close()
     d2.close()
@@ -231,7 +231,7 @@ def test_convert_file_to_be_cf_compliant():
     """
     Test Convert RAPID Output to be CF Compliant
     """
-    print "TEST 5: TEST CONVERT RAPID OUTPUT TO CF COMPLIANT (COMID_LAT_LON_Z)"
+    print "TEST 6: TEST CONVERT RAPID OUTPUT TO CF COMPLIANT (COMID_LAT_LON_Z)"
 
     input_qout_file = os.path.join(COMPARE_DATA_PATH, 'Qout_erai_t511_3hr_19800101.nc')
     temp_qout_file = os.path.join(OUTPUT_DATA_PATH, 'Qout_erai_t511_3hr_19800101_test_cf.nc')
@@ -268,6 +268,12 @@ def test_convert_file_to_be_cf_compliant():
         os.remove(temp_qout_file)
     except OSError:
         pass
+
+def test_generate_qinit_file():
+    """
+    This tests the qinit file function to create an input qinit file for RAPID
+    """
+
 
 
 if __name__ == '__main__':

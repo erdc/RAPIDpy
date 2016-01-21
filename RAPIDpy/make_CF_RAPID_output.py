@@ -62,7 +62,7 @@ from netCDF4 import Dataset
 import numpy as np
 
 #local
-from helper_functions import csv_to_list
+from helper_functions import csv_to_list, remove_files
 
 def log(message, severity, print_debug=True):
     """Logs, prints, or raises a message.
@@ -515,19 +515,12 @@ class ConvertRAPIDOutputToCF(object):
             self.cf_nc.close()
             
             #delete original RAPID output
-            try:
-                for raw_rapid_file in self.rapid_output_file_list:
-                    os.remove(raw_rapid_file)
-            except OSError:
-                pass
+            remove_files(*self.rapid_output_file_list)
 
             #rename nc compliant file to original name
             os.rename(self.cf_compliant_file, self.rapid_output_file_list[0])
             log('Time to process %s' % (datetime.utcnow()-time_start_conversion), 'INFO')
         except Exception, e:
             #delete cf RAPID output
-            try:
-                os.remove(self.cf_compliant_file)
-            except OSError:
-                pass
+            remove_files(self.cf_compliant_file)
             log('Conversion Error %s' % e, 'ERROR')

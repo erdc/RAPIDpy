@@ -339,7 +339,8 @@ def test_extract_timeseries():
     remove_files(original_timeseries_file, 
                  original_qout_file,
                  cf_timeseries_file,
-                 cf_qout_file
+                 cf_qout_file,
+                 cf_timeseries_daily_file
                  )
 
     

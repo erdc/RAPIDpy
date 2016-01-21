@@ -176,7 +176,7 @@ cv.convert()
 This function simplifies writing time series for each stream reach to a csv file.
 
 ```python
-from RAPIDpy.rapid import write_flows_to_csv
+from RAPIDpy.helper_functions import write_flows_to_csv
 path_to_file = '/p/work1/u4hfraat/rapid_projects/output_mississippi-nfie/Qout_k3v1_2005to2009.nc'
 #for writing entire time series to file
 write_flows_to_csv(path_to_file, 
@@ -193,8 +193,8 @@ RAPIDpy also creates a qinit file from a RAPID qout file. This example shows how
 ```python
 from RAPIDpy.rapid import RAPID
 rapid_manager = RAPID(rapid_executable_location='/p/u4hfraat/rapid/src/rapid',
-                      Qout_file='/rapid_projects/output_mississippi-nfie/Qout_k2v1_2005to2009.nc', 
-		      rapid_connect_file='/autorapid/input_mississippi_nfie/rapid_connect_ECMWF.csv'
+                      Qout_file='/output_mississippi-nfie/Qout_k2v1_2005to2009.nc', 
+		      rapid_connect_file='/input_mississippi_nfie/rapid_connect_ECMWF.csv'
                      )
 rapid_manager.generate_qinit_from_past_qout(qinit_file='/autorapid/input_mississippi_nfie/Qinit_2008_flood.csv',
 					    time_index=10162) #time_index is optional, if not included it will be last time step
@@ -205,12 +205,12 @@ To check how well your simulation performed versus observations, this function c
 from RAPIDpy.goodness_of_fit import find_goodness_of_fit_csv, find_goodness_of_fit
 
 #if you have observations and model results next to each other in columns, this works for you
-find_goodness_of_fit_csv('/Users/rdchlads/autorapid/rapid-io/output/united_kingdom-thames/flows_kingston_gage_noah.csv')
+find_goodness_of_fit_csv('/united_kingdom-thames/flows_kingston_gage_noah.csv')
 
-#if you have gage files in the format RAPID needs for ccalibration, this will generate a file for you with results
-find_goodness_of_fit(reach_id_file='/p/work1/u4hfraat/rapid_projects/input_mississippi-nfie/all_gauges_nfie_id.csv',
-                     rapid_qout_file='/p/work1/u4hfraat/rapid_projects/output_mississippi-nfie/Qout_k4v2_2005to2014.nc',
-                     observed_file='/p/work1/u4hfraat/rapid_projects/input_mississippi-nfie/obs_all_gauges_nfie.csv',
-                     out_analysis_file='/p/work1/u4hfraat/rapid_projects/output_mississippi-nfie/flows_analysis_vic_k4v2_2005-14.csv',
+#if you have gage files in the format RAPID needs for calibration, this will generate a file for you with results
+find_goodness_of_fit(reach_id_file='/input_mississippi-nfie/all_gauges_nfie_id.csv',
+                     rapid_qout_file='/output_mississippi-nfie/Qout_k4v2_2005to2014.nc',
+                     observed_file='/input_mississippi-nfie/obs_all_gauges_nfie.csv',
+                     out_analysis_file='/output_mississippi-nfie/flows_analysis_vic_k4v2_2005-14.csv',
                      #steps_per_group=8, #for raw rapid output (8 is produces daily flows for 3-hr timesteps)
                      daily=True) #use this option for CF compliant files

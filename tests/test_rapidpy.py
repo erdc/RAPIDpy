@@ -192,7 +192,7 @@ def test_run_rapid_simulation():
 
     print "TEST 5: TEST RUNNING RAPID SIMULATION"
     rapid_manager = RAPID(rapid_executable_location,
-                          use_all_processors=True,
+                          num_processors=1,
                           rapid_connect_file=os.path.join(INPUT_DATA_PATH, 'rapid_connect.csv'),
                           riv_bas_id_file=os.path.join(INPUT_DATA_PATH, 'riv_bas_id.csv'),
                           Vlat_file=os.path.join(INPUT_DATA_PATH, 'm3_riv_bas_erai_t511_3hr_19800101.nc'),
@@ -218,7 +218,8 @@ def test_run_rapid_simulation():
     d2 = Dataset(generated_qout_file_solution)
     ok_(d1.dimensions.keys() == d2.dimensions.keys())
     ok_(d1.variables.keys() == d2.variables.keys())
-    ok_((d1.variables['rivid'][:] == d1.variables['rivid'][:]).all())
+    ok_((d1.variables['rivid'][:] == d2.variables['rivid'][:]).all())
+    ok_((d1.variables['time'][:] == d2.variables['time'][:]).all())
     d1.close()
     d2.close()
 

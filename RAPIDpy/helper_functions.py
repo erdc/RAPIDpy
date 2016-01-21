@@ -7,8 +7,15 @@
 ##  Copyright © 2015 Alan D Snow. All rights reserved.
 ##
 from csv import reader as csvreader
+from csv import writer as csvwriter
+from datetime import datetime
 from netCDF4 import Dataset
-import numpy as np
+from numpy import where, unique
+from numpy.testing import assert_almost_equal
+from os import remove
+from os.path import dirname, join
+from pytz import utc
+
 #------------------------------------------------------------------------------
 # HELPER FUNCTIONS
 #------------------------------------------------------------------------------
@@ -22,6 +29,28 @@ def csv_to_list(csv_file, delimiter=','):
     with open(csv_file, 'rb') as csv_con:
         reader = csvreader(csv_con, delimiter=delimiter)
         return list(reader)
+
+    
+def remove_files(*args):
+    """
+    This function removes all files input as arguments
+    """
+    for arg in args:
+        try:
+            remove(arg)
+        except OSError:
+            pass
+
+def get_rapid_timeseries(nc_file_handle, reach_index, id_dim_name, out_var):
+    """
+    This function get's a time series from RAPID output for a specific
+    reach id
+    """
+    qout_dims = nc_file_handle.variables[out_var].dimensions
+    if qout_dims[0] == id_dim_name:
+        return nc_file_handle.variables[out_var][reach_index, :]
+    else:
+        return nc_file_handle.variables[out_var][:, reach_index]
 
 def compare_qout_files(dataset1_path, dataset2_path, Qout_var="Qout"):
     """
@@ -49,7 +78,7 @@ def compare_qout_files(dataset1_path, dataset2_path, Qout_var="Qout"):
         d2_comid_list = d2.variables[id_dim_name2][:]
         d2_reordered_comid_list = []
         for comid in d1.variables[id_dim_name1][:]:
-            d2_reordered_comid_list.append(np.where(d2_comid_list==comid)[0][0])
+            d2_reordered_comid_list.append(where(d2_comid_list==comid)[0][0])
         qout_dimensions = d2.variables[Qout_var].dimensions
         if qout_dimensions[0].lower() == 'time' and \
            qout_dimensions[1].lower() == id_dim_name2.lower():
@@ -63,17 +92,17 @@ def compare_qout_files(dataset1_path, dataset2_path, Qout_var="Qout"):
         d2_reordered_qout = d2.variables[Qout_var][:]
         
     #get where the files are different
-    where_diff = np.where(d1.variables[Qout_var][:] != d2_reordered_qout)
-    un_where_diff = np.unique(where_diff[0])
+    where_diff = where(d1.variables[Qout_var][:] != d2_reordered_qout)
+    un_where_diff = unique(where_diff[0])
     
     #if different, check to see how different
     if un_where_diff.any():
         decimal_test = 7
         while decimal_test > 0:
             try:
-                np.testing.assert_almost_equal(d1.variables[Qout_var][:], 
-                                               d2_reordered_qout, 
-                                               decimal=decimal_test)
+                assert_almost_equal(d1.variables[Qout_var][:], 
+                                    d2_reordered_qout, 
+                                    decimal=decimal_test)
                 print "\nALMOST EQUAL to", decimal_test, "decimal places.\n"
                 qout_same = True
                 decimal_test=-1
@@ -99,34 +128,37 @@ def compare_qout_files(dataset1_path, dataset2_path, Qout_var="Qout"):
     d2.close()
     return qout_same
 
-def write_flows_to_csv(path_to_file, ind=None, reach_id=None, daily=False, out_var='Qout'):
+def write_flows_to_csv(path_to_rapid_qout_file, path_to_output_file, 
+                       reach_index=None, reach_id=None, daily=False, 
+                       out_var='Qout'):
     """
         Write out RAPID output to CSV file
     """
-    data_nc = Dataset(path_to_file)
+    data_nc = Dataset(path_to_rapid_qout_file)
     
-    if reach_id != None:
-        dims = data_nc.dimensions
-        id_dim_name = 'COMID'
-        if 'rivid' in dims:
-            id_dim_name = 'rivid'
-        reach_ids = data_nc.variables[id_dim_name][:]
-        ind = np.where(reach_ids==reach_id)[0][0]
-        print ind, reach_id
-    nc_vars = data_nc.variables.keys()
+    dims = data_nc.dimensions
+    id_dim_name = 'COMID'
+    if 'rivid' in dims:
+        id_dim_name = 'rivid'
 
+    if reach_id != None:
+        reach_ids = data_nc.variables[id_dim_name][:]
+        reach_index = where(reach_ids==reach_id)[0][0]
+
+    nc_vars = data_nc.variables.keys()
+            
     #analyze and write
-    if 'time' in nc_vars:
+    if 'time' in nc_vars and len(data_nc.dimensions[id_dim_name])>0:
         if daily:
-            current_day = datetime.datetime.fromtimestamp(data_nc.variables['time'][0], tz=utc)
+            current_day = datetime.fromtimestamp(data_nc.variables['time'][0], tz=utc)
             flow = 0
             num_days = 0
-            qout_arr = data_nc.variables[out_var][ind, :]
             
-            with open(os.path.join(os.path.dirname(path_to_file), "daily_flows.csv"), 'w') as outcsv:
+            qout_arr = get_rapid_timeseries(data_nc, reach_index, id_dim_name, out_var)
+            with open(path_to_output_file, 'w') as outcsv:
                 writer = csvwriter(outcsv)
                 for idx, t in enumerate(data_nc.variables['time'][:]):
-                    var_time = datetime.datetime.fromtimestamp(t, tz=utc)
+                    var_time = datetime.fromtimestamp(t, tz=utc)
                     if current_day.day == var_time.day:
                         flow += qout_arr[idx]
                         num_days += 1
@@ -140,17 +172,17 @@ def write_flows_to_csv(path_to_file, ind=None, reach_id=None, daily=False, out_v
                         num_days = 1
                         flow = qout_arr[idx]
         else:
-            qout = data_nc.variables[out_var][ind, :]
+            qout = get_rapid_timeseries(data_nc, reach_index, id_dim_name, out_var)
             time = data_nc.variables['time'][:]
-            with open(os.path.join(os.path.dirname(path_to_file), "flows.csv"), 'w') as outcsv:
+            with open(path_to_output_file, 'w') as outcsv:
                 writer = csvwriter(outcsv)
                 for index in xrange(len(qout)):
-                    var_time = datetime.datetime.fromtimestamp(time[index], tz=utc)
+                    var_time = datetime.fromtimestamp(time[index], tz=utc)
                     writer.writerow([var_time.strftime("%Y/%m/%d %H:00"), qout[index]])
 
     else:
-        qout = data_nc.variables[out_var][:, ind]
-        with open(os.path.join(os.path.dirname(path_to_file), "flows.csv"), 'w') as outcsv:
+        qout = get_rapid_timeseries(data_nc, reach_index, id_dim_name, out_var)
+        with open(path_to_output_file, 'w') as outcsv:
             writer = csvwriter(outcsv)
             for index in xrange(len(qout)):
                 writer.writerow([index, qout[index]])

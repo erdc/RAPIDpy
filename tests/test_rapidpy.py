@@ -17,7 +17,9 @@ from shutil import copy
 
 #local import
 from RAPIDpy.rapid import RAPID
-from RAPIDpy.helper_functions import compare_qout_files, write_flows_to_csv
+from RAPIDpy.helper_functions import (compare_qout_files, 
+                                      remove_files,
+                                      write_flows_to_csv)
 
 
 #GLOBAL VARIABLES
@@ -57,10 +59,7 @@ def test_generate_rapid_input_file():
 
     ok_(fcmp(generated_input_file, generated_input_file_solution))
     
-    try:
-        os.remove(generated_input_file)
-    except OSError:
-        pass
+    remove_files(generated_input_file)
 
 def test_update_rapid_input_file():
     """
@@ -92,10 +91,7 @@ def test_update_rapid_input_file():
 
     ok_(fcmp(updated_input_file, updated_input_file_solution))
     
-    try:
-        os.remove(updated_input_file)
-    except OSError:
-        pass
+    remove_files(updated_input_file)
 
 def test_update_rapid_invalid_input_file():
     """
@@ -127,10 +123,7 @@ def test_update_rapid_invalid_input_file():
 
     ok_(fcmp(updated_input_file, updated_input_file_solution))
     
-    try:
-        os.remove(updated_input_file)
-    except OSError:
-        pass
+    remove_files(updated_input_file)
 
 def test_update_rapid_numbers_input_file():
     """
@@ -163,10 +156,7 @@ def test_update_rapid_numbers_input_file():
 
     ok_(fcmp(generated_input_file, generated_input_file_solution))
     
-    try:
-        os.remove(generated_input_file)
-    except OSError:
-        pass
+    remove_files(generated_input_file)
 
 def test_qout_same():
     """
@@ -223,10 +213,7 @@ def test_run_rapid_simulation():
     d1.close()
     d2.close()
 
-    try:
-        os.remove(generated_qout_file)
-    except OSError:
-        pass
+    remove_files(generated_qout_file)
     
 def test_convert_file_to_be_cf_compliant():
     """
@@ -265,10 +252,7 @@ def test_convert_file_to_be_cf_compliant():
     d1.close()
     d2.close()
     
-    try:
-        os.remove(temp_qout_file)
-    except OSError:
-        pass
+    remove_files(temp_qout_file)
 
 def test_generate_qinit_file():
     """
@@ -303,19 +287,63 @@ def test_generate_qinit_file():
                                                 
     qinit_cf_rapid_qout_solution = os.path.join(COMPARE_DATA_PATH, 'qinit_cf_rapid_qout-SOLUTION.csv')
     ok_(fcmp(qinit_cf_rapid_qout, qinit_cf_rapid_qout_solution))
-    
-    def remove_files(*args):
-        for arg in args:
-            try:
-                os.remove(arg)
-            except OSError:
-                pass
 
     remove_files(original_qout_file, 
                  qinit_original_rapid_qout,
                  cf_qout_file,
                  qinit_cf_rapid_qout
                  )
+
+def test_extract_timeseries():
+    """
+    This tests extracting a timeseries from RAPID Qout file
+    """
+    print "TEST 9: TEST EXTRACT TIMESERIES FROM QINIT FILE"
+    
+    #for writing entire time series to file
+    input_qout_file = os.path.join(COMPARE_DATA_PATH, 'Qout_erai_t511_3hr_19800101.nc')
+    original_qout_file = os.path.join(OUTPUT_DATA_PATH, 'Qout_erai_t511_3hr_19800101.nc')
+    copy(input_qout_file, original_qout_file)
+    original_timeseries_file = os.path.join(OUTPUT_DATA_PATH, 'original_timeseries.csv')
+    
+    write_flows_to_csv(original_qout_file,
+                       original_timeseries_file,
+                       reach_id=5785903)
+
+    original_timeseries_file_solution = os.path.join(COMPARE_DATA_PATH, 'original_timeseries-SOLUTION.csv')
+    ok_(fcmp(original_timeseries_file, original_timeseries_file_solution))
+    
+    #if file is CF compliant, you can write out daily average
+    cf_input_qout_file = os.path.join(COMPARE_DATA_PATH, 'Qout_erai_t511_3hr_19800101_CF.nc')
+    cf_qout_file = os.path.join(OUTPUT_DATA_PATH, 'Qout_erai_t511_3hr_19800101_CF.nc')
+    copy(cf_input_qout_file, cf_qout_file)
+    cf_timeseries_daily_file = os.path.join(OUTPUT_DATA_PATH, 'cf_timeseries_daily.csv')
+
+    write_flows_to_csv(cf_qout_file,
+                       cf_timeseries_daily_file,
+                       reach_index=20,
+                       daily=True)
+
+    cf_timeseries_daily_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_timeseries_daily-SOLUTION.csv')    
+    ok_(fcmp(cf_timeseries_daily_file, cf_timeseries_daily_file_solution))
+    
+    #if file is CF compliant, check write out timeseries
+    cf_timeseries_file = os.path.join(OUTPUT_DATA_PATH, 'cf_timeseries.csv')
+    write_flows_to_csv(cf_qout_file,
+                       cf_timeseries_file,
+                       reach_index=20)
+
+    cf_timeseries_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_timeseries-SOLUTION.csv')    
+    ok_(fcmp(cf_timeseries_file, cf_timeseries_file_solution))
+
+    remove_files(original_timeseries_file, 
+                 original_qout_file,
+                 cf_timeseries_file,
+                 cf_qout_file
+                 )
+
+    
+    
 
 if __name__ == '__main__':
     import nose

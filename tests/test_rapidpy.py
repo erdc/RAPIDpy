@@ -306,11 +306,14 @@ def test_extract_timeseries():
     copy(input_qout_file, original_qout_file)
     original_timeseries_file = os.path.join(OUTPUT_DATA_PATH, 'original_timeseries.csv')
     
-    write_flows_to_csv(original_qout_file,
-                       original_timeseries_file,
-                       reach_id=5785903)
-
-    original_timeseries_file_solution = os.path.join(COMPARE_DATA_PATH, 'original_timeseries-SOLUTION.csv')
+    time_valid = write_flows_to_csv(original_qout_file,
+                                    original_timeseries_file,
+                                    reach_id=5785903)
+    if time_valid:
+        original_timeseries_file_solution = os.path.join(COMPARE_DATA_PATH, 'original_timeseries-SOLUTION.csv')
+    else:
+        original_timeseries_file_solution = os.path.join(COMPARE_DATA_PATH, 'original_timeseries-notime-SOLUTION.csv')
+        
     ok_(fcmp(original_timeseries_file, original_timeseries_file_solution))
     
     #if file is CF compliant, you can write out daily average

@@ -8,13 +8,12 @@
 ##
 from csv import reader as csvreader
 from csv import writer as csvwriter
-from datetime import datetime
 from netCDF4 import Dataset
 from numpy import where, unique
+from numpy.ma import masked
 from numpy.testing import assert_almost_equal
 from os import remove
-from os.path import dirname, join
-from pytz import utc
+import time
 
 #------------------------------------------------------------------------------
 # HELPER FUNCTIONS
@@ -146,11 +145,17 @@ def write_flows_to_csv(path_to_rapid_qout_file, path_to_output_file,
         reach_index = where(reach_ids==reach_id)[0][0]
 
     nc_vars = data_nc.variables.keys()
-            
+    
+    time_var_valid = False
+    if 'time' in nc_vars:
+        if len(data_nc.dimensions['time'])>0:
+            if not (data_nc.variables['time'][:] == masked).any():
+                time_var_valid = True
+
     #analyze and write
-    if 'time' in nc_vars and len(data_nc.dimensions[id_dim_name])>0:
+    if time_var_valid:
         if daily:
-            current_day = datetime.fromtimestamp(data_nc.variables['time'][0], tz=utc)
+            current_day = time.gmtime(data_nc.variables['time'][0])
             flow = 0
             num_days = 0
             
@@ -158,14 +163,14 @@ def write_flows_to_csv(path_to_rapid_qout_file, path_to_output_file,
             with open(path_to_output_file, 'w') as outcsv:
                 writer = csvwriter(outcsv)
                 for idx, t in enumerate(data_nc.variables['time'][:]):
-                    var_time = datetime.fromtimestamp(t, tz=utc)
-                    if current_day.day == var_time.day:
+                    var_time = time.gmtime(t)
+                    if current_day.tm_yday == var_time.tm_yday:
                         flow += qout_arr[idx]
                         num_days += 1
                     else:
                         if num_days > 0:
                             #write last average
-                            writer.writerow([current_day.strftime("%Y/%m/%d"), flow/num_days])
+                            writer.writerow([time.strftime("%Y/%m/%d", current_day), flow/num_days])
                         
                         #start new average
                         current_day = var_time
@@ -173,14 +178,15 @@ def write_flows_to_csv(path_to_rapid_qout_file, path_to_output_file,
                         flow = qout_arr[idx]
         else:
             qout = get_rapid_timeseries(data_nc, reach_index, id_dim_name, out_var)
-            time = data_nc.variables['time'][:]
+            time_array = data_nc.variables['time'][:]
             with open(path_to_output_file, 'w') as outcsv:
                 writer = csvwriter(outcsv)
                 for index in xrange(len(qout)):
-                    var_time = datetime.fromtimestamp(time[index], tz=utc)
-                    writer.writerow([var_time.strftime("%Y/%m/%d %H:00"), qout[index]])
+                    var_time = time.gmtime(time_array[index])
+                    writer.writerow([time.strftime("%Y/%m/%d %H:00", var_time), qout[index]])
 
     else:
+        print "Valid time variable not found. Printing values only ..."
         qout = get_rapid_timeseries(data_nc, reach_index, id_dim_name, out_var)
         with open(path_to_output_file, 'w') as outcsv:
             writer = csvwriter(outcsv)

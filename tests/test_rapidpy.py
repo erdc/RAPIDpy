@@ -349,4 +349,3 @@ def test_extract_timeseries():
 if __name__ == '__main__':
     import nose
     nose.main()
-

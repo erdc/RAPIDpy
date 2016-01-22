@@ -150,7 +150,11 @@ def write_flows_to_csv(path_to_rapid_qout_file, path_to_output_file,
     if 'time' in nc_vars:
         if len(data_nc.dimensions['time'])>0:
             if not (data_nc.variables['time'][:] == masked).any():
-                time_var_valid = True
+                try:
+                    time.gmtime(data_nc.variables['time'][0])
+                    time_var_valid = True
+                except ValueError:
+                    pass
 
     #analyze and write
     if time_var_valid:
@@ -194,3 +198,4 @@ def write_flows_to_csv(path_to_rapid_qout_file, path_to_output_file,
                 writer.writerow([index, qout[index]])
 
     data_nc.close()
+    return time_var_valid

@@ -1,7 +1,7 @@
 # RAPIDpy
 
-Python scripting interface for the RAPID program.
-More information about installation and the input parameters can be found at http://rapid-hub.org.
+Python scripting interface for the RAPID program to assist preparing inputs, automating running RAPID, and postprocess the output.
+More information about installation and the input parameters for RAPID can be found at http://rapid-hub.org.
 The source code for RAPID is located at https://github.com/c-h-david/rapid/.
 
 [![DOI](https://zenodo.org/badge/doi/10.5281/zenodo.45149.svg)](http://dx.doi.org/10.5281/zenodo.45149)

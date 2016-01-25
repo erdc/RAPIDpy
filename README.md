@@ -1,6 +1,6 @@
 # RAPIDpy
 
-Python scripting interface for the RAPID program to assist preparing inputs, automating running RAPID, and postprocess the output.
+RAPIDpy is a python interface for RAPID that assists to prepare inputs, runs the RAPID program, and provides post-processing utilities.
 More information about installation and the input parameters for RAPID can be found at http://rapid-hub.org.
 The source code for RAPID is located at https://github.com/c-h-david/rapid/.
 

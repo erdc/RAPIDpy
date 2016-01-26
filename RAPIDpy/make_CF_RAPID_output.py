@@ -488,10 +488,10 @@ class ConvertRAPIDOutputToCF(object):
             self._generate_time_values()
             
             # Populate comid, lat, lon, z
+            self.cf_nc.variables[self.output_id_dim_name][:] = self.raw_nc_list[0].variables[input_id_dim_name][:]
+
             log('writing comid lat lon z', 'INFO')
             lookup_start = datetime.now()
-            self.cf_nc.variables[self.output_id_dim_name][:] = self.raw_nc_list[0].variables[input_id_dim_name][:]
-            
             self._write_comid_lat_lon_z()
             duration = str((datetime.now() - lookup_start).total_seconds())
             log('Lookup Duration (s): ' + duration, 'INFO')

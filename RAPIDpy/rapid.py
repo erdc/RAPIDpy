@@ -276,11 +276,19 @@ class RAPID(object):
                 line = line.strip()
                 if not line[:1].isalpha() or not line:
                     continue
-                line_split = line.split()
-                attr = line_split[0]
+                line_split = line.split("=")
+                attr = line_split[0].strip()
                 value = None
                 if len(line_split)>1:
-                    value = line_split[1]
+                    value = line_split[1].strip().replace("'", "").replace('"', "")
+                    #convert integers to integers
+                    try:
+                        value = int(value)
+                    except Exception:
+                        pass
+                    #remove dots from beginning & end of value
+                    if attr.startswith('BS'):
+                        value = value.replace(".", "") 
                 elif attr in self._no_value_attr_list:
                     value = True
                 #add attribute if exists
@@ -293,7 +301,7 @@ class RAPID(object):
                     print "Invalid argument" , attr, ". Skipping ..."
             old_file.close()
             
-            self.generate_input_file(file_path)
+            self.generate_namelist_file(file_path)
         else:
             raise Exception("RAPID namelist file to update not found.")
             
@@ -311,7 +319,7 @@ class RAPID(object):
                                     comid_lat_lon_z_file=comid_lat_lon_z_file, #path to comid_lat_lon_z file
                                     rapid_connect_file=self.rapid_connect_file, #path to RAPID connect file
                                     project_name=project_name, #name of your project
-                                    output_id_dim_name='COMID', #name of ID dimension in output file, typically COMID or FEATUREID
+                                    output_id_dim_name='rivid', #name of ID dimension in output file, typically COMID or FEATUREID
                                     output_flow_var_name='Qout', #name of streamflow variable in output file, typically Qout or m3_riv
                                     print_debug=False)
         cv.convert()
@@ -410,12 +418,18 @@ class RAPID(object):
         print "Extracting data ..."
         #get information from datasets
         data_nc = Dataset(self.Qout_file, mode="r")
-        riv_bas_id_array = data_nc.variables['COMID'][:]
+        
+        dims = data_nc.dimensions
+        id_dim_name = 'COMID'
+        if 'rivid' in dims:
+            id_dim_name = 'rivid'
+
+        riv_bas_id_array = data_nc.variables[id_dim_name][:]
         qout_dimensions = data_nc.variables['Qout'].dimensions
-        if qout_dimensions[0].lower() == 'time' and qout_dimensions[1].lower() == 'comid':
+        if qout_dimensions[0].lower() == 'time' and qout_dimensions[1].lower() == id_dim_name.lower():
             #data is raw rapid output
             data_values = data_nc.variables['Qout'][time_index,:]
-        elif qout_dimensions[1].lower() == 'time' and qout_dimensions[0].lower() == 'comid':
+        elif qout_dimensions[1].lower() == 'time' and qout_dimensions[0].lower() == id_dim_name.lower():
             #the data is CF compliant and has time=0 added to output
             data_values = data_nc.variables['Qout'][:,time_index]
         else:
@@ -540,160 +554,3 @@ class RAPID(object):
                 print "No valid data returned ..."
         else:
             print "USGS query error ..."
-
-#------------------------------------------------------------------------------
-#Useful Functions
-#------------------------------------------------------------------------------
-def compare_qout_files(dataset1_path, dataset2_path, Qout_var="Qout"):
-    """
-    This function compares the output of RAPID Qout and tells you where they are different.
-    """
-    d1 = Dataset(dataset1_path)
-    d2 = Dataset(dataset2_path)
-    if not np.unique(d1.variables['COMID'][:] != d2.variables['COMID'][:]).all():
-        print "WARNING: COMID order is different in each dataset. Reordering data for comparison."
-        if len(d1.variables['COMID'][:]) != len(d2.variables['COMID'][:]):
-            raise Exception("Length of COMID input not the same.")
-            
-        d2_comid_list = d2.variables['COMID'][:]
-        d2_reordered_comid_list = []
-        for comid in d1.variables['COMID'][:]:
-            d2_reordered_comid_list.append(np.where(d2_comid_list==comid)[0][0])
-        qout_dimensions = d1.variables[Qout_var].dimensions
-        if qout_dimensions[0].lower() == 'time' and \
-           qout_dimensions[1].lower() == 'comid':
-            d2_reordered_qout = d2.variables[Qout_var][:,d2_reordered_comid_list]
-        elif qout_dimensions[1].lower() == 'time' and \
-             qout_dimensions[0].lower() == 'comid':
-            d2_reordered_qout = d2.variables[Qout_var][d2_reordered_comid_list,:]
-        else:
-            raise Exception("Invalid RAPID Qout file.")
-    else:
-        d2_reordered_qout = d2.variables[Qout_var][:]
-        
-    #get where the files are different
-    where_diff = np.where(d1.variables[Qout_var][:] != d2_reordered_qout)
-    un_where_diff = np.unique(where_diff[0])
-    
-    #if different, check to see how different
-    if un_where_diff.any():
-        decimal_test = 7
-        while decimal_test > 0:
-            try:
-                np.testing.assert_almost_equal(d1.variables[Qout_var][:], 
-                                               d2_reordered_qout, 
-                                               decimal=decimal_test)
-                print "\nALMOST EQUAL to", decimal_test, "decimal places.\n"
-                decimal_test=-1
-            except AssertionError as ex:
-                if decimal_test <= 1:
-                    print ex
-                decimal_test-=1
-                pass
-        print "Number of different timeseries:", len(un_where_diff)
-        print "COMID idexes where different:"
-        print un_where_diff
-        index = un_where_diff[0]
-        print "Dataset 1 example. COMID index:", index
-        print d1.variables[Qout_var][index, :]
-        print "Dataset 2 example. COMID index:", index
-        print d2_reordered_qout[index, :]
-    
-    else:
-        print "Output Qout data is the same."
-
-    d1.close()
-    d2.close()
-
-def write_flows_to_csv(path_to_file, ind=None, reach_id=None, daily=False, out_var='Qout'):
-    """
-        Write out RAPID output to CSV file
-    """
-    data_nc = Dataset(path_to_file)
-    if reach_id != None:
-        reach_ids = data_nc.variables['COMID'][:]
-        ind = np.where(reach_ids==reach_id)[0][0]
-        print ind, reach_id
-    nc_vars = data_nc.variables.keys()
-
-    #analyze and write
-    if 'time' in nc_vars:
-        if daily:
-            current_day = datetime.datetime.fromtimestamp(data_nc.variables['time'][0], tz=utc)
-            flow = 0
-            num_days = 0
-            qout_arr = data_nc.variables[out_var][ind, :]
-            
-            with open(os.path.join(os.path.dirname(path_to_file), "daily_flows.csv"), 'w') as outcsv:
-                writer = csvwriter(outcsv)
-                for idx, t in enumerate(data_nc.variables['time'][:]):
-                    var_time = datetime.datetime.fromtimestamp(t, tz=utc)
-                    if current_day.day == var_time.day:
-                        flow += qout_arr[idx]
-                        num_days += 1
-                    else:
-                        if num_days > 0:
-                            #write last average
-                            writer.writerow([current_day.strftime("%Y/%m/%d"), flow/num_days])
-                        
-                        #start new average
-                        current_day = var_time
-                        num_days = 1
-                        flow = qout_arr[idx]
-        else:
-            qout = data_nc.variables[out_var][ind, :]
-            time = data_nc.variables['time'][:]
-            with open(os.path.join(os.path.dirname(path_to_file), "flows.csv"), 'w') as outcsv:
-                writer = csvwriter(outcsv)
-                for index in xrange(len(qout)):
-                    var_time = datetime.datetime.fromtimestamp(time[index], tz=utc)
-                    writer.writerow([var_time.strftime("%Y/%m/%d %H:00"), qout[index]])
-
-    else:
-        qout = data_nc.variables[out_var][:, ind]
-        with open(os.path.join(os.path.dirname(path_to_file), "flows.csv"), 'w') as outcsv:
-            writer = csvwriter(outcsv)
-            for index in xrange(len(qout)):
-                writer.writerow([index, qout[index]])
-
-    data_nc.close()
-
-"""
-if __name__ == "__main__":
-    rapid_manager = RAPID(rapid_executable_location="",
-                          use_all_processors=True,                          
-                          ZS_TauR = 24*3600, #duration of routing procedure (time step of runoff data)
-                          ZS_dtR = 15*60, #internal routing time step
-                          ZS_TauM = 12*24*3600, #total simulation time 
-                          ZS_dtM = 24*3600 #input time step 
-                         )
-    rapid_manager.generate_usgs_avg_daily_flows_opt(reach_id_gage_id_file='mississippi_usgsgage_id_comid.csv',
-                                                    start_datetime=datetime.datetime(2000,1,1),
-                                                    end_datetime=datetime.datetime(2009,1,1),
-                                                    out_streamflow_file="usgs_streamflow.csv",
-                                                    out_stream_id_file="stream_id_file.csv")
-    era_rapid_output_file = os.path.join(master_watershed_output_directory,
-                                                           'Qout_erai.nc')
-    rapid_manager.update_parameters(rapid_connect_file=case_insensitive_file_search(master_watershed_input_directory,
-                                                                                 r'rapid_connect\.csv'),
-                                    Vlat_file=master_rapid_runoff_file,
-                                    riv_bas_id_file=case_insensitive_file_search(master_watershed_input_directory,
-                                                                                 r'riv_bas_id\.csv'),
-                                    k_file=case_insensitive_file_search(master_watershed_input_directory,
-                                                                        r'k\.csv'),
-                                    x_file=case_insensitive_file_search(master_watershed_input_directory,
-                                                                        r'x\.csv'),
-                                    Qout_file=era_rapid_output_file
-                                    )
-
-    comid_lat_lon_z_file = case_insensitive_file_search(master_watershed_input_directory,
-                                                        r'comid_lat_lon_z\.csv')
-
-    rapid_manager.update_reach_number_data()
-    rapid_manager.run()
-    rapid_manager.make_output_CF_compliant(simulation_start_datetime=datetime.datetime(1980, 1, 1),
-                                           comid_lat_lon_z_file=comid_lat_lon_z_file,
-                                           project_name="ERA Interim Historical flows by US Army ERDC")     
-"""
-            
-            

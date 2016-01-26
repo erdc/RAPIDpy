@@ -1,7 +1,14 @@
 # RAPIDpy
-Python scripting interface for the RAPID progam.
-More information about installation and the input parameters can be found at http://rapid-hub.org.
+
+RAPIDpy is a python interface for RAPID that assists to prepare inputs, runs the RAPID program, and provides post-processing utilities.
+More information about installation and the input parameters for RAPID can be found at http://rapid-hub.org.
 The source code for RAPID is located at https://github.com/c-h-david/rapid/.
+
+[![DOI](https://zenodo.org/badge/doi/10.5281/zenodo.45149.svg)](http://dx.doi.org/10.5281/zenodo.45149)
+
+[![Build Status](https://travis-ci.org/erdc-cm/RAPIDpy.svg?branch=master)](https://travis-ci.org/erdc-cm/RAPIDpy)
+
+[![License (3-Clause BSD)](https://img.shields.io/badge/license-BSD%203--Clause-yellow.svg)](https://github.com/erdc-cm/RAPIDpy/blob/master/LICENSE)
 
 #Installation
 
@@ -142,3 +149,70 @@ rapid_manager.generate_usgs_avg_daily_flows_opt(reach_id_gage_id_file=join(main,
 												out_streamflow_file=join(main,"streamflow_2000_2014.csv"), 
 												out_stream_id_file=join(main,"streamid_2000_2014.csv"))
 ```
+												
+##Merge RAPID output
+You can use this to combine consecutive RAPID output files into one file. WARNING: This code replaces the first file with the combined output and deletes the second file. BACK UP YOUR FILES!!!!
+
+Example:
+```python
+import datetime
+from RAPIDpy.make_CF_RAPID_output import ConvertRAPIDOutputToCF
+file1 = ""
+file2 = ""
+cv = ConvertRAPIDOutputToCF(rapid_output_file=[file1, file2],
+                            start_datetime=datetime.datetime(2005,1,1),
+                            time_step=[3*3600, 3*3600],
+                            qinit_file="",
+                            comid_lat_lon_z_file="",
+                            rapid_connect_file="",
+                            project_name="NLDAS(VIC)-RAPID historical flows by US Army ERDC",
+                            output_id_dim_name='COMID',
+                            output_flow_var_name='Qout',
+                            print_debug=False)
+cv.convert()
+```
+
+##Write Qout timeseries to csv file
+This function simplifies writing time series for each stream reach to a csv file.
+
+```python
+from RAPIDpy.helper_functions import write_flows_to_csv
+path_to_file = '/output_mississippi-nfie/Qout_k3v1_2005to2009.nc'
+#for writing entire time series to file
+write_flows_to_csv(path_to_file,
+                   '/timeseries/Qout_3624735.csv', 
+		           reach_id=3624735) #COMID or rivid
+		   
+#if file is CF compliant, you can write out daily average
+write_flows_to_csv(path_to_file, 
+                   '/timeseries/Qout_daily.csv'
+		           reach_index=20, #index of COMID or rivid (example if you already know index instead if reach_id)
+		            daily=True) #if file is CF compliant, write out daily flows
+```
+
+##Generate qinit from past qout
+RAPIDpy also creates a qinit file from a RAPID qout file. This example shows how.
+```python
+from RAPIDpy.rapid import RAPID
+rapid_manager = RAPID(rapid_executable_location='/p/u4hfraat/rapid/src/rapid',
+                      Qout_file='/output_mississippi-nfie/Qout_k2v1_2005to2009.nc', 
+		      rapid_connect_file='/input_mississippi_nfie/rapid_connect_ECMWF.csv'
+                     )
+rapid_manager.generate_qinit_from_past_qout(qinit_file='/autorapid/input_mississippi_nfie/Qinit_2008_flood.csv',
+					    time_index=10162) #time_index is optional, if not included it will be last time step
+```
+##Goodness of Fit
+To check how well your simulation performed versus observations, this function can help you.
+```python
+from RAPIDpy.goodness_of_fit import find_goodness_of_fit_csv, find_goodness_of_fit
+
+#if you have observations and model results next to each other in columns, this works for you
+find_goodness_of_fit_csv('/united_kingdom-thames/flows_kingston_gage_noah.csv')
+
+#if you have gage files in the format RAPID needs for calibration, this will generate a file for you with results
+find_goodness_of_fit(reach_id_file='/input_mississippi-nfie/all_gauges_nfie_id.csv',
+                     rapid_qout_file='/output_mississippi-nfie/Qout_k4v2_2005to2014.nc',
+                     observed_file='/input_mississippi-nfie/obs_all_gauges_nfie.csv',
+                     out_analysis_file='/output_mississippi-nfie/flows_analysis_vic_k4v2_2005-14.csv',
+                     #steps_per_group=8, #for raw rapid output (8 is produces daily flows for 3-hr timesteps)
+                     daily=True) #use this option for CF compliant files

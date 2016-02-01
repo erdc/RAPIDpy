@@ -152,16 +152,20 @@ class ConvertRAPIDOutputToCF(object):
                 id_dim_name = 'FEATUREID'
             else:
                 msg = 'Could not find ID dimension. Looked for rivid, COMID and FEATUREID.'
-                raise Exception(msg)
+                log(msg, 'ERROR')
             id_dim_name_list.append(id_dim_name)
 
             id_len_list.append(len(dims[id_dim_name]))
 
-            if 'time' not in dims:
-                msg = 'Could not find time dimension. Looked for Time.'
-                raise Exception(msg)
+            time_len = -1
+            if 'time' in dims:
+                time_len = len(dims['time'])
+            elif 'Time' in dims:
+                time_len = len(dims['Time'])
+            else:
+                msg = 'Could not find time dimension.'
+                log(msg, 'ERROR')
                 
-            time_len = len(dims['time'])
             if initial_file:
                 time_len += 1 #add one for the first flow value RAPID
                             #does not include

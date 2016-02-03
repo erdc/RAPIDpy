@@ -9,11 +9,11 @@
 __author__ = 'Alan D. Snow'
 from csv import writer as csvwriter
 import datetime
-from netCDF4 import Dataset
 import numpy as np
 from pytz import utc
 
 from helper_functions import csv_to_list
+from dataset import RAPIDDataset
 
 #------------------------------------------------------------------------------
 #statistic functions
@@ -194,8 +194,8 @@ def find_goodness_of_fit(reach_id_file, rapid_qout_file, observed_file,
     """
     reach_id_list = np.array([row[0] for row in csv_to_list(reach_id_file)])
    
-    nc_file = Dataset(rapid_qout_file)
-    nc_reach_id_list = nc_file.variables['COMID'][:]
+    nc_file = RAPIDDataset(rapid_qout_file)
+    nc_reach_id_list = nc_file.get_river_id_array()
     
     #analyze and write
     def get_daily_time_series(data_nc, reach_index, daily, steps_per_group):
@@ -204,13 +204,13 @@ def find_goodness_of_fit(reach_id_file, rapid_qout_file, observed_file,
         """
         if 'time' in data_nc.variables.keys():
             if daily:
-                current_day = datetime.datetime.fromtimestamp(data_nc.variables['time'][0], tz=utc)
+                current_day = datetime.datetime.fromtimestamp(data_nc.get_time_array()[0], tz=utc)
                 flow = 0.0
                 num_days = 0
-                qout_arr = data_nc.variables['Qout'][reach_index, :]
+                qout_arr = data_nc.get_qout_index(reach_index)
                 daily_qout = []
-                for idx, t in enumerate(data_nc.variables['time'][:]):
-                    var_time = datetime.datetime.fromtimestamp(t, tz=utc)
+                for idx, t in enumerate(data_nc.get_time_array()):
+                    var_time = datetime.datetime.utcfromtimestamp(t)
                     if current_day.day == var_time.day:
                         flow += qout_arr[idx]
                         num_days += 1
@@ -227,7 +227,7 @@ def find_goodness_of_fit(reach_id_file, rapid_qout_file, observed_file,
                 return np.array(daily_qout, np.float32)
             return nc_file.variables['Qout'][reach_index,:]
         elif steps_per_group > 1:
-            flow_data = data_nc.variables['Qout'][:, reach_index]
+            flow_data = data_nc.get_qout_index(reach_index)
             daily_qout = []
             for step_index in xrange(0, len(flow_data), steps_per_group):
                 flows_slice = flow_data[step_index:step_index + steps_per_group]
@@ -235,7 +235,7 @@ def find_goodness_of_fit(reach_id_file, rapid_qout_file, observed_file,
             
             return np.array(daily_qout, np.float32)
         
-        return nc_file.variables['Qout'][:,reach_index]
+        return data_nc.get_qout_index(reach_index)
 
 
     observed_table = np.array(csv_to_list(observed_file), np.float32)

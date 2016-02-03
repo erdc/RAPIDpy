@@ -49,15 +49,15 @@ def compare_qout_files(dataset1_path, dataset2_path, Qout_var="Qout"):
     d1 = RAPIDDataset(dataset1_path)
     d2 = RAPIDDataset(dataset2_path)
 
-    if len(d1.get_river_index_array()) != len(d2.get_river_index_array()):
+    if len(d1.get_river_id_array()) != len(d2.get_river_id_array()):
         raise Exception("Length of COMID/rivid input not the same.")
 
-    if not (d1.get_river_index_array() == d2.get_river_index_array()).all():
+    if not (d1.get_river_id_array() == d2.get_river_id_array()).all():
         print "WARNING: COMID/rivid order is different in each dataset. Reordering data for comparison."
         
         d2_reordered_reach_index_list = []
-        for comid in d1.get_river_index_array():
-            d2_reordered_reach_index_list.append(where(d2.get_river_index_array()==comid)[0][0])
+        for comid in d1.get_river_id_array():
+            d2_reordered_reach_index_list.append(where(d2.get_river_id_array()==comid)[0][0])
         d2_reordered_qout = d2.get_qout_index(d2_reordered_reach_index_list)
     else:
         d2_reordered_qout = d2.get_qout()

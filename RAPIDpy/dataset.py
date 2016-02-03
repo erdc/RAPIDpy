@@ -88,7 +88,7 @@ class RAPIDDataset(object):
         else:
             return [datetime.datetime.utcfromtimestamp(t) for t in time_array]
 
-    def get_river_index_array(self):
+    def get_river_id_array(self):
         """
         This method returns the river index array for this file
         """
@@ -100,7 +100,7 @@ class RAPIDDataset(object):
         dataset corresponding to the river ID
         """
         try:
-            return np.where(self.get_river_index_array()==river_id)[0][0]
+            return np.where(self.get_river_id_array()==river_id)[0][0]
         except IndexError as ex:
             raise IndexError("ERROR: River ID", river_id, "not found in dataset ...")
 

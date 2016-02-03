@@ -429,7 +429,7 @@ class RAPID(object):
         rapid_connect_array = csv_to_list(self.rapid_connect_file)
         stream_id_array = np.array([int(float(row[0])) for row in rapid_connect_array])
         init_flows_array = np.zeros(len(rapid_connect_array))
-        for riv_bas_index, riv_bas_id in enumerate(qout_nc.get_river_index_array()):
+        for riv_bas_index, riv_bas_id in enumerate(qout_nc.get_river_id_array()):
             try:
                 data_index = np.where(stream_id_array==riv_bas_id)[0][0]
                 init_flows_array[data_index] = streamflow_values[riv_bas_index]

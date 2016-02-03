@@ -88,6 +88,44 @@ class RAPIDDataset(object):
         else:
             return [datetime.datetime.utcfromtimestamp(t) for t in time_array]
 
+    def get_time_index_range(self, date_peak_search_start=None,
+                             date_peak_search_end=None,
+                             time_index_peak_search_start=None,
+                             time_index_peak_search_end=None,
+                             time_index=None):
+        """
+        Generates a time index range based on datetimes
+        """
+        #get the range of time based on datetime range
+        time_range = None
+        if 'time' in self.qout_nc.variables and (date_peak_search_start is not None or date_peak_search_end is not None):
+            print "Determining time range ({0} to {1})...".format(date_peak_search_start, date_peak_search_end)
+            time_array = self.qout_nc.variables['time'][:]
+            if date_peak_search_start is not None:
+                seconds_start = (date_peak_search_start-datetime.datetime(1970,1,1)).total_seconds()
+                time_range = np.where(time_array>=seconds_start)[0]
+            
+            if date_peak_search_end is not None:
+                seconds_end = (date_peak_search_end-datetime.datetime(1970,1,1)).total_seconds()
+                if time_range is not None:
+                    time_range = np.intersect1d(time_range, np.where(time_array<=seconds_end)[0])
+                else:
+                    time_range = np.where(time_array<=seconds_end)[0]
+    
+        #get the range of time based on time index range
+        elif time_index_peak_search_start is not None or time_index_peak_search_end is not None:
+            if time_index_peak_search_start is None:
+                time_index_peak_search_start = 0
+            if time_index_peak_search_end is None:
+                time_index_peak_search_end = self.size_time
+            time_range = range(time_index_peak_search_start,time_index_peak_search_end)
+
+        #get only one time step
+        elif time_index is not None:
+            time_range = time_index
+        
+        return time_range
+
     def get_river_id_array(self):
         """
         This method returns the river index array for this file
@@ -164,7 +202,8 @@ class RAPIDDataset(object):
                        date_peak_search_end=None,
                        time_index_peak_search_start=None,
                        time_index_peak_search_end=None,
-                       time_index=None):
+                       time_index=None,
+                       time_index_array=None):
         """
         This method extracts streamflow data by river index
         It allows for extracting single or multiple river streamflow arrays
@@ -174,34 +213,12 @@ class RAPIDDataset(object):
             if isinstance(river_index_array, list) or type(river_index_array).__module__ == np.array:
                 if len(river_index_array) == 1:
                     river_index_array = river_index_array[0]
-
-        #get the range of time based on datetime range
-        time_range = None
-        if 'time' in self.qout_nc.variables and (date_peak_search_start is not None or date_peak_search_end is not None):
-            print "Determining time range ({0} to {1})...".format(date_peak_search_start, date_peak_search_end)
-            time_array = self.qout_nc.variables['time'][:]
-            if date_peak_search_start is not None:
-                seconds_start = (date_peak_search_start-datetime.datetime(1970,1,1)).total_seconds()
-                time_range = np.where(time_array>=seconds_start)[0]
-            
-            if date_peak_search_end is not None:
-                seconds_end = (date_peak_search_end-datetime.datetime(1970,1,1)).total_seconds()
-                if time_range is not None:
-                    time_range = np.intersect1d(time_range, np.where(time_array<=seconds_end)[0])
-                else:
-                    time_range = np.where(time_array<=seconds_end)[0]
-
-        #get the range of time based on time index range
-        elif time_index_peak_search_start is not None or time_index_peak_search_end is not None:
-            if time_index_peak_search_start is None:
-                time_index_peak_search_start = 0
-            if time_index_peak_search_end is None:
-                time_index_peak_search_end = self.size_time
-            time_range = range(time_index_peak_search_start,time_index_peak_search_end)
-
-        #get only one time step
-        elif time_index is not None:
-            time_range = time_index
+        if time_index_array is None:
+            time_index_array = self.get_time_index_range(date_peak_search_start,
+                                                         date_peak_search_end,
+                                                         time_index_peak_search_start,
+                                                         time_index_peak_search_end,
+                                                         time_index)
 
         print "Extracting streamflow data ..."
         qout_variable = self.qout_nc.variables['Qout']

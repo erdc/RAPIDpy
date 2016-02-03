@@ -225,19 +225,19 @@ class RAPIDDataset(object):
         qout_dimensions = qout_variable.dimensions
         streamflow_array = []
         if qout_dimensions[0].lower() == 'time' and qout_dimensions[1].lower() == self.river_id_dimension.lower():
-            if time_range is not None and river_index_array is not None:
-                streamflow_array = qout_variable[time_range,river_index_array].transpose()
-            elif time_range is not None:
-                streamflow_array = qout_variable[time_range,:].transpose()
+            if time_index_array is not None and river_index_array is not None:
+                streamflow_array = qout_variable[time_index_array,river_index_array].transpose()
+            elif time_index_array is not None:
+                streamflow_array = qout_variable[time_index_array,:].transpose()
             elif river_index_array is not None:
                 streamflow_array = qout_variable[:,river_index_array].transpose()
             else:
                 streamflow_array = qout_variable[:].transpose()
         elif qout_dimensions[1].lower() == 'time' and qout_dimensions[0].lower() == self.river_id_dimension.lower():
-            if time_range is not None and river_index_array is not None:
-                streamflow_array = qout_variable[river_index_array, time_range]
-            elif time_range is not None:
-                streamflow_array = qout_variable[:, time_range]
+            if time_index_array is not None and river_index_array is not None:
+                streamflow_array = qout_variable[river_index_array, time_index_array]
+            elif time_index_array is not None:
+                streamflow_array = qout_variable[:, time_index_array]
             elif river_index_array is not None:
                 streamflow_array = qout_variable[river_index_array, :]
             else:

@@ -11,7 +11,6 @@ import datetime
 from dateutil.parser import parse
 from dateutil.tz import tzoffset
 from multiprocessing import cpu_count
-from netCDF4 import Dataset
 import numpy as np
 import os
 from pytz import utc
@@ -19,6 +18,7 @@ from requests import get
 from subprocess import Popen, PIPE
 
 #local
+from dataset import RAPIDDataset
 from helper_functions import csv_to_list
 from make_CF_RAPID_output import ConvertRAPIDOutputToCF
 
@@ -417,34 +417,22 @@ class RAPID(object):
         print "Generating qinit file from qout file ..."
         print "Extracting data ..."
         #get information from datasets
-        data_nc = Dataset(self.Qout_file, mode="r")
+        qout_nc = RAPIDDataset(self.Qout_file)
         
-        dims = data_nc.dimensions
-        id_dim_name = 'COMID'
-        if 'rivid' in dims:
-            id_dim_name = 'rivid'
-
-        riv_bas_id_array = data_nc.variables[id_dim_name][:]
-        qout_dimensions = data_nc.variables['Qout'].dimensions
-        if qout_dimensions[0].lower() == 'time' and qout_dimensions[1].lower() == id_dim_name.lower():
-            #data is raw rapid output
-            data_values = data_nc.variables['Qout'][time_index,:]
-        elif qout_dimensions[1].lower() == 'time' and qout_dimensions[0].lower() == id_dim_name.lower():
-            #the data is CF compliant and has time=0 added to output
-            data_values = data_nc.variables['Qout'][:,time_index]
-        else:
-            data_nc.close()
-            raise Exception( "Invalid ECMWF forecast file %s" % self.Qout_file)
-        data_nc.close()
+        try:
+            streamflow_values = qout_nc.get_qout(time_index=time_index)
+        except Exception:
+            qout_nc.close()
+            raise
     
         print "Reordering data..."
         rapid_connect_array = csv_to_list(self.rapid_connect_file)
         stream_id_array = np.array([int(float(row[0])) for row in rapid_connect_array])
         init_flows_array = np.zeros(len(rapid_connect_array))
-        for riv_bas_index, riv_bas_id in enumerate(riv_bas_id_array):
+        for riv_bas_index, riv_bas_id in enumerate(qout_nc.get_river_index_array()):
             try:
                 data_index = np.where(stream_id_array==riv_bas_id)[0][0]
-                init_flows_array[data_index] = data_values[riv_bas_index]
+                init_flows_array[data_index] = streamflow_values[riv_bas_index]
             except Exception:
                 raise Exception ('riv bas id %s not found in connectivity list.' % riv_bas_id)
         

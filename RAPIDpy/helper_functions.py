@@ -63,8 +63,8 @@ def compare_qout_files(dataset1_path, dataset2_path, Qout_var="Qout"):
         d2_reordered_qout = d2.get_qout()
         
     #get where the files are different
-    q1_qout = d1.get_qout()
-    where_diff = where(q1_qout != d2_reordered_qout)
+    d1_qout = d1.get_qout()
+    where_diff = where(d1_qout != d2_reordered_qout)
     un_where_diff = unique(where_diff[0])
     
     #if different, check to see how different
@@ -113,7 +113,6 @@ def write_flows_to_csv(path_to_rapid_qout_file, path_to_output_file,
 
     #analyze and write
     qout_arr = data_nc.get_qout_index(reach_index)
-    print qout_arr
     time_var_valid = data_nc.is_time_variable_valid()
     if time_var_valid:
         if daily:

@@ -6,21 +6,20 @@
 ##  Created by Alan D. Snow 2016.
 ##  Copyright © 2015 Alan D Snow. All rights reserved.
 ##
-from csv import reader as csv_reader
+
 from datetime import datetime
 from filecmp import cmp as fcmp
 from netCDF4 import Dataset
 from nose.tools import ok_
-from numpy.testing import assert_almost_equal
-from numpy import array as np_array
-from numpy import float32 as np_float32
 import os
 from shutil import copy
 
 
 #local import
 from RAPIDpy.rapid import RAPID
-from RAPIDpy.helper_functions import (compare_qout_files, 
+from RAPIDpy.helper_functions import (compare_csv_decimal_files,
+                                      compare_csv_timeseries_files,
+                                      compare_qout_files, 
                                       remove_files,
                                       write_flows_to_csv)
 
@@ -353,7 +352,7 @@ def test_generate_qinit_file():
     rapid_manager.generate_qinit_from_past_qout(qinit_file=qinit_original_rapid_qout)
     
     qinit_original_rapid_qout_solution = os.path.join(COMPARE_DATA_PATH, 'qinit_original_rapid_qout-SOLUTION.csv')
-    ok_(fcmp(qinit_original_rapid_qout, qinit_original_rapid_qout_solution))
+    ok_(compare_csv_decimal_files(qinit_original_rapid_qout, qinit_original_rapid_qout_solution, header=False))
 
     #test with CF rapid output and alternate time index
     cf_input_qout_file = os.path.join(COMPARE_DATA_PATH, 'Qout_nasa_lis_3hr_20020830_CF.nc')
@@ -366,7 +365,7 @@ def test_generate_qinit_file():
                                                 time_index=5)
                                                 
     qinit_cf_rapid_qout_solution = os.path.join(COMPARE_DATA_PATH, 'qinit_cf_rapid_qout-SOLUTION.csv')
-    ok_(fcmp(qinit_cf_rapid_qout, qinit_cf_rapid_qout_solution))
+    ok_(compare_csv_decimal_files(qinit_cf_rapid_qout, qinit_cf_rapid_qout_solution, header=False))
 
     remove_files(original_qout_file, 
                  qinit_original_rapid_qout,
@@ -394,7 +393,7 @@ def test_extract_timeseries():
     else:
         original_timeseries_file_solution = os.path.join(COMPARE_DATA_PATH, 'original_timeseries-notime-SOLUTION.csv')
         
-    ok_(fcmp(new_timeseries_file, original_timeseries_file_solution))
+    ok_(compare_csv_timeseries_files(new_timeseries_file, original_timeseries_file_solution, header=False))
     
     #for writing entire time series to file from original rapid output
     input_qout_file = os.path.join(COMPARE_DATA_PATH, 'Qout_nasa_lis_3hr_20020830_original.nc')
@@ -407,7 +406,7 @@ def test_extract_timeseries():
                                     reach_id=75224)
     original_timeseries_file_solution = os.path.join(COMPARE_DATA_PATH, 'original_timeseries-notime-SOLUTION.csv')
         
-    ok_(fcmp(original_timeseries_file, original_timeseries_file_solution))
+    ok_(compare_csv_timeseries_files(original_timeseries_file, original_timeseries_file_solution, header=False))
 
     #if file is CF compliant, you can write out daily average
     cf_input_qout_file = os.path.join(COMPARE_DATA_PATH, 'Qout_nasa_lis_3hr_20020830_CF.nc')
@@ -421,7 +420,7 @@ def test_extract_timeseries():
                        daily=True)
 
     cf_timeseries_daily_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_timeseries_daily-SOLUTION.csv')    
-    ok_(fcmp(cf_timeseries_daily_file, cf_timeseries_daily_file_solution))
+    ok_(compare_csv_timeseries_files(cf_timeseries_daily_file, cf_timeseries_daily_file_solution, header=False))
     
     #if file is CF compliant, check write out timeseries
     cf_timeseries_file = os.path.join(OUTPUT_DATA_PATH, 'cf_timeseries.csv')
@@ -430,7 +429,7 @@ def test_extract_timeseries():
                        reach_index=20)
 
     cf_timeseries_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_timeseries-SOLUTION.csv')    
-    ok_(fcmp(cf_timeseries_file, cf_timeseries_file_solution))
+    ok_(compare_csv_timeseries_files(cf_timeseries_file, cf_timeseries_file_solution, header=False))
 
     remove_files(new_timeseries_file, 
                  new_qout_file,
@@ -448,31 +447,6 @@ def test_goodness_of_fit():
     """
     print "TEST 13: TEST GOODNESS OF FIT FUNCTIONS"
 
-
-    def compare_csv_files(file1, file2):
-        """
-        This function compares two csv files
-        """
-        with open(file1, 'rb') as fh1, \
-             open(file2, 'rb') as fh2:
-            csv1 = csv_reader(fh1)
-            csv2 = csv_reader(fh2)
-            files_equal = (csv1.next() == csv2.next()) #header
-            while files_equal:
-                try:
-                    try:
-                        assert_almost_equal(np_array(csv1.next(), dtype=np_float32),
-                                            np_array(csv2.next(), dtype=np_float32),
-                                            decimal=2)
-                    except AssertionError:
-                        files_equal = False
-                        break
-                        pass
-                except StopIteration:
-                    break
-                    pass
-        return files_equal
-
     reach_id_file = os.path.join(INPUT_DATA_PATH, 'obs_reach_id.csv') 
     observed_file = os.path.join(INPUT_DATA_PATH, 'obs_flow.csv') 
     #using CF-compliant file
@@ -482,7 +456,7 @@ def test_goodness_of_fit():
                          cf_out_analysis_file, daily=True)
 
     cf_goodness_of_fit_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_goodness_of_fit_analysis-SOLUTION.csv') 
-    ok_(compare_csv_files(cf_out_analysis_file, cf_goodness_of_fit_file_solution))
+    ok_(compare_csv_decimal_files(cf_out_analysis_file, cf_goodness_of_fit_file_solution))
     #using original RAPID file
     raw_goodness_of_fit_file_solution = os.path.join(COMPARE_DATA_PATH, 'raw_goodness_of_fit_analysis-SOLUTION.csv') 
     original_input_qout_file = os.path.join(COMPARE_DATA_PATH, 'Qout_nasa_lis_3hr_20020830_original.nc')
@@ -490,7 +464,7 @@ def test_goodness_of_fit():
     find_goodness_of_fit(reach_id_file, original_input_qout_file, observed_file,
                          original_out_analysis_file, steps_per_group=8)
 
-    ok_(compare_csv_files(original_out_analysis_file, raw_goodness_of_fit_file_solution))
+    ok_(compare_csv_decimal_files(original_out_analysis_file, raw_goodness_of_fit_file_solution))
 
     #using new RAPID file
     new_input_qout_file = os.path.join(COMPARE_DATA_PATH, 'Qout_nasa_lis_3hr_20020830.nc')
@@ -498,7 +472,7 @@ def test_goodness_of_fit():
     find_goodness_of_fit(reach_id_file, new_input_qout_file, observed_file,
                          new_out_analysis_file, steps_per_group=8)
 
-    ok_(compare_csv_files(new_out_analysis_file, raw_goodness_of_fit_file_solution))
+    ok_(compare_csv_decimal_files(new_out_analysis_file, raw_goodness_of_fit_file_solution))
 
     remove_files(cf_out_analysis_file,
                  original_out_analysis_file,

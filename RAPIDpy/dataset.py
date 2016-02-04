@@ -169,6 +169,8 @@ class RAPIDDataset(object):
                np_valid_river_ids[sorted_indexes], \
                np.array(missing_river_ids)
 
+    
+
     def get_qout(self, river_id_array=None,
                  date_peak_search_start=None,
                  date_peak_search_end=None,
@@ -245,4 +247,40 @@ class RAPIDDataset(object):
         else:
             raise Exception( "Invalid RAPID Qout file dimensions ...")
         return streamflow_array
+    
+    def get_daily_qout(self, reach_index, daily, steps_per_group):
+        """
+        Gets the daily time series from RAPID output
+        """
+        if self.is_time_variable_valid() and daily:
+            current_day = datetime.datetime.utcfromtimestamp(self.qout_nc.variables['time'][0])
+            flow = 0.0
+            num_days = 0
+            qout_arr = self.get_qout_index(reach_index)
+            daily_qout = []
+            for idx, t in enumerate(self.get_time_array()):
+                var_time = datetime.datetime.utcfromtimestamp(t)
+                if current_day.day == var_time.day:
+                    flow += qout_arr[idx]
+                    num_days += 1
+                else:
+                    if num_days > 0:
+                        #write last average
+                        daily_qout.append(flow/num_days)
+                    
+                    #start new average
+                    current_day = var_time
+                    num_days = 1
+                    flow = qout_arr[idx]
+            
+            return np.array(daily_qout, np.float32)
+        elif steps_per_group > 1:
+            flow_data = self.get_qout_index(reach_index)
+            daily_qout = []
+            for step_index in xrange(0, len(flow_data), steps_per_group):
+                flows_slice = flow_data[step_index:step_index + steps_per_group]
+                daily_qout.append(np.mean(flows_slice))
+            return np.array(daily_qout, np.float32)
+        
+        return self.get_qout_index(reach_index)
 

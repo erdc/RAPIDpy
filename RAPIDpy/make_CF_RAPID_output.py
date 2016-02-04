@@ -292,39 +292,41 @@ class ConvertRAPIDOutputToCF(object):
         time_var.standard_name = 'time'
         time_var.units = 'seconds since 1970-01-01 00:00:00 0:00'
         time_var.axis = 'T'
-    
-        log('    lat_var', 'DEBUG', self.print_debug)
-        lat_var = self.cf_nc.createVariable('lat', 'f8', (self.output_id_dim_name,),
-                                       fill_value=-9999.0)
-        lat_var.long_name = 'latitude'
-        lat_var.standard_name = 'latitude'
-        lat_var.units = 'degrees_north'
-        lat_var.axis = 'Y'
-    
-        log('    lon_var', 'DEBUG', self.print_debug)
-        lon_var = self.cf_nc.createVariable('lon', 'f8', (self.output_id_dim_name,),
-                                       fill_value=-9999.0)
-        lon_var.long_name = 'longitude'
-        lon_var.standard_name = 'longitude'
-        lon_var.units = 'degrees_east'
-        lon_var.axis = 'X'
-    
-        log('    z_var', 'DEBUG', self.print_debug)
-        z_var = self.cf_nc.createVariable('z', 'f8', (self.output_id_dim_name,),
-                                     fill_value=-9999.0)
-        z_var.long_name = ('Elevation referenced to the North American ' +
-                           'Vertical Datum of 1988 (NAVD88)')
-        z_var.standard_name = 'surface_altitude'
-        z_var.units = 'm'
-        z_var.axis = 'Z'
-        z_var.positive = 'up'
-    
-        log('    crs_var', 'DEBUG', self.print_debug)
-        crs_var = self.cf_nc.createVariable('crs', 'i4')
-        crs_var.grid_mapping_name = 'latitude_longitude'
-        crs_var.epsg_code = 'EPSG:4269'  # NAD83, which is what NHD uses.
-        crs_var.semi_major_axis = 6378137.0
-        crs_var.inverse_flattening = 298.257222101
+        
+        #only add if user adds
+        if self.comid_lat_lon_z_file and os.path.exists(self.comid_lat_lon_z_file):
+            log('    lat_var', 'DEBUG', self.print_debug)
+            lat_var = self.cf_nc.createVariable('lat', 'f8', (self.output_id_dim_name,),
+                                           fill_value=-9999.0)
+            lat_var.long_name = 'latitude'
+            lat_var.standard_name = 'latitude'
+            lat_var.units = 'degrees_north'
+            lat_var.axis = 'Y'
+        
+            log('    lon_var', 'DEBUG', self.print_debug)
+            lon_var = self.cf_nc.createVariable('lon', 'f8', (self.output_id_dim_name,),
+                                           fill_value=-9999.0)
+            lon_var.long_name = 'longitude'
+            lon_var.standard_name = 'longitude'
+            lon_var.units = 'degrees_east'
+            lon_var.axis = 'X'
+        
+            log('    z_var', 'DEBUG', self.print_debug)
+            z_var = self.cf_nc.createVariable('z', 'f8', (self.output_id_dim_name,),
+                                         fill_value=-9999.0)
+            z_var.long_name = ('Elevation referenced to the North American ' +
+                               'Vertical Datum of 1988 (NAVD88)')
+            z_var.standard_name = 'surface_altitude'
+            z_var.units = 'm'
+            z_var.axis = 'Z'
+            z_var.positive = 'up'
+        
+            log('    crs_var', 'DEBUG', self.print_debug)
+            crs_var = self.cf_nc.createVariable('crs', 'i4')
+            crs_var.grid_mapping_name = 'latitude_longitude'
+            crs_var.epsg_code = 'EPSG:4269'  # NAD83, which is what NHD uses.
+            crs_var.semi_major_axis = 6378137.0
+            crs_var.inverse_flattening = 298.257222101
 
     def _write_comid_lat_lon_z(self):
         """Add latitude, longitude, and z values for each netCDF feature
@@ -338,7 +340,8 @@ class ConvertRAPIDOutputToCF(object):
             Lookup table is a CSV file with COMID, Lat, Lon, and Elev_m columns.
             Columns must be in that order and these must be the first four columns.
         """
-        if self.comid_lat_lon_z_file:
+        #only add if user adds
+        if self.comid_lat_lon_z_file and os.path.exists(self.comid_lat_lon_z_file):
             #get list of COMIDS
             lookup_table = csv_to_list(self.comid_lat_lon_z_file )
             lookup_comids = np.array([int(float(row[0])) for row in lookup_table[1:]])

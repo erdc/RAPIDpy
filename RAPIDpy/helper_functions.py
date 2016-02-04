@@ -10,6 +10,8 @@ from csv import reader as csvreader
 from csv import writer as csvwriter
 from numpy import where, unique
 from numpy.testing import assert_almost_equal
+from numpy import array as np_array
+from numpy import float32 as np_float32
 from os import remove
 import time
 
@@ -29,7 +31,61 @@ def csv_to_list(csv_file, delimiter=','):
         reader = csvreader(csv_con, delimiter=delimiter)
         return list(reader)
 
+def compare_csv_decimal_files(file1, file2, header=True):
+    """
+    This function compares two csv files
+    """
+    with open(file1, 'rb') as fh1, \
+         open(file2, 'rb') as fh2:
+        csv1 = csvreader(fh1)
+        csv2 = csvreader(fh2)
+        files_equal = True
+        if header:
+            files_equal = (csv1.next() == csv2.next()) #header
+        while files_equal:
+            try:
+                try:
+                    assert_almost_equal(np_array(csv1.next(), dtype=np_float32),
+                                        np_array(csv2.next(), dtype=np_float32),
+                                        decimal=2)
+                except AssertionError:
+                    files_equal = False
+                    break
+                    pass
+            except StopIteration:
+                break
+                pass
+    return files_equal
     
+def compare_csv_timeseries_files(file1, file2, header=True):
+    """
+    This function compares two csv files
+    """
+    with open(file1, 'rb') as fh1, \
+         open(file2, 'rb') as fh2:
+        csv1 = csvreader(fh1)
+        csv2 = csvreader(fh2)
+        files_equal = True
+        if header:
+            files_equal = (csv1.next() == csv2.next()) #header
+        while files_equal:
+            try:
+                try:
+                    row1 = csv1.next()
+                    row2 = csv2.next()
+                    files_equal = row1[0] == row2[0] #check dates
+                    assert_almost_equal(np_array(row1[1:], dtype=np_float32),
+                                        np_array(row2[1:], dtype=np_float32),
+                                        decimal=2)
+                except AssertionError:
+                    files_equal = False
+                    break
+                    pass
+            except StopIteration:
+                break
+                pass
+    return files_equal
+
 def remove_files(*args):
     """
     This function removes all files input as arguments

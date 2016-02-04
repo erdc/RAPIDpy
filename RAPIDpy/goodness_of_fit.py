@@ -217,11 +217,9 @@ def find_goodness_of_fit(reach_id_file, rapid_qout_file, observed_file,
             reach_index = np.where(nc_reach_id_list == int(reach_id))[0][0]
             observed_array = observed_table[:, index]
             simulated_array = data_nc.get_daily_qout(reach_index, daily, steps_per_group)
-            print "SIM1", simulated_array
             #make sure they are the same length
             simulated_array = simulated_array[:len(observed_array)]
             observed_array = observed_array[:len(simulated_array)]
-            print "SIM2", simulated_array
             simulated_array,observed_array = filter_nan(simulated_array,observed_array)
             writer.writerow([reach_id,
                              pc_bias(simulated_array,observed_array),

@@ -194,50 +194,10 @@ def find_goodness_of_fit(reach_id_file, rapid_qout_file, observed_file,
     """
     reach_id_list = np.array([row[0] for row in csv_to_list(reach_id_file)])
    
-    nc_file = RAPIDDataset(rapid_qout_file)
-    nc_reach_id_list = nc_file.get_river_id_array()
+    data_nc = RAPIDDataset(rapid_qout_file)
+    nc_reach_id_list = data_nc.get_river_id_array()
     
     #analyze and write
-    def get_daily_time_series(data_nc, reach_index, daily, steps_per_group):
-        """
-            Gets the daily time series from RAPID output
-        """
-        if 'time' in data_nc.variables.keys():
-            if daily:
-                current_day = datetime.datetime.fromtimestamp(data_nc.get_time_array()[0], tz=utc)
-                flow = 0.0
-                num_days = 0
-                qout_arr = data_nc.get_qout_index(reach_index)
-                daily_qout = []
-                for idx, t in enumerate(data_nc.get_time_array()):
-                    var_time = datetime.datetime.utcfromtimestamp(t)
-                    if current_day.day == var_time.day:
-                        flow += qout_arr[idx]
-                        num_days += 1
-                    else:
-                        if num_days > 0:
-                            #write last average
-                            daily_qout.append(flow/num_days)
-                        
-                        #start new average
-                        current_day = var_time
-                        num_days = 1
-                        flow = qout_arr[idx]
-                
-                return np.array(daily_qout, np.float32)
-            return nc_file.variables['Qout'][reach_index,:]
-        elif steps_per_group > 1:
-            flow_data = data_nc.get_qout_index(reach_index)
-            daily_qout = []
-            for step_index in xrange(0, len(flow_data), steps_per_group):
-                flows_slice = flow_data[step_index:step_index + steps_per_group]
-                daily_qout.append(np.mean(flows_slice))
-            
-            return np.array(daily_qout, np.float32)
-        
-        return data_nc.get_qout_index(reach_index)
-
-
     observed_table = np.array(csv_to_list(observed_file), np.float32)
     with open(out_analysis_file, 'w') as outcsv:
         writer = csvwriter(outcsv)
@@ -256,10 +216,12 @@ def find_goodness_of_fit(reach_id_file, rapid_qout_file, observed_file,
         for index, reach_id in enumerate(reach_id_list):
             reach_index = np.where(nc_reach_id_list == int(reach_id))[0][0]
             observed_array = observed_table[:, index]
-            simulated_array = get_daily_time_series(nc_file, reach_index, daily, steps_per_group)
+            simulated_array = data_nc.get_daily_qout(reach_index, daily, steps_per_group)
+            print "SIM1", simulated_array
             #make sure they are the same length
             simulated_array = simulated_array[:len(observed_array)]
             observed_array = observed_array[:len(simulated_array)]
+            print "SIM2", simulated_array
             simulated_array,observed_array = filter_nan(simulated_array,observed_array)
             writer.writerow([reach_id,
                              pc_bias(simulated_array,observed_array),

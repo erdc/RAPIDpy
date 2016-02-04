@@ -6,11 +6,14 @@
 ##  Created by Alan D. Snow 2016.
 ##  Copyright © 2015 Alan D Snow. All rights reserved.
 ##
-
+from csv import reader as csv_reader
 from datetime import datetime
 from filecmp import cmp as fcmp
 from netCDF4 import Dataset
 from nose.tools import ok_
+from numpy.testing import assert_almost_equal
+from numpy import array as np_array
+from numpy import float32 as np_float32
 import os
 from shutil import copy
 
@@ -444,7 +447,32 @@ def test_goodness_of_fit():
     This tests the goodness of fit functions
     """
     print "TEST 13: TEST GOODNESS OF FIT FUNCTIONS"
-    
+
+
+    def compare_csv_files(file1, file2):
+        """
+        This function compares two csv files
+        """
+        with open(file1, 'rb') as fh1, \
+             open(file2, 'rb') as fh2:
+            csv1 = csv_reader(fh1)
+            csv2 = csv_reader(fh2)
+            files_equal = (csv1.next() == csv2.next()) #header
+            while files_equal:
+                try:
+                    try:
+                        assert_almost_equal(np_array(csv1.next(), dtype=np_float32),
+                                            np_array(csv2.next(), dtype=np_float32),
+                                            decimal=2)
+                    except AssertionError:
+                        files_equal = False
+                        break
+                        pass
+                except StopIteration:
+                    break
+                    pass
+        return files_equal
+
     reach_id_file = os.path.join(INPUT_DATA_PATH, 'obs_reach_id.csv') 
     observed_file = os.path.join(INPUT_DATA_PATH, 'obs_flow.csv') 
     #using CF-compliant file
@@ -454,16 +482,15 @@ def test_goodness_of_fit():
                          cf_out_analysis_file, daily=True)
 
     cf_goodness_of_fit_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_goodness_of_fit_analysis-SOLUTION.csv') 
-    ok_(fcmp(cf_out_analysis_file, cf_goodness_of_fit_file_solution))
-
+    ok_(compare_csv_files(cf_out_analysis_file, cf_goodness_of_fit_file_solution))
     #using original RAPID file
+    raw_goodness_of_fit_file_solution = os.path.join(COMPARE_DATA_PATH, 'raw_goodness_of_fit_analysis-SOLUTION.csv') 
     original_input_qout_file = os.path.join(COMPARE_DATA_PATH, 'Qout_nasa_lis_3hr_20020830_original.nc')
     original_out_analysis_file = os.path.join(OUTPUT_DATA_PATH, 'original_goodness_of_fit_results-daily.csv') 
     find_goodness_of_fit(reach_id_file, original_input_qout_file, observed_file,
                          original_out_analysis_file, steps_per_group=8)
 
-    raw_goodness_of_fit_file_solution = os.path.join(COMPARE_DATA_PATH, 'raw_goodness_of_fit_analysis-SOLUTION.csv') 
-    ok_(fcmp(original_out_analysis_file, raw_goodness_of_fit_file_solution))
+    ok_(compare_csv_files(original_out_analysis_file, raw_goodness_of_fit_file_solution))
 
     #using new RAPID file
     new_input_qout_file = os.path.join(COMPARE_DATA_PATH, 'Qout_nasa_lis_3hr_20020830.nc')
@@ -471,8 +498,7 @@ def test_goodness_of_fit():
     find_goodness_of_fit(reach_id_file, new_input_qout_file, observed_file,
                          new_out_analysis_file, steps_per_group=8)
 
-    new_goodness_of_fit_file_solution = os.path.join(COMPARE_DATA_PATH, 'new_goodness_of_fit_analysis-SOLUTION.csv') 
-    ok_(fcmp(new_out_analysis_file, new_goodness_of_fit_file_solution))
+    ok_(compare_csv_files(new_out_analysis_file, raw_goodness_of_fit_file_solution))
 
     remove_files(cf_out_analysis_file,
                  original_out_analysis_file,

@@ -90,37 +90,37 @@ class RAPIDDataset(object):
         else:
             return [datetime.datetime.utcfromtimestamp(t) for t in time_array]
 
-    def get_time_index_range(self, date_peak_search_start=None,
-                             date_peak_search_end=None,
-                             time_index_peak_search_start=None,
-                             time_index_peak_search_end=None,
+    def get_time_index_range(self, date_search_start=None,
+                             date_search_end=None,
+                             time_index_search_start=None,
+                             time_index_search_end=None,
                              time_index=None):
         """
         Generates a time index range based on datetimes
         """
         #get the range of time based on datetime range
         time_range = None
-        if 'time' in self.qout_nc.variables and (date_peak_search_start is not None or date_peak_search_end is not None):
-            print "Determining time range ({0} to {1})...".format(date_peak_search_start, date_peak_search_end)
+        if 'time' in self.qout_nc.variables and (date_search_start is not None or date_search_end is not None):
+            print "Determining time range ({0} to {1})...".format(date_search_start, date_search_end)
             time_array = self.qout_nc.variables['time'][:]
-            if date_peak_search_start is not None:
-                seconds_start = (date_peak_search_start-datetime.datetime(1970,1,1)).total_seconds()
+            if date_search_start is not None:
+                seconds_start = (date_search_start-datetime.datetime(1970,1,1)).total_seconds()
                 time_range = np.where(time_array>=seconds_start)[0]
             
-            if date_peak_search_end is not None:
-                seconds_end = (date_peak_search_end-datetime.datetime(1970,1,1)).total_seconds()
+            if date_search_end is not None:
+                seconds_end = (date_search_end-datetime.datetime(1970,1,1)).total_seconds()
                 if time_range is not None:
                     time_range = np.intersect1d(time_range, np.where(time_array<=seconds_end)[0])
                 else:
                     time_range = np.where(time_array<=seconds_end)[0]
     
         #get the range of time based on time index range
-        elif time_index_peak_search_start is not None or time_index_peak_search_end is not None:
-            if time_index_peak_search_start is None:
-                time_index_peak_search_start = 0
-            if time_index_peak_search_end is None:
-                time_index_peak_search_end = self.size_time
-            time_range = range(time_index_peak_search_start,time_index_peak_search_end)
+        elif time_index_search_start is not None or time_index_search_end is not None:
+            if time_index_search_start is None:
+                time_index_search_start = 0
+            if time_index_search_end is None:
+                time_index_search_end = self.size_time
+            time_range = range(time_index_search_start,time_index_search_end)
 
         #get only one time step
         elif time_index is not None:
@@ -174,10 +174,10 @@ class RAPIDDataset(object):
     
 
     def get_qout(self, river_id_array=None,
-                 date_peak_search_start=None,
-                 date_peak_search_end=None,
-                 time_index_peak_search_start=None,
-                 time_index_peak_search_end=None,
+                 date_search_start=None,
+                 date_search_end=None,
+                 time_index_search_start=None,
+                 time_index_search_end=None,
                  time_index=None):
         """
         This method extracts streamflow data by river id
@@ -193,19 +193,19 @@ class RAPIDDataset(object):
             riverid_index_list_subset = self.get_subset_riverid_index_list(river_id_array)
 
         return self.get_qout_index(riverid_index_list_subset,
-                                   date_peak_search_start,
-                                   date_peak_search_end,
-                                   time_index_peak_search_start,
-                                   time_index_peak_search_end,
+                                   date_search_start,
+                                   date_search_end,
+                                   time_index_search_start,
+                                   time_index_search_end,
                                    time_index)
                        
 
 
     def get_qout_index(self, river_index_array=None,
-                       date_peak_search_start=None,
-                       date_peak_search_end=None,
-                       time_index_peak_search_start=None,
-                       time_index_peak_search_end=None,
+                       date_search_start=None,
+                       date_search_end=None,
+                       time_index_search_start=None,
+                       time_index_search_end=None,
                        time_index=None,
                        time_index_array=None):
         """
@@ -218,10 +218,10 @@ class RAPIDDataset(object):
                 if len(river_index_array) == 1:
                     river_index_array = river_index_array[0]
         if time_index_array is None:
-            time_index_array = self.get_time_index_range(date_peak_search_start,
-                                                         date_peak_search_end,
-                                                         time_index_peak_search_start,
-                                                         time_index_peak_search_end,
+            time_index_array = self.get_time_index_range(date_search_start,
+                                                         date_search_end,
+                                                         time_index_search_start,
+                                                         time_index_search_end,
                                                          time_index)
 
         qout_variable = self.qout_nc.variables['Qout']
@@ -249,11 +249,11 @@ class RAPIDDataset(object):
             raise Exception( "Invalid RAPID Qout file dimensions ...")
         return streamflow_array
     
-    def get_daily_qout(self, reach_index, daily, steps_per_group):
+    def get_daily_qout(self, reach_index, steps_per_group=1):
         """
         Gets the daily time series from RAPID output
         """
-        if self.is_time_variable_valid() and daily:
+        if self.is_time_variable_valid() and steps_per_group<=1:
             current_day = datetime.datetime.utcfromtimestamp(self.qout_nc.variables['time'][0])
             flow = 0.0
             num_days = 0
@@ -282,6 +282,8 @@ class RAPIDDataset(object):
                 flows_slice = flow_data[step_index:step_index + steps_per_group]
                 daily_qout.append(np.mean(flows_slice))
             return np.array(daily_qout, np.float32)
-        
-        return self.get_qout_index(reach_index)
+        else:
+            print steps_per_group
+            raise Exception("Must have steps_per_group set to a value greater than one "
+                            "due to non CF-Compliant Qout file ...")
 

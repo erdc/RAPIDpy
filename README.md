@@ -241,7 +241,7 @@ find_goodness_of_fit(rapid_qout_file=original_input_qout_file,
 
 This is a wrapper for the RAPID Qout netCDF file. Here are some basic examples for useage.
 
-```
+```python
 from datetime import datetime
 from RAPIDpy.dataset import RAPIDDataset
 
@@ -251,7 +251,7 @@ with RAPIDDataset('/path/to/Qout.nc') as qout_nc:
 This example demonstrates how to retrieve or generate 
 a time array to go along with your
 RAPID streamflow series
-```
+```python
     #CF-Compliant
     time_array = qout_nc.get_time_array()
     #or, to get datetime array
@@ -268,42 +268,42 @@ RAPID streamflow series
 
 This example demonstrates how to get the river ids in the
 RAPID Qout dataset.
-```
+```python
     river_ids = qout_nc.get_river_id_array()
 ```
 
 This example demonstrates how to retrieve the streamflow
 associated with the reach you are interested in
 
-``` 
+```python 
     river_id = 500
-    streamflow_array = get_qout(river_id)
+    streamflow_array = qout_nc.get_qout(river_id)
 
 ```
 
 This example demonstrates how to retrieve the streamflow
 within a date range associated with the reach you are interested in
 
-``` 
+```python 
     river_id = 500
     #CF-Compliant
-    streamflow_array = get_qout(river_id,
-                                date_search_start=datetime(1985,1,1),
-                                date_search_end=datetime(1985,2,4))
+    streamflow_array = qout_nc.get_qout(river_id,
+                                    date_search_start=datetime(1985,1,1),
+                                    date_search_end=datetime(1985,2,4))
 
     #Original RAPID Qout
-    streamflow_array = get_qout(river_id,
-                                time_index_search_start=20,
-                                time_index_search_end=25)
+    streamflow_array = qout_nc.get_qout(river_id,
+                                        time_index_search_start=20,
+                                        time_index_search_end=25)
 
 ```
 This example demonstrates how to get daily streamflow averages as an array
 ```
     river_id = 500
     #CF-Compliant
-    streamflow_array = get_daily_qout(river_id)
+    streamflow_array = qout_nc.get_daily_qout(river_id)
     #Original RAPID Qout
-    streamflow_array = get_daily_qout(river_id,
-                                      steps_per_group=8, #average 8 timesteps together for 1 day
-                                      )
+    streamflow_array = qout_nc.get_daily_qout(river_id,
+                                              steps_per_group=8, #average 8 timesteps together for 1 day
+                                              )
 ```

@@ -28,15 +28,32 @@ class RAPIDDataset(object):
         self.qout_nc = Dataset(filename, mode='r')
         
         #determine river ID dimension
-        self.river_id_dimension = 'COMID'
         if 'rivid' in self.qout_nc.dimensions:
             self.river_id_dimension = 'rivid'
+        elif 'COMID' in self.qout_nc.dimensions:
+            self.river_id_dimension = 'COMID'
+        else:
+            raise Exception('ERROR: Could not find river ID dimension.')
+        self.size_river_id = len(self.qout_nc.dimensions[self.river_id_dimension])
+        
         
         #determine time dimension
         if 'time' in self.qout_nc.dimensions:
             self.size_time = len(self.qout_nc.dimensions['time'])
-        else:
+        elif 'Time' in self.qout_nc.dimensions:
             self.size_time = len(self.qout_nc.dimensions['Time'])
+        else:
+            raise Exception('ERROR: Could not find time dimension.')
+
+        #determin streamflow variable
+        if 'Qout' in self.qout_nc.variables:
+            self.q_var_name = 'Qout'
+        elif 'm3_riv' in self.qout_nc.variables:
+            self.q_var_name = 'm3_riv'
+        else:
+            raise Exception('ERROR: Could not find flow variable. Looked for Qout and m3_riv.')
+
+        self.size_q_var = len(self.qout_nc.variables[self.q_var_name])
 
     def __enter__(self):
         return self
@@ -224,7 +241,7 @@ class RAPIDDataset(object):
                                                          time_index_search_end,
                                                          time_index)
 
-        qout_variable = self.qout_nc.variables['Qout']
+        qout_variable = self.qout_nc.variables[self.q_var_name]
         qout_dimensions = qout_variable.dimensions
         streamflow_array = []
         if qout_dimensions[0].lower() == 'time' and qout_dimensions[1].lower() == self.river_id_dimension.lower():

@@ -274,7 +274,6 @@ RAPID Qout dataset.
 
 This example demonstrates how to retrieve the streamflow
 associated with the reach you are interested in
-
 ```python 
     river_id = 500
     streamflow_array = qout_nc.get_qout(river_id)
@@ -283,7 +282,6 @@ associated with the reach you are interested in
 
 This example demonstrates how to retrieve the streamflow
 within a date range associated with the reach you are interested in
-
 ```python 
     river_id = 500
     #CF-Compliant
@@ -297,8 +295,9 @@ within a date range associated with the reach you are interested in
                                         time_index_search_end=25)
 
 ```
+
 This example demonstrates how to get daily streamflow averages as an array
-```
+```python
     river_id = 500
     #CF-Compliant
     streamflow_array = qout_nc.get_daily_qout(river_id)

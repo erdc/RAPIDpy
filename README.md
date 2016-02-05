@@ -32,18 +32,18 @@ Downloaded Cygwin (64-bit) (https://www.cygwin.com/) with these dependencies:
 - time
 
 ### Installation Steps:
-- Here is a script to download and install prereqs: http://rapid-hub.org/data/rapid_install_prereqs.tar.gz
+- Look here for a script to download and install prereqs: http://rapid-hub.org/download.html
 - Follow the instructions on page 10-14: http://rapid-hub.org/docs/RAPID_Azure.pdf
 
 ##Step 2: Install netCDF4
 ###On Ubuntu:
 ```
-$ apt-get install python-dev zlib1g-dev libhdf5-serial-dev libnetcdf-dev
+$ sudo apt-get install python-dev zlib1g-dev libhdf5-serial-dev libnetcdf-dev
 ```
 ###On Redhat/CentOS:
 ```
-$ yum install epel-release
-$ yum install netcdf4-python hdf5-devel netcdf-devel
+$ sudo yum install epel-release
+$ sudo yum install netcdf4-python hdf5-devel netcdf-devel
 ```
 ###On OSX:
 ```
@@ -52,15 +52,19 @@ $ brew install homebrew/science/netcdf
 ##Step 3: Install RAPIDpy
 ```
 $ sudo su
-$ pip install netCDF4 RAPIDpy
+# pip install RAPIDpy
 $ exit
 ```
-#How to use
+#How to use:
+
 ##Running RAPID
 ### Step 1: Initialize the RAPID manager class. 
 - First, add the path to you rapid executable location. 
-- Next, you need to either tell it how many processors to use using the *num_processors* input variable or to use all available processors set *use_all_processors* to true.
-- After that, add any other parameters you would like to use that would normally be in the rapid namelist file (this is case sensitive).
+- Next, you need to either tell it how many processors to 
+  use using the *num_processors* input variable or to use all 
+  available processors set *use_all_processors* to true.
+- After that, add any other parameters you would like to use that 
+  would normally be in the rapid namelist file (this is case sensitive).
 
 
 Example:
@@ -103,7 +107,6 @@ rapid_manager.update_parameters(rapid_connect_file='../rapid_input_directory/rap
 ```
 ### Step 3 (optional): Update reach number data
 If you don't want to manually count the numbers for the rapid_connect or riv_bas_id files, use the *update_reach_number_data* function.
-
 
 Example:
 ```python
@@ -150,8 +153,10 @@ rapid_manager.generate_usgs_avg_daily_flows_opt(reach_id_gage_id_file=join(main,
 												out_stream_id_file=join(main,"streamid_2000_2014.csv"))
 ```
 												
-##Merge RAPID output
-You can use this to combine consecutive RAPID output files into one file. WARNING: This code replaces the first file with the combined output and deletes the second file. BACK UP YOUR FILES!!!!
+##Merge RAPID Output
+You can use this to combine consecutive RAPID output files into one file. 
+
+WARNING: This code replaces the first file with the combined output and deletes the second file. BACK UP YOUR FILES!!!!
 
 Example:
 ```python
@@ -178,6 +183,7 @@ This function simplifies writing time series for each stream reach to a csv file
 ```python
 from RAPIDpy.helper_functions import write_flows_to_csv
 path_to_file = '/output_mississippi-nfie/Qout_k3v1_2005to2009.nc'
+
 #for writing entire time series to file
 write_flows_to_csv(path_to_file,
                    '/timeseries/Qout_3624735.csv', 
@@ -187,22 +193,24 @@ write_flows_to_csv(path_to_file,
 write_flows_to_csv(path_to_file, 
                    '/timeseries/Qout_daily.csv'
 		           reach_index=20, #index of COMID or rivid (example if you already know index instead if reach_id)
-		            daily=True) #if file is CF compliant, write out daily flows
+                   daily=True) #if file is CF compliant, write out daily flows
 ```
 
 ##Generate qinit from past qout
+
 RAPIDpy also creates a qinit file from a RAPID qout file. This example shows how.
 ```python
 from RAPIDpy.rapid import RAPID
 rapid_manager = RAPID(rapid_executable_location='/p/u4hfraat/rapid/src/rapid',
                       Qout_file='/output_mississippi-nfie/Qout_k2v1_2005to2009.nc', 
-		      rapid_connect_file='/input_mississippi_nfie/rapid_connect_ECMWF.csv'
+                      rapid_connect_file='/input_mississippi_nfie/rapid_connect_ECMWF.csv'
                      )
 rapid_manager.generate_qinit_from_past_qout(qinit_file='/autorapid/input_mississippi_nfie/Qinit_2008_flood.csv',
 					    time_index=10162) #time_index is optional, if not included it will be last time step
 ```
 ##Goodness of Fit
 To check how well your simulation performed versus observations, this function can help you.
+
 ```python
 from RAPIDpy.goodness_of_fit import find_goodness_of_fit_csv, find_goodness_of_fit
 
@@ -210,9 +218,92 @@ from RAPIDpy.goodness_of_fit import find_goodness_of_fit_csv, find_goodness_of_f
 find_goodness_of_fit_csv('/united_kingdom-thames/flows_kingston_gage_noah.csv')
 
 #if you have gage files in the format RAPID needs for calibration, this will generate a file for you with results
-find_goodness_of_fit(reach_id_file='/input_mississippi-nfie/all_gauges_nfie_id.csv',
-                     rapid_qout_file='/output_mississippi-nfie/Qout_k4v2_2005to2014.nc',
-                     observed_file='/input_mississippi-nfie/obs_all_gauges_nfie.csv',
-                     out_analysis_file='/output_mississippi-nfie/flows_analysis_vic_k4v2_2005-14.csv',
-                     #steps_per_group=8, #for raw rapid output (8 is produces daily flows for 3-hr timesteps)
-                     daily=True) #use this option for CF compliant files
+reach_id_file = os.path.join(INPUT_DATA_PATH, 'obs_reach_id.csv') 
+observed_file = os.path.join(INPUT_DATA_PATH, 'obs_flow.csv') 
+
+#using CF-compliant file
+cf_input_qout_file = os.path.join(COMPARE_DATA_PATH, 'Qout_nasa_lis_3hr_20020830_CF.nc')
+cf_out_analysis_file = os.path.join(OUTPUT_DATA_PATH, 'cf_goodness_of_fit_results-daily.csv') 
+find_goodness_of_fit(cf_input_qout_file, reach_id_file, observed_file,
+                     cf_out_analysis_file, daily=True)
+
+#using original RAPID file
+original_input_qout_file = os.path.join(COMPARE_DATA_PATH, 'Qout_nasa_lis_3hr_20020830_original.nc')
+original_out_analysis_file = os.path.join(OUTPUT_DATA_PATH, 'original_goodness_of_fit_results-daily.csv') 
+find_goodness_of_fit(rapid_qout_file=original_input_qout_file, 
+                     reach_id_file=reach_id_file, 
+                     observed_file=observed_file,
+                     out_analysis_file=original_out_analysis_file, 
+                     steps_per_group=8) #for raw rapid output (8 is produces daily flows for 3-hr timesteps)
+
+
+##Dataset Manager
+
+This is a wrapper for the RAPID Qout netCDF file. Here are some basic examples for useage.
+
+```
+from datetime import datetime
+from RAPIDpy.dataset import RAPIDDataset
+
+with RAPIDDataset('/path/to/Qout.nc') as qout_nc:
+```
+
+This example demonstrates how to retrieve or generate 
+a time array to go along with your
+RAPID streamflow series
+```
+    #CF-Compliant
+    time_array = qout_nc.get_time_array()
+    #or, to get datetime array
+    time_datetime = qout_nc.get_time_array(return_datetime=True)
+    
+    #Original Qout
+    time_array = qout_nc.get_time_array(datetime_simulation_start=datetime(1980, 1, 1),
+                                        simulation_time_step_seconds=3*3600)
+    #or, to get datetime array
+    time_datetime = qout_nc.get_time_array(datetime_simulation_start=datetime(1980, 1, 1),
+                                           simulation_time_step_seconds=3*3600,
+                                           return_datetime=True)
+```
+
+This example demonstrates how to get the river ids in the
+RAPID Qout dataset.
+```
+    river_ids = qout_nc.get_river_id_array()
+```
+
+This example demonstrates how to retrieve the streamflow
+associated with the reach you are interested in
+
+``` 
+    river_id = 500
+    streamflow_array = get_qout(river_id)
+
+```
+
+This example demonstrates how to retrieve the streamflow
+within a date range associated with the reach you are interested in
+
+``` 
+    river_id = 500
+    #CF-Compliant
+    streamflow_array = get_qout(river_id,
+                                date_search_start=datetime(1985,1,1),
+                                date_search_end=datetime(1985,2,4))
+
+    #Original RAPID Qout
+    streamflow_array = get_qout(river_id,
+                                time_index_search_start=20,
+                                time_index_search_end=25)
+
+```
+This example demonstrates how to get daily streamflow averages as an array
+```
+    river_id = 500
+    #CF-Compliant
+    streamflow_array = get_daily_qout(river_id)
+    #Original RAPID Qout
+    streamflow_array = get_daily_qout(river_id,
+                                      steps_per_group=8, #average 8 timesteps together for 1 day
+                                      )
+```

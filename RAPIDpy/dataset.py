@@ -11,6 +11,7 @@ import datetime
 from netCDF4 import Dataset
 import numpy as np
 from numpy.ma import masked
+from pytz import utc
 
 #------------------------------------------------------------------------------
 #Main Dataset Manager Class
@@ -75,7 +76,8 @@ class RAPIDDataset(object):
             time_array = self.qout_nc.variables['time'][:]
         #Original Qout file
         elif datetime_simulation_start is not None and simulation_time_step_seconds is not None:
-            initial_time_seconds = (datetime_simulation_start-datetime.datetime(1970,1,1)).total_seconds()+simulation_time_step_seconds
+            datetime_simulation_start.replace(tzinfo=utc)
+            initial_time_seconds = (datetime_simulation_start-datetime.datetime(1970,1,1, tzinfo=utc)).total_seconds()+simulation_time_step_seconds
             final_time_seconds = initial_time_seconds + self.size_time*simulation_time_step_seconds
             time_array = np.arange(initial_time_seconds, final_time_seconds, simulation_time_step_seconds)
         else:
@@ -139,7 +141,7 @@ class RAPIDDataset(object):
         """
         try:
             return np.where(self.get_river_id_array()==river_id)[0][0]
-        except IndexError as ex:
+        except IndexError:
             raise IndexError("ERROR: River ID", river_id, "not found in dataset ...")
 
     def get_subset_riverid_index_list(self, river_id_list):
@@ -188,7 +190,7 @@ class RAPIDDataset(object):
             if not isinstance(river_id_array, list) \
             or not type(river_id_array).__module__ == np.array:
                 river_id_array = [river_id_array]
-            riverid_index_list_subset = get_subset_riverid_index_list(river_id_array)
+            riverid_index_list_subset = self.get_subset_riverid_index_list(river_id_array)
 
         return self.get_qout_index(riverid_index_list_subset,
                                    date_peak_search_start,
@@ -222,7 +224,6 @@ class RAPIDDataset(object):
                                                          time_index_peak_search_end,
                                                          time_index)
 
-        print "Extracting streamflow data ..."
         qout_variable = self.qout_nc.variables['Qout']
         qout_dimensions = qout_variable.dimensions
         streamflow_array = []

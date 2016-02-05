@@ -286,8 +286,8 @@ within a date range associated with the reach you are interested in
     river_id = 500
     #CF-Compliant
     streamflow_array = qout_nc.get_qout(river_id,
-                                    date_search_start=datetime(1985,1,1),
-                                    date_search_end=datetime(1985,2,4))
+                                        date_search_start=datetime(1985,1,1),
+                                        date_search_end=datetime(1985,2,4))
 
     #Original RAPID Qout
     streamflow_array = qout_nc.get_qout(river_id,

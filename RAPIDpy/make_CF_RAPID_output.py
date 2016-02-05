@@ -60,8 +60,10 @@ from datetime import datetime, timedelta
 import os
 from netCDF4 import Dataset
 import numpy as np
+from pytz import utc
 
 #local
+from dataset import RAPIDDataset
 from helper_functions import csv_to_list, remove_files
 
 def log(message, severity, print_debug=True):
@@ -104,7 +106,7 @@ class ConvertRAPIDOutputToCF(object):
            self.rapid_output_file_list = [rapid_output_file]
        else:
            self.rapid_output_file_list = rapid_output_file
-       self.start_datetime = start_datetime
+       self.start_datetime = start_datetime.replace(tzinfo=utc)
        
        if not isinstance(time_step, list): 
            self.time_step_array = [time_step]
@@ -135,83 +137,25 @@ class ConvertRAPIDOutputToCF(object):
         """
 
         self.raw_nc_list = []
-        total_time_len = 0  
-        initial_file = True
-        id_dim_name_list = []
+        total_time_len = 1 #add one for the first flow value RAPID
+                           #does not include
         id_len_list = []
-        q_var_name_list = []
-        self.time_len_array = []
         for rapid_output_file in self.rapid_output_file_list:
-            raw_nc = Dataset(rapid_output_file)
-            dims = raw_nc.dimensions
-            if 'rivid' in dims:
-                id_dim_name = 'rivid'
-            elif 'COMID' in dims:
-                id_dim_name = 'COMID'
-            elif 'FEATUREID' in dims:
-                id_dim_name = 'FEATUREID'
-            else:
-                msg = 'Could not find ID dimension. Looked for rivid, COMID and FEATUREID.'
-                log(msg, 'ERROR')
-            id_dim_name_list.append(id_dim_name)
-
-            id_len_list.append(len(dims[id_dim_name]))
-
-            time_len = -1
-            if 'time' in dims:
-                time_len = len(dims['time'])
-            elif 'Time' in dims:
-                time_len = len(dims['Time'])
-            else:
-                msg = 'Could not find time dimension.'
-                log(msg, 'ERROR')
-                
-            if initial_file:
-                time_len += 1 #add one for the first flow value RAPID
-                            #does not include
-                initial_file = False
-            total_time_len += time_len
-            self.time_len_array.append(time_len)
-            
-            variables = raw_nc.variables
-        
-            if 'Qout' in variables:
-                q_var_name = 'Qout'
-            elif 'm3_riv' in variables:
-                q_var_name = 'm3_riv'
-            else:
-                log('Could not find flow variable. Looked for Qout and m3_riv.',
-                    'ERROR')
-
-            var_dims = variables[q_var_name].dimensions
-            id_var_name = None
-            if 'rivid' in var_dims:
-                id_var_name = 'rivid'
-            elif 'COMID' in var_dims:
-                id_var_name = 'COMID'
-            elif 'FEATUREID' in var_dims:
-                id_var_name = 'FEATUREID'
+            qout_nc = RAPIDDataset(rapid_output_file)
+            id_len_list.append(qout_nc.size_river_id)
+            total_time_len += qout_nc.size_time
+            self.raw_nc_list.append(qout_nc)
     
-            if id_var_name is not None and id_var_name != id_dim_name:
-                msg = ('ID dimension name (' + id_dim_name + ') does not equal ID ' +
-                       'variable name (' + id_var_name + ').')
-                log(msg, 'WARNING')
+        #make sure river id lists are the same
+        for id_len in range(1, len(id_len_list)):
+            if id_len != id_len_list[0]:
+                raise Exception("ERROR: River ID size is different in one of the files ...")
+        
+        for raw_nc in range(1, len(self.raw_nc_list)):
+            if raw_nc.get_river_id_array() != self.raw_nc_list[0].get_river_id_array():
+                raise Exception("ERROR: River IDs are different in files ...")
 
-            q_var_name_list.append(q_var_name)
-            
-            #make sure all id_dim_names same
-            if not all(x == id_dim_name_list[0] for x in id_dim_name_list):
-                log('ID dimension name not same for all files.', 'ERROR')
-            #make sure all q var_names same       
-            if not all(x == id_len_list[0] for x in id_len_list):
-                log('ID dimension length not same for all files.', 'ERROR')
-            #make sure all q var_names same       
-            if not all(x == q_var_name_list[0] for x in q_var_name_list):
-                log('Q variable name not same for all files.', 'ERROR')
-            
-            self.raw_nc_list.append(raw_nc)
-            
-        return id_dim_name, id_len_list[0], total_time_len, q_var_name
+        return id_len_list[0], total_time_len
 
 
     def _initialize_output(self, time_len, id_len):
@@ -416,29 +360,24 @@ class ConvertRAPIDOutputToCF(object):
         # Populate time values
         log('writing times', 'INFO')
         total_seconds = 0
-        d1970 = datetime(1970, 1, 1)
-        time_array = []
-
-        for index, time_len in enumerate(self.time_len_array):
-            if index > 0:
-                total_seconds += self.time_step_array[index]
+        d1970 = datetime(1970, 1, 1, tzinfo=utc)
+        time_array = [[int((self.start_datetime - d1970).total_seconds())]]
+        
+        datetime_nc_start_simulation = self.start_datetime
+        for raw_nc_index, raw_nc in enumerate(self.raw_nc_list):
+            
+            raw_nc_time = raw_nc.get_time_array(datetime_simulation_start=datetime_nc_start_simulation,
+                                                simulation_time_step_seconds=self.time_step_array[raw_nc_index])
+            
+            time_array.append(raw_nc_time)
+            datetime_nc_start_simulation = datetime.utcfromtimestamp(raw_nc_time[-1])
                 
-            secs_start = int((self.start_datetime - d1970 + timedelta(seconds=total_seconds)).total_seconds())
-            time_delta = self.time_step_array[index] * time_len
-            total_seconds += time_delta
-            if index < len(self.time_len_array)-1:
-                #push back total seconds to time of next run
-                total_seconds -= self.time_step_array[index]
-            secs_end = secs_start + time_delta
-                
-            time_array.append(np.arange(secs_start, secs_end, self.time_step_array[index]))
-
-        end_date = (self.start_datetime + timedelta(seconds=total_seconds))
         self.cf_nc.variables['time'][:] = np.concatenate(time_array)
+        end_date = datetime.utcfromtimestamp(self.cf_nc.variables['time'][-1])
         self.cf_nc.time_coverage_start = self.start_datetime.isoformat() + 'Z'
         self.cf_nc.time_coverage_end = end_date.isoformat() + 'Z'
 
-    def _copy_streamflow_values(self, input_flow_var_name):
+    def _copy_streamflow_values(self):
         """
         Copies streamflow values from raw output to CF file
         """
@@ -458,10 +397,10 @@ class ConvertRAPIDOutputToCF(object):
         end_time_step_index = -1
         for raw_nc_index, raw_nc in enumerate(self.raw_nc_list):
             if raw_nc_index == 0:
-                end_time_step_index = self.time_len_array[raw_nc_index]
+                end_time_step_index = raw_nc.size_time + 1
             else:
-                end_time_step_index = begin_time_step_index + self.time_len_array[raw_nc_index]
-            q_var[:,begin_time_step_index:end_time_step_index] = raw_nc.variables[input_flow_var_name][:].transpose()
+                end_time_step_index = begin_time_step_index + raw_nc.size_time
+            q_var[:,begin_time_step_index:end_time_step_index] = raw_nc.get_qout()
             begin_time_step_index = end_time_step_index
         
         #add initial flow to RAPID output file
@@ -494,7 +433,7 @@ class ConvertRAPIDOutputToCF(object):
 
             # Validate the raw netCDF file
             log('validating input netCDF file', 'INFO')
-            input_id_dim_name, id_len, time_len, input_flow_var_name = self._validate_raw_nc()
+            id_len, time_len = self._validate_raw_nc()
 
             # Initialize the output file (create dimensions and variables)
             log('initializing output', 'INFO')
@@ -502,9 +441,10 @@ class ConvertRAPIDOutputToCF(object):
 
             self._generate_time_values()
             
-            # Populate comid, lat, lon, z
-            self.cf_nc.variables[self.output_id_dim_name][:] = self.raw_nc_list[0].variables[input_id_dim_name][:]
+            #copy river ids over
+            self.cf_nc.variables[self.output_id_dim_name][:] = self.raw_nc_list[0].get_river_id_array()
 
+            # Populate comid, lat, lon, z
             log('writing comid lat lon z', 'INFO')
             lookup_start = datetime.now()
             self._write_comid_lat_lon_z()
@@ -514,7 +454,7 @@ class ConvertRAPIDOutputToCF(object):
             # Create a variable for streamflow. This is big, and slows down
             # previous steps if we do it earlier.
             log('Creating streamflow variable', 'INFO')
-            self._copy_streamflow_values(input_flow_var_name)
+            self._copy_streamflow_values()
             
             #close files
             for raw_nc in self.raw_nc_list:

@@ -41,7 +41,7 @@ class RAPIDDataset(object):
         return self
         
     def __exit__(self, exc_type, exc_value, traceback):
-        close()
+        self.close()
 
     def close(self):
         self.qout_nc.close()
@@ -74,7 +74,7 @@ class RAPIDDataset(object):
         if self.is_time_variable_valid():
             time_array = self.qout_nc.variables['time'][:]
         #Original Qout file
-        elif datetime_simulation_start is not None and simulation_time_step is not None:
+        elif datetime_simulation_start is not None and simulation_time_step_seconds is not None:
             initial_time_seconds = (datetime_simulation_start-datetime.datetime(1970,1,1)).total_seconds()+simulation_time_step_seconds
             final_time_seconds = initial_time_seconds + self.size_time*simulation_time_step_seconds
             time_array = np.arange(initial_time_seconds, final_time_seconds, simulation_time_step_seconds)

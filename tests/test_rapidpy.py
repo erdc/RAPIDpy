@@ -452,7 +452,7 @@ def test_goodness_of_fit():
     #using CF-compliant file
     cf_input_qout_file = os.path.join(COMPARE_DATA_PATH, 'Qout_nasa_lis_3hr_20020830_CF.nc')
     cf_out_analysis_file = os.path.join(OUTPUT_DATA_PATH, 'cf_goodness_of_fit_results-daily.csv') 
-    find_goodness_of_fit(reach_id_file, cf_input_qout_file, observed_file,
+    find_goodness_of_fit(cf_input_qout_file, reach_id_file, observed_file,
                          cf_out_analysis_file, daily=True)
 
     cf_goodness_of_fit_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_goodness_of_fit_analysis-SOLUTION.csv') 
@@ -461,7 +461,7 @@ def test_goodness_of_fit():
     raw_goodness_of_fit_file_solution = os.path.join(COMPARE_DATA_PATH, 'raw_goodness_of_fit_analysis-SOLUTION.csv') 
     original_input_qout_file = os.path.join(COMPARE_DATA_PATH, 'Qout_nasa_lis_3hr_20020830_original.nc')
     original_out_analysis_file = os.path.join(OUTPUT_DATA_PATH, 'original_goodness_of_fit_results-daily.csv') 
-    find_goodness_of_fit(reach_id_file, original_input_qout_file, observed_file,
+    find_goodness_of_fit(original_input_qout_file, reach_id_file, observed_file,
                          original_out_analysis_file, steps_per_group=8)
 
     ok_(compare_csv_decimal_files(original_out_analysis_file, raw_goodness_of_fit_file_solution))
@@ -469,7 +469,7 @@ def test_goodness_of_fit():
     #using new RAPID file
     new_input_qout_file = os.path.join(COMPARE_DATA_PATH, 'Qout_nasa_lis_3hr_20020830.nc')
     new_out_analysis_file = os.path.join(OUTPUT_DATA_PATH, 'goodness_of_fit_results-daily.csv') 
-    find_goodness_of_fit(reach_id_file, new_input_qout_file, observed_file,
+    find_goodness_of_fit(new_input_qout_file, reach_id_file, observed_file,
                          new_out_analysis_file, steps_per_group=8)
 
     ok_(compare_csv_decimal_files(new_out_analysis_file, raw_goodness_of_fit_file_solution))

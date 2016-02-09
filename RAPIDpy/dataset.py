@@ -113,8 +113,8 @@ class RAPIDDataset(object):
 
     def get_time_index_range(self, date_search_start=None,
                              date_search_end=None,
-                             time_index_search_start=None,
-                             time_index_search_end=None,
+                             time_index_start=None,
+                             time_index_end=None,
                              time_index=None):
         """
         Generates a time index range based on datetimes
@@ -136,12 +136,12 @@ class RAPIDDataset(object):
                     time_range = np.where(time_array<=seconds_end)[0]
     
         #get the range of time based on time index range
-        elif time_index_search_start is not None or time_index_search_end is not None:
-            if time_index_search_start is None:
-                time_index_search_start = 0
-            if time_index_search_end is None:
-                time_index_search_end = self.size_time
-            time_range = range(time_index_search_start,time_index_search_end)
+        elif time_index_start is not None or time_index_end is not None:
+            if time_index_start is None:
+                time_index_start = 0
+            if time_index_end is None:
+                time_index_end = self.size_time
+            time_range = range(time_index_start,time_index_end)
 
         #get only one time step
         elif time_index is not None:
@@ -197,8 +197,8 @@ class RAPIDDataset(object):
     def get_qout(self, river_id_array=None,
                  date_search_start=None,
                  date_search_end=None,
-                 time_index_search_start=None,
-                 time_index_search_end=None,
+                 time_index_start=None,
+                 time_index_end=None,
                  time_index=None):
         """
         This method extracts streamflow data by river id
@@ -216,8 +216,8 @@ class RAPIDDataset(object):
         return self.get_qout_index(riverid_index_list_subset,
                                    date_search_start,
                                    date_search_end,
-                                   time_index_search_start,
-                                   time_index_search_end,
+                                   time_index_start,
+                                   time_index_end,
                                    time_index)
                        
 
@@ -225,8 +225,8 @@ class RAPIDDataset(object):
     def get_qout_index(self, river_index_array=None,
                        date_search_start=None,
                        date_search_end=None,
-                       time_index_search_start=None,
-                       time_index_search_end=None,
+                       time_index_start=None,
+                       time_index_end=None,
                        time_index=None,
                        time_index_array=None):
         """
@@ -241,8 +241,8 @@ class RAPIDDataset(object):
         if time_index_array is None:
             time_index_array = self.get_time_index_range(date_search_start,
                                                          date_search_end,
-                                                         time_index_search_start,
-                                                         time_index_search_end,
+                                                         time_index_start,
+                                                         time_index_end,
                                                          time_index)
 
         qout_variable = self.qout_nc.variables[self.q_var_name]

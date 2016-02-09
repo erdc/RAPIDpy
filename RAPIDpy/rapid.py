@@ -236,7 +236,26 @@ class RAPID(object):
         #get riv_bas_id info
         riv_bas_id_table = csv_to_list(self.riv_bas_id_file)
         self.IS_riv_bas = len(riv_bas_id_table)
+    
+    def update_simulation_runtime(self):
+        """
+        Updates the total simulation runtime from
+        the m3 file and the time step
+        """
+        if not self.Vlat_file or not os.path.exists(self.Vlat_file):
+            raise Exception("Need Vlat_file to proceed ...")
 
+        if self.ZS_TauR <= 0:
+            raise Exception("Missing routing time step ...")
+    
+        try:
+            self.ZS_TauR = int(self.ZS_TauR)
+        except Exception:
+            raise Excepion("Invalid routing time step: {0} ...".format(self.ZS_TauR))
+
+        with RAPIDDataset(self.Vlat_file) as m3_nc:
+            self.ZS_TauM = m3_nc.size_time*self.ZS_TauR
+            self.ZS_TauO = m3_nc.size_time*self.ZS_TauR
 
     def generate_namelist_file(self, file_path):
         """

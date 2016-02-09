@@ -161,11 +161,49 @@ def test_update_rapid_numbers_input_file():
     
     remove_files(generated_input_file)
 
+def test_update_rapid_numbers_input_file():
+    """
+    Checks RAPID input file update with number validation
+    """
+    print "TEST 5: GENERATE RUNTIME FOR NAMELIST FILE"
+    rapid_manager = RAPID(rapid_executable_location="",
+                          use_all_processors=True,
+                          rapid_connect_file=os.path.join(INPUT_DATA_PATH, 'rapid_connect.csv'),
+                          riv_bas_id_file=os.path.join(INPUT_DATA_PATH, 'riv_bas_id.csv'),
+                          Vlat_file=os.path.join(INPUT_DATA_PATH, 'm3_nasa_lis_3hr_20020830.nc'),
+                          ZS_TauR=3*3600,
+                         )
+
+    rapid_manager.update_reach_number_data()
+    
+    rapid_manager.update_simulation_runtime()
+                          
+    rapid_manager.update_parameters(rapid_connect_file='rapid_connect.csv',
+                                    Vlat_file='m3_nasa_lis_3hr_20020830.nc',
+                                    riv_bas_id_file='riv_bas_id.csv',
+                                    k_file='k.csv',
+                                    x_file='x.csv',
+                                    Qout_file='Qout.nc'
+                                    )
+
+    generated_input_file = os.path.join(OUTPUT_DATA_PATH, 
+                                      "rapid_namelist-GENERATE-TIME")
+
+    rapid_manager.generate_namelist_file(generated_input_file)
+                          
+    generated_input_file_solution = os.path.join(COMPARE_DATA_PATH, 
+                                               "rapid_namelist-GENERATE-TIME-SOLUTION")
+
+
+    ok_(fcmp(generated_input_file, generated_input_file_solution))
+    
+    remove_files(generated_input_file)
+
 def test_qout_same():
     """
     Test function to compare RAPID simulation Qout
     """
-    print "TEST 5: TEST COMPARE RAPID QOUT"
+    print "TEST 6: TEST COMPARE RAPID QOUT"
     input_qout_file = os.path.join(COMPARE_DATA_PATH, 'Qout_nasa_lis_3hr_20020830.nc')
     input_qout_file_cf = os.path.join(COMPARE_DATA_PATH, 'Qout_nasa_lis_3hr_20020830_CF.nc')
    
@@ -176,7 +214,7 @@ def test_run_rapid_simulation():
     Test Running RAPID Simulation
     """
     
-    print "TEST 6: TEST RUNNING RAPID SIMULATION"
+    print "TEST 7: TEST RUNNING RAPID SIMULATION"
     rapid_executable_location = os.path.join(MAIN_TESTS_FOLDER,
                                              "..", "..",
                                              "rapid", "src", "rapid")
@@ -222,7 +260,7 @@ def test_convert_file_to_be_cf_compliant_new_format_comid_lat_lon_z():
     """
     Test Convert RAPID Output to be CF Compliant for new format with COMID_LAT_LON_Z
     """
-    print "TEST 7: TEST CONVERT RAPID OUTPUT TO CF COMPLIANT (COMID_LAT_LON_Z)"
+    print "TEST 8: TEST CONVERT RAPID OUTPUT TO CF COMPLIANT (COMID_LAT_LON_Z)"
 
     input_qout_file = os.path.join(COMPARE_DATA_PATH, 'Qout_nasa_lis_3hr_20020830.nc')
     temp_qout_file = os.path.join(OUTPUT_DATA_PATH, 'Qout_nasa_lis_3hr_20020830_test_cf_lat_lon_z.nc')
@@ -261,7 +299,7 @@ def test_convert_file_to_be_cf_compliant_new_format():
     """
     Test Convert RAPID Output to be CF Compliant for new format without COMID_LAT_LON_Z
     """
-    print "TEST 8: TEST CONVERT RAPID OUTPUT TO CF COMPLIANT (NO COMID_LAT_LON_Z)"
+    print "TEST 9: TEST CONVERT RAPID OUTPUT TO CF COMPLIANT (NO COMID_LAT_LON_Z)"
 
     input_qout_file = os.path.join(COMPARE_DATA_PATH, 'Qout_nasa_lis_3hr_20020830.nc')
     temp_qout_file = os.path.join(OUTPUT_DATA_PATH, 'Qout_nasa_lis_3hr_20020830_test_cf.nc')
@@ -298,7 +336,7 @@ def test_convert_file_to_be_cf_compliant_original_format():
     """
     Test Convert RAPID Output to be CF Compliant for original format
     """
-    print "TEST 9: TEST CONVERT RAPID OUTPUT TO CF COMPLIANT - ORIGINAL (COMID_LAT_LON_Z)"
+    print "TEST 10: TEST CONVERT RAPID OUTPUT TO CF COMPLIANT - ORIGINAL (COMID_LAT_LON_Z)"
 
     input_qout_file = os.path.join(COMPARE_DATA_PATH, 'Qout_nasa_lis_3hr_20020830_original.nc')
     temp_qout_file = os.path.join(OUTPUT_DATA_PATH, 'Qout_nasa_lis_3hr_20020830_original_test_cf.nc')
@@ -337,7 +375,7 @@ def test_generate_qinit_file():
     """
     This tests the qinit file function to create an input qinit file for RAPID
     """
-    print "TEST 10: TEST GENERATE QINIT FILE"
+    print "TEST 11: TEST GENERATE QINIT FILE"
     rapid_manager = RAPID(rapid_executable_location="",
                           rapid_connect_file=os.path.join(INPUT_DATA_PATH, 'rapid_connect.csv')
                          )
@@ -377,7 +415,7 @@ def test_extract_timeseries():
     """
     This tests extracting a timeseries from RAPID Qout file
     """
-    print "TEST 11: TEST EXTRACT TIMESERIES FROM QINIT FILE"
+    print "TEST 12: TEST EXTRACT TIMESERIES FROM QINIT FILE"
     
     #for writing entire time series to file from new rapid output
     input_qout_file = os.path.join(COMPARE_DATA_PATH, 'Qout_nasa_lis_3hr_20020830.nc')

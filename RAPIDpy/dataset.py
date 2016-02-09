@@ -32,6 +32,8 @@ class RAPIDDataset(object):
             self.river_id_dimension = 'rivid'
         elif 'COMID' in self.qout_nc.dimensions:
             self.river_id_dimension = 'COMID'
+        elif 'DrainLnID' in self.qout_nc.dimensions:
+            self.river_id_dimension = 'DrainLnID'
         else:
             raise Exception('ERROR: Could not find river ID dimension.')
         self.size_river_id = len(self.qout_nc.dimensions[self.river_id_dimension])

@@ -31,7 +31,9 @@ class RAPID(object):
     the RAPID program.
     """
     def __init__(self, rapid_executable_location, num_processors=1, 
-                 use_all_processors=False, cygwin_bin_location="", **kwargs):
+                 use_all_processors=False, cygwin_bin_location="",
+                 mpiexec_command="mpiexec", ksp_type="richardson",
+                 **kwargs):
         """
         Initialize the class with variables given by the user
         """
@@ -41,6 +43,9 @@ class RAPID(object):
             raise Exception("Required to have cygwin_bin_location set if using windows!")
         self._cygwin_bin_location = cygwin_bin_location
         self._cygwin_bash_exe_location = os.path.join(cygwin_bin_location, "bash.exe")
+        self._mpiexec_command = mpiexec_command
+        self._ksp_type = ksp_type
+        
         #use all processors akes precedent over num_processors arg
         if use_all_processors == True:
             self._num_processors = cpu_count()
@@ -393,12 +398,15 @@ class RAPID(object):
                 run_rapid.write("#!/bin/sh\n")
                 run_rapid.write("cd {}\n".format(self._get_cygwin_path(os.getcwd())))
                 if self._num_processors > 1:
-                    run_rapid.write("mpiexec -np {0} {1} -ksp_type richardson\n".format(self._num_processors, 
-                                                                                        self._get_cygwin_path(local_rapid_executable_location)))
+                    run_rapid.write("{0} -np {1} {2} -ksp_type {3}\n".format(self._mpiexec_command,
+                                                                             self._num_processors,
+                                                                             self._get_cygwin_path(local_rapid_executable_location),
+                                                                             self._ksp_type))
                 else:
                     #htcondor will not allow mpiexec for single processor jobs
                     #this was added for that purpose
-                    run_rapid.write("{} -ksp_type richardson\n".format(self._get_cygwin_path(local_rapid_executable_location)))
+                    run_rapid.write("{0} -ksp_type {1}\n".format(self._get_cygwin_path(local_rapid_executable_location),
+                                                                 self._ksp_type))
                 
             
             self._dos2unix_cygwin(run_rapid_script)
@@ -409,12 +417,12 @@ class RAPID(object):
             #htcondor will not allow mpiexec for single processor jobs
             #this was added for that purpose
             run_rapid_command = [local_rapid_executable_location, 
-                                 "-ksp_type", "richardson"]
+                                 "-ksp_type", self._ksp_type]
                                  
             if self._num_processors > 1:
-                run_rapid_command = ["mpiexec", "-n", str(self._num_processors), 
+                run_rapid_command = [self._mpiexec_command, "-n", str(self._num_processors),
                                      local_rapid_executable_location, 
-                                     "-ksp_type", "richardson"]
+                                     "-ksp_type", self._ksp_type]
 
         process = Popen(run_rapid_command, 
                         stdout=PIPE, stderr=PIPE, shell=False)

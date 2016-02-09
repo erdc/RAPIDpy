@@ -50,9 +50,26 @@ $ sudo yum install netcdf4-python hdf5-devel netcdf-devel
 $ brew install homebrew/science/netcdf
 ```
 ##Step 3: Install RAPIDpy
+To get the latest stable version:
 ```
 $ sudo su
 # pip install RAPIDpy
+$ exit
+```
+To install the latest version:
+```
+$ git clone https://github.com/erdc-cm/RAPIDpy.git
+$ cd RAPIDpy
+$ sudo su
+# python setup.py install
+$ exit
+```
+To develop on the latest version:
+```
+$ git clone https://github.com/erdc-cm/RAPIDpy.git
+$ cd RAPIDpy
+$ sudo su
+# python setup.py develop
 $ exit
 ```
 #How to use:
@@ -102,7 +119,7 @@ rapid_manager.update_parameters(rapid_connect_file='../rapid_input_directory/rap
                                 riv_bas_id_file='../rapid_input_directory/riv_bas_id.csv,
                                 k_file='../rapid_input_directory/k.csv',
                                 x_file='../rapid_input_directory/x.csv',
-                                Qout_file='../OUTPUT/Qout.nc'
+                                Qout_file='../OUTPUT/Qout.nc',
                                 )
 ```
 ### Step 3 (optional): Update reach number data
@@ -113,7 +130,15 @@ Example:
 rapid_manager.update_reach_number_data()
 ```
 
-### Step 4: Run RAPID
+### Step 4 (optional): Update simulation runtime data
+If you don't want to manually determine the total simulation duration, use the *update_simulation_runtime* function.
+
+Example:
+```python
+rapid_manager.update_simulation_runtime()
+```
+
+### Step 5: Run RAPID
 This will generate your rapid_namelist file and run RAPID from wherever you call this script (your working directory).
 
 Example:
@@ -121,7 +146,7 @@ Example:
 rapid_manager.run()
 ```
 
-###Step 5 (optional): Convert RAPID output to be CF Compliant
+###Step 6 (optional): Convert RAPID output to be CF Compliant
 This will convert the RAPID output to be CF compliant. This will require a comid_lat_lon_z file.
 Additionally, it prepends time zero to you simulation. If no qinit file is given, a value of zero is added.
 

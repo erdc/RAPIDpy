@@ -393,16 +393,32 @@ class ConvertRAPIDOutputToCF(object):
         q_var.comment = ('lat, lon, and z values taken at midpoint of river ' +
                          'reach feature')
         log('Copying streamflow values', 'INFO')
-        begin_time_step_index = 1
-        end_time_step_index = -1
-        for raw_nc_index, raw_nc in enumerate(self.raw_nc_list):
-            if raw_nc_index == 0:
-                end_time_step_index = raw_nc.size_time + 1
-            else:
-                end_time_step_index = begin_time_step_index + raw_nc.size_time
-            q_var[:,begin_time_step_index:end_time_step_index] = raw_nc.get_qout()
-            begin_time_step_index = end_time_step_index
         
+        master_begin_time_step_index = 1
+        master_end_time_step_index = -1
+        max_2d_dimension = 1000000000
+        #to reduce memory, copy by chunks (largest possible)
+        for raw_nc_index, raw_nc in enumerate(self.raw_nc_list):
+            
+            max_time_step_size = min(raw_nc.size_time, max(1, max_2d_dimension/raw_nc.size_river_id))
+            raw_nc_begin_time_step_index = 0
+            raw_nc_end_time_step_index = -1
+            for time_interval_index in xrange(0, raw_nc.size_time, max_time_step_size):
+                time_interval_size = min(raw_nc.size_time-time_interval_index*max_time_step_size, max_time_step_size)
+                
+                raw_nc_end_time_step_index = raw_nc_begin_time_step_index+time_interval_size
+                
+                if raw_nc_index == 0:
+                    master_end_time_step_index = time_interval_size + 1
+                else:
+                    master_end_time_step_index = master_begin_time_step_index + time_interval_size
+                
+                
+                q_var[:,master_begin_time_step_index:master_end_time_step_index] = raw_nc.get_qout(time_index_start=raw_nc_begin_time_step_index,
+                                                                                                   time_index_end=raw_nc_end_time_step_index)
+                master_begin_time_step_index = master_end_time_step_index
+                raw_nc_begin_time_step_index = raw_nc_end_time_step_index
+
         #add initial flow to RAPID output file
         if self.qinit_file and self.rapid_connect_file:
             lookup_table = csv_to_list(self.rapid_connect_file)

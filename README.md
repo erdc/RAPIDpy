@@ -316,8 +316,8 @@ within a date range associated with the reach you are interested in
 
     #Original RAPID Qout
     streamflow_array = qout_nc.get_qout(river_id,
-                                        time_index_search_start=20,
-                                        time_index_search_end=25)
+                                        time_index_start=20,
+                                        time_index_end=25)
 
 ```
 

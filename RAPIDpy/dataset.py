@@ -3,8 +3,8 @@
 ##  dataset.py
 ##  RAPIDpy
 ##
-##  Created by Alan D Snow, 2015.
-##  Copyright © 2015 Alan D Snow. All rights reserved.
+##  Created by Alan D Snow, 2016.
+##  Copyright © 2016 Alan D Snow. All rights reserved.
 ##
 
 import datetime
@@ -34,6 +34,8 @@ class RAPIDDataset(object):
             self.river_id_dimension = 'COMID'
         elif 'DrainLnID' in self.qout_nc.dimensions:
             self.river_id_dimension = 'DrainLnID'
+        elif 'FEATUREID' in self.qout_nc.dimensions:
+            self.river_id_dimension = 'FEATUREID'
         else:
             raise Exception('ERROR: Could not find river ID dimension.')
         self.size_river_id = len(self.qout_nc.dimensions[self.river_id_dimension])

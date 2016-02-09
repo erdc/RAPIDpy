@@ -443,25 +443,20 @@ class RAPID(object):
         """
         print "Generating qinit file from qout file ..."
         print "Extracting data ..."
-        #get information from datasets
-        qout_nc = RAPIDDataset(self.Qout_file)
-        
-        try:
+        #get information from dataset
+        with RAPIDDataset(self.Qout_file) as qout_nc:
             streamflow_values = qout_nc.get_qout(time_index=time_index)
-        except Exception:
-            qout_nc.close()
-            raise
     
-        print "Reordering data..."
-        rapid_connect_array = csv_to_list(self.rapid_connect_file)
-        stream_id_array = np.array([int(float(row[0])) for row in rapid_connect_array])
-        init_flows_array = np.zeros(len(rapid_connect_array))
-        for riv_bas_index, riv_bas_id in enumerate(qout_nc.get_river_id_array()):
-            try:
-                data_index = np.where(stream_id_array==riv_bas_id)[0][0]
-                init_flows_array[data_index] = streamflow_values[riv_bas_index]
-            except Exception:
-                raise Exception ('riv bas id %s not found in connectivity list.' % riv_bas_id)
+            print "Reordering data..."
+            rapid_connect_array = csv_to_list(self.rapid_connect_file)
+            stream_id_array = np.array([int(float(row[0])) for row in rapid_connect_array])
+            init_flows_array = np.zeros(len(rapid_connect_array))
+            for riv_bas_index, riv_bas_id in enumerate(qout_nc.get_river_id_array()):
+                try:
+                    data_index = np.where(stream_id_array==riv_bas_id)[0][0]
+                    init_flows_array[data_index] = streamflow_values[riv_bas_index]
+                except Exception:
+                    raise Exception ('riv bas id %s not found in connectivity list.' % riv_bas_id)
         
         print "Writing to file ..."
         with open(qinit_file, 'wb') as qinit_out:

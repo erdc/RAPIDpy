@@ -396,10 +396,10 @@ class ConvertRAPIDOutputToCF(object):
 
         log('Copying streamflow values', 'INFO')
         master_begin_time_step_index = 1
-        master_end_time_step_index = -1
-        max_2d_dimension = 1000000000 #~8GB Max
+        master_end_time_step_index = len(self.cf_nc.dimensions['time'])
         
         #to reduce RAM, copy by chunks
+        max_2d_dimension = 1000000000 #~8GB Max
         for raw_nc_index, raw_nc in enumerate(self.raw_nc_list):
             max_time_step_size = min(raw_nc.size_time, max(1, int(float(max_2d_dimension)/float(raw_nc.size_river_id))))
             raw_nc_begin_time_step_index = 0

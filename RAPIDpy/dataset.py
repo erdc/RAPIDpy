@@ -78,10 +78,14 @@ class RAPIDDataset(object):
             if len(self.qout_nc.dimensions['time'])>0:
                 if not (self.qout_nc.variables['time'][:] == masked).any():
                     try:
-                        datetime.datetime.utcfromtimestamp(self.qout_nc.variables['time'][0])
-                        time_var_valid = True
+                        timestep = (datetime.datetime.utcfromtimestamp(self.qout_nc.variables['time'][0])-
+                                    datetime.datetime.utcfromtimestamp(self.qout_nc.variables['time'][1])).seconds
+                        
+                        if timestep > 0:
+                            time_var_valid = True
                     except ValueError:
                         pass
+    
         return time_var_valid
 
     def get_time_array(self, datetime_simulation_start=None,
@@ -199,7 +203,8 @@ class RAPIDDataset(object):
                  date_search_end=None,
                  time_index_start=None,
                  time_index_end=None,
-                 time_index=None):
+                 time_index=None,
+                 time_index_array=None):
         """
         This method extracts streamflow data by river id
         It allows for extracting single or multiple river streamflow arrays
@@ -218,7 +223,8 @@ class RAPIDDataset(object):
                                    date_search_end,
                                    time_index_start,
                                    time_index_end,
-                                   time_index)
+                                   time_index,
+                                   time_index_array)
                        
 
 

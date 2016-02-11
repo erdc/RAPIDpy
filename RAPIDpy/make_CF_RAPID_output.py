@@ -381,6 +381,7 @@ class ConvertRAPIDOutputToCF(object):
         """
         Copies streamflow values from raw output to CF file
         """
+        log('Creating streamflow variable', 'INFO')
         q_var = self.cf_nc.createVariable(
             self.output_flow_var_name, 'f4', (self.output_id_dim_name, 'time'))
         q_var.long_name = 'Discharge'
@@ -392,33 +393,30 @@ class ConvertRAPIDOutputToCF(object):
         q_var.references = 'http://rapid-hub.org/'
         q_var.comment = ('lat, lon, and z values taken at midpoint of river ' +
                          'reach feature')
+
         log('Copying streamflow values', 'INFO')
-        
         master_begin_time_step_index = 1
         master_end_time_step_index = -1
-        max_2d_dimension = 1000000000
-        #to reduce memory, copy by chunks (largest possible)
+        max_2d_dimension = 1000000000 #~8GB Max
+        
+        #to reduce RAM, copy by chunks
         for raw_nc_index, raw_nc in enumerate(self.raw_nc_list):
-            
-            max_time_step_size = min(raw_nc.size_time, max(1, max_2d_dimension/raw_nc.size_river_id))
+            max_time_step_size = min(raw_nc.size_time, max(1, int(float(max_2d_dimension)/float(raw_nc.size_river_id))))
             raw_nc_begin_time_step_index = 0
-            raw_nc_end_time_step_index = -1
-            for time_interval_index in xrange(0, raw_nc.size_time, max_time_step_size):
-                time_interval_size = min(raw_nc.size_time-time_interval_index*max_time_step_size, max_time_step_size)
-                
-                raw_nc_end_time_step_index = raw_nc_begin_time_step_index+time_interval_size
-                
-                if raw_nc_index == 0:
-                    master_end_time_step_index = time_interval_size + 1
-                else:
-                    master_end_time_step_index = master_begin_time_step_index + time_interval_size
-                
+            raw_nc_end_time_step_index = raw_nc.size_time
+            for raw_nc_time_index in xrange(0, raw_nc.size_time, max_time_step_size):
+                time_interval_size = max(1, min(raw_nc.size_time-raw_nc_time_index, max_time_step_size))
+
+                raw_nc_end_time_step_index = raw_nc_begin_time_step_index + time_interval_size
+                master_end_time_step_index = master_begin_time_step_index + time_interval_size
                 
                 q_var[:,master_begin_time_step_index:master_end_time_step_index] = raw_nc.get_qout(time_index_start=raw_nc_begin_time_step_index,
                                                                                                    time_index_end=raw_nc_end_time_step_index)
+                
                 master_begin_time_step_index = master_end_time_step_index
                 raw_nc_begin_time_step_index = raw_nc_end_time_step_index
 
+        log('Adding initial streamflow values', 'INFO')
         #add initial flow to RAPID output file
         if self.qinit_file and self.rapid_connect_file:
             lookup_table = csv_to_list(self.rapid_connect_file)
@@ -436,7 +434,6 @@ class ConvertRAPIDOutputToCF(object):
         else:
             for index, comid in enumerate(self.cf_nc.variables[self.output_id_dim_name][:]):
                 q_var[index,0] = 0
-                
 
     def convert(self):
         """
@@ -469,7 +466,6 @@ class ConvertRAPIDOutputToCF(object):
 
             # Create a variable for streamflow. This is big, and slows down
             # previous steps if we do it earlier.
-            log('Creating streamflow variable', 'INFO')
             self._copy_streamflow_values()
             
             #close files

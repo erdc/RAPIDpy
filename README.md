@@ -88,7 +88,9 @@ Example:
 ```python
 from RAPIDpy.rapid import RAPID
 rapid_manager = RAPID(rapid_executable_location='~/work/rapid/run/rapid'
-                      use_all_processors=True,                          
+                      use_all_processors=True, #optional, default is False
+                      #num_processors=1, #optional, default is 1, overridden if use_all_processors is True                         
+                      #ksp_type="richardson", #optional, default is richardson
                       ZS_TauR=24*3600, #duration of routing procedure (time step of runoff data)
                       ZS_dtR=15*60, #internal routing time step
                       ZS_TauM=365*24*3600, #total simulation time 
@@ -100,7 +102,9 @@ If you are using Cygwin on Windows:
 from RAPIDpy.rapid import RAPID
 rapid_manager = RAPID(rapid_executable_location='C:\\cygwin64\\home\\username\\work\\rapid\\run\\rapid',
                       cygwin_bin_location='C:\\cygwin64\\bin',
-                      use_all_processors=True,                          
+                      use_all_processors=True, #optional, default is False
+                      #num_processors=1, #optional, default is 1, overridden if use_all_processors is True                         
+                      #ksp_type="richardson", #optional, default is richardson
                       ZS_TauR=24*3600, #duration of routing procedure (time step of runoff data)
                       ZS_dtR=15*60, #internal routing time step
                       ZS_TauM=365*24*3600, #total simulation time 
@@ -108,8 +112,9 @@ rapid_manager = RAPID(rapid_executable_location='C:\\cygwin64\\home\\username\\w
                      )
 ```
 
-### Step 2 (optional): Add/update additional parameters later
-You can add or update parameters using the *update_parameters* function by using the name of the variable in the rapid namelist file (this is case sensitive).
+### Step 2 (optional): Add/update additional namelist parameters later
+You can add or update rapid namelist parameters using the *update_parameters* 
+function by using the name of the variable in the rapid namelist file (this is case sensitive).
 
 
 Example:
@@ -123,7 +128,8 @@ rapid_manager.update_parameters(rapid_connect_file='../rapid_input_directory/rap
                                 )
 ```
 ### Step 3 (optional): Update reach number data
-If you don't want to manually count the numbers for the rapid_connect or riv_bas_id files, use the *update_reach_number_data* function.
+If you don't want to manually count the numbers for the rapid_connect or riv_bas_id files, 
+use the *update_reach_number_data* function.
 
 Example:
 ```python
@@ -153,7 +159,7 @@ Additionally, it prepends time zero to you simulation. If no qinit file is given
 Example:
 ```python
 rapid_manager.make_output_CF_compliant(simulation_start_datetime=datetime.datetime(1980, 1, 1),
-                                       comid_lat_lon_z_file='../rapid_input_directory/comid_lat_lon_z.csv',
+                                       comid_lat_lon_z_file='/rapid_input_directory/comid_lat_lon_z.csv', #optional
                                        project_name="ERA Interim Historical flows by US Army ERDC") 
 ```
 ##Getting USGS Daily Gage Data
@@ -192,9 +198,9 @@ file2 = ""
 cv = ConvertRAPIDOutputToCF(rapid_output_file=[file1, file2],
                             start_datetime=datetime.datetime(2005,1,1),
                             time_step=[3*3600, 3*3600],
-                            qinit_file="",
-                            comid_lat_lon_z_file="",
-                            rapid_connect_file="",
+                            qinit_file="", #optional
+                            comid_lat_lon_z_file="", #optional
+                            rapid_connect_file="", #optional
                             project_name="NLDAS(VIC)-RAPID historical flows by US Army ERDC",
                             output_id_dim_name='COMID',
                             output_flow_var_name='Qout',
@@ -226,13 +232,31 @@ write_flows_to_csv(path_to_file,
 RAPIDpy also creates a qinit file from a RAPID qout file. This example shows how.
 ```python
 from RAPIDpy.rapid import RAPID
-rapid_manager = RAPID(rapid_executable_location='/p/u4hfraat/rapid/src/rapid',
-                      Qout_file='/output_mississippi-nfie/Qout_k2v1_2005to2009.nc', 
+rapid_manager = RAPID(Qout_file='/output_mississippi-nfie/Qout_k2v1_2005to2009.nc', 
                       rapid_connect_file='/input_mississippi_nfie/rapid_connect_ECMWF.csv'
                      )
-rapid_manager.generate_qinit_from_past_qout(qinit_file='/autorapid/input_mississippi_nfie/Qinit_2008_flood.csv',
+rapid_manager.generate_qinit_from_past_qout(qinit_file='/input_mississippi_nfie/Qinit_2008_flood.csv',
 					    time_index=10162) #time_index is optional, if not included it will be last time step
 ```
+
+##Generate seasonal qinit from past qout
+
+RAPIDpy also creates a seasonal qinit file from a RAPID qout file. This requires a simulation Qout file with a 
+longer time period of record and to be CF compliant. It takes the average of the current date +- 3 days and 
+goes back as far as possible. This example shows how to use it.
+
+```python
+from RAPIDpy.rapid import RAPID
+rapid_manager = RAPID(Qout_file='/output_mississippi-nfie/Qout_2000to2015.nc', 
+                      rapid_connect_file='/input_mississippi_nfie/rapid_connect_ECMWF.csv'
+                      )
+
+rapid_manager.generate_seasonal_intitialization(qinit_file='/input_mississippi_nfie/Qinit_seasonal_avg_jan_1.csv',
+                                                #datetime_start_initialization, #this is optional, default is utcnow
+                                                )
+                                                
+```
+
 ##Goodness of Fit
 To check how well your simulation performed versus observations, this function can help you.
 

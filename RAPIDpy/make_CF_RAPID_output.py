@@ -56,7 +56,7 @@ References:
 """
 
 
-from datetime import datetime, timedelta
+from datetime import datetime
 import os
 from netCDF4 import Dataset
 import numpy as np
@@ -147,12 +147,12 @@ class ConvertRAPIDOutputToCF(object):
             self.raw_nc_list.append(qout_nc)
     
         #make sure river id lists are the same
-        for id_len in range(1, len(id_len_list)):
-            if id_len != id_len_list[0]:
+        for id_len_undex in range(1, len(id_len_list)):
+            if id_len_list[id_len_undex] != id_len_list[0]:
                 raise Exception("ERROR: River ID size is different in one of the files ...")
         
-        for raw_nc in range(1, len(self.raw_nc_list)):
-            if raw_nc.get_river_id_array() != self.raw_nc_list[0].get_river_id_array():
+        for raw_nc_index in range(1, len(self.raw_nc_list)):
+            if not (self.raw_nc_list[raw_nc_index].get_river_id_array() == self.raw_nc_list[0].get_river_id_array()).all():
                 raise Exception("ERROR: River IDs are different in files ...")
 
         return id_len_list[0], total_time_len
@@ -359,7 +359,6 @@ class ConvertRAPIDOutputToCF(object):
         """
         # Populate time values
         log('writing times', 'INFO')
-        total_seconds = 0
         d1970 = datetime(1970, 1, 1, tzinfo=utc)
         time_array = [[int((self.start_datetime - d1970).total_seconds())]]
         
@@ -479,7 +478,8 @@ class ConvertRAPIDOutputToCF(object):
             #rename nc compliant file to original name
             os.rename(self.cf_compliant_file, self.rapid_output_file_list[0])
             log('Time to process %s' % (datetime.utcnow()-time_start_conversion), 'INFO')
-        except Exception, e:
+        except Exception:
             #delete cf RAPID output
             remove_files(self.cf_compliant_file)
-            log('Conversion Error %s' % e, 'ERROR')
+            #log('Conversion Error %s' % e, 'ERROR')
+            raise

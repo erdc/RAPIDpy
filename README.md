@@ -4,7 +4,7 @@ RAPIDpy is a python interface for RAPID that assists to prepare inputs, runs the
 More information about installation and the input parameters for RAPID can be found at http://rapid-hub.org.
 The source code for RAPID is located at https://github.com/c-h-david/rapid/.
 
-[![DOI](https://zenodo.org/badge/doi/10.5281/zenodo.45149.svg)](http://dx.doi.org/10.5281/zenodo.45149)
+[![DOI](https://zenodo.org/badge/19918/erdc-cm/RAPIDpy.svg)](https://zenodo.org/badge/latestdoi/19918/erdc-cm/RAPIDpy)
 
 [![Build Status](https://travis-ci.org/erdc-cm/RAPIDpy.svg?branch=master)](https://travis-ci.org/erdc-cm/RAPIDpy)
 

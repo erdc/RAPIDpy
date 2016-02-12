@@ -24,6 +24,7 @@ from RAPIDpy.helper_functions import (compare_csv_decimal_files,
                                       write_flows_to_csv)
 
 from RAPIDpy.goodness_of_fit import find_goodness_of_fit
+from RAPIDpy.make_CF_RAPID_output import ConvertRAPIDOutputToCF
 
 #GLOBAL VARIABLES
 MAIN_TESTS_FOLDER = os.path.dirname(os.path.abspath(__file__))
@@ -516,6 +517,52 @@ def test_goodness_of_fit():
                  original_out_analysis_file,
                  new_out_analysis_file)
     
+def test_cf_merge():
+    """
+    This tests merging two qout files
+    """
+    print "TEST 14: TEST MERGE QOUT"
+
+    orig_qout_1 = os.path.join(INPUT_DATA_PATH, 'Qout_merge_3hr.nc')
+    orig_qout_2 = os.path.join(INPUT_DATA_PATH, 'Qout_merge_6hr.nc')
+
+    qout_1 = os.path.join(OUTPUT_DATA_PATH, 'Qout_merge_3hr.nc')
+    qout_2 = os.path.join(OUTPUT_DATA_PATH, 'Qout_merge_6hr.nc')
+
+    copy(orig_qout_1, qout_1)
+    copy(orig_qout_2, qout_2)
+    #Merge all files together at the end
+    cv = ConvertRAPIDOutputToCF(rapid_output_file=[qout_1, qout_2], 
+                                start_datetime=datetime(2016, 2, 12), 
+                                time_step=[3*3600, 6*3600], 
+                                qinit_file="", 
+                                comid_lat_lon_z_file="",
+                                rapid_connect_file="", 
+                                project_name="ECMWF-RAPID Predicted flows by US Army ERDC", 
+                                output_id_dim_name='rivid',
+                                output_flow_var_name='Qout',
+                                print_debug=False)
+    cv.convert()
+
+    cf_merge_qout_file_solution = os.path.join(COMPARE_DATA_PATH,
+                                               'Qout_merge-SOLUTION.nc')
+
+    #check Qout    
+    ok_(compare_qout_files(qout_1, cf_merge_qout_file_solution))
+
+    #check other info in netcdf file
+    d1 = Dataset(qout_1)
+    d2 = Dataset(cf_merge_qout_file_solution)
+    ok_(d1.dimensions.keys() == d2.dimensions.keys())
+    ok_(d1.variables.keys() == d2.variables.keys())
+    ok_((d1.variables['time'][:] == d1.variables['time'][:]).all())
+    ok_((d1.variables['rivid'][:] == d1.variables['rivid'][:]).all())
+    d1.close()
+    d2.close()
+    
+    remove_files(qout_1,
+                 qout_2)
+
 if __name__ == '__main__':
     import nose
     nose.main()

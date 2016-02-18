@@ -216,8 +216,7 @@ class RAPIDDataset(object):
             if not isinstance(river_id_array, list) \
             or not type(river_id_array).__module__ == np.array:
                 river_id_array = [river_id_array]
-            riverid_index_list_subset = self.get_subset_riverid_index_list(river_id_array)
-
+            riverid_index_list_subset = self.get_subset_riverid_index_list(river_id_array)[0]
         return self.get_qout_index(riverid_index_list_subset,
                                    date_search_start,
                                    date_search_end,

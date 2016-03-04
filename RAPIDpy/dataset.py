@@ -213,8 +213,8 @@ class RAPIDDataset(object):
         #get indices of where the streamflow data is
         riverid_index_list_subset = None
         if river_id_array is not None:
-            if not isinstance(river_id_array, list) \
-            or not type(river_id_array).__module__ == np.array:
+            if hasattr(river_id_array, "__len__") \
+            and not isinstance(river_id_array, str):
                 river_id_array = [river_id_array]
             riverid_index_list_subset = self.get_subset_riverid_index_list(river_id_array)[0]
 

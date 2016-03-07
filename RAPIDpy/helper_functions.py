@@ -6,8 +6,7 @@
 ##  Created by Alan D Snow, 2015.
 ##  Copyright © 2015 Alan D Snow. All rights reserved.
 ##
-from csv import reader as csvreader
-from csv import writer as csvwriter
+import csv
 from numpy import where, unique
 from numpy.testing import assert_almost_equal
 from numpy import array as np_array
@@ -25,10 +24,11 @@ def csv_to_list(csv_file, delimiter=','):
     Reads in a CSV file and returns the contents as list,
     where every row is stored as a sublist, and each element
     in the sublist represents 1 cell in the table.
-
     """
     with open(csv_file, 'rb') as csv_con:
-        reader = csvreader(csv_con, delimiter=delimiter)
+        dialect = csv.Sniffer().sniff(csv_con.read(1024), delimiters=delimiter)
+        csv_con.seek(0)
+        reader = csv.reader(csv_con, dialect)
         return list(reader)
 
 def compare_csv_decimal_files(file1, file2, header=True):

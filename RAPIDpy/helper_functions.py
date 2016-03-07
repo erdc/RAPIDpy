@@ -26,9 +26,12 @@ def csv_to_list(csv_file, delimiter=','):
     in the sublist represents 1 cell in the table.
     """
     with open(csv_file, 'rb') as csv_con:
-        dialect = csv.Sniffer().sniff(csv_con.read(1024), delimiters=delimiter)
-        csv_con.seek(0)
-        reader = csv.reader(csv_con, dialect)
+        if len(delimiter) > 1:
+            dialect = csv.Sniffer().sniff(csv_con.read(1024), delimiters=delimiter)
+            csv_con.seek(0)
+            reader = csv.reader(csv_con, dialect)
+        else:
+            reader = csv.reader(csv_con, delimiter=delimiter)
         return list(reader)
 
 def compare_csv_decimal_files(file1, file2, header=True):
@@ -37,8 +40,8 @@ def compare_csv_decimal_files(file1, file2, header=True):
     """
     with open(file1, 'rb') as fh1, \
          open(file2, 'rb') as fh2:
-        csv1 = csvreader(fh1)
-        csv2 = csvreader(fh2)
+        csv1 = csv.reader(fh1)
+        csv2 = csv.reader(fh2)
         files_equal = True
         if header:
             files_equal = (csv1.next() == csv2.next()) #header
@@ -63,8 +66,8 @@ def compare_csv_timeseries_files(file1, file2, header=True):
     """
     with open(file1, 'rb') as fh1, \
          open(file2, 'rb') as fh2:
-        csv1 = csvreader(fh1)
-        csv2 = csvreader(fh2)
+        csv1 = csv.reader(fh1)
+        csv2 = csv.reader(fh2)
         files_equal = True
         if header:
             files_equal = (csv1.next() == csv2.next()) #header
@@ -177,7 +180,7 @@ def write_flows_to_csv(path_to_rapid_qout_file, path_to_output_file,
             num_days = 0
             
             with open(path_to_output_file, 'w') as outcsv:
-                writer = csvwriter(outcsv)
+                writer = csv.writer(outcsv)
                 for idx, t in enumerate(data_nc.get_time_array()):
                     var_time = time.gmtime(t)
                     if current_day.tm_yday == var_time.tm_yday:
@@ -195,7 +198,7 @@ def write_flows_to_csv(path_to_rapid_qout_file, path_to_output_file,
         else:
             time_array = data_nc.get_time_array()
             with open(path_to_output_file, 'w') as outcsv:
-                writer = csvwriter(outcsv)
+                writer = csv.writer(outcsv)
                 for index in xrange(len(qout_arr)):
                     var_time = time.gmtime(time_array[index])
                     writer.writerow([time.strftime("%Y/%m/%d %H:00", var_time), qout_arr[index]])
@@ -203,7 +206,7 @@ def write_flows_to_csv(path_to_rapid_qout_file, path_to_output_file,
     else:
         print "Valid time variable not found. Printing values only ..."
         with open(path_to_output_file, 'w') as outcsv:
-            writer = csvwriter(outcsv)
+            writer = csv.writer(outcsv)
             for index in xrange(len(qout_arr)):
                 writer.writerow([index, qout_arr[index]])
 

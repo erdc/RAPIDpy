@@ -213,10 +213,11 @@ class RAPIDDataset(object):
         #get indices of where the streamflow data is
         riverid_index_list_subset = None
         if river_id_array is not None:
-            if not isinstance(river_id_array, list) \
-            or not type(river_id_array).__module__ == np.array:
+            if hasattr(river_id_array, "__len__") \
+            and not isinstance(river_id_array, str):
                 river_id_array = [river_id_array]
             riverid_index_list_subset = self.get_subset_riverid_index_list(river_id_array)[0]
+
         return self.get_qout_index(riverid_index_list_subset,
                                    date_search_start,
                                    date_search_end,
@@ -285,8 +286,7 @@ class RAPIDDataset(object):
             num_days = 0
             qout_arr = self.get_qout_index(reach_index)
             daily_qout = []
-            for idx, t in enumerate(self.get_time_array()):
-                var_time = datetime.datetime.utcfromtimestamp(t)
+            for idx, var_time in enumerate(self.get_time_array(return_datetime=True)):
                 if current_day.day == var_time.day:
                     flow += qout_arr[idx]
                     num_days += 1
@@ -313,3 +313,24 @@ class RAPIDDataset(object):
             raise Exception("Must have steps_per_group set to a value greater than one "
                             "due to non CF-Compliant Qout file ...")
 
+    def get_seasonal_monthly_average(self,river_id_array,
+                                     month):
+        """
+        This function loops through a CF compliant rapid streamflow
+        file to produce estimates for current streamflow based on
+        the seasonal average over the data within the historical streamflow
+        file.
+        """
+        if not self.is_time_variable_valid():
+            raise Exception("ERROR: File must be CF 1.6 compliant with time dimension ...")
+
+        time_indices = []
+        for idx, var_time in enumerate(self.get_time_array(return_datetime=True)):
+            if var_time.month == month:
+                time_indices.append(idx)
+
+        if not time_indices:
+            raise Exception("ERROR: No time steps found within range ...")
+        
+        print "Extracting data ..."
+        return np.mean(self.get_qout(river_id_array, time_index_array=time_indices), axis=1)

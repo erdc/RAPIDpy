@@ -44,11 +44,21 @@ Downloaded Cygwin (64-bit) (https://www.cygwin.com/) with these dependencies:
 ```
 $ sudo apt-get install python-dev zlib1g-dev libhdf5-serial-dev libnetcdf-dev
 ```
-###On Redhat/CentOS:
+###On Redhat/CentOS 7:
 ```
-$ sudo yum install epel-release
 $ sudo yum install netcdf4-python hdf5-devel netcdf-devel
 ```
+If you are on RHEL 7 and having troubles, add the epel repo:
+```
+$ wget https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+$ sudo rpm -Uvh epel-release-7*.rpm
+```
+If you are on CentOS 7 and having troubles, add the epel repo:
+```
+$ sudo yum install epel-release
+```
+Then install packages listed above.
+
 ###On OSX:
 ```
 $ brew install homebrew/science/netcdf

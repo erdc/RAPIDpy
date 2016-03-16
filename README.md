@@ -17,7 +17,11 @@ The source code for RAPID is located at https://github.com/c-h-david/rapid/.
 ### Before Installation Steps:
 #### Ubuntu:
 ```
-$ apt-get install gfortran g++ openmpi-bin
+$ sudo apt-get install gfortran g++ openmpi-bin
+```
+#### RedHat/CentOS:
+```
+$ sudo yum install gcc-g++ gcc-gfortran openmpi
 ```
 #### Windows with Cygwin:
 Downloaded Cygwin (64-bit) (https://www.cygwin.com/) with these dependencies:

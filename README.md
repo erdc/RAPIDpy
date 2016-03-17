@@ -46,7 +46,7 @@ $ sudo apt-get install python-dev zlib1g-dev libhdf5-serial-dev libnetcdf-dev
 ```
 ###On Redhat/CentOS 7:
 ```
-$ sudo yum install netcdf4-python hdf5-devel netcdf-devel
+$ sudo yum install netcdf4-python python-devel hdf5-devel netcdf-devel
 ```
 If you are on RHEL 7 and having troubles, add the epel repo:
 ```

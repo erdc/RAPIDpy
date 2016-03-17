@@ -21,7 +21,7 @@ $ sudo apt-get install gfortran g++ openmpi-bin
 ```
 #### RedHat/CentOS:
 ```
-$ sudo yum install gcc-g++ gcc-gfortran openmpi
+$ sudo yum install gcc-c++ gcc-gfortran openmpi
 ```
 #### Windows with Cygwin:
 Downloaded Cygwin (64-bit) (https://www.cygwin.com/) with these dependencies:

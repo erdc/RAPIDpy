@@ -267,7 +267,7 @@ class RAPID(object):
         try:
             self.ZS_TauR = int(self.ZS_TauR)
         except Exception:
-            raise Excepion("Invalid routing time step: {0} ...".format(self.ZS_TauR))
+            raise Exception("Invalid routing time step: {0} ...".format(self.ZS_TauR))
 
         with RAPIDDataset(self.Vlat_file) as m3_nc:
             self.ZS_TauM = m3_nc.size_time*self.ZS_TauR

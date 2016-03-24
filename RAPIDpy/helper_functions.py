@@ -171,31 +171,20 @@ def write_flows_to_csv(path_to_rapid_qout_file, path_to_output_file,
         reach_index = data_nc.get_river_index(reach_id)
 
     #analyze and write
-    qout_arr = data_nc.get_qout_index(reach_index)
     time_var_valid = data_nc.is_time_variable_valid()
     if time_var_valid:
         if daily:
-            current_day = time.gmtime(data_nc.get_time_array()[0])
-            flow = 0
-            num_days = 0
-            
             with open(path_to_output_file, 'w') as outcsv:
                 writer = csv.writer(outcsv)
-                for idx, t in enumerate(data_nc.get_time_array()):
-                    var_time = time.gmtime(t)
-                    if current_day.tm_yday == var_time.tm_yday:
-                        flow += qout_arr[idx]
-                        num_days += 1
-                    else:
-                        if num_days > 0:
-                            #write last average
-                            writer.writerow([time.strftime("%Y/%m/%d", current_day), flow/num_days])
-                        
-                        #start new average
-                        current_day = var_time
-                        num_days = 1
-                        flow = qout_arr[idx]
+		daily_time_index_array = data_nc.get_daily_time_index_array()
+                daily_qout = data_nc.get_daily_qout_index(reach_index)
+		time_array = data_nc.get_time_array()
+		for idx, time_idx in enumerate(daily_time_index_array):		 
+		    current_day = time.gmtime(time_array[time_idx])	
+	            #write last average
+        	    writer.writerow([time.strftime("%Y/%m/%d", current_day), daily_qout[idx]])
         else:
+            qout_arr = data_nc.get_qout_index(reach_index)
             time_array = data_nc.get_time_array()
             with open(path_to_output_file, 'w') as outcsv:
                 writer = csv.writer(outcsv)
@@ -205,6 +194,7 @@ def write_flows_to_csv(path_to_rapid_qout_file, path_to_output_file,
 
     else:
         print "Valid time variable not found. Printing values only ..."
+    	qout_arr = data_nc.get_qout_index(reach_index)
         with open(path_to_output_file, 'w') as outcsv:
             writer = csv.writer(outcsv)
             for index in xrange(len(qout_arr)):

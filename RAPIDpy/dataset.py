@@ -153,6 +153,18 @@ class RAPIDDataset(object):
         
         return time_range
 
+    def get_daily_time_index_array(self):
+        """
+	Returns an array of the first index of each day in the time array
+	"""
+        current_day = datetime.datetime.utcfromtimestamp(self.qout_nc.variables['time'][0])
+        daily_time_index_array = [0]
+        for idx, var_time in enumerate(self.get_time_array(return_datetime=True)):
+            if current_day.day != var_time.day:
+                 daily_time_index_array.append(idx)
+		 current_day = var_time
+	return daily_time_index_array
+
     def get_river_id_array(self):
         """
         This method returns the river index array for this file
@@ -276,31 +288,27 @@ class RAPIDDataset(object):
             raise Exception( "Invalid RAPID Qout file dimensions ...")
         return streamflow_array
     
-    def get_daily_qout(self, reach_index, steps_per_group=1):
+    def get_daily_qout_index(self, reach_index, daily_time_index_array=None, steps_per_group=1):
         """
         Gets the daily time series from RAPID output
         """
         if self.is_time_variable_valid() and steps_per_group<=1:
-            current_day = datetime.datetime.utcfromtimestamp(self.qout_nc.variables['time'][0])
-            flow = 0.0
-            num_days = 0
             qout_arr = self.get_qout_index(reach_index)
-            daily_qout = []
-            for idx, var_time in enumerate(self.get_time_array(return_datetime=True)):
-                if current_day.day == var_time.day:
-                    flow += qout_arr[idx]
-                    num_days += 1
-                else:
-                    if num_days > 0:
-                        #write last average
-                        daily_qout.append(flow/num_days)
-                    
-                    #start new average
-                    current_day = var_time
-                    num_days = 1
-                    flow = qout_arr[idx]
-            
-            return np.array(daily_qout, np.float32)
+	    if not daily_time_index_array:
+		daily_time_index_array = self.get_daily_time_index_array()
+            len_daily_time_array = len(daily_time_index_array)
+            daily_qout = np.zeros(len_daily_time_array)
+	    for idx in xrange(len_daily_time_array):
+		time_index_start = daily_time_index_array[idx]
+		if idx+1 < len_daily_time_array:
+                    next_time_index = daily_time_index_array[idx+1]
+	            daily_qout[idx] = np.mean(qout_arr[time_index_start:next_time_index])
+		elif idx+1 == len_daily_time_array:
+		    if time_index_start < self.size_time - 1:
+		    	daily_qout[idx] =  np.mean(qout_arr[time_index_start:-1])	
+                    else:
+                        daily_qout[idx] =  qout_arr[time_index_start]
+            return daily_qout
         elif steps_per_group > 1:
             flow_data = self.get_qout_index(reach_index)
             daily_qout = []
@@ -309,7 +317,6 @@ class RAPIDDataset(object):
                 daily_qout.append(np.mean(flows_slice))
             return np.array(daily_qout, np.float32)
         else:
-            print steps_per_group
             raise Exception("Must have steps_per_group set to a value greater than one "
                             "due to non CF-Compliant Qout file ...")
 

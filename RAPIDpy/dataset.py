@@ -287,11 +287,19 @@ class RAPIDDataset(object):
         else:
             raise Exception( "Invalid RAPID Qout file dimensions ...")
         return streamflow_array
-    
-    def get_daily_qout_index(self, reach_index, daily_time_index_array=None, steps_per_group=1):
+
+    def get_daily_qout_index(self, reach_index, daily_time_index_array=None, 
+			     steps_per_group=1, mode="mean"):
         """
         Gets the daily time series from RAPID output
         """
+        if mode=="mean":
+	   calc = np.mean
+	elif mode=="max":
+	   calc = np.max
+	else:
+	    raise Exception("Invalid calc mode ...")
+
         if self.is_time_variable_valid() and steps_per_group<=1:
             qout_arr = self.get_qout_index(reach_index)
 	    if not daily_time_index_array:
@@ -302,10 +310,11 @@ class RAPIDDataset(object):
 		time_index_start = daily_time_index_array[idx]
 		if idx+1 < len_daily_time_array:
                     next_time_index = daily_time_index_array[idx+1]
-	            daily_qout[idx] = np.mean(qout_arr[time_index_start:next_time_index])
+		     
+	            daily_qout[idx] = calc(qout_arr[time_index_start:next_time_index])
 		elif idx+1 == len_daily_time_array:
 		    if time_index_start < self.size_time - 1:
-		    	daily_qout[idx] =  np.mean(qout_arr[time_index_start:-1])	
+		    	daily_qout[idx] =  calc(qout_arr[time_index_start:-1])	
                     else:
                         daily_qout[idx] =  qout_arr[time_index_start]
             return daily_qout
@@ -314,11 +323,20 @@ class RAPIDDataset(object):
             daily_qout = []
             for step_index in xrange(0, len(flow_data), steps_per_group):
                 flows_slice = flow_data[step_index:step_index + steps_per_group]
-                daily_qout.append(np.mean(flows_slice))
+                daily_qout.append(calc(flows_slice))
             return np.array(daily_qout, np.float32)
         else:
             raise Exception("Must have steps_per_group set to a value greater than one "
                             "due to non CF-Compliant Qout file ...")
+
+    def get_daily_qout(self, river_id, daily_time_index_array=None,
+                       steps_per_group=1, mode="mean"):
+	"""
+        Retrieves the daily qout for river id from RAPID time series
+	"""
+	self.get_daily_qout_index(self.get_river_index(reach_index),
+				  daily_time_index_array,
+                                  steps_per_group, mode)
 
     def get_seasonal_monthly_average(self,river_id_array,
                                      month):

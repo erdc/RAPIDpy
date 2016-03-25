@@ -364,11 +364,21 @@ within a date range associated with the reach you are interested in
 This example demonstrates how to get daily streamflow averages as an array
 ```python
     river_id = 500
-    river_index - qout_nc.get_river_index(river_id)
+    #CF-Compliant
+    streamflow_array = qout_nc.get_daily_qout(river_id,
+                                              mode="mean", #(optional) default is mean, but max is another option
+                                              )
+    #Original RAPID Qout
+    streamflow_array = qout_nc.get_daily_qout(river_id,
+                                              mode="mean", #(optional) default is mean, but max is another option
+                                       	      steps_per_group=8, #average 8 timesteps together for 1 day
+                                      	      )
+    #OR if you know the index
+    river_index = qout_nc.get_river_index(river_id)
     #CF-Compliant
     streamflow_array = qout_nc.get_daily_qout_index(river_index)
     #Original RAPID Qout
-    streamflow_array = qout_nc.get_daily_qout_index(river_indexd,
+    streamflow_array = qout_nc.get_daily_qout_index(river_index,
                                               	    steps_per_group=8, #average 8 timesteps together for 1 day
                                               	    )
 ```

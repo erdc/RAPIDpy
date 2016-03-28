@@ -10,8 +10,8 @@
 from csv import writer as csvwriter
 import numpy as np
 
-from RAPIDpy.helper_functions import csv_to_list
-from RAPIDpy import RAPIDDataset
+from ..helper_functions import csv_to_list
+from ..dataset import RAPIDDataset
 
 #------------------------------------------------------------------------------
 #statistic functions

@@ -63,8 +63,8 @@ import numpy as np
 from pytz import utc
 
 #local
-from RAPIDpy import RAPIDDataset
-from RAPIDpy.helper_functions import csv_to_list, remove_files
+from ..dataset import RAPIDDataset
+from ..helper_functions import csv_to_list, remove_files
 
 def log(message, severity, print_debug=True):
     """Logs, prints, or raises a message.

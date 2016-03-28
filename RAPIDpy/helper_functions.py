@@ -12,7 +12,6 @@ from numpy.testing import assert_almost_equal
 from numpy import array as np_array
 from numpy import float32 as np_float32
 from os import remove
-import time
 
 #local imports
 from dataset import RAPIDDataset
@@ -158,47 +157,3 @@ def compare_qout_files(dataset1_path, dataset2_path, Qout_var="Qout"):
     d1.close()
     d2.close()
     return qout_same
-
-def write_flows_to_csv(path_to_rapid_qout_file, path_to_output_file, 
-                       reach_index=None, reach_id=None, daily=False, 
-                       out_var='Qout'):
-    """
-        Write out RAPID output to CSV file
-    """
-    data_nc = RAPIDDataset(path_to_rapid_qout_file)
-    
-    if reach_id != None:
-        reach_index = data_nc.get_river_index(reach_id)
-
-    #analyze and write
-    time_var_valid = data_nc.is_time_variable_valid()
-    if time_var_valid:
-        if daily:
-            with open(path_to_output_file, 'w') as outcsv:
-                writer = csv.writer(outcsv)
-		daily_time_index_array = data_nc.get_daily_time_index_array()
-                daily_qout = data_nc.get_daily_qout_index(reach_index)
-		time_array = data_nc.get_time_array()
-		for idx, time_idx in enumerate(daily_time_index_array):		 
-		    current_day = time.gmtime(time_array[time_idx])	
-	            #write last average
-        	    writer.writerow([time.strftime("%Y/%m/%d", current_day), daily_qout[idx]])
-        else:
-            qout_arr = data_nc.get_qout_index(reach_index)
-            time_array = data_nc.get_time_array()
-            with open(path_to_output_file, 'w') as outcsv:
-                writer = csv.writer(outcsv)
-                for index in xrange(len(qout_arr)):
-                    var_time = time.gmtime(time_array[index])
-                    writer.writerow([time.strftime("%Y/%m/%d %H:00", var_time), qout_arr[index]])
-
-    else:
-        print "Valid time variable not found. Printing values only ..."
-    	qout_arr = data_nc.get_qout_index(reach_index)
-        with open(path_to_output_file, 'w') as outcsv:
-            writer = csv.writer(outcsv)
-            for index in xrange(len(qout_arr)):
-                writer.writerow([index, qout_arr[index]])
-
-    data_nc.close()
-    return time_var_valid

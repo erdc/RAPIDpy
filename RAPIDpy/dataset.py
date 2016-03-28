@@ -7,11 +7,13 @@
 ##  Copyright © 2016 Alan D Snow. All rights reserved.
 ##
 
+from csv import writer as csv_writer
 import datetime
 from netCDF4 import Dataset
 import numpy as np
 from numpy.ma import masked
 from pytz import utc
+import time
 
 #------------------------------------------------------------------------------
 #Main Dataset Manager Class
@@ -294,27 +296,27 @@ class RAPIDDataset(object):
         Gets the daily time series from RAPID output
         """
         if mode=="mean":
-	   calc = np.mean
-	elif mode=="max":
-	   calc = np.max
-	else:
-	    raise Exception("Invalid calc mode ...")
+            calc = np.mean
+        elif mode=="max":
+    	       calc = np.max
+        else:
+    	       raise Exception("Invalid calc mode ...")
 
         if self.is_time_variable_valid() and steps_per_group<=1:
             qout_arr = self.get_qout_index(reach_index)
-	    if not daily_time_index_array:
-		daily_time_index_array = self.get_daily_time_index_array()
+            if not daily_time_index_array:
+                daily_time_index_array = self.get_daily_time_index_array()
+                
             len_daily_time_array = len(daily_time_index_array)
             daily_qout = np.zeros(len_daily_time_array)
-	    for idx in xrange(len_daily_time_array):
-		time_index_start = daily_time_index_array[idx]
-		if idx+1 < len_daily_time_array:
+            for idx in xrange(len_daily_time_array):
+                time_index_start = daily_time_index_array[idx]
+                if idx+1 < len_daily_time_array:
                     next_time_index = daily_time_index_array[idx+1]
-		     
-	            daily_qout[idx] = calc(qout_arr[time_index_start:next_time_index])
-		elif idx+1 == len_daily_time_array:
-		    if time_index_start < self.size_time - 1:
-		    	daily_qout[idx] =  calc(qout_arr[time_index_start:-1])	
+                    daily_qout[idx] = calc(qout_arr[time_index_start:next_time_index])
+                elif idx+1 == len_daily_time_array:
+                    if time_index_start < self.size_time - 1:
+                        daily_qout[idx] =  calc(qout_arr[time_index_start:-1])	
                     else:
                         daily_qout[idx] =  qout_arr[time_index_start]
             return daily_qout
@@ -331,11 +333,11 @@ class RAPIDDataset(object):
 
     def get_daily_qout(self, river_id, daily_time_index_array=None,
                        steps_per_group=1, mode="mean"):
-	"""
+        """
         Retrieves the daily qout for river id from RAPID time series
-	"""
-	self.get_daily_qout_index(self.get_river_index(reach_index),
-				  daily_time_index_array,
+        """
+        self.get_daily_qout_index(self.get_river_index(river_id),
+                                  daily_time_index_array,
                                   steps_per_group, mode)
 
     def get_seasonal_monthly_average(self,river_id_array,
@@ -359,3 +361,45 @@ class RAPIDDataset(object):
         
         print "Extracting data ..."
         return np.mean(self.get_qout(river_id_array, time_index_array=time_indices), axis=1)
+
+
+    def write_flows_to_csv(self, path_to_output_file,
+                           reach_index=None, reach_id=None,
+                           daily=False):
+        """
+        Write out RAPID output to CSV file
+        """
+        if reach_id != None:
+            reach_index = self.get_river_index(reach_id)
+        elif reach_id == None and reach_index == None:
+            raise Exception("ERROR: Need reach id or reach index ...")
+
+        #analyze and write
+        time_var_valid = self.is_time_variable_valid()
+        if time_var_valid:
+            if daily:
+                with open(path_to_output_file, 'w') as outcsv:
+                    writer = csv_writer(outcsv)
+                    daily_time_index_array = self.get_daily_time_index_array()
+                    daily_qout = self.get_daily_qout_index(reach_index)
+                    time_array = self.get_time_array()
+                    for idx, time_idx in enumerate(daily_time_index_array):
+                        current_day = time.gmtime(time_array[time_idx])
+                        #write last average
+                        writer.writerow([time.strftime("%Y/%m/%d", current_day), daily_qout[idx]])
+            else:
+                qout_arr = self.get_qout_index(reach_index)
+                time_array = self.get_time_array()
+                with open(path_to_output_file, 'w') as outcsv:
+                    writer = csv_writer(outcsv)
+                    for index in xrange(len(qout_arr)):
+                        var_time = time.gmtime(time_array[index])
+                        writer.writerow([time.strftime("%Y/%m/%d %H:00", var_time), qout_arr[index]])
+
+        else:
+            print "Valid time variable not found. Printing values only ..."
+            qout_arr = self.get_qout_index(reach_index)
+            with open(path_to_output_file, 'w') as outcsv:
+                writer = csv_writer(outcsv)
+                for index in xrange(len(qout_arr)):
+                    writer.writerow([index, qout_arr[index]])

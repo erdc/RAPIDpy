@@ -6,14 +6,12 @@
 ##  Created by Alan D Snow 2015.
 ##  Copyright © 2015 Alan D Snow. All rights reserved.
 ##
-__author__ = 'Alan D. Snow'
-from csv import writer as csvwriter
-import datetime
-import numpy as np
-from pytz import utc
 
-from helper_functions import csv_to_list
-from dataset import RAPIDDataset
+from csv import writer as csvwriter
+import numpy as np
+
+from RAPIDpy.helper_functions import csv_to_list
+from RAPIDpy import RAPIDDataset
 
 #------------------------------------------------------------------------------
 #statistic functions
@@ -269,18 +267,3 @@ def find_goodness_of_fit_csv(observed_simulated_file):
     print "correlation coefficient", correlation(simulated_array,observed_array)
     print "index of agreement", index_agreement(simulated_array,observed_array)
     print "Kling-Gupta Efficiency", KGE(simulated_array,observed_array)[0]
-
-
-
-#------------------------------------------------------------------------------
-#main
-#------------------------------------------------------------------------------
-"""
-if __name__ == "__main__":
-    find_goodness_of_fit_csv('/Users/rdchlads/autorapid/rapid-io/output/united_kingdom-thames/flows_kingston_gage.csv')
-    find_goodness_of_fit(reach_id_file='/Users/rdchlads/autorapid/rapid-io/output/united_kingdom-thames/obs_reach_id.csv',
-                         rapid_qout_file='/Users/rdchlads/autorapid/rapid-io/output/united_kingdom-thames/Qout_met_office_joules_3hr_20010101to20090101_ukv.nc',
-                         observed_file='/Users/rdchlads/autorapid/rapid-io/output/united_kingdom-thames/flows_kingston_gage.csv',
-                         out_analysis_file='/Users/rdchlads/autorapid/rapid-io/output/united_kingdom-thames/flows_kingston_analysis_ukv.csv',
-                         daily=True)
-"""

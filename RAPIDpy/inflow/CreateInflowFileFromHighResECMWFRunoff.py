@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 ##
 ##  CreateInflowFileFromHighResECMWFRunoff.py
-##  spt_lsm_autorapid_process
+##  RAPIDpy
 ##
 ##  Created by Alan D. Snow (adapted from CreateInflowFileFromECMWFRunoff.py).
 ##  Copyright © 2015-2016 Alan D Snow. All rights reserved.

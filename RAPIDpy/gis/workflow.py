@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 ##
 ##  workflow.py
-##  RAPID_OpenToolbox
+##  RAPIDpy
 ##
 ##  Created by Alan D Snow.
 ##  Based on RAPID_Toolbox for ArcMap

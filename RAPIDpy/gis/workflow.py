@@ -10,7 +10,8 @@
 
 import os
 
-from network import CreateNetworkConnectivity, CreateSubsetFile
+from network import (CreateNetworkConnectivity, CreateNetworkConnectivityTauDEM,
+                     CreateSubsetFile)
 from muskingum import (CreateMuskingumKfacFile, CreateMuskingumKFile, 
                        CreateConstMuskingumXFile)
 from weight import CreateWeightTableECMWF
@@ -29,6 +30,7 @@ def CreateAllStaticRAPIDFiles(in_drainage_line,
                               kfac_length_units="km",
                               lambda_k=0.35,
                               x_value=0.3,
+                              taudem_network_connectivity_tree_file=None,
                               file_geodatabase=None
                              ):
     """
@@ -36,11 +38,16 @@ def CreateAllStaticRAPIDFiles(in_drainage_line,
     """
     #RAPID connect file
     rapid_connect_file = os.path.join(rapid_output_folder, 'rapid_connect.csv')
-    CreateNetworkConnectivity(in_drainage_line,
-                              river_id,
-                              next_down_river_id,
-                              rapid_connect_file,
-                              file_geodatabase)
+    if not taudem_network_connectivity_tree_file:
+        CreateNetworkConnectivity(in_drainage_line,
+                                  river_id,
+                                  next_down_river_id,
+                                  rapid_connect_file,
+                                  file_geodatabase)
+    else:
+        CreateNetworkConnectivityTauDEM(taudem_network_connectivity_tree_file,
+                                        rapid_connect_file)
+        
     #river basin id file                          
     riv_bas_id_file = os.path.join(rapid_output_folder, 'riv_bas_id.csv')
     CreateSubsetFile(in_drainage_line,
@@ -130,6 +137,7 @@ def CreateAllStaticECMWFRAPIDFiles(in_drainage_line,
                                    kfac_length_units="km",
                                    lambda_k=0.35,
                                    x_value=0.3,
+                                   taudem_network_connectivity_tree_file=None,
                                    file_geodatabase=None
                                    ):
     """
@@ -149,6 +157,7 @@ def CreateAllStaticECMWFRAPIDFiles(in_drainage_line,
                               kfac_length_units,
                               lambda_k,
                               x_value,
+                              taudem_network_connectivity_tree_file,
                               file_geodatabase)
                         
 
@@ -159,24 +168,3 @@ def CreateAllStaticECMWFRAPIDFiles(in_drainage_line,
                               rapid_output_folder,
                               rapid_connect_file,
                               file_geodatabase)
-
-
-if __name__ == "__main__":
-    """    
-    CreateAllStaticECMWFRAPIDFiles(in_drainage_line="DrainageLine_Subset",
-                                   river_id="HydroID",
-                                   length_id="Shape_Length",
-                                   slope_id="Avg_Slope",
-                                   next_down_river_id="NextDownID",
-                                   in_catchment="Catchment_Subset",
-                                   catchment_river_id="DrainLnID",
-                                   rapid_output_folder="/media/alan/Seagate Backup Plus Drive/AutoRAPID/gis_files/UpperMosul_noLake/Results/RAPIDOutputFiles/upper_tigris-upper_tigris",
-                                   kfac_length_units="m",
-                                   file_geodatabase="/media/alan/Seagate Backup Plus Drive/AutoRAPID/gis_files/UpperMosul_noLake/Results/UM_nolake.gdb"
-                                   )
-    """
-    CreateAllStaticECMWFFiles(in_catchment='/media/alan/Seagate Backup Plus Drive/AutoRAPID/gis_files/UpperMosul_noLake/shapefiles/catchment_subset.shp',
-                              catchment_river_id="DrainLnID",
-                              rapid_output_folder="/media/alan/Seagate Backup Plus Drive/AutoRAPID/gis_files/UpperMosul_noLake/Results/RAPIDOutputFiles/upper_tigris-upper_tigris",
-                              rapid_connect_file="/media/alan/Seagate Backup Plus Drive/AutoRAPID/gis_files/UpperMosul_noLake/Results/RAPIDOutputFiles/upper_tigris-upper_tigris/rapid_connect.csv")
-    

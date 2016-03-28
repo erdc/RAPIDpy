@@ -8,7 +8,7 @@
 ##  Copyright © 2016 Alan D Snow. All rights reserved.
 ##  License: BSD 3-Clause
 
-from csv import writer as csv_writer
+import csv
 import numpy as np
 
 try:
@@ -16,32 +16,13 @@ try:
 except Exception:
     raise Exception("You need the gdal python package to run this tool ...")
 
-def CreateNetworkConnectivity(in_drainage_line,
-                              stream_id,
-                              next_down_id,
-                              out_csv_file,
-                              file_geodatabase=None):
+
+def StreamIDNextDownIDToConnectivity(stream_id_array,
+                                     next_down_id_array,
+                                     out_csv_file):
     """
-    Creates Network Connectivity input CSV file for RAPID
-    based on the Drainage Line feature class with HydroID and NextDownID fields"
-    """    
-    if file_geodatabase:
-        gdb_driver = ogr.GetDriverByName("OpenFileGDB")
-        ogr_file_geodatabase = gdb_driver.Open(file_geodatabase, 0)
-        ogr_drainage_line_shapefile_lyr = ogr_file_geodatabase.GetLayer(in_drainage_line)
-    else:
-        ogr_drainage_line_shapefile = ogr.Open(in_drainage_line)
-        ogr_drainage_line_shapefile_lyr = ogr_drainage_line_shapefile.GetLayer()
-
-    stream_id_array = []
-    next_down_id_array = []
-    for drainage_line_feature in ogr_drainage_line_shapefile_lyr:
-        stream_id_array.append(drainage_line_feature.GetField(stream_id))
-        next_down_id_array.append(drainage_line_feature.GetField(next_down_id))
-    
-    stream_id_array = np.array(stream_id_array, dtype=np.int32)
-    next_down_id_array = np.array(next_down_id_array, dtype=np.int32)
-
+    Creates RAPID connect file from stream_id array and next down id array
+    """
     list_all = []
     max_count_upstream = 0
 
@@ -60,11 +41,61 @@ def CreateNetworkConnectivity(in_drainage_line,
         list_all.append(np.concatenate([np.array([hydroid,nextDownID,count_upstream]),list_upstreamID]).astype(int))
 
     with open(out_csv_file,'wb') as csvfile:
-        connectwriter = csv_writer(csvfile, dialect='excel')
+        connectwriter = csv.writer(csvfile)
         for row_list in list_all:
             out = np.concatenate([row_list, np.array([0 for i in xrange(max_count_upstream - row_list[2])])])
             connectwriter.writerow(out.astype(int))
-            
+
+def CreateNetworkConnectivity(in_drainage_line,
+                              stream_id,
+                              next_down_id,
+                              out_csv_file,
+                              file_geodatabase=None):
+    """
+    Creates Network Connectivity input CSV file for RAPID
+    based on the Drainage Line feature class with HydroID and NextDownID fields
+    """    
+    if file_geodatabase:
+        gdb_driver = ogr.GetDriverByName("OpenFileGDB")
+        ogr_file_geodatabase = gdb_driver.Open(file_geodatabase, 0)
+        ogr_drainage_line_shapefile_lyr = ogr_file_geodatabase.GetLayer(in_drainage_line)
+    else:
+        ogr_drainage_line_shapefile = ogr.Open(in_drainage_line)
+        ogr_drainage_line_shapefile_lyr = ogr_drainage_line_shapefile.GetLayer()
+
+    stream_id_array = []
+    next_down_id_array = []
+    for drainage_line_feature in ogr_drainage_line_shapefile_lyr:
+        stream_id_array.append(drainage_line_feature.GetField(stream_id))
+        next_down_id_array.append(drainage_line_feature.GetField(next_down_id))
+    
+    stream_id_array = np.array(stream_id_array, dtype=np.int32)
+    next_down_id_array = np.array(next_down_id_array, dtype=np.int32)
+
+    StreamIDNextDownIDToConnectivity(stream_id_array,
+                                     next_down_id_array,
+                                     out_csv_file)
+                                     
+def CreateNetworkConnectivityTauDEM(network_connectivity_tree_file,
+                                    out_csv_file):
+    """
+    Creates Network Connectivity input CSV file for RAPID
+    based on the TauDEM network connectivity tree file
+    """    
+    stream_id_array = []
+    next_down_id_array = []
+    with open(network_connectivity_tree_file, "rb") as csvfile:
+        for row in csvfile:
+            split_row = row.split()
+            stream_id_array.append(split_row[0].strip()) #link number
+            next_down_id_array.append(split_row[3].strip()) #next downstream link number
+
+    stream_id_array = np.array(stream_id_array, dtype=np.int32)
+    next_down_id_array = np.array(next_down_id_array, dtype=np.int32)
+
+    StreamIDNextDownIDToConnectivity(stream_id_array,
+                                     next_down_id_array,
+                                     out_csv_file)
 
 def CreateSubsetFile(in_drainage_line,
                      in_stream_id, 
@@ -120,3 +151,6 @@ def CreateSubsetFile(in_drainage_line,
         connectwriter = csv_writer(csvfile)
         for hydroid in hydroid_list:
             connectwriter.writerow([hydroid])
+if __name__=="__main__":
+    CreateNetworkConnectivityTauDEM(network_connectivity_tree_file="/media/alan/Seagate Backup Plus Drive/AutoRAPID/gis_files/azerbaijan/test_d8/out_network_connectivity_tree.txt",
+                                    out_csv_file="/media/alan/Seagate Backup Plus Drive/AutoRAPID/gis_files/azerbaijan/test_d8/rapid_connect.txt")  

@@ -102,7 +102,7 @@ $ exit
 
 Example:
 ```python
-from RAPIDpy.rapid import RAPID
+from RAPIDpy import RAPID
 rapid_manager = RAPID(rapid_executable_location='~/work/rapid/run/rapid'
                       use_all_processors=True, #optional, default is False
                       #num_processors=1, #optional, default is 1, overridden if use_all_processors is True                         
@@ -115,7 +115,7 @@ rapid_manager = RAPID(rapid_executable_location='~/work/rapid/run/rapid'
 ```
 If you are using Cygwin on Windows:
 ```python
-from RAPIDpy.rapid import RAPID
+from RAPIDpy import RAPID
 rapid_manager = RAPID(rapid_executable_location='C:\\cygwin64\\home\\username\\work\\rapid\\run\\rapid',
                       cygwin_bin_location='C:\\cygwin64\\bin',
                       use_all_processors=True, #optional, default is False
@@ -208,7 +208,7 @@ WARNING: This code replaces the first file with the combined output and deletes 
 Example:
 ```python
 import datetime
-from RAPIDpy.make_CF_RAPID_output import ConvertRAPIDOutputToCF
+from RAPIDpy.postprocess import ConvertRAPIDOutputToCF
 file1 = ""
 file2 = ""
 cv = ConvertRAPIDOutputToCF(rapid_output_file=[file1, file2],
@@ -223,31 +223,11 @@ cv = ConvertRAPIDOutputToCF(rapid_output_file=[file1, file2],
                             print_debug=False)
 cv.convert()
 ```
-
-##Write Qout timeseries to csv file
-This function simplifies writing time series for each stream reach to a csv file.
-
-```python
-from RAPIDpy.helper_functions import write_flows_to_csv
-path_to_file = '/output_mississippi-nfie/Qout_k3v1_2005to2009.nc'
-
-#for writing entire time series to file
-write_flows_to_csv(path_to_file,
-                   '/timeseries/Qout_3624735.csv', 
-		           reach_id=3624735) #COMID or rivid
-		   
-#if file is CF compliant, you can write out daily average
-write_flows_to_csv(path_to_file, 
-                   '/timeseries/Qout_daily.csv'
-		           reach_index=20, #index of COMID or rivid (example if you already know index instead if reach_id)
-                   daily=True) #if file is CF compliant, write out daily flows
-```
-
 ##Generate qinit from past qout
 
 RAPIDpy also creates a qinit file from a RAPID qout file. This example shows how.
 ```python
-from RAPIDpy.rapid import RAPID
+from RAPIDpy import RAPID
 rapid_manager = RAPID(Qout_file='/output_mississippi-nfie/Qout_k2v1_2005to2009.nc', 
                       rapid_connect_file='/input_mississippi_nfie/rapid_connect_ECMWF.csv'
                      )
@@ -277,7 +257,7 @@ rapid_manager.generate_seasonal_intitialization(qinit_file='/input_mississippi_n
 To check how well your simulation performed versus observations, this function can help you.
 
 ```python
-from RAPIDpy.goodness_of_fit import find_goodness_of_fit_csv, find_goodness_of_fit
+from RAPIDpy.postprocess import find_goodness_of_fit_csv, find_goodness_of_fit
 
 #if you have observations and model results next to each other in columns, this works for you
 find_goodness_of_fit_csv('/united_kingdom-thames/flows_kingston_gage_noah.csv')
@@ -381,4 +361,17 @@ This example demonstrates how to get daily streamflow averages as an array
     streamflow_array = qout_nc.get_daily_qout_index(river_index,
                                               	    steps_per_group=8, #average 8 timesteps together for 1 day
                                               	    )
+```
+Write Qout timeseries to csv file
+This function simplifies writing time series for each stream reach to a csv file.
+
+```python
+    #for writing entire time series to file
+    qout_nc.write_flows_to_csv('/timeseries/Qout_3624735.csv', 
+		                       reach_id=3624735) #COMID or rivid
+		       
+    #if file is CF compliant, you can write out daily average
+    qout_nc.write_flows_to_csv('/timeseries/Qout_daily.csv',
+		                       reach_index=20, #index of COMID or rivid (example if you already know index instead if reach_id),
+                               daily=True) #if file is CF compliant, write out daily flows
 ```

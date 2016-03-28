@@ -6,7 +6,7 @@
               and the weight table previously created.
  History:     Initial coding - 10/17/2014, version 1.0
  Updated:     Version 2.0, 06/10/2015
-              Version 3.0, 02/16/2016, Stripped ArcMap specific code and modified for spt_lsm_autorapid_process
+              Version 3.0, 02/16/2016, Stripped ArcMap specific code and modified for RAPIDpy
 -------------------------------------------------------------------------------'''
 import os
 import netCDF4 as NET

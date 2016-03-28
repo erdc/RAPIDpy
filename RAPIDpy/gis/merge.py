@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 ##
 ##  merge.py
-##  RAPID_OpenToolbox
+##  RAPIDpy
 ##
 ##  Created by Alan D Snow.
 ##

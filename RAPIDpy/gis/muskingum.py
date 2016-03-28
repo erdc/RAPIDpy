@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 ##
-##  muksingum.py
-##  RAPID_OpenToolbox
+##  muskingum.py
+##  RAPIDpy
 ##
 ##  Created by Alan D Snow.
 ##

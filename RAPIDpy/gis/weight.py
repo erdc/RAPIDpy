@@ -10,17 +10,23 @@
 
 import csv
 from datetime import datetime
-from osgeo import gdal, ogr, osr
 from json import loads as json_loads
 from netCDF4 import Dataset
 import numpy as np
 import os
-from pyproj import Proj, transform
-from shapely.geometry import MultiPolygon, Polygon, shape
 from subprocess import PIPE, Popen
-import rtree #http://toblerity.org/rtree/install.html
 
+try:
+    from osgeo import gdal, ogr, osr
+    from pyproj import Proj, transform
+    from shapely.geometry import MultiPolygon, Polygon, shape
+    import rtree #http://toblerity.org/rtree/install.html
+except Exception:
+    raise Exception("You need the gdal, pyproj, shapely, and rtree python package to run these tools ...")
+
+#local
 from voronoi import pointsToVoronoiGridArray, pointsToVoronoiGridShapefile
+
 gdal.UseExceptions()
 
 def get_poly_area_geo(poly):

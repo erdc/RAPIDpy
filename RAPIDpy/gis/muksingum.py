@@ -11,7 +11,13 @@
 from csv import reader as csv_reader
 from csv import writer as csv_writer
 import numpy as np
-from osgeo import ogr
+
+try:
+    from osgeo import ogr
+except Exception:
+    raise Exception("You need the gdal python package to run this tool ...")
+
+
 from RAPIDpy.helper_functions import csv_to_list
 
 def CreateMuskingumKfacFile(in_drainage_line,

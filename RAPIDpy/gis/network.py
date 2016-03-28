@@ -10,7 +10,11 @@
 
 from csv import writer as csv_writer
 import numpy as np
-from osgeo import ogr
+
+try:
+    from osgeo import ogr
+except Exception:
+    raise Exception("You need the gdal python package to run this tool ...")
 
 def CreateNetworkConnectivity(in_drainage_line,
                               stream_id,

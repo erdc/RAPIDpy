@@ -10,10 +10,12 @@
 
 import numpy as np
 import os
-from osgeo import ogr, osr
-from scipy.spatial import Voronoi
-from shapely.geometry import Polygon
-
+try:
+    from osgeo import ogr, osr
+    from scipy.spatial import Voronoi
+    from shapely.geometry import Polygon
+except Exception:
+    raise Exception("You need scipy, gdal, and shapely python packages to run these tools ...")
 
 def pointsToVoronoiGridShapefile(lat, lon, vor_shp_path, extent=None):
     """

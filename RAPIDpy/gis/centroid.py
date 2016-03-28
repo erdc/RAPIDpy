@@ -9,7 +9,10 @@
 ##  License: BSD 3-Clause
 
 from csv import writer as csv_writer
-from osgeo import ogr, osr
+try:
+    from osgeo import ogr, osr
+except Exception:
+    raise Exception("You need the gdal python package to run this tool ...")
 
 def FlowlineToPoint(in_drainage_line,
                     river_id,

@@ -16,15 +16,15 @@ from shutil import copy
 
 
 #local import
-from RAPIDpy.rapid import RAPID
+from RAPIDpy import RAPID
+from RAPIDpy import RAPIDDataset
 from RAPIDpy.helper_functions import (compare_csv_decimal_files,
                                       compare_csv_timeseries_files,
                                       compare_qout_files, 
-                                      remove_files,
-                                      write_flows_to_csv)
+                                      remove_files)
 
-from RAPIDpy.goodness_of_fit import find_goodness_of_fit
-from RAPIDpy.make_CF_RAPID_output import ConvertRAPIDOutputToCF
+from RAPIDpy.postprocess import find_goodness_of_fit
+from RAPIDpy.postprocess import ConvertRAPIDOutputToCF
 
 #GLOBAL VARIABLES
 MAIN_TESTS_FOLDER = os.path.dirname(os.path.abspath(__file__))
@@ -162,7 +162,7 @@ def test_update_rapid_numbers_input_file():
     
     remove_files(generated_input_file)
 
-def test_update_rapid_numbers_input_file():
+def test_update_rapid_runtime():
     """
     Checks RAPID input file update with number validation
     """
@@ -424,13 +424,14 @@ def test_extract_timeseries():
     copy(input_qout_file, new_qout_file)
     new_timeseries_file = os.path.join(OUTPUT_DATA_PATH, 'new_timeseries_file.csv')
     
-    time_valid = write_flows_to_csv(new_qout_file,
-                                    new_timeseries_file,
-                                    reach_id=75224)
-    if time_valid:
-        original_timeseries_file_solution = os.path.join(COMPARE_DATA_PATH, 'original_timeseries-SOLUTION.csv')
-    else:
-        original_timeseries_file_solution = os.path.join(COMPARE_DATA_PATH, 'original_timeseries-notime-SOLUTION.csv')
+    with RAPIDDataset(new_qout_file) as qout_nc:
+        qout_nc.write_flows_to_csv(new_timeseries_file,
+                                   reach_id=75224)
+                                   
+        if qout_nc.is_time_variable_valid():
+            original_timeseries_file_solution = os.path.join(COMPARE_DATA_PATH, 'original_timeseries-SOLUTION.csv')
+        else:
+            original_timeseries_file_solution = os.path.join(COMPARE_DATA_PATH, 'original_timeseries-notime-SOLUTION.csv')
         
     ok_(compare_csv_timeseries_files(new_timeseries_file, original_timeseries_file_solution, header=False))
     
@@ -440,9 +441,9 @@ def test_extract_timeseries():
     copy(input_qout_file, original_qout_file)
     original_timeseries_file = os.path.join(OUTPUT_DATA_PATH, 'original_timeseries.csv')
     
-    time_valid = write_flows_to_csv(original_qout_file,
-                                    original_timeseries_file,
-                                    reach_id=75224)
+    with RAPIDDataset(original_qout_file) as qout_nc:
+        qout_nc.write_flows_to_csv(original_timeseries_file,
+                                   reach_id=75224)
     original_timeseries_file_solution = os.path.join(COMPARE_DATA_PATH, 'original_timeseries-notime-SOLUTION.csv')
         
     ok_(compare_csv_timeseries_files(original_timeseries_file, original_timeseries_file_solution, header=False))
@@ -453,19 +454,19 @@ def test_extract_timeseries():
     copy(cf_input_qout_file, cf_qout_file)
     cf_timeseries_daily_file = os.path.join(OUTPUT_DATA_PATH, 'cf_timeseries_daily.csv')
 
-    write_flows_to_csv(cf_qout_file,
-                       cf_timeseries_daily_file,
-                       reach_index=20,
-                       daily=True)
+    with RAPIDDataset(cf_qout_file) as qout_nc:
+        qout_nc.write_flows_to_csv(cf_timeseries_daily_file,
+                                   reach_index=20,
+                                   daily=True)
 
     cf_timeseries_daily_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_timeseries_daily-SOLUTION.csv')    
     ok_(compare_csv_timeseries_files(cf_timeseries_daily_file, cf_timeseries_daily_file_solution, header=False))
     
     #if file is CF compliant, check write out timeseries
     cf_timeseries_file = os.path.join(OUTPUT_DATA_PATH, 'cf_timeseries.csv')
-    write_flows_to_csv(cf_qout_file,
-                       cf_timeseries_file,
-                       reach_index=20)
+    with RAPIDDataset(cf_qout_file) as qout_nc:
+        qout_nc.write_flows_to_csv(cf_timeseries_file,
+                                   reach_index=20)
 
     cf_timeseries_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_timeseries-SOLUTION.csv')    
     ok_(compare_csv_timeseries_files(cf_timeseries_file, cf_timeseries_file_solution, header=False))

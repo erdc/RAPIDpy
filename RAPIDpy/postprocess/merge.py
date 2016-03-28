@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 ##
-##  make_CF_output.py
+##  merge.py
 ##  RAPIDpy
 ##
 ##  Created by Alan D Snow & Tim Whitaker, 2015.
@@ -63,8 +63,8 @@ import numpy as np
 from pytz import utc
 
 #local
-from dataset import RAPIDDataset
-from helper_functions import csv_to_list, remove_files
+from RAPIDpy import RAPIDDataset
+from RAPIDpy.helper_functions import csv_to_list, remove_files
 
 def log(message, severity, print_debug=True):
     """Logs, prints, or raises a message.

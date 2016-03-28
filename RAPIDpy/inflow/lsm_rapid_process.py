@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 ##
 ##  lsm_rapid_process.py
-##  spt_lsm_autorapid_process
+##  RAPIDpy
 ##
 ##  Created by Alan D. Snow.
 ##  Copyright © 2015-2016 Alan D Snow. All rights reserved.
-##  License: BSD-3 Clause
+##  License: BSD 3-Clause
 
 from datetime import datetime
 import multiprocessing
@@ -73,19 +73,14 @@ def run_lsm_rapid_process(rapid_executable_location,
                           lsm_data_location,
                           simulation_start_datetime,
                           simulation_end_datetime=datetime.utcnow(),
-                          download_era_interim=False,
                           ensemble_list=[None],
+                          generate_rapid_namelist_file=True,
+                          run_rapid_simulation=True,
                           generate_return_periods_file=False,
                           generate_seasonal_initialization_file=False,
                           generate_initialization_file=False,
-                          generate_rapid_namelist_file=True,
-                          run_rapid_simulation=True,
                           use_all_processors=True,
                           num_processors=1,
-                          ftp_host="",
-                          ftp_login="",
-                          ftp_passwd="",
-                          ftp_directory="",
                           cygwin_bin_location=""
                           ):
     """
@@ -558,25 +553,25 @@ def run_lsm_rapid_process(rapid_executable_location,
                                                        comid_lat_lon_z_file=comid_lat_lon_z_file,
                                                        project_name="{0} Based Historical flows by US Army ERDC".format(description))
 
-            #generate return periods
-            if generate_return_periods_file and os.path.exists(lsm_rapid_output_file) and lsm_rapid_output_file:
-                return_periods_file = os.path.join(master_watershed_output_directory,
-                                                   'return_periods_{0}'.format(out_file_ending))
-                #assume storm has 3 day length
-                storm_length_days = 3
-                generate_return_periods(lsm_rapid_output_file,
-                                        return_periods_file,
-                                        storm_length_days)
-                    
-            if generate_seasonal_initialization_file and os.path.exists(lsm_rapid_output_file) and lsm_rapid_output_file:
-                seasonal_qinit_file = os.path.join(master_watershed_input_directory,
-                                                   'seasonal_qinit_{0}.csv'.format(out_file_ending[:-3]))
-                rapid_manager.generate_seasonal_intitialization(seasonal_qinit_file)
-
-            if generate_initialization_file and os.path.exists(lsm_rapid_output_file) and lsm_rapid_output_file:
-                qinit_file = os.path.join(master_watershed_input_directory,
-                                          'qinit_{0}.csv'.format(out_file_ending[:-3]))
-                rapid_manager.generate_qinit_from_past_qout(qinit_file)
+                #generate return periods
+                if generate_return_periods_file and os.path.exists(lsm_rapid_output_file) and lsm_rapid_output_file:
+                    return_periods_file = os.path.join(master_watershed_output_directory,
+                                                       'return_periods_{0}'.format(out_file_ending))
+                    #assume storm has 3 day length
+                    storm_length_days = 3
+                    generate_return_periods(lsm_rapid_output_file,
+                                            return_periods_file,
+                                            storm_length_days)
+                        
+                if generate_seasonal_initialization_file and os.path.exists(lsm_rapid_output_file) and lsm_rapid_output_file:
+                    seasonal_qinit_file = os.path.join(master_watershed_input_directory,
+                                                       'seasonal_qinit_{0}.csv'.format(out_file_ending[:-3]))
+                    rapid_manager.generate_seasonal_intitialization(seasonal_qinit_file)
+    
+                if generate_initialization_file and os.path.exists(lsm_rapid_output_file) and lsm_rapid_output_file:
+                    qinit_file = os.path.join(master_watershed_input_directory,
+                                              'qinit_{0}.csv'.format(out_file_ending[:-3]))
+                    rapid_manager.generate_qinit_from_past_qout(qinit_file)
 
 
     #print info to user

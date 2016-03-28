@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 ##
-##  helper_functions.py
-##  spt_erai_autorapid_process
+##  utilities.py
+##  RAPIDpy
 ##
-##  Created by Alan D. Snow 2016.
+##  Created by Alan D. Snow.
 ##  Copyright © 2016 Alan D Snow. All rights reserved.
 ##
 

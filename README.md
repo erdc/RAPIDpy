@@ -23,7 +23,7 @@ https://github.com/erdc-cm/RAPIDpy/wiki/Installation
 See: https://github.com/erdc-cm/RAPIDpy/wiki/GIS-Tools
 
 ##Tools to prepare inflow and run RAPID::
-https://github.com/erdc-cm/RAPIDpy/wiki/Inflow-from-Land-Surface-Models
+See: https://github.com/erdc-cm/RAPIDpy/wiki/Inflow-from-Land-Surface-Models
 
 ##Running RAPID:
 See: https://github.com/erdc-cm/RAPIDpy/wiki/Running-RAPID

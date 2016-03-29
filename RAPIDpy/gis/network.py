@@ -151,6 +151,3 @@ def CreateSubsetFile(in_drainage_line,
         connectwriter = csv_writer(csvfile)
         for hydroid in hydroid_list:
             connectwriter.writerow([hydroid])
-if __name__=="__main__":
-    CreateNetworkConnectivityTauDEM(network_connectivity_tree_file="/media/alan/Seagate Backup Plus Drive/AutoRAPID/gis_files/azerbaijan/test_d8/out_network_connectivity_tree.txt",
-                                    out_csv_file="/media/alan/Seagate Backup Plus Drive/AutoRAPID/gis_files/azerbaijan/test_d8/rapid_connect.txt")  

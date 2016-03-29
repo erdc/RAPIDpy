@@ -129,7 +129,7 @@ def pointsToVoronoiGridShapefile(lat, lon, vor_shp_path, extent=None):
             ring.AddPoint(loopLon,loopLat)
             poly.AddGeometry(ring)
             feat = ogr.Feature(layerDefn)
-            feat.SetField('GRID_LON', voronoi_centroids[point_id][0] )
+            feat.SetField('GRID_LON', voronoi_centroids[point_id][0])
             feat.SetField('GRID_LAT', voronoi_centroids[point_id][1])
             feat.SetGeometry(poly)  
             layer.CreateFeature(feat)

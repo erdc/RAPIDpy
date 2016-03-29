@@ -93,11 +93,10 @@ def RTreeCreateWeightTable(lsm_grid_lat, lsm_grid_lon,
     print time_end_lsm_grid_rtree - time_end_lsm_grid_thiessen
     
     print "Retrieving catchment river id list ..."
-    catchment_rivid_list = []
-    for catchment_feature in ogr_catchment_shapefile_lyr:
-        catchment_rivid_list.append(catchment_feature.GetField(river_id))
-     
-    catchment_rivid_list = np.array(catchment_rivid_list, dtype=np.int32)
+    number_of_catchment_features = ogr_catchment_shapefile_lyr.GetFeatureCount()
+    catchment_rivid_list = np.zeros(number_of_catchment_features, dtype=np.int32)
+    for feature_idx, catchment_feature in enumerate(ogr_catchment_shapefile_lyr):
+        catchment_rivid_list[feature_idx] = catchment_feature.GetField(river_id)
         
     print "Reading in RAPID connect file ..."
     rapid_connect_rivid_list = []

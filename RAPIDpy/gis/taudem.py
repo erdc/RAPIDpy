@@ -429,11 +429,3 @@ class TauDEM(object):
         polygon_file = os.path.join(output_directory, 'catchments.shp')                          
         self.rasterToPolygon(out_watershed_grid, polygon_file)
         print "TOTAL time to complete:", datetime.utcnow()-time_start
-
-if __name__ == "__main__":
-    td = TauDEM("/home/alan/work/scripts/TauDEM", 
-                num_processors=8)
-    output_directory = "/home/alan/work/scripts/TauDEMpy/test_d8_hdr"
-    td.demToStreamNetwork("/media/alan/Seagate Backup Plus Drive/AutoRAPID/gis_files/azerbaijan/Azerbaijan DEM/azerb_30m_clp/hdr.adf",
-                          output_directory)
-

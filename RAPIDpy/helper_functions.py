@@ -58,7 +58,7 @@ def get_rivid_list_from_file(in_rapid_connect):
     """
     rapid_connect_rivid_list = []
     with open(in_rapid_connect, "rb") as csvfile:
-        reader = csv.reader(csvfile)
+        reader = csv.reader(csvfile, delimiter=",")
         for row in reader:
             rapid_connect_rivid_list.append(row[0])
     return np_array(rapid_connect_rivid_list, dtype=int)

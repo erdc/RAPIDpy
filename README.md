@@ -12,8 +12,6 @@ The source code for RAPID is located at https://github.com/c-h-david/rapid/. Oth
 
 [![License (3-Clause BSD)](https://img.shields.io/badge/license-BSD%203--Clause-yellow.svg)](https://github.com/erdc-cm/RAPIDpy/blob/master/LICENSE)
 
-For more information, see the Wiki: https://github.com/erdc-cm/RAPIDpy/wiki
-
 #Installation
 https://github.com/erdc-cm/RAPIDpy/wiki/Installation
 

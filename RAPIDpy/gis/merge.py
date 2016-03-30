@@ -21,10 +21,8 @@ def MergeWeightTables(weight_table_file,
     with duplicate headers removed
     """
     
-    connectivity_table = csv_to_list(connectivity_file)
- 
     weight_table = csv_to_list(weight_table_file)
-    weight_comid_list = np.array([row[0] for row in weight_table[1:]])
+    weight_comid_list = np.array([row[0] for row in weight_table[1:]], dtype=int)
     #FEATUREID,area_sqm,lon_index,lat_index,npoints,weight,Lon,Lat
     new_weight_table = weight_table[0:1]
     replacement_row = weight_table[1][1:]
@@ -34,30 +32,32 @@ def MergeWeightTables(weight_table_file,
     replacement_row[3] = 1
  
     print("Looping ...")
-    for row in connectivity_table:
-        try:
-            #find all occurences
-            comid_indicies = np.where(weight_comid_list==row[0])[0]
-            weight_indices = [int(d)+1 for d in comid_indicies]
-            #if num occurences don't match what table says
-            if len(weight_indices) > int(weight_table[weight_indices[0]][4]):
-                #print weight_table[weight_indices[0]]
+    with open(connectivity_file, "rb") as fconnect:
+        for row in fconnect:
+            connect_rivid = int(float(row.split(",")[0]))
+            try:
+                #find all occurences
+                comid_indicies = np.where(weight_comid_list==connect_rivid)[0]
+                weight_indices = [int(d)+1 for d in comid_indicies]
+                #if num occurences don't match what table says
+                if len(weight_indices) > int(weight_table[weight_indices[0]][4]):
+                    #print weight_table[weight_indices[0]]
+                    for weight_index in weight_indices:
+                        #remove if it has an area of zero
+                        if float(weight_table[weight_index][1]) == 0.0:
+                            #print "REMOVED:", weight_table[weight_index]
+                            weight_indices.remove(weight_index)
+     
+                if len(weight_indices) != int(weight_table[weight_indices[0]][4]):
+                    for weight_index in weight_indices:
+                        print("ERROR: {0} {1}".format(weight_index, weight_table[weight_index]))
+     
                 for weight_index in weight_indices:
-                    #remove if it has an area of zero
-                    if float(weight_table[weight_index][1]) == 0.0:
-                        #print "REMOVED:", weight_table[weight_index]
-                        weight_indices.remove(weight_index)
- 
-            if len(weight_indices) != int(weight_table[weight_indices[0]][4]):
-                for weight_index in weight_indices:
-                    print ("ERROR: {0} {1}".format(weight_index, weight_table[weight_index]))
- 
-            for weight_index in weight_indices:
-                new_weight_table.append(weight_table[weight_index])
-        except IndexError:
-            print("{0} not found ...".format(row[0]))
-            #skip if not found
-            continue
+                    new_weight_table.append(weight_table[weight_index])
+            except IndexError:
+                print("{0} not found ...".format(connect_rivid))
+                #skip if not found
+                continue
  
     print("Writing ...")
     with open(new_weight_table_file, 'wb') as outfile:
@@ -110,7 +110,7 @@ def MergeMuskingumFiles(old_connectivity_file,
     """
 
     old_connectivity_table = csv_to_list(old_connectivity_file)
-    old_comid_list = np.array([row[0] for row in old_connectivity_table], dtype=np.int32)
+    old_comid_list = np.array([row[0] for row in old_connectivity_table], dtype=int)
     old_connectivity_table = None
     new_connectivity_table = csv_to_list(new_connectivity_file)
     old_muskingum_table = csv_to_list(old_muskingum_file)

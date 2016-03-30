@@ -22,7 +22,7 @@ def case_insensitive_file_search(directory, pattern):
                             [filename for filename in os.listdir(directory) \
                              if re.search(pattern, filename, re.IGNORECASE)][0])
     except IndexError:
-        print pattern, "not found"
+        print("{0} not found".format(pattern))
         raise
 
 def partition(lst, n):
@@ -44,7 +44,7 @@ def get_valid_watershed_list(input_directory):
             and len(directory.split("-")) == 2:
             valid_input_directories.append(directory)
         else:
-            print directory, "incorrectly formatted. Skipping ..."
+            print("{0} incorrectly formatted. Skipping ...".format(directory))
     return valid_input_directories
 
 def get_watershed_subbasin_from_folder(folder_name):

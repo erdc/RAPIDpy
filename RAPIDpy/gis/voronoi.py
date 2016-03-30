@@ -43,7 +43,7 @@ def pointsToVoronoiGridShapefile(lat, lon, vor_shp_path, extent=None):
     voronoi_centroids = np.array(ptList) # set-up for input to Delaunay
 
     # set-up output polygon shp
-    print "Creating output polygon shp", vor_shp_path.split('/')[-1]
+    print("Creating output polygon shp {0}".format(os.path.basename(vor_shp_path)))
     if os.path.exists(vor_shp_path): os.remove(vor_shp_path)
     drv = ogr.GetDriverByName('ESRI Shapefile')
     outShp = drv.CreateDataSource(vor_shp_path)
@@ -57,7 +57,7 @@ def pointsToVoronoiGridShapefile(lat, lon, vor_shp_path, extent=None):
     # find nodes surrounding polygon centroid
     # sort nodes in counterclockwise order
     # create polygon perimeter through nodes
-    print "Building Voronoi polygons..."
+    print("Building Voronoi polygons...")
     #compute voronoi
     voronoi_manager  = Voronoi(voronoi_centroids)
     voronoi_verticies = voronoi_manager.vertices
@@ -165,7 +165,7 @@ def pointsToVoronoiGridArray(lat, lon, extent=None):
     # find nodes surrounding polygon centroid
     # sort nodes in counterclockwise order
     # create polygon perimeter through nodes
-    print "Building Voronoi polygons..."
+    print("Building Voronoi polygons...")
     #compute voronoi
     voronoi_manager  = Voronoi(voronoi_centroids)
     voronoi_verticies = voronoi_manager.vertices

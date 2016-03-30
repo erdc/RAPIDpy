@@ -20,7 +20,7 @@ from subprocess import Popen, PIPE
 
 #local
 from dataset import RAPIDDataset
-from helper_functions import csv_to_list
+from helper_functions import csv_to_list, log
 from postprocess import ConvertRAPIDOutputToCF
 
 #------------------------------------------------------------------------------
@@ -50,7 +50,8 @@ class RAPID(object):
         if use_all_processors == True:
             self._num_processors = cpu_count()
         elif num_processors > cpu_count():
-            print "WARNING: Num processors requested exceeded max. Set to max ..."
+            log("Num processors requested exceeded max. Set to max ...",
+                "WARNING")
             self._num_processors = cpu_count()
         else:
             self._num_processors = num_processors
@@ -232,7 +233,8 @@ class RAPID(object):
             if key in dir(self) and not key.startswith('_'):
                 setattr(self, key, value)
             else:
-                raise Exception("Invalid RAPID parameter %s." % key)
+                log("Invalid RAPID parameter %s." % key,
+                    "ERROR")
     
     def update_reach_number_data(self):
         """
@@ -240,10 +242,12 @@ class RAPID(object):
         """
         
         if not self.rapid_connect_file or not self.rapid_connect_file:
-            raise Exception("ERROR: Missing rapid_connect_file. Please set before running this function ...")
+            log("Missing rapid_connect_file. Please set before running this function ...",
+                "ERROR")
 
         if not self.riv_bas_id_file or not self.riv_bas_id_file:
-            raise Exception("ERROR: Missing riv_bas_id_file. Please set before running this function ...")
+            log("Missing riv_bas_id_file. Please set before running this function ...",
+                "ERROR")
 
         #get rapid connect info
         rapid_connect_table = csv_to_list(self.rapid_connect_file)
@@ -260,15 +264,18 @@ class RAPID(object):
         the m3 file and the time step
         """
         if not self.Vlat_file or not os.path.exists(self.Vlat_file):
-            raise Exception("Need Vlat_file to proceed ...")
+            log("Need Vlat_file to proceed ...",
+                "ERROR")
 
         if self.ZS_TauR <= 0:
-            raise Exception("Missing routing time step ...")
+            log("Missing routing time step ...",
+                "ERROR")
     
         try:
             self.ZS_TauR = int(self.ZS_TauR)
         except Exception:
-            raise Exception("Invalid routing time step: {0} ...".format(self.ZS_TauR))
+            log("Invalid routing time step: {0} ...".format(self.ZS_TauR),
+                "ERROR")
 
         with RAPIDDataset(self.Vlat_file) as m3_nc:
             self.ZS_TauM = m3_nc.size_time*self.ZS_TauR
@@ -278,7 +285,8 @@ class RAPID(object):
         """
         Generate rapid_namelist file
         """
-        print "Generating RAPID namelist file ..."
+        log("Generating RAPID namelist file ...",
+            "INFO")
         try:
             os.remove(file_path)
         except OSError:
@@ -306,7 +314,8 @@ class RAPID(object):
         Update existing namelist file with new parameters
         """
         if os.path.exists(file_path) and file_path:
-            print "Adding missing inputs from RAPID input file ..."
+            log("Adding missing inputs from RAPID input file ...",
+                "INFO")
             old_file = open(file_path, 'r')
             for line in old_file:
                 line = line.strip()
@@ -334,12 +343,14 @@ class RAPID(object):
                     if not getattr(self, attr):
                         setattr(self, attr, value)
                 else:
-                    print "Invalid argument" , attr, ". Skipping ..."
+                    log("Invalid argument {0}. Skipping ...".format(attr),
+                        "INFO")
             old_file.close()
             
             self.generate_namelist_file(file_path)
         else:
-            raise Exception("RAPID namelist file to update not found.")
+            log("RAPID namelist file to update not found.",
+                "ERROR")
             
     def make_output_CF_compliant(self, 
                                  simulation_start_datetime,
@@ -348,17 +359,24 @@ class RAPID(object):
         """
         Converts RAPID output to be CF compliant
         """
-        cv = ConvertRAPIDOutputToCF(rapid_output_file=self.Qout_file, #location of timeseries output file
-                                    start_datetime=simulation_start_datetime, #time of the start of the simulation time
-                                    time_step=self.ZS_TauR, #time step of simulation in seconds
-                                    qinit_file=self.Qinit_file, #RAPID qinit file
-                                    comid_lat_lon_z_file=comid_lat_lon_z_file, #path to comid_lat_lon_z file
-                                    rapid_connect_file=self.rapid_connect_file, #path to RAPID connect file
-                                    project_name=project_name, #name of your project
-                                    output_id_dim_name='rivid', #name of ID dimension in output file, typically COMID or FEATUREID
-                                    output_flow_var_name='Qout', #name of streamflow variable in output file, typically Qout or m3_riv
-                                    print_debug=False)
-        cv.convert()
+        need_to_convert = True
+        with RAPIDDataset(self.Qout_file) as qout_nc:
+            need_to_convert = not qout_nc.is_time_variable_valid()
+        if not need_to_convert:
+            log("RAPID Qout file already CF compliant ...",
+                "INFO")
+        else:
+            cv = ConvertRAPIDOutputToCF(rapid_output_file=self.Qout_file, #location of timeseries output file
+                                        start_datetime=simulation_start_datetime, #time of the start of the simulation time
+                                        time_step=self.ZS_TauR, #time step of simulation in seconds
+                                        qinit_file=self.Qinit_file, #RAPID qinit file
+                                        comid_lat_lon_z_file=comid_lat_lon_z_file, #path to comid_lat_lon_z file
+                                        rapid_connect_file=self.rapid_connect_file, #path to RAPID connect file
+                                        project_name=project_name, #name of your project
+                                        output_id_dim_name='rivid', #name of ID dimension in output file, typically COMID or FEATUREID
+                                        output_flow_var_name='Qout', #name of streamflow variable in output file, typically Qout or m3_riv
+                                        print_debug=False)
+            cv.convert()
     
     def run(self, rapid_namelist_file=""):
         """
@@ -366,7 +384,8 @@ class RAPID(object):
         """
     
         if not self._rapid_executable_location or not self._rapid_executable_location:
-            raise Exception("ERROR: Missing rapid_executable_location. Please set before running this function ...")
+            log("Missing rapid_executable_location. Please set before running this function ...",
+                "ERROR")
 
         time_start = datetime.datetime.utcnow()
     
@@ -405,7 +424,8 @@ class RAPID(object):
 
         
         #run RAPID
-        print "Running RAPID ..."
+        log("Running RAPID ...",
+            "INFO")
         run_rapid_script = ""
         if os.name == "nt":
             run_rapid_script = os.path.join(os.getcwd(), "run_rapid.sh")
@@ -446,29 +466,36 @@ class RAPID(object):
             rapid_cleanup(temp_link_to_rapid, rapid_namelist_file, run_rapid_script)
             raise Exception(err)
         else:
-            print 'RAPID output:'
+            log('RAPID output:',
+                "INFO")
             for line in out.split('\n'):
-                print line
+                print(line)
         rapid_cleanup(temp_link_to_rapid, rapid_namelist_file, run_rapid_script)
-        print "Time to run RAPID: %s" % (datetime.datetime.utcnow()-time_start)
+        log("Time to run RAPID: %s" % (datetime.datetime.utcnow()-time_start),
+            "INFO")
 
     def generate_qinit_from_past_qout(self, qinit_file, time_index=-1):
         """
         Generate qinit from qout file
         """
         if not self.Qout_file or not os.path.exists(self.Qout_file):
-            raise Exception("ERROR: Missing Qout_file. Please set before running this function ...")
+            log('Missing Qout_file. Please set before running this function ...',
+                "ERROR")
 
         if not self.rapid_connect_file or not self.rapid_connect_file:
-            raise Exception("ERROR: Missing rapid_connect_file. Please set before running this function ...")
-
-        print "Generating qinit file from qout file ..."
+            log('Missing rapid_connect file. Please set before running this function ...',
+                "ERROR")
+ 
+        log("Generating qinit file from qout file ...",
+            "INFO")
         #get information from dataset
         with RAPIDDataset(self.Qout_file) as qout_nc:
-            print "Extracting data ..."
+            log("Extracting data ...",
+                "INFO")
             streamflow_values = qout_nc.get_qout(time_index=time_index)
     
-            print "Reordering data..."
+            log("Reordering data ...",
+                "INFO")
             rapid_connect_array = csv_to_list(self.rapid_connect_file)
             stream_id_array = np.array([row[0] for row in rapid_connect_array], np.int32)
             init_flows_array = np.zeros(len(rapid_connect_array))
@@ -477,16 +504,19 @@ class RAPID(object):
                     data_index = np.where(stream_id_array==riv_bas_id)[0][0]
                     init_flows_array[data_index] = streamflow_values[riv_bas_index]
                 except Exception:
-                    print 'WARNING: riv bas id %s not found in connectivity list.' % riv_bas_id
+                    log('riv bas id {0} not found in connectivity list.'.format(riv_bas_id),
+                        "WARNING")
         
-        print "Writing to file ..."
+        log("Writing to file ...",
+            "INFO")
         with open(qinit_file, 'wb') as qinit_out:
             for init_flow in init_flows_array:
                 qinit_out.write('{}\n'.format(init_flow))
 
         self.Qinit_file = qinit_file
         self.BS_opt_Qinit = True
-        print "Initialization Complete!"
+        log("Initialization Complete!",
+            "INFO")
 
     def generate_seasonal_intitialization(self, qinit_file,
                                           datetime_start_initialization=datetime.datetime.utcnow()):
@@ -498,18 +528,24 @@ class RAPID(object):
         """
         #get information from datasets
         if not self.Qout_file or not os.path.exists(self.Qout_file):
-            raise Exception("ERROR: Missing Qout_file. Please set before running this function ...")
+            log("Missing Qout_file. Please set before running this function ...",
+                "ERROR")
 
         if not self.rapid_connect_file or not self.rapid_connect_file:
-            raise Exception("ERROR: Missing rapid_connect_file. Please set before running this function ...")
+            log("Missing rapid_connect file. Please set before running this function ...",
+                "ERROR")
         
         with RAPIDDataset(self.Qout_file) as qout_hist_nc:
             if not qout_hist_nc.is_time_variable_valid():
-                raise Exception("ERROR: File must be CF 1.6 compliant with time dimension ...")
+                log("File must be CF 1.6 compliant with valid time variable ...",
+                    "ERROR")
 
-            print "Generating seasonal average qinit file from qout file ..."
+            log("Generating seasonal average qinit file from qout file ...",
+                "INFO")
             
-            print "Determining dates with streamflows of interest ..."
+            log("Determining dates with streamflows of interest ...",
+                "INFO")
+
             datetime_min = datetime_start_initialization - datetime.timedelta(3)
             datetime_max = datetime_start_initialization + datetime.timedelta(3)
             
@@ -525,12 +561,15 @@ class RAPID(object):
                         time_indices.append(idx)
 
             if not time_indices:
-                raise Exception("ERROR: No time steps found within range ...")
+                log("No time steps found within range ...",
+                    "ERROR")
             
-            print "Extracting data ..."
+            log("Extracting data ...",
+                "INFO")
             streamflow_array = qout_hist_nc.get_qout(time_index_array=time_indices)
 
-            print "Reordering data..."
+            log("Reordering data...",
+                "INFO")
             rapid_connect_array = csv_to_list(self.rapid_connect_file)
             stream_id_array = np.array([row[0] for row in rapid_connect_array], dtype=np.int32)
             init_flows_array = np.zeros(len(rapid_connect_array))
@@ -539,24 +578,27 @@ class RAPID(object):
                     data_index = np.where(stream_id_array==riv_bas_id)[0][0]
                     init_flows_array[data_index] = np.mean(streamflow_array[riv_bas_index])
                 except Exception:
-                    print 'WARNING: riv_bas_id', riv_bas_id,'not found in connectivity list.'
+                    log('riv_bas_id {0} not found in connectivity list.'.format(riv_bas_id),
+                        "WARNING")
 
-            print "Writing to file ..."
+            log("Writing to file ...",
+                "INFO")
             with open(qinit_file, 'wb') as qinit_out:
                 for init_flow in init_flows_array:
                     qinit_out.write('{}\n'.format(init_flow))
 
-            print "Initialization Complete!"
-
+            log("Initialization Complete!",
+                "INFO")
 
     def generate_usgs_avg_daily_flows_opt(self, reach_id_gage_id_file,
                                           start_datetime, end_datetime,
                                           out_streamflow_file, out_stream_id_file):
         """
-        Generate streamflow file and stream id file required for optimization 
+        Generate streamflow file and stream id file required for calibration 
         based on usgs gage ids associated with stream ids
         """
-        print "Generating avg streamflow file and stream id file required for optimization ..."
+        log("Generating avg streamflow file and stream id file required for calibration ...",
+            "INFO")
         reach_id_gage_id_list = csv_to_list(reach_id_gage_id_file) 
         if start_datetime.tzinfo is None or start_datetime.tzinfo.utcoffset(start_datetime) is None:
             start_datetime = start_datetime.replace(tzinfo=utc)
@@ -575,7 +617,8 @@ class RAPID(object):
             gage_id_list.append(station_id)
         
         num_gage_id_list = np.array(gage_id_list, dtype=np.int32)
-        print "Querying Server for Data ..."                            
+        log("Querying Server for Data ..." ,
+            "INFO")
     
         #print station_id
         query_params = {
@@ -607,24 +650,31 @@ class RAPID(object):
                         
                         if local_datetime >= start_datetime:
                             if not time_step['value']:
-                                print "MISSING DATA", station_id, local_datetime, time_step['value']
+                                log("MISSING DATA for USGS Station {0} {1} {2}".format(station_id,
+                                                                                       local_datetime,
+                                                                                       time_step['value']),
+                                    "WARNING")
                             gage_data.append(float(time_step['value'])/35.3146667)
     
                     try:
                         #get where streamids assocated with USGS sation id is
                         streamid_index = np.where(num_gage_id_list==int(float(usgs_station_id)))[0][0]+1
                     except Exception:
-                        print "USGS Station", usgs_station_id, "not found in list ..."
+                        log("USGS Station {0} not found in list ...".format(usgs_station_id),
+                            "WARNING")
                         raise
                         
                     if len(gage_data) == num_days_needed:
                         gage_data_matrix.append(gage_data)
                         valid_comid_list.append(reach_id_gage_id_list[streamid_index][0])
                     else:
-                        print "StreamID", reach_id_gage_id_list[streamid_index][0], "USGS Station", \
-                              usgs_station_id, "MISSING", num_days_needed-len(gage_data), "DATA VALUES"
+                        log("StreamID {0} USGS Station {1} MISSING {2} DATA VALUES".format(reach_id_gage_id_list[streamid_index][0],
+                                                                                           usgs_station_id,
+                                                                                           num_days_needed-len(gage_data)),
+                            "WARNING")
             if gage_data_matrix and valid_comid_list:
-                print "Writing Output ..."                            
+                log("Writing Output ...",
+                    "INFO")
                 np_array = np.array(gage_data_matrix).transpose()  
                 with open(out_streamflow_file, 'wb') as gage_data:
                     wf = csvwriter(gage_data)
@@ -643,6 +693,8 @@ class RAPID(object):
                 self.IS_obs_use = len(valid_comid_list)
                 self.obs_use_id_file = out_stream_id_file
             else:
-                print "No valid data returned ..."
+                log("No valid data returned ...",
+                    "WARNING")
         else:
-            print "USGS query error ..."
+                log("USGS query error ...",
+                    "WARNING")

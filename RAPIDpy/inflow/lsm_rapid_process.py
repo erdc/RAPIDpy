@@ -45,16 +45,16 @@ def generate_inflows_from_runoff(args):
     time_start_all = datetime.utcnow()
 
     #prepare ECMWF file for RAPID
-    print "Runoff downscaling for:", watershed, subbasin
-    print "Index:", file_index_list[0], "to", file_index_list[-1]
-    print "File(s):", runoff_file_list[0], "to", runoff_file_list[-1]
+    print("Runoff downscaling for: {0} {1}".format(watershed, subbasin))
+    print("Index: {0} to {1}".format(file_index_list[0], file_index_list[-1]))
+    print("File(s): {0} to {1}".format(runoff_file_list[0], runoff_file_list[-1]))
           
     if not isinstance(runoff_file_list, list): 
         runoff_file_list = [runoff_file_list]
     else:
         runoff_file_list = runoff_file_list
        
-    print "Converting inflow"
+    print("Converting inflow")
     RAPID_Inflow_Tool.execute(nc_file_list=runoff_file_list,
                               index_list=file_index_list,
                               in_weight_table=weight_table_file,
@@ -63,7 +63,7 @@ def generate_inflows_from_runoff(args):
                               )
 
     time_finish_ecmwf = datetime.utcnow()
-    print "Time to convert inflows: %s" % (time_finish_ecmwf-time_start_all)
+    print("Time to convert inflows: {0}".format(time_finish_ecmwf-time_start_all))
 
 #------------------------------------------------------------------------------
 #MAIN PROCESS
@@ -81,7 +81,8 @@ def run_lsm_rapid_process(rapid_executable_location,
                           generate_initialization_file=False,
                           use_all_processors=True,
                           num_processors=1,
-                          cygwin_bin_location=""
+                          cygwin_bin_location="",
+                          modeling_institution="US Army Engineer Research and Development Center"
                           ):
     """
     This is the main process to generate inflow for RAPID and to run RAPID
@@ -92,7 +93,7 @@ def run_lsm_rapid_process(rapid_executable_location,
     if use_all_processors == True:
         NUM_CPUS = multiprocessing.cpu_count()
     elif num_processors > multiprocessing.cpu_count():
-        print "WARNING: Num processors requested exceeded max. Set to max ..."
+        print("WARNING: Num processors requested exceeded max. Set to max ...")
         NUM_CPUS = multiprocessing.cpu_count()
     else:
         NUM_CPUS = num_processors
@@ -121,9 +122,9 @@ def run_lsm_rapid_process(rapid_executable_location,
                 print file_date
             if file_date >= simulation_start_datetime:
                 lsm_file_list_subset.append(os.path.join(subdir, erai_file))
-        print lsm_file_list_subset[0]
+        print(lsm_file_list_subset[0])
         actual_simulation_start_datetime = datetime.strptime(re.search(r'\d{8}', lsm_file_list_subset[0]).group(0), "%Y%m%d")
-        print lsm_file_list_subset[-1]
+        print(lsm_file_list_subset[-1])
         actual_simulation_end_datetime = datetime.strptime(re.search(r'\d{8}', lsm_file_list_subset[-1]).group(0), "%Y%m%d")
         
         lsm_file_list = sorted(lsm_file_list_subset)
@@ -232,8 +233,8 @@ def run_lsm_rapid_process(rapid_executable_location,
                 time_dim = "Time"
             file_size_time = len(lsm_example_file.dimensions[time_dim])
         except Exception as ex:
-            print "ERROR:", ex
-            print "Assuming time dimension is 1"
+            print("ERROR: {0}".format(ex))
+            print("Assuming time dimension is 1")
             file_size_time = 1
 
         out_file_ending = "{0}to{1}{2}".format(actual_simulation_start_datetime.strftime("%Y%m%d"), 
@@ -257,7 +258,7 @@ def run_lsm_rapid_process(rapid_executable_location,
             or surface_runoff_var.lower() == "ro":
             #these are the ECMWF models
             if lat_dim_size == 361 and lon_dim_size == 720:
-                print "Runoff file identified as ERA Interim Low Res (T255) GRID"
+                print("Runoff file identified as ERA Interim Low Res (T255) GRID")
                 #A) ERA Interim Low Res (T255)
                 #Downloaded as 0.5 degree grid
                 # dimensions:
@@ -269,7 +270,7 @@ def run_lsm_rapid_process(rapid_executable_location,
                 grid_type = 't255'
 
             elif lat_dim_size == 512 and lon_dim_size == 1024:
-                print "Runoff file identified as ERA Interim High Res (T511) GRID"
+                print("Runoff file identified as ERA Interim High Res (T511) GRID")
                 #B) ERA Interim High Res (T511)
                 # dimensions:
                 #  lon = 1024 ;
@@ -279,7 +280,7 @@ def run_lsm_rapid_process(rapid_executable_location,
                 model_name = "erai"
                 grid_type = 't511'
             elif lat_dim_size == 161 and lon_dim_size == 320:
-                print "Runoff file identified as ERA 20CM (T159) GRID"
+                print("Runoff file identified as ERA 20CM (T159) GRID")
                 #C) ERA 20CM (T159) - 3hr - 10 ensembles
                 #Downloaded as 1.125 degree grid
                 # dimensions:
@@ -307,7 +308,7 @@ def run_lsm_rapid_process(rapid_executable_location,
             total_num_time_steps=file_size_time*len(lsm_file_list)
             RAPID_Inflow_Tool = CreateInflowFileFromERAInterimRunoff()                 
         elif institution == "NASA GSFC":
-            print "Runoff file identified as LIS GRID"
+            print("Runoff file identified as LIS GRID")
             #this is the LIS model
             weight_file_name = r'weight_lis\.csv'
             grid_type = 'lis'
@@ -332,7 +333,7 @@ def run_lsm_rapid_process(rapid_executable_location,
                                                                time_step)
 
         elif institution == "Met Office, UK":
-            print "Runoff file identified as Joules GRID"
+            print("Runoff file identified as Joules GRID")
             #this is the LIS model
             weight_file_name = r'weight_joules\.csv'
             grid_type = 'joules'
@@ -360,7 +361,7 @@ def run_lsm_rapid_process(rapid_executable_location,
 
             model_name = "nasa"
             if lat_dim_size == 600 and lon_dim_size == 1440:
-                print "Runoff file identified as GLDAS GRID"
+                print("Runoff file identified as GLDAS GRID")
                 #GLDAS NC FILE
                 #dimensions:
                 #    g0_lat_0 = 600 ;
@@ -382,7 +383,7 @@ def run_lsm_rapid_process(rapid_executable_location,
                 total_num_time_steps=file_size_time*len(lsm_file_list)
 
             elif lat_dim_size <= 224 and lon_dim_size <= 464:
-                print "Runoff file identified as NLDAS GRID"
+                print("Runoff file identified as NLDAS GRID")
                 #NLDAS MOSAIC FILE
                 #dimensions:
                 #    g0_lat_0 = 224 ;
@@ -445,8 +446,8 @@ def run_lsm_rapid_process(rapid_executable_location,
         if grid_type == 'nldas' or grid_type == 'lis' or grid_type == 'joules':
 	    num_extra_files = file_size_time*len(lsm_file_list) % 3
             if num_extra_files != 0:
-                print "WARNING: Number of files needs to be divisible by 3. Remainder is" , num_extra_files
-		print "This means your simulation will be truncated"
+                print("WARNING: Number of files needs to be divisible by 3. Remainder is {0}".format(num_extra_files))
+                print("This means your simulation will be truncated")
             total_num_time_steps=int(file_size_time*len(lsm_file_list)/3)
 
         out_file_ending = "{0}_{1}_{2}hr_{3}".format(model_name, grid_type, time_step/3600, out_file_ending)
@@ -482,13 +483,27 @@ def run_lsm_rapid_process(rapid_executable_location,
             weight_table_file = case_insensitive_file_search(master_watershed_input_directory,
                                                              weight_file_name)
 
+            try:
+                in_rivid_lat_lon_z_file = case_insensitive_file_search(master_watershed_input_directory,
+                                                                    r'comid_lat_lon_z\.csv')
+            except Exception:
+                in_rivid_lat_lon_z_file = ""
+                print("WARNING: comid_lat_lon_z file not found. These will not be added ...")
+                pass
+            
             RAPID_Inflow_Tool.generateOutputInflowFile(out_nc=master_rapid_runoff_file,
-                                                       in_weight_table=weight_table_file,
-                                                       tot_size_time=total_num_time_steps,
+                                                       start_datetime_utc=actual_simulation_start_datetime,
+                                                       number_of_timesteps=total_num_time_steps,
+                                                       simulation_time_step_seconds=time_step,
+                                                       in_riv_bas_id_file=case_insensitive_file_search(master_watershed_input_directory,
+                                                                                                       r'riv_bas_id\.csv'),
+                                                       in_rivid_lat_lon_z_file=in_rivid_lat_lon_z_file,
+                                                       land_surface_model_description=description,
+                                                       modeling_institution=modeling_institution
                                                        )
             job_combinations = []
             if grid_type == 'nldas' or grid_type == 'lis' or grid_type == 'joules':
-                print "Grouping {0} in threes".format(grid_type)
+                print("Grouping {0} in threes".format(grid_type))
                 lsm_file_list = [lsm_file_list[nldas_index:nldas_index+3] for nldas_index in range(0, len(lsm_file_list), 3)\
                                  if len(lsm_file_list[nldas_index:nldas_index+3])==3]
 
@@ -542,16 +557,10 @@ def run_lsm_rapid_process(rapid_executable_location,
             if run_rapid_simulation:
                 rapid_manager.run()
 
-                try:
-                    comid_lat_lon_z_file = case_insensitive_file_search(master_watershed_input_directory,
-                                                                        r'comid_lat_lon_z\.csv')
-                except Exception:
-                    comid_lat_lon_z_file = ""
-                    print "WARNING: comid_lat_lon_z file not found. These will not be added in conversion ..."
-                    pass
                 rapid_manager.make_output_CF_compliant(simulation_start_datetime=actual_simulation_start_datetime,
-                                                       comid_lat_lon_z_file=comid_lat_lon_z_file,
-                                                       project_name="{0} Based Historical flows by US Army ERDC".format(description))
+                                                       comid_lat_lon_z_file=in_rivid_lat_lon_z_file,
+                                                       project_name="{0} Based Historical flows by {1}".format(description,
+                                                                                                               modeling_institution))
 
                 #generate return periods
                 if generate_return_periods_file and os.path.exists(lsm_rapid_output_file) and lsm_rapid_output_file:
@@ -576,6 +585,6 @@ def run_lsm_rapid_process(rapid_executable_location,
 
     #print info to user
     time_end = datetime.utcnow()
-    print "Time Begin All: " + str(time_begin_all)
-    print "Time Finish All: " + str(time_end)
-    print "TOTAL TIME: "  + str(time_end-time_begin_all)
+    print("Time Begin All: {0}".format(time_begin_all))
+    print("Time Finish All: {0}".format(time_end))
+    print("TOTAL TIME: {0}".format(time_end-time_begin_all))

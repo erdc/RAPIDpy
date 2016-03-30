@@ -33,7 +33,7 @@ def MergeWeightTables(weight_table_file,
     #set npoints to one
     replacement_row[3] = 1
  
-    print "Looping ..."
+    print("Looping ...")
     for row in connectivity_table:
         try:
             #find all occurences
@@ -50,16 +50,16 @@ def MergeWeightTables(weight_table_file,
  
             if len(weight_indices) != int(weight_table[weight_indices[0]][4]):
                 for weight_index in weight_indices:
-                    print "ERROR:", weight_index, weight_table[weight_index]
+                    print ("ERROR: {0} {1}".format(weight_index, weight_table[weight_index]))
  
             for weight_index in weight_indices:
                 new_weight_table.append(weight_table[weight_index])
         except IndexError:
-            print row[0], "not found ..."
+            print("{0} not found ...".format(row[0]))
             #skip if not found
             continue
  
-    print "Writing ..."
+    print("Writing ...")
     with open(new_weight_table_file, 'wb') as outfile:
         writer = csv.writer(outfile)
         writer.writerows(new_weight_table)
@@ -74,8 +74,8 @@ def MergeNetworkConnectFiles(old_connectivity_file,
 
     max_num_upstream = max([int(float(row[2])) for row in connectivity_table])
     
-    print "Maximum number of upstream reaches:", max_num_upstream
-    print "Looping ..."
+    print("Maximum number of upstream reaches: {0}".format(max_num_upstream))
+    print("Looping ...")
     new_comid_list = np.zeros(len(connectivity_table), dtype=np.int32)
     new_connectivity_table = []
     index = 0
@@ -95,7 +95,7 @@ def MergeNetworkConnectFiles(old_connectivity_file,
             new_comid_list[index] = row[0]
             index += 1
             
-    print "Writing ..."
+    print("Writing ...")
     with open(new_connectivity_file, 'wb') as outfile:
         writer = csv.writer(outfile)
         writer.writerows(new_connectivity_table)
@@ -116,7 +116,7 @@ def MergeMuskingumFiles(old_connectivity_file,
     old_muskingum_table = csv_to_list(old_muskingum_file)
     new_table = []
 
-    print "Looping ..."
+    print("Looping ...")
     for row in new_connectivity_table:
         try:
             comid_index = np.where(old_comid_list==int(float(row[0])))[0][0]
@@ -125,7 +125,7 @@ def MergeMuskingumFiles(old_connectivity_file,
             #print "SKIPPED:", row[0]
             continue
 
-    print "Writing ..."
+    print("Writing ...")
     with open(new_muskingum_file, 'wb') as outfile:
         writer = csv.writer(outfile)
         writer.writerows(new_table)    

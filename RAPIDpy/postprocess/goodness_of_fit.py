@@ -257,13 +257,13 @@ def find_goodness_of_fit_csv(observed_simulated_file):
                                                 np.array(observed_array))
 
     # print error indices
-    print "Percent Bias:", pc_bias(simulated_array,observed_array)
-    print "Absolute Percent Bias:", apb(simulated_array,observed_array)
-    print "Root Mean Squared Error:", rmse(simulated_array,observed_array)
-    print "Mean Absolute Error", mae(simulated_array,observed_array)
-    print "Bias", bias(simulated_array,observed_array)
-    print "Nash Sutcliffe efficiency coefficient", NS(simulated_array,observed_array)
-    print "Likelihood", L(simulated_array,observed_array)
-    print "correlation coefficient", correlation(simulated_array,observed_array)
-    print "index of agreement", index_agreement(simulated_array,observed_array)
-    print "Kling-Gupta Efficiency", KGE(simulated_array,observed_array)[0]
+    print("Percent Bias: {0}".format(pc_bias(simulated_array,observed_array)))
+    print("Absolute Percent Bias:".format(apb(simulated_array,observed_array)))
+    print("Root Mean Squared Error:".format(rmse(simulated_array,observed_array)))
+    print("Mean Absolute Error".format(mae(simulated_array,observed_array)))
+    print("Bias".format(bias(simulated_array,observed_array)))
+    print("Nash Sutcliffe efficiency coefficient".format(NS(simulated_array,observed_array)))
+    print("Likelihood".format(L(simulated_array,observed_array)))
+    print("correlation coefficient".format(correlation(simulated_array,observed_array)))
+    print("index of agreement".format(index_agreement(simulated_array,observed_array)))
+    print("Kling-Gupta Efficiency".format(KGE(simulated_array,observed_array)[0]))

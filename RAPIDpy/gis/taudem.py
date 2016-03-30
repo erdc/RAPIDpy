@@ -9,15 +9,18 @@
 ##  License: BSD 3-Clause
 
 from datetime import datetime
-from json import loads as json_loads
 from multiprocessing import cpu_count
 import numpy as np
 import os
-from osgeo import gdal, ogr
-from shapely.geometry import MultiPolygon, Polygon, shape
-from shapely.ops import cascaded_union
 from subprocess import PIPE, Popen
 
+try:
+    from osgeo import gdal, ogr
+    from shapely.wkb import loads as shapely_loads
+    from shapely.ops import cascaded_union
+except ImportError:
+    raise Exception("You need to install the gdal and shapely python packages to use this tool ...")
+    
 class TauDEM(object):
     """
     TauDEM process manager
@@ -42,22 +45,23 @@ class TauDEM(object):
             # Get and describe the first argument
         #
     
-        print "Number of Processes:", self.num_processors
+        print("Number of Processes: {0}".format(self.num_processors))
         time_start = datetime.utcnow()
 
         # Construct the taudem command line.
         cmd = ['mpiexec', '-n', str(self.num_processors)] + cmd
-        print "Command Line: ", " ".join(cmd)
+        print("Command Line: {0}".format(" ".join(cmd)))
         process = Popen(cmd, stdout=PIPE, stderr=PIPE, shell=False)
         out, err = process.communicate()
         if out:
-            print "OUTPUT:"
+            print("OUTPUT:")
             for line in out.split('\n'):
                 print line
         if err:
-            print "ERROR:", err
+            print("ERROR:")
+            print(err)
             #raise Exception(err)
-        print "Time to complete:", datetime.utcnow()-time_start
+        print("Time to complete: {0}".format(datetime.utcnow()-time_start))
             
     def _add_prj_file(self, original_gis_file,
                       new_gis_file):
@@ -82,7 +86,7 @@ class TauDEM(object):
         """
         Converts raster to polygon and then dissolves it
         """
-        print "Process: Raster to Polygon ..."
+        print("Process: Raster to Polygon ...")
         time_start = datetime.utcnow()
         temp_polygon_file = "{0}_temp.shp".format(os.path.splitext(os.path.basename(polygon_file))[0])
         cmd = ["gdal_polygonize.py", raster_file,
@@ -93,15 +97,16 @@ class TauDEM(object):
         process = Popen(cmd, stdout=PIPE, stderr=PIPE, shell=False)
         out, err = process.communicate()
         if out:
-            print "OUTPUT:"
+            print("OUTPUT:")
             for line in out.split('\n'):
                 print line
         if err:
-            print "ERROR:", err
+            print("ERROR:")
+            print(err)
             #raise Exception(err)
-        print "Time to convert to polygon:", datetime.utcnow()-time_start
+        print("Time to convert to polygon: {0}".format(datetime.utcnow()-time_start))
         
-        print "Dissolving ..."
+        print("Dissolving ...")
         time_start_dissolve = datetime.utcnow()
         ogr_polygin_shapefile = ogr.Open(temp_polygon_file)
         ogr_polygon_shapefile_lyr = ogr_polygin_shapefile.GetLayer()
@@ -133,38 +138,14 @@ class TauDEM(object):
                 for feature_index in feature_indices:
                     feature = ogr_polygon_shapefile_lyr.GetFeature(feature_index)
                     feat_geom = feature.GetGeometryRef()
-                    feat_geom_count = feat_geom.GetGeometryCount()
-                    main_polygon_arr = []
-                    for ring_idx in xrange(feat_geom_count):
-                        feat_ring = feat_geom.GetGeometryRef(ring_idx)
-                        num_ring_points = feat_ring.GetPointCount()
-                        
-                        if num_ring_points <= 0:
-                            feature_info = json_loads(feat_ring.ExportToJson())
-                            main_polygon_arr.append(Polygon(shape(feature_info)))
-                        else:
-                            poly_pt_arr = []
-                            for pt_idx in xrange(num_ring_points):
-                                x, y, z = feat_ring.GetPoint(pt_idx)
-                                poly_pt_arr.append((x,y))
-                            poly_pt_arr.append((poly_pt_arr[0])) #close the loop
-                            main_polygon_arr.append(Polygon(poly_pt_arr))
-                    if len(main_polygon_arr) == 1:
-                        dissolve_poly_list.append(main_polygon_arr[0])
-                    else:
-                        dissolve_poly_list.append(MultiPolygon(main_polygon_arr))
-         
+                    dissolve_poly_list.append(shapely_loads(feat_geom.ExportToWkb()))                
                 dissolve_polygon = cascaded_union(dissolve_poly_list)
                 new_feat.SetGeometry(ogr.CreateGeometryFromWkb(dissolve_polygon.wkb))
             dissolve_layer.CreateFeature(new_feat)
-            new_feat = None
         #clean up
-        dissolve_shapefile = dissolve_layer =  None
-        ogr_polygin_shapefile = ogr_polygon_shapefile_lyr = None
         shp_drv.DeleteDataSource(temp_polygon_file)
-        shp_drv = None
-        print "Time to dissolve:", datetime.utcnow()-time_start_dissolve
-        print "Total time to convert:", datetime.utcnow()-time_start
+        print("Time to dissolve: {0}".format(datetime.utcnow()-time_start_dissolve))
+        print("Total time to convert: {0}".format(datetime.utcnow()-time_start))
         
     def pitRemove(self, 
                   elevation_grid,
@@ -175,7 +156,7 @@ class TauDEM(object):
         """
         Remove low spots from DEM
         """
-        print "PROCESS: PitRemove"
+        print("PROCESS: PitRemove")
         self.pit_filled_elevation_grid = pit_filled_elevation_grid
              
         # Construct the taudem command line.
@@ -202,7 +183,7 @@ class TauDEM(object):
         """
         Calculates flow direction with Dinf method
         """                     
-        print "PROCESS: DinfFlowDirection"
+        print("PROCESS: DinfFlowDirection")
         # Construct the taudem command line.
         cmd = [os.path.join(self.taudem_exe_path, 'dinfflowdir'),
                '-fel', pit_filled_elevation_grid, 
@@ -225,7 +206,7 @@ class TauDEM(object):
         """
         Calculates flow direction with D8 method
         """                     
-        print "PROCESS: D8FlowDirection"
+        print("PROCESS: D8FlowDirection")
         if pit_filled_elevation_grid:
             self.pit_filled_elevation_grid = pit_filled_elevation_grid
     
@@ -256,7 +237,7 @@ class TauDEM(object):
         """
         Calculates contributing area with Dinf method
         """                     
-        print "PROCESS: DinfContributingArea"
+        print("PROCESS: DinfContributingArea")
 
         # Construct the taudem command line.
         cmd = [os.path.join(self.taudem_exe_path, 'areadinf'),
@@ -286,7 +267,7 @@ class TauDEM(object):
         """
         Calculates contributing area with D8 method
         """                     
-        print "PROCESS: D8ContributingArea"
+        print("PROCESS: D8ContributingArea")
         if flow_dir_grid:
             self.flow_dir_grid = flow_dir_grid
 
@@ -319,7 +300,7 @@ class TauDEM(object):
         """
         Calculates the stream definition by threshold
         """
-        print "PROCESS: StreamDefByThreshold"
+        print("PROCESS: StreamDefByThreshold")
         if contributing_area_grid:
             self.contributing_area_grid = contributing_area_grid
             
@@ -357,7 +338,7 @@ class TauDEM(object):
         """
         Creates vector network and shapefile from stream raster grid
         """
-        print "PROCESS: StreamReachAndWatershed"
+        print("PROCESS: StreamReachAndWatershed")
         if pit_filled_elevation_grid:
             self.pit_filled_elevation_grid = pit_filled_elevation_grid
         if flow_dir_grid:
@@ -428,4 +409,4 @@ class TauDEM(object):
         #convert watersed grid to shapefile
         polygon_file = os.path.join(output_directory, 'catchments.shp')                          
         self.rasterToPolygon(out_watershed_grid, polygon_file)
-        print "TOTAL time to complete:", datetime.utcnow()-time_start
+        print("TOTAL time to complete: {0}".format(datetime.utcnow()-time_start))

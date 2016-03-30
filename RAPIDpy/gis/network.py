@@ -8,7 +8,7 @@
 ##  Copyright © 2016 Alan D Snow. All rights reserved.
 ##  License: BSD 3-Clause
 
-import csv
+from csv import writer as csv_writer
 import numpy as np
 
 try:
@@ -41,7 +41,7 @@ def StreamIDNextDownIDToConnectivity(stream_id_array,
         list_all.append(np.concatenate([np.array([hydroid,nextDownID,count_upstream]),list_upstreamID]).astype(int))
 
     with open(out_csv_file,'wb') as csvfile:
-        connectwriter = csv.writer(csvfile)
+        connectwriter = csv_writer(csvfile)
         for row_list in list_all:
             out = np.concatenate([row_list, np.array([0 for i in xrange(max_count_upstream - row_list[2])])])
             connectwriter.writerow(out.astype(int))
@@ -127,7 +127,7 @@ def CreateSubsetFile(in_drainage_line,
     if 'HYDROSEQ' in upper_field_names:
         #with this method, smaller is downstream
         sort_field = orig_field_names[upper_field_names.index('HYDROSEQ')]
-        print "Sorting by %s" % sort_field
+        print("Sorting by {0}".format(sort_field))
 
     hydroseq_list = []
     hydroid_list = []

@@ -3,9 +3,9 @@
 ##  dataset.py
 ##  RAPIDpy
 ##
-##  Created by Alan D Snow, 2016.
+##  Created by Alan D Snow.
 ##  Copyright © 2016 Alan D Snow. All rights reserved.
-##
+##  BSD 3-Clause
 
 from csv import writer as csv_writer
 import datetime
@@ -128,7 +128,7 @@ class RAPIDDataset(object):
         #get the range of time based on datetime range
         time_range = None
         if 'time' in self.qout_nc.variables and (date_search_start is not None or date_search_end is not None):
-            print "Determining time range ({0} to {1})...".format(date_search_start, date_search_end)
+            print("Determining time range ({0} to {1})...".format(date_search_start, date_search_end))
             time_array = self.qout_nc.variables['time'][:]
             if date_search_start is not None:
                 seconds_start = (date_search_start-datetime.datetime(1970,1,1)).total_seconds()
@@ -198,7 +198,7 @@ class RAPIDDataset(object):
                 netcdf_river_indices_list.append(self.get_river_index(river_id))
                 valid_river_ids.append(river_id)
             except IndexError:
-                print "ReachID", river_id, "not found in netCDF dataset. Skipping ..."
+                print("WARNING: ReachID {0} not found in netCDF dataset. Skipping ...".format(river_id))
                 missing_river_ids.append(river_id)
                 pass
         
@@ -359,7 +359,7 @@ class RAPIDDataset(object):
         if not time_indices:
             raise Exception("ERROR: No time steps found within range ...")
         
-        print "Extracting data ..."
+        print("Extracting data ...")
         return np.mean(self.get_qout(river_id_array, time_index_array=time_indices), axis=1)
 
 
@@ -397,7 +397,7 @@ class RAPIDDataset(object):
                         writer.writerow([time.strftime("%Y/%m/%d %H:00", var_time), qout_arr[index]])
 
         else:
-            print "Valid time variable not found. Printing values only ..."
+            print("Valid time variable not found. Printing values only ...")
             qout_arr = self.get_qout_index(reach_index)
             with open(path_to_output_file, 'w') as outcsv:
                 writer = csv_writer(outcsv)

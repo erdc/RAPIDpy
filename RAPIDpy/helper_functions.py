@@ -18,6 +18,25 @@ from dataset import RAPIDDataset
 #------------------------------------------------------------------------------
 # HELPER FUNCTIONS
 #------------------------------------------------------------------------------
+def log(message, severity, print_debug=True):
+    """Logs, prints, or raises a message.
+
+    Arguments:
+        message -- message to report
+        severity -- string of one of these values:
+            CRITICAL|ERROR|WARNING|INFO|DEBUG
+    """
+
+    print_me = ['WARNING', 'INFO', 'DEBUG']
+    if severity in print_me:
+        if severity == 'DEBUG':
+            if print_debug:
+                print("{0}: {1}".format(severity, message))
+        else:
+                print("{0}: {1}".format(severity, message))
+    else:
+        raise Exception("{0}: {1}".format(severity, message))
+
 def csv_to_list(csv_file, delimiter=','):
     """
     Reads in a CSV file and returns the contents as list,
@@ -32,6 +51,17 @@ def csv_to_list(csv_file, delimiter=','):
         else:
             reader = csv.reader(csv_con, delimiter=delimiter)
         return list(reader)
+
+def get_rivid_list_from_file(in_rapid_connect):
+    """
+    Gets the first row of rivids in rapid connect file or riv_bas_id file
+    """
+    rapid_connect_rivid_list = []
+    with open(in_rapid_connect, "rb") as csvfile:
+        reader = csv.reader(csvfile)
+        for row in reader:
+            rapid_connect_rivid_list.append(row[0])
+    return np_array(rapid_connect_rivid_list, dtype=int)
 
 def compare_csv_decimal_files(file1, file2, header=True):
     """
@@ -108,10 +138,12 @@ def compare_qout_files(dataset1_path, dataset2_path, Qout_var="Qout"):
     d2 = RAPIDDataset(dataset2_path)
 
     if len(d1.get_river_id_array()) != len(d2.get_river_id_array()):
-        raise Exception("Length of COMID/rivid input not the same.")
+        log("Length of COMID/rivid input not the same.",
+            "ERROR")
 
     if not (d1.get_river_id_array() == d2.get_river_id_array()).all():
-        print "WARNING: COMID/rivid order is different in each dataset. Reordering data for comparison."
+        log("COMID/rivid order is different in each dataset. Reordering data for comparison.",
+            "WARNING")
         
         d2_reordered_reach_index_list = []
         for comid in d1.get_river_id_array():
@@ -133,7 +165,8 @@ def compare_qout_files(dataset1_path, dataset2_path, Qout_var="Qout"):
                 assert_almost_equal(d1_qout,
                                     d2_reordered_qout, 
                                     decimal=decimal_test)
-                print "\nALMOST EQUAL to", decimal_test, "decimal places.\n"
+                log("ALMOST EQUAL to {0} decimal places.".format(decimal_test),
+                    "INFO")
                 qout_same = True
                 decimal_test=-1
             except AssertionError as ex:
@@ -141,18 +174,22 @@ def compare_qout_files(dataset1_path, dataset2_path, Qout_var="Qout"):
                     print ex
                 decimal_test-=1
                 pass
-        print "Number of different timeseries:", len(un_where_diff)
-        print "COMID idexes where different:"
-        print un_where_diff
+        log("Number of different timeseries: {0}".format(len(un_where_diff)),
+            "INFO")
+        log("COMID idexes where different: {0}".format(un_where_diff),
+            "INFO")
+        log("COMID idexes where different: {0}".format(un_where_diff),
+            "INFO")
         index = un_where_diff[0]
-        print "Dataset 1 example. COMID index:", index
-        print d1.get_qout_index(index)
-        print "Dataset 2 example. COMID index:", index
-        print d2_reordered_qout[index, :]
+        log("Dataset 1 example. COMID index: {0}".format(d1.get_qout_index(index)),
+            "INFO")
+        log("Dataset 2 example. COMID index: {0}".format(d2_reordered_qout[index, :]),
+            "INFO")
     
     else:
         qout_same = True
-        print "Output Qout data is the same."
+        log("Output Qout data is the same.",
+            "INFO")
 
     d1.close()
     d2.close()

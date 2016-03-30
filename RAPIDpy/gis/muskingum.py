@@ -60,11 +60,11 @@ def CreateMuskingumKfacFile(in_drainage_line,
     length_slope_array = []
     kfac2_array = []
     if formula_type == 1:
-        print "River Length/Celerity"
+        print("River Length/Celerity")
     elif formula_type == 2:
-        print "Eta*River Length/Sqrt(River Slope)"
+        print("Eta*River Length/Sqrt(River Slope)")
     elif formula_type == 3:
-        print "Eta*River Length/Sqrt(River Slope) [0.05, 0.95]"
+        print("Eta*River Length/Sqrt(River Slope) [0.05, 0.95]")
     else:
         raise Exception("Invalid formula type. Valid range: 1-3 ...")
     
@@ -112,7 +112,7 @@ def CreateMuskingumKfacFile(in_drainage_line,
         
         if formula_type >= 2:
             if formula_type == 3:
-                print "Filtering Data by 5th and 95th Percentiles ..."
+                print("Filtering Data by 5th and 95th Percentiles ...")
                 length_slope_array = np.array(length_slope_array)
                 percentile_5 = np.percentile(length_slope_array, 5)
                 percentile_95 = np.percentile(length_slope_array, 95)
@@ -121,10 +121,10 @@ def CreateMuskingumKfacFile(in_drainage_line,
                 length_slope_array[length_slope_array>percentile_95] = percentile_95
             
             eta = np.mean(kfac2_array) / np.mean(length_slope_array)
-            print "Kfac2_Avg {}".format(np.mean(kfac2_array))
-            print "Length_Slope Avg {}".format( np.mean(length_slope_array))
-            print "Eta {}".format(eta)
-            print "Writing Data ..."
+            print("Kfac2_Avg {0}".format(np.mean(kfac2_array)))
+            print("Length_Slope Avg {0}".format( np.mean(length_slope_array)))
+            print("Eta {0}".format(eta))
+            print("Writing Data ...")
             for len_slope in length_slope_array:
                 kfac_writer.writerow(eta*len_slope)
 

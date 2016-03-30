@@ -64,27 +64,7 @@ from pytz import utc
 
 #local
 from ..dataset import RAPIDDataset
-from ..helper_functions import csv_to_list, remove_files
-
-def log(message, severity, print_debug=True):
-    """Logs, prints, or raises a message.
-
-    Arguments:
-        message -- message to report
-        severity -- string of one of these values:
-            CRITICAL|ERROR|WARNING|INFO|DEBUG
-    """
-
-    print_me = ['WARNING', 'INFO', 'DEBUG']
-    if severity in print_me:
-        if severity == 'DEBUG':
-            if print_debug:
-                print severity, message
-        else:
-                print severity, message
-    else:
-        raise Exception("%s: %s" % (severity, message))
-
+from ..helper_functions import csv_to_list, remove_files, log
 
 class ConvertRAPIDOutputToCF(object):
     """

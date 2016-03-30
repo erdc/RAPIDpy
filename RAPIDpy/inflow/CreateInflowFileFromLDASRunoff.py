@@ -7,12 +7,13 @@
 ##  Copyright © 2015-2016 Alan D Snow. All rights reserved.
 ##  License: BSD-3 Clause
 
-import csv
 import netCDF4 as NET
 import numpy as NUM
 import os
 
-class CreateInflowFileFromLDASRunoff(object):
+from CreateInflowFileFromGriddedRunoff import CreateInflowFileFromGriddedRunoff
+
+class CreateInflowFileFromLDASRunoff(CreateInflowFileFromGriddedRunoff):
     def __init__(self, lat_dim="g0_lat_0", 
                        lon_dim="g0_lon_1", 
                        lat_var="g0_lat_0", 
@@ -53,63 +54,16 @@ class CreateInflowFileFromLDASRunoff(object):
         return
 
 
-    def readInWeightTable(self, in_weight_table):
-        """
-        Read in weight table
-        """
-        
-        print "Reading the weight table..."
-        self.dict_list = {self.header_wt[0]:[], self.header_wt[1]:[], self.header_wt[2]:[],
-                          self.header_wt[3]:[], self.header_wt[4]:[]}
-                     
-        with open(in_weight_table, "rb") as csvfile:
-            reader = csv.reader(csvfile)
-            self.count = 0
-            for row in reader:
-                if self.count == 0:
-                    #check number of columns in the weight table
-                    if len(row) < len(self.dict_list):
-                        raise Exception(self.errorMessages[4])
-                    #check header
-                    if row[1:len(self.header_wt)] != self.header_wt[1:]:
-                        raise Exception(self.errorMessages[5])
-                    self.count += 1
-                else:
-                    for i in xrange(len(self.header_wt)):
-                       self.dict_list[self.header_wt[i]].append(row[i])
-                    self.count += 1
-
-        self.size_streamID = len(set(self.dict_list[self.header_wt[0]]))
-
-    def generateOutputInflowFile(self, out_nc, in_weight_table, tot_size_time):
-        """
-        Generate inflow file for RAPID
-        """
-
-        self.readInWeightTable(in_weight_table)
-        # Create output inflow netcdf data
-        print "Generating inflow file"
-        # data_out_nc = NET.Dataset(out_nc, "w") # by default format = "NETCDF4"
-        data_out_nc = NET.Dataset(out_nc, "w", format = "NETCDF3_CLASSIC")
-        dim_Time = data_out_nc.createDimension('Time', tot_size_time)
-        dim_RiverID = data_out_nc.createDimension('rivid', self.size_streamID)
-        var_m3_riv = data_out_nc.createVariable('m3_riv', 'f4', 
-                                                ('Time', 'rivid'),
-                                                fill_value=0)
-        data_out_nc.close()
-        #empty list to be read in later
-        self.dict_list = {}
-
     def execute(self, nc_file_list, index_list, in_weight_table, 
                 out_nc, grid_type):
                 
         """The source code of the tool."""
         if not os.path.exists(out_nc):
-            print "ERROR: Outfile has not been created. You need to run: generateOutputInflowFile function ..."
+            print("ERROR: Outfile has not been created. You need to run: generateOutputInflowFile function ...")
             raise Exception("ERROR: Outfile has not been created. You need to run: generateOutputInflowFile function ...")
             
         if len(nc_file_list) != len(index_list):
-            print "ERROR: Number of runoff files not equal to number of indices ..."
+            print("ERROR: Number of runoff files not equal to number of indices ...")
             raise Exception("ERROR: Number of runoff files not equal to number of indices ...")
         
         self.readInWeightTable(in_weight_table)
@@ -126,7 +80,6 @@ class CreateInflowFileFromLDASRunoff(object):
 
         index_new = []
         conversion_factor = None
-        fill_value = None
         
         # start compute inflow
         data_out_nc = NET.Dataset(out_nc, "a", format = "NETCDF3_CLASSIC")
@@ -146,7 +99,7 @@ class CreateInflowFileFromLDASRunoff(object):
 
             for nc_file in nc_file_array:
                 # Validate the netcdf dataset
-                vars_oi_index = self.dataValidation(nc_file)
+                self.dataValidation(nc_file)
 
                 #self.dataIdentify(nc_file, vars_oi_index)
 
@@ -154,7 +107,7 @@ class CreateInflowFileFromLDASRunoff(object):
                 data_in_nc = NET.Dataset(nc_file)
 
                 '''Calculate water inflows'''
-                print "Calculating water inflows for", os.path.basename(nc_file) , grid_type, "..."
+                print("Calculating water inflows for {0} {1} ...".format(os.path.basename(nc_file) , grid_type))
                 data_subset_surface_runoff = data_in_nc.variables[self.vars_oi[2]][min_lat_ind_all:max_lat_ind_all+1, min_lon_ind_all:max_lon_ind_all+1]
                 data_subset_subsurface_runoff = data_in_nc.variables[self.vars_oi[3]][min_lat_ind_all:max_lat_ind_all+1, min_lon_ind_all:max_lon_ind_all+1]
                 #check surface runoff dims
@@ -222,8 +175,8 @@ class CreateInflowFileFromLDASRunoff(object):
                 npoints = int(self.dict_list[self.header_wt[4]][pointer])
                 # Check if all npoints points correspond to the same streamID
                 if len(set(self.dict_list[self.header_wt[0]][pointer : (pointer + npoints)])) != 1:
-                    print "ROW INDEX", pointer
-                    print "COMID", self.dict_list[self.header_wt[0]][pointer]
+                    print("ROW INDEX {0}".format(pointer))
+                    print("COMID {0}".format(self.dict_list[self.header_wt[0]][pointer]))
                     raise Exception(self.errorMessages[2])
 
                 area_sqm_npoints = NUM.array([float(k) for k in self.dict_list[self.header_wt[1]][pointer : (pointer + npoints)]])

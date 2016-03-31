@@ -14,7 +14,7 @@ import numpy as np
 import os
 from subprocess import PIPE, Popen
 try:
-    from osgeo import gdal, ogr
+    from osgeo import gdal, ogr, osr
     from pyproj import Geod
     from shapely.wkb import loads as shapely_loads
     from shapely.ops import cascaded_union
@@ -302,6 +302,15 @@ class TauDEM(object):
         network_shapefile = ogr.Open(stream_network, 1)
         network_layer = network_shapefile.GetLayer()
         network_layer_defn = network_layer.GetLayerDefn()
+        
+        #make sure projection EPSG:4326
+        network_layer_proj = network_layer.GetSpatialRef()
+        geographic_proj = osr.SpatialReference()
+        geographic_proj.ImportFromEPSG(4326)
+        proj_transform = None
+        if network_layer_proj != geographic_proj:
+            proj_transform = osr.CoordinateTransformation(network_layer_proj, geographic_proj)
+
         #check for field
         create_field=True
         for i in xrange(network_layer_defn.GetFieldCount()):
@@ -316,6 +325,10 @@ class TauDEM(object):
         geo_manager = Geod(ellps="WGS84")
         for network_feature in network_layer:
             feat_geom = network_feature.GetGeometryRef()
+            #make sure coordinates are geographic
+            if proj_transform:
+                feat_geom.Transform(proj_transform)
+                
             line = shapely_loads(feat_geom.ExportToWkb())
             lon_list, lat_list = line.xy
             az1, az2, dist = geo_manager.inv(lon_list[:-1], lat_list[:-1], lon_list[1:], lat_list[1:])

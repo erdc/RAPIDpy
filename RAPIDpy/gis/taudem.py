@@ -4,7 +4,7 @@
 ##  RAPIDpy
 ##
 ##  Created by Alan D Snow.
-##  Based on ArcGIS python scripts by David Tarboton (https://github.com/dtarb/TauDEM)
+##  Command line function based on ArcGIS python scripts by David Tarboton (https://github.com/dtarb/TauDEM)
 ##  Copyright © 2016 Alan D Snow. All rights reserved.
 ##  License: BSD 3-Clause
 
@@ -15,6 +15,7 @@ import os
 from subprocess import PIPE, Popen
 try:
     from osgeo import gdal, ogr
+    from pyproj import Geod
     from shapely.wkb import loads as shapely_loads
     from shapely.ops import cascaded_union
 except ImportError:
@@ -110,7 +111,8 @@ class TauDEM(object):
             shp_drv.DeleteDataSource(out_subset_network_file)
             
         network_subset_shp = shp_drv.CreateDataSource(out_subset_network_file)
-        network_subset_layer = network_subset_shp.CreateLayer('', network_layer.GetSpatialRef(), ogr.wkbLineString)
+        network_subset_layer = network_subset_shp.CreateLayer('', network_layer.GetSpatialRef(), 
+                                                              ogr.wkbLineString)
         # Add input Layer Fields to the output Layer if it is the one we want
         for i in xrange(network_layer_defn.GetFieldCount()):
             network_subset_layer.CreateField(network_layer_defn.GetFieldDefn(i))
@@ -183,7 +185,8 @@ class TauDEM(object):
             shp_drv.DeleteDataSource(out_watershed_subset_file)
             
         subset_watershed_shapefile = shp_drv.CreateDataSource(out_watershed_subset_file)
-        subset_watershed_layer = subset_watershed_shapefile.CreateLayer('', ogr_watershed_shapefile_lyr.GetSpatialRef(), ogr.wkbPolygon)
+        subset_watershed_layer = subset_watershed_shapefile.CreateLayer('', ogr_watershed_shapefile_lyr.GetSpatialRef(), 
+                                                                        ogr.wkbPolygon)
         # Add input Layer Fields to the output Layer if it is the one we want
         for i in xrange(ogr_watershed_shapefile_lyr_defn.GetFieldCount()):
             subset_watershed_layer.CreateField(ogr_watershed_shapefile_lyr_defn.GetFieldDefn(i))
@@ -210,9 +213,6 @@ class TauDEM(object):
             new_feat.SetGeometry(geom.Clone())
             # Add new feature to output Layer
             subset_watershed_layer.CreateFeature(new_feat)
-        
-        
-        
         
     def rasterToPolygon(self, raster_file, polygon_file):
         """
@@ -254,7 +254,8 @@ class TauDEM(object):
             shp_drv.DeleteDataSource(polygon_file)
             
         dissolve_shapefile = shp_drv.CreateDataSource(polygon_file)
-        dissolve_layer = dissolve_shapefile.CreateLayer('', ogr_polygon_shapefile_lyr.GetSpatialRef(), ogr.wkbPolygon)
+        dissolve_layer = dissolve_shapefile.CreateLayer('', ogr_polygon_shapefile_lyr.GetSpatialRef(), 
+                                                        ogr.wkbPolygon)
         dissolve_layer.CreateField(ogr.FieldDefn('LINKNO', ogr.OFTInteger))
         dissolve_layer_defn = dissolve_layer.GetLayerDefn()
 
@@ -282,6 +283,44 @@ class TauDEM(object):
         shp_drv.DeleteDataSource(temp_polygon_file)
         print("Time to dissolve: {0}".format(datetime.utcnow()-time_start_dissolve))
         print("Total time to convert: {0}".format(datetime.utcnow()-time_start))
+        
+    def slopeToDecimal(self, stream_network, slope_field):
+        """
+        Converts the slope field to decimal from percentage
+        """
+        network_shapefile = ogr.Open(stream_network, 1)
+        network_layer = network_shapefile.GetLayer()
+        for network_feature in network_layer:
+            new_slope = network_feature.GetField(slope_field)/100.0
+            network_feature.SetField(slope_field, new_slope)
+            network_layer.SetFeature(network_feature)
+            
+    def addLengthMeters(self, stream_network):
+        """
+        Adds length field in meters to network
+        """
+        network_shapefile = ogr.Open(stream_network, 1)
+        network_layer = network_shapefile.GetLayer()
+        network_layer_defn = network_layer.GetLayerDefn()
+        #check for field
+        create_field=True
+        for i in xrange(network_layer_defn.GetFieldCount()):
+            field_name = network_layer_defn.GetFieldDefn(i).GetName()
+            if field_name == 'LENGTH_M':
+                create_field=False
+                break
+            
+        if create_field:
+            network_layer.CreateField(ogr.FieldDefn('LENGTH_M', ogr.OFTReal))
+
+        geo_manager = Geod(ellps="WGS84")
+        for network_feature in network_layer:
+            feat_geom = network_feature.GetGeometryRef()
+            line = shapely_loads(feat_geom.ExportToWkb())
+            lon_list, lat_list = line.xy
+            az1, az2, dist = geo_manager.inv(lon_list[:-1], lat_list[:-1], lon_list[1:], lat_list[1:])
+            network_feature.SetField('LENGTH_M', sum(dist))
+            network_layer.SetFeature(network_feature)
 
     def pitRemove(self, 
                   elevation_grid,
@@ -530,11 +569,11 @@ class TauDEM(object):
         stream_raster_grid = os.path.join(output_directory, 'stream_raster_grid.tif')
         self.streamDefByThreshold(stream_raster_grid,
                                   threshold)
-        out_stream_order_grid = os.path.join(output_directory, 'out_stream_order_grid.tif')
-        out_network_connectivity_tree = os.path.join(output_directory, 'out_network_connectivity_tree.txt')
-        out_network_coordinates = os.path.join(output_directory, 'out_network_coordinates.txt')
-        out_stream_reach_file = os.path.join(output_directory, 'out_stream_reach_file.shp')
-        out_watershed_grid = os.path.join(output_directory, 'out_watershed_grid.tif')
+        out_stream_order_grid = os.path.join(output_directory, 'stream_order_grid.tif')
+        out_network_connectivity_tree = os.path.join(output_directory, 'network_connectivity_tree.txt')
+        out_network_coordinates = os.path.join(output_directory, 'network_coordinates.txt')
+        out_stream_reach_file = os.path.join(output_directory, 'stream_reach_file.shp')
+        out_watershed_grid = os.path.join(output_directory, 'watershed_grid.tif')
         self.streamReachAndWatershed(delineate,
                                      out_stream_order_grid,
                                      out_network_connectivity_tree,
@@ -543,6 +582,6 @@ class TauDEM(object):
                                      out_watershed_grid)
                                      
         #convert watersed grid to shapefile
-        polygon_file = os.path.join(output_directory, 'catchments.shp')                          
-        self.rasterToPolygon(out_watershed_grid, polygon_file)
+        out_watershed_shapefile = os.path.join(output_directory, 'watershed_shapefile.shp')                          
+        self.rasterToPolygon(out_watershed_grid, out_watershed_shapefile)
         print("TOTAL time to complete: {0}".format(datetime.utcnow()-time_start))

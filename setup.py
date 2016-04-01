@@ -17,6 +17,7 @@ setup(
     download_url='https://github.com/erdc-cm/RAPIDpy/tarballs/2.2.1',
     license='BSD 3-Clause',
     packages=find_packages(),
+    package_data={'': ['gis/lsm_grids/*.nc']},
     install_requires=['numpy', 'netCDF4', 'python-dateutil', 'pytz', 'requests'],
     classifiers=[
                 'Intended Audience :: Developers',

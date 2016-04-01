@@ -33,11 +33,12 @@ def StreamIDNextDownIDToConnectivity(stream_id_array,
         count_upstream = len(list_upstreamID)
         if count_upstream > max_count_upstream:
             max_count_upstream = count_upstream
-        # replace the nextDownID with 0 if it equals to -1 (no next downstream)
         nextDownID = next_down_id_array[stream_id_array==hydroid][0]
-        if nextDownID == -1:
-            nextDownID = 0
-         # append the list of Stream HydroID, NextDownID, Count of Upstream ID, and  HydroID of each Upstream into a larger list
+#THIS IS REMOVED DUE TO THE FACT THAT THERE ARE STREAMS WITH ID OF ZERO
+#        # replace the nextDownID with 0 if it equals to -1 (no next downstream)
+#        if nextDownID == -1:
+#            nextDownID = 0
+        # append the list of Stream HydroID, NextDownID, Count of Upstream ID, and  HydroID of each Upstream into a larger list
         list_all.append(np.concatenate([np.array([hydroid,nextDownID,count_upstream]),list_upstreamID]).astype(int))
 
     with open(out_csv_file,'wb') as csvfile:
@@ -76,8 +77,8 @@ def CreateNetworkConnectivity(in_drainage_line,
                                      next_down_id_array,
                                      out_csv_file)
                                      
-def CreateNetworkConnectivityTauDEM(network_connectivity_tree_file,
-                                    out_csv_file):
+def CreateNetworkConnectivityTauDEMTree(network_connectivity_tree_file,
+                                        out_csv_file):
     """
     Creates Network Connectivity input CSV file for RAPID
     based on the TauDEM network connectivity tree file

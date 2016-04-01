@@ -27,7 +27,7 @@ except Exception:
 
 #local
 from voronoi import pointsToVoronoiGridArray, pointsToVoronoiGridShapefile
-from ..helper_function import get_rivid_list_from_file
+from ..helper_functions import get_rivid_list_from_file
 
 gdal.UseExceptions()
 

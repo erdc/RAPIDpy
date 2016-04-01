@@ -23,7 +23,7 @@ class CreateInflowFileFromWRFHydroRunoff(CreateInflowFileFromGriddedRunoff):
                  subsurface_runoff_var="UDROFF",
                  time_step_seconds=1*3600):
         """Define the tool (tool name is the name of the class)."""
-        self.header_wt = ['StreamID', 'area_sqm', 'west_east', 'south_north',
+        self.header_wt = ['rivid', 'area_sqm', 'west_east', 'south_north',
                           'npoints']
         # According to David Gochis, underground runoff is "a major fraction of total river flow in most places"
         self.vars_oi = [lat_var, lon_var, surface_runoff_var, subsurface_runoff_var]

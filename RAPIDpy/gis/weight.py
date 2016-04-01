@@ -119,7 +119,7 @@ def RTreeCreateWeightTable(lsm_grid_lat, lsm_grid_lon,
                     
     with open(out_weight_table, 'wb') as csvfile:
         connectwriter = csv.writer(csvfile)
-        connectwriter.writerow(['rivid', 'area', 'index_lsm_grid_lon', 'index_lsm_grid_lat', 
+        connectwriter.writerow(['rivid', 'area_sqm', 'lon_index', 'lat_index', 
                                 'npoints', 'lsm_grid_lon', 'lsm_grid_lat'])
         geographic_proj =  Proj(init='EPSG:4326') #geographic
         osr_geographic_proj = osr.SpatialReference()
@@ -261,7 +261,7 @@ def GDALCreateWeightTable(lsm_grid_lat, lsm_grid_lon,
                     
     with open(out_weight_table, 'wb') as csvfile:
         connectwriter = csv.writer(csvfile)
-        connectwriter.writerow(['rivid', 'area', 'index_lsm_grid_lon', 'index_lsm_grid_lat', 
+        connectwriter.writerow(['rivid', 'area_sqm', 'lon_index', 'lat_index', 
                                 'npoints', 'lsm_grid_lon', 'lsm_grid_lat'])
             
         for rapid_connect_rivid in rapid_connect_rivid_list:

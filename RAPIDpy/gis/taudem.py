@@ -13,6 +13,7 @@ from multiprocessing import cpu_count
 import numpy as np
 import os
 from subprocess import PIPE, Popen
+from sys import getrecursionlimit, setrecursionlimit
 try:
     from osgeo import gdal, ogr, osr
     from pyproj import Geod
@@ -83,13 +84,15 @@ class TauDEM(object):
             
         with open(out_prj_file, 'w') as prj_file:
             prj_file.write(spatial_ref_str)
-            
+    
     def extractSubNetwork(self, 
                           network_file,
                           out_subset_network_file,
                           outlet_ids,
                           river_id_field,
-                          next_down_id_field):
+                          next_down_id_field,
+                          river_magnitude_field,
+                          safe_mode=True):
         """
         Extracts a subset river network from the main river network based on
         the outlet ids
@@ -103,20 +106,6 @@ class TauDEM(object):
         for feature_idx, drainage_line_feature in enumerate(network_layer):
             rivid_list[feature_idx] = drainage_line_feature.GetField(river_id_field)
             next_down_rivid_list[feature_idx] = drainage_line_feature.GetField(next_down_id_field)
-        
-        
-        shp_drv = ogr.GetDriverByName('ESRI Shapefile')
-        # Remove output shapefile if it already exists
-        if os.path.exists(out_subset_network_file):
-            shp_drv.DeleteDataSource(out_subset_network_file)
-            
-        network_subset_shp = shp_drv.CreateDataSource(out_subset_network_file)
-        network_subset_layer = network_subset_shp.CreateLayer('', network_layer.GetSpatialRef(), 
-                                                              ogr.wkbLineString)
-        # Add input Layer Fields to the output Layer if it is the one we want
-        for i in xrange(network_layer_defn.GetFieldCount()):
-            network_subset_layer.CreateField(network_layer_defn.GetFieldDefn(i))
-        network_subset_layer_defn = network_subset_layer.GetLayerDefn()
         
         def getSubNetworkIDList(outlet_river_id,
                                 rivid_list,
@@ -135,12 +124,45 @@ class TauDEM(object):
                 pass
             return sub_network_index_list
             
-        main_sub_network_index_list = []    
-        for outlet_id in outlet_ids:
-            main_sub_network_index_list.append(np.where(rivid_list==outlet_id)[0][0])
-            main_sub_network_index_list += getSubNetworkIDList(outlet_id,
-                                                               rivid_list,
-                                                               next_down_rivid_list)
+        original_recursion_limit = getrecursionlimit()
+        try:
+            main_sub_network_index_list = []    
+            for outlet_id in outlet_ids:
+                outlet_index = np.where(rivid_list==outlet_id)[0][0]
+                outlet_feature = network_layer.GetFeature(outlet_index)
+                outlet_magnitude = outlet_feature.GetField(river_magnitude_field)
+                if outlet_magnitude > original_recursion_limit:
+                    if not safe_mode:
+                        setrecursionlimit(outlet_magnitude)
+                    else:
+                        raise Exception("Current recursion limit {0} will not allow"
+                                        " extraction for stream magnitude {1}. To override,"
+                                        " set safe_mode to False ...".format(original_recursion_limit,
+                                                                             outlet_magnitude))
+                main_sub_network_index_list.append(outlet_index)
+                main_sub_network_index_list += getSubNetworkIDList(outlet_id,
+                                                                   rivid_list,
+                                                                   next_down_rivid_list)
+        except Exception:
+            setrecursionlimit(original_recursion_limit)
+            raise
+            
+        setrecursionlimit(original_recursion_limit)
+
+        #Write out subset to new shapefile
+        shp_drv = ogr.GetDriverByName('ESRI Shapefile')
+        # Remove output shapefile if it already exists
+        if os.path.exists(out_subset_network_file):
+            shp_drv.DeleteDataSource(out_subset_network_file)
+            
+        network_subset_shp = shp_drv.CreateDataSource(out_subset_network_file)
+        network_subset_layer = network_subset_shp.CreateLayer('', network_layer.GetSpatialRef(), 
+                                                              ogr.wkbLineString)
+        # Add input Layer Fields to the output Layer if it is the one we want
+        for i in xrange(network_layer_defn.GetFieldCount()):
+            network_subset_layer.CreateField(network_layer_defn.GetFieldDefn(i))
+        network_subset_layer_defn = network_subset_layer.GetLayerDefn()
+
         for feature_index in main_sub_network_index_list:      
             subset_feature = network_layer.GetFeature(feature_index)
             #add to list
@@ -157,6 +179,32 @@ class TauDEM(object):
             # Add new feature to output Layer
             network_subset_layer.CreateFeature(new_feat)
             
+    def extractLargestSubNetwork(self,
+                                 network_file,
+                                 out_subset_network_file,
+                                 river_id_field,
+                                 next_down_id_field,
+                                 river_magnitude_field,
+                                 safe_mode=True):
+        """
+        Extracts the larges sub network from the watershed
+        """
+        network_shapefile = ogr.Open(network_file)
+        network_layer = network_shapefile.GetLayer()
+        number_of_features = network_layer.GetFeatureCount()
+        riv_magnuitude_list = np.zeros(number_of_features, dtype=np.int32)
+        for feature_idx, drainage_line_feature in enumerate(network_layer):
+            riv_magnuitude_list[feature_idx] = drainage_line_feature.GetField(river_magnitude_field)
+        
+        max_magnitude_feature = network_layer.GetFeature(np.argmax(riv_magnuitude_list))
+        self.extractSubNetwork(network_file,
+                               out_subset_network_file,
+                               [max_magnitude_feature.GetField(river_id_field)],
+                               river_id_field,
+                               next_down_id_field,
+                               river_magnitude_field,
+                               safe_mode)
+                               
     def extractSubsetFromWatershed(self,
                                    subset_network_file,
                                    subset_network_river_id_field,
@@ -196,7 +244,8 @@ class TauDEM(object):
             try:
                 watershed_feature_index = np.where(watershed_rivid_list==drainage_line_feature.GetField(subset_network_river_id_field))[0][0]
             except IndexError:
-                print("RivID {0} not found ...".format(drainage_line_feature.GetField(subset_network_river_id_field)))
+                print("{0} {1} not found ...".format(subset_network_river_id_field,
+                                                     drainage_line_feature.GetField(subset_network_river_id_field)))
                 continue
                 
             subset_feature = ogr_watershed_shapefile_lyr.GetFeature(watershed_feature_index)
@@ -284,17 +333,6 @@ class TauDEM(object):
         print("Time to dissolve: {0}".format(datetime.utcnow()-time_start_dissolve))
         print("Total time to convert: {0}".format(datetime.utcnow()-time_start))
         
-    def slopeToDecimal(self, stream_network, slope_field):
-        """
-        Converts the slope field to decimal from percentage
-        """
-        network_shapefile = ogr.Open(stream_network, 1)
-        network_layer = network_shapefile.GetLayer()
-        for network_feature in network_layer:
-            new_slope = network_feature.GetField(slope_field)/100.0
-            network_feature.SetField(slope_field, new_slope)
-            network_layer.SetFeature(network_feature)
-            
     def addLengthMeters(self, stream_network):
         """
         Adds length field in meters to network

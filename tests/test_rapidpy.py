@@ -28,9 +28,9 @@ from RAPIDpy.postprocess import ConvertRAPIDOutputToCF
 
 #GLOBAL VARIABLES
 MAIN_TESTS_FOLDER = os.path.dirname(os.path.abspath(__file__))
-COMPARE_DATA_PATH = os.path.join(MAIN_TESTS_FOLDER, 'compare_data')
-INPUT_DATA_PATH = os.path.join(MAIN_TESTS_FOLDER, 'input_data')
-OUTPUT_DATA_PATH = os.path.join(MAIN_TESTS_FOLDER, 'tmp_output_files')
+COMPARE_DATA_PATH = os.path.join(MAIN_TESTS_FOLDER, 'compare')
+INPUT_DATA_PATH = os.path.join(MAIN_TESTS_FOLDER, 'data')
+OUTPUT_DATA_PATH = os.path.join(MAIN_TESTS_FOLDER, 'output')
 
 #------------------------------------------------------------------------------
 # MAIN TEST SCRIPTS
@@ -58,7 +58,7 @@ def test_generate_rapid_input_file():
                                         "rapid_namelist-GENERATE")
     rapid_manager.generate_namelist_file(generated_input_file)
     generated_input_file_solution = os.path.join(COMPARE_DATA_PATH, 
-                                                 "rapid_namelist-GENERATE-SOLUTION")
+                                                 "rapid_namelist-GENERATE")
 
 
     ok_(fcmp(generated_input_file, generated_input_file_solution))
@@ -90,7 +90,7 @@ def test_update_rapid_input_file():
     copy(original_input_file, updated_input_file)
     rapid_manager.update_namelist_file(updated_input_file)
     updated_input_file_solution = os.path.join(COMPARE_DATA_PATH, 
-                                               "rapid_namelist-UPDATE-SOLUTION")
+                                               "rapid_namelist-UPDATE")
 
 
     ok_(fcmp(updated_input_file, updated_input_file_solution))
@@ -122,7 +122,7 @@ def test_update_rapid_invalid_input_file():
     copy(original_input_file, updated_input_file)
     rapid_manager.update_namelist_file(updated_input_file)
     updated_input_file_solution = os.path.join(COMPARE_DATA_PATH, 
-                                               "rapid_namelist-UPDATE-INVALID-SOLUTION")
+                                               "rapid_namelist-UPDATE-INVALID")
 
 
     ok_(fcmp(updated_input_file, updated_input_file_solution))
@@ -155,7 +155,7 @@ def test_update_rapid_numbers_input_file():
     rapid_manager.generate_namelist_file(generated_input_file)
                           
     generated_input_file_solution = os.path.join(COMPARE_DATA_PATH, 
-                                               "rapid_namelist-GENERATE-NUMBERS-SOLUTION")
+                                                 "rapid_namelist-GENERATE-NUMBERS")
 
 
     ok_(fcmp(generated_input_file, generated_input_file_solution))
@@ -188,12 +188,12 @@ def test_update_rapid_runtime():
                                     )
 
     generated_input_file = os.path.join(OUTPUT_DATA_PATH, 
-                                      "rapid_namelist-GENERATE-TIME")
+                                        "rapid_namelist-GENERATE-TIME")
 
     rapid_manager.generate_namelist_file(generated_input_file)
                           
     generated_input_file_solution = os.path.join(COMPARE_DATA_PATH, 
-                                               "rapid_namelist-GENERATE-TIME-SOLUTION")
+                                                 "rapid_namelist-GENERATE-TIME")
 
 
     ok_(fcmp(generated_input_file, generated_input_file_solution))
@@ -390,7 +390,7 @@ def test_generate_qinit_file():
     rapid_manager.update_parameters(Qout_file=original_qout_file)
     rapid_manager.generate_qinit_from_past_qout(qinit_file=qinit_original_rapid_qout)
     
-    qinit_original_rapid_qout_solution = os.path.join(COMPARE_DATA_PATH, 'qinit_original_rapid_qout-SOLUTION.csv')
+    qinit_original_rapid_qout_solution = os.path.join(COMPARE_DATA_PATH, 'qinit_original_rapid_qout.csv')
     ok_(compare_csv_decimal_files(qinit_original_rapid_qout, qinit_original_rapid_qout_solution, header=False))
 
     #test with CF rapid output and alternate time index
@@ -403,7 +403,7 @@ def test_generate_qinit_file():
     rapid_manager.generate_qinit_from_past_qout(qinit_file=qinit_cf_rapid_qout,
                                                 time_index=5)
                                                 
-    qinit_cf_rapid_qout_solution = os.path.join(COMPARE_DATA_PATH, 'qinit_cf_rapid_qout-SOLUTION.csv')
+    qinit_cf_rapid_qout_solution = os.path.join(COMPARE_DATA_PATH, 'qinit_cf_rapid_qout.csv')
     ok_(compare_csv_decimal_files(qinit_cf_rapid_qout, qinit_cf_rapid_qout_solution, header=False))
 
     remove_files(original_qout_file, 
@@ -429,9 +429,9 @@ def test_extract_timeseries():
                                    reach_id=75224)
                                    
         if qout_nc.is_time_variable_valid():
-            original_timeseries_file_solution = os.path.join(COMPARE_DATA_PATH, 'original_timeseries-SOLUTION.csv')
+            original_timeseries_file_solution = os.path.join(COMPARE_DATA_PATH, 'original_timeseries.csv')
         else:
-            original_timeseries_file_solution = os.path.join(COMPARE_DATA_PATH, 'original_timeseries-notime-SOLUTION.csv')
+            original_timeseries_file_solution = os.path.join(COMPARE_DATA_PATH, 'original_timeseries-notime.csv')
         
     ok_(compare_csv_timeseries_files(new_timeseries_file, original_timeseries_file_solution, header=False))
     
@@ -444,7 +444,7 @@ def test_extract_timeseries():
     with RAPIDDataset(original_qout_file) as qout_nc:
         qout_nc.write_flows_to_csv(original_timeseries_file,
                                    reach_id=75224)
-    original_timeseries_file_solution = os.path.join(COMPARE_DATA_PATH, 'original_timeseries-notime-SOLUTION.csv')
+    original_timeseries_file_solution = os.path.join(COMPARE_DATA_PATH, 'original_timeseries-notime.csv')
         
     ok_(compare_csv_timeseries_files(original_timeseries_file, original_timeseries_file_solution, header=False))
 
@@ -459,7 +459,7 @@ def test_extract_timeseries():
                                    reach_index=20,
                                    daily=True)
 
-    cf_timeseries_daily_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_timeseries_daily-SOLUTION.csv')    
+    cf_timeseries_daily_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_timeseries_daily.csv')    
     ok_(compare_csv_timeseries_files(cf_timeseries_daily_file, cf_timeseries_daily_file_solution, header=False))
     
     #if file is CF compliant, check write out timeseries
@@ -468,7 +468,7 @@ def test_extract_timeseries():
         qout_nc.write_flows_to_csv(cf_timeseries_file,
                                    reach_index=20)
 
-    cf_timeseries_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_timeseries-SOLUTION.csv')    
+    cf_timeseries_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_timeseries.csv')    
     ok_(compare_csv_timeseries_files(cf_timeseries_file, cf_timeseries_file_solution, header=False))
 
     remove_files(new_timeseries_file, 
@@ -495,10 +495,10 @@ def test_goodness_of_fit():
     find_goodness_of_fit(cf_input_qout_file, reach_id_file, observed_file,
                          cf_out_analysis_file, daily=True)
 
-    cf_goodness_of_fit_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_goodness_of_fit_analysis-SOLUTION.csv') 
+    cf_goodness_of_fit_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_goodness_of_fit_analysis.csv') 
     ok_(compare_csv_decimal_files(cf_out_analysis_file, cf_goodness_of_fit_file_solution))
     #using original RAPID file
-    raw_goodness_of_fit_file_solution = os.path.join(COMPARE_DATA_PATH, 'raw_goodness_of_fit_analysis-SOLUTION.csv') 
+    raw_goodness_of_fit_file_solution = os.path.join(COMPARE_DATA_PATH, 'raw_goodness_of_fit_analysis.csv') 
     original_input_qout_file = os.path.join(COMPARE_DATA_PATH, 'Qout_nasa_lis_3hr_20020830_original.nc')
     original_out_analysis_file = os.path.join(OUTPUT_DATA_PATH, 'original_goodness_of_fit_results-daily.csv') 
     find_goodness_of_fit(original_input_qout_file, reach_id_file, observed_file,
@@ -546,7 +546,7 @@ def test_cf_merge():
     cv.convert()
 
     cf_merge_qout_file_solution = os.path.join(COMPARE_DATA_PATH,
-                                               'Qout_merge-SOLUTION.nc')
+                                               'Qout_merge.nc')
 
     #check Qout    
     ok_(compare_qout_files(qout_1, cf_merge_qout_file_solution))
@@ -563,7 +563,6 @@ def test_cf_merge():
     
     remove_files(qout_1,
                  qout_2)
-
 if __name__ == '__main__':
     import nose
     nose.main()

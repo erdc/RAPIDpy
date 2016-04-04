@@ -142,7 +142,7 @@ def CreateSubsetFile(in_drainage_line,
     hydroid_list = np.array(hydroid_list, dtype=np.int32)
     if hydroseq_list:
         hydroseq_list = np.array(hydroseq_list, dtype=np.int32)
-        sort_order = np.argsort(hydroseq_list, reverse=True)
+        sort_order = hydroseq_list.argsort()[::-1]
         hydroid_list = hydroid_list[sort_order]
     else:
         hydroid_list = np.sort(hydroid_list)

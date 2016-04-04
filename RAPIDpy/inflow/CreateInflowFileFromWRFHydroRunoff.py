@@ -51,7 +51,7 @@ class CreateInflowFileFromWRFHydroRunoff(CreateInflowFileFromGriddedRunoff):
         data_nc.close()
 
     def execute(self, nc_file_list, index_list, in_weight_table, 
-                out_nc, grid_type):
+                out_nc, grid_type, mp_lock):
         """The source code of the tool."""
 
         """The source code of the tool."""
@@ -152,6 +152,10 @@ class CreateInflowFileFromWRFHydroRunoff(CreateInflowFileFromGriddedRunoff):
                 ''''IMPORTANT NOTE: runoff variables in WRF-Hydro dataset is cumulative through time'''
                 ro_stream = NUM.concatenate([data_goal[0:1,],
                             NUM.subtract(data_goal[1:,],data_goal[:-1,])]) * area_sqm_npoints
+                                #only one process is allowed to write at a time to netcdf file
+                mp_lock.acquire()
+                data_out_nc = NET.Dataset(out_nc, "a", format = "NETCDF3_CLASSIC")
+
                 try:
                     #ignore masked values
                     if ro_stream.sum() is NUM.ma.masked:
@@ -165,7 +169,7 @@ class CreateInflowFileFromWRFHydroRunoff(CreateInflowFileFromGriddedRunoff):
                                               ro_stream.sum(axis=1)))
                     raise
 
+                data_out_nc.close()
+                mp_lock.release()
+
                 pointer += npoints
-
-
-        data_out_nc.close()

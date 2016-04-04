@@ -44,26 +44,38 @@ def generate_inflows_from_runoff(args):
 
     time_start_all = datetime.utcnow()
 
-    #prepare ECMWF file for RAPID
-    print("Runoff downscaling for: {0} {1}".format(watershed, subbasin))
-    print("Index: {0} to {1}".format(file_index_list[0], file_index_list[-1]))
-    print("File(s): {0} to {1}".format(runoff_file_list[0], runoff_file_list[-1]))
-          
     if not isinstance(runoff_file_list, list): 
         runoff_file_list = [runoff_file_list]
     else:
         runoff_file_list = runoff_file_list
-       
-    print("Converting inflow")
-    RAPID_Inflow_Tool.execute(nc_file_list=runoff_file_list,
-                              index_list=file_index_list,
-                              in_weight_table=weight_table_file,
-                              out_nc=rapid_inflow_file,
-                              grid_type=grid_type,
-                              )
 
-    time_finish_ecmwf = datetime.utcnow()
-    print("Time to convert inflows: {0}".format(time_finish_ecmwf-time_start_all))
+    if not isinstance(file_index_list, list): 
+        file_index_list = [file_index_list]
+    else:
+        file_index_list = file_index_list
+    if runoff_file_list and file_index_list:
+        #prepare ECMWF file for RAPID
+        print("Runoff downscaling for: {0} {1}".format(watershed, subbasin))
+        index_string = "Index: {0}".format(file_index_list[0])
+        if len(file_index_list) > 1:
+            index_string += " to {1}".format(file_index_list[-1])
+        print(index_string)
+        runoff_string = "File(s): {0}".format(runoff_file_list[0])
+        if len(runoff_file_list) > 1:
+            runoff_string += " to {1}".format(runoff_file_list[-1])
+        print(runoff_string)
+          
+           
+        print("Converting inflow")
+        RAPID_Inflow_Tool.execute(nc_file_list=runoff_file_list,
+                                  index_list=file_index_list,
+                                  in_weight_table=weight_table_file,
+                                  out_nc=rapid_inflow_file,
+                                  grid_type=grid_type,
+                                  )
+    
+        time_finish_ecmwf = datetime.utcnow()
+        print("Time to convert inflows: {0}".format(time_finish_ecmwf-time_start_all))
 
 #------------------------------------------------------------------------------
 #MAIN PROCESS
@@ -518,14 +530,14 @@ def run_lsm_rapid_process(rapid_executable_location,
                                          master_rapid_runoff_file,
                                          RAPID_Inflow_Tool))
                 #COMMENTED CODE IS FOR DEBUGGING
-##                generate_inflows_from_runoff((watershed.lower(),
-##                                              subbasin.lower(),
-##                                              cpu_grouped_file_list,
-##                                              partition_index_list[loop_index],
-##                                              weight_table_file,
-##                                              grid_type,
-##                                              master_rapid_runoff_file,
-##                                              RAPID_Inflow_Tool))
+                generate_inflows_from_runoff((watershed.lower(),
+                                              subbasin.lower(),
+                                              cpu_grouped_file_list,
+                                              partition_index_list[loop_index],
+                                              weight_table_file,
+                                              grid_type,
+                                              master_rapid_runoff_file,
+                                              RAPID_Inflow_Tool))
             pool = multiprocessing.Pool(NUM_CPUS)
             #chunksize=1 makes it so there is only one task per cpu
             pool.imap(generate_inflows_from_runoff,

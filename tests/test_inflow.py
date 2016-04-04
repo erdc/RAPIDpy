@@ -77,7 +77,7 @@ def test_run_era_interim_inflow():
                                                 "Qout_erai_t511_3hr_20030121to20030122.nc")
     d1 = Dataset(generated_qout_file)
     d2 = Dataset(generated_qout_file_solution)
-    assert_almost_equal(d1.variables['Qout'][:], d2.variables['Qout'][:])
+    assert_almost_equal(d1.variables['Qout'][:], d2.variables['Qout'][:], decimal=5)
     ok_((d1.variables['rivid'][:] == d2.variables['rivid'][:]).all())
     ok_((d1.variables['time'][:] == d2.variables['time'][:]).all())
     if 'lat' in d2.variables.keys():

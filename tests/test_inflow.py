@@ -21,7 +21,7 @@ from RAPIDpy.helper_functions import (compare_csv_decimal_files,
                                       remove_files)
 #GLOBAL VARIABLES
 MAIN_TESTS_FOLDER = os.path.dirname(os.path.abspath(__file__))
-COMPARE_DATA_PATH = os.path.join(MAIN_TESTS_FOLDER, 'compare')
+COMPARE_DATA_PATH = os.path.join(MAIN_TESTS_FOLDER, 'compare', 'inflow')
 INPUT_DATA_PATH = os.path.join(MAIN_TESTS_FOLDER, 'data')
 RAPID_DATA_PATH = os.path.join(MAIN_TESTS_FOLDER, 'input', 'x-x')
 OUTPUT_DATA_PATH = os.path.join(MAIN_TESTS_FOLDER, 'output')

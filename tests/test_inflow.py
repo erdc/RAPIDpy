@@ -60,7 +60,7 @@ def test_run_era_interim_inflow():
     #check other info in netcdf file
     d1 = Dataset(generated_m3_file)
     d2 = Dataset(generated_m3_file_solution)
-    assert_almost_equal(d1.variables['m3_riv'][:], d2.variables['m3_riv'][:])
+    assert_almost_equal(d1.variables['m3_riv'][:], d2.variables['m3_riv'][:], decimal=5)
     if 'rivid' in d2.variables.keys():
         ok_((d1.variables['rivid'][:] == d2.variables['rivid'][:]).all())
     if 'lat' in d2.variables.keys():
@@ -123,7 +123,7 @@ def test_run_nldas2_inflow():
     #check other info in netcdf file
     d1 = Dataset(generated_m3_file)
     d2 = Dataset(generated_m3_file_solution)
-    assert_almost_equal(d1.variables['m3_riv'][:], d2.variables['m3_riv'][:])
+    assert_almost_equal(d1.variables['m3_riv'][:], d2.variables['m3_riv'][:], decimal=5)
     if 'rivid' in d2.variables.keys():
         ok_((d1.variables['rivid'][:] == d2.variables['rivid'][:]).all())
     if 'lat' in d2.variables.keys():

@@ -13,7 +13,6 @@ from netCDF4 import Dataset
 import os
 import re
 
-
 #local imports
 from RAPIDpy import RAPID
 from CreateInflowFileFromERAInterimRunoff import CreateInflowFileFromERAInterimRunoff
@@ -41,6 +40,7 @@ def generate_inflows_from_runoff(args):
     grid_type = args[5]
     rapid_inflow_file = args[6]
     RAPID_Inflow_Tool = args[7]
+    mp_lock = args[8]
 
     time_start_all = datetime.utcnow()
 
@@ -72,6 +72,7 @@ def generate_inflows_from_runoff(args):
                                   in_weight_table=weight_table_file,
                                   out_nc=rapid_inflow_file,
                                   grid_type=grid_type,
+                                  mp_lock=mp_lock,
                                   )
     
         time_finish_ecmwf = datetime.utcnow()
@@ -518,26 +519,31 @@ def run_lsm_rapid_process(rapid_executable_location,
                 print("Grouping {0} in threes".format(grid_type))
                 lsm_file_list = [lsm_file_list[nldas_index:nldas_index+3] for nldas_index in range(0, len(lsm_file_list), 3)\
                                  if len(lsm_file_list[nldas_index:nldas_index+3])==3]
-
+            if len(lsm_file_list) < NUM_CPUS:
+                NUM_CPUS = len(lsm_file_list)
+            mp_lock = multiprocessing.Manager().Lock()
             partition_list, partition_index_list = partition(lsm_file_list, NUM_CPUS)
             for loop_index, cpu_grouped_file_list in enumerate(partition_list):
-                job_combinations.append((watershed.lower(),
-                                         subbasin.lower(),
-                                         cpu_grouped_file_list,
-                                         partition_index_list[loop_index],
-                                         weight_table_file,
-                                         grid_type,
-                                         master_rapid_runoff_file,
-                                         RAPID_Inflow_Tool))
-                #COMMENTED CODE IS FOR DEBUGGING
-                generate_inflows_from_runoff((watershed.lower(),
-                                              subbasin.lower(),
-                                              cpu_grouped_file_list,
-                                              partition_index_list[loop_index],
-                                              weight_table_file,
-                                              grid_type,
-                                              master_rapid_runoff_file,
-                                              RAPID_Inflow_Tool))
+                if cpu_grouped_file_list and partition_index_list[loop_index]:
+                    job_combinations.append((watershed.lower(),
+                                             subbasin.lower(),
+                                             cpu_grouped_file_list,
+                                             partition_index_list[loop_index],
+                                             weight_table_file,
+                                             grid_type,
+                                             master_rapid_runoff_file,
+                                             RAPID_Inflow_Tool,
+                                             mp_lock))
+                    #COMMENTED CODE IS FOR DEBUGGING
+##                    generate_inflows_from_runoff((watershed.lower(),
+##                                                  subbasin.lower(),
+##                                                  cpu_grouped_file_list,
+##                                                  partition_index_list[loop_index],
+##                                                  weight_table_file,
+##                                                  grid_type,
+##                                                  master_rapid_runoff_file,
+##                                                  RAPID_Inflow_Tool,
+##                                                  mp_lock))
             pool = multiprocessing.Pool(NUM_CPUS)
             #chunksize=1 makes it so there is only one task per cpu
             pool.imap(generate_inflows_from_runoff,

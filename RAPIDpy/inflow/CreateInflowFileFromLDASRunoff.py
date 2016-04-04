@@ -55,7 +55,7 @@ class CreateInflowFileFromLDASRunoff(CreateInflowFileFromGriddedRunoff):
 
 
     def execute(self, nc_file_list, index_list, in_weight_table, 
-                out_nc, grid_type):
+                out_nc, grid_type, mp_lock):
                 
         """The source code of the tool."""
         if not os.path.exists(out_nc):
@@ -80,9 +80,6 @@ class CreateInflowFileFromLDASRunoff(CreateInflowFileFromGriddedRunoff):
 
         index_new = []
         conversion_factor = None
-        
-        # start compute inflow
-        data_out_nc = NET.Dataset(out_nc, "a", format = "NETCDF3_CLASSIC")
 
         #combine inflow data
         for nc_file_array_index, nc_file_array in enumerate(nc_file_list):
@@ -188,11 +185,16 @@ class CreateInflowFileFromLDASRunoff(CreateInflowFileFromGriddedRunoff):
                 ro_stream = NUM.add(data_goal_surface, data_goal_subsurface) * area_sqm_npoints * conversion_factor
                 #filter nan
                 ro_stream = ro_stream[~NUM.isnan(ro_stream)]
-
+                
+                #only one process is allowed to write at a time to netcdf file
+                mp_lock.acquire()
+                data_out_nc = NET.Dataset(out_nc, "a", format = "NETCDF3_CLASSIC")
                 if ro_stream.any():
                     data_out_nc.variables['m3_riv'][index,stream_index] = ro_stream.sum()
                 else:
                     data_out_nc.variables['m3_riv'][index,stream_index] = 0
+                data_out_nc.close()
+                mp_lock.release()
                 
                 pointer += npoints
 

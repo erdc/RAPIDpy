@@ -97,12 +97,12 @@ def test_run_era_interim_inflow():
                                   generated_weight_ecmwf_t1279_file_solution))
 
     #weight_ecmwf_tco369
-    generated_weight_ecmwf_tco369_file = os.path.join(OUTPUT_DATA_PATH, 
-                                                     "weight_ecmwf_tco369.csv")
-    generated_weight_ecmwf_tco369_file_solution = os.path.join(COMPARE_DATA_PATH,
-                                                              "weight_ecmwf_tco369.csv")
-    ok_(compare_csv_decimal_files(generated_weight_ecmwf_tco369_file, 
-                                  generated_weight_ecmwf_tco369_file_solution))
+    generated_weight_ecmwf_tco639_file = os.path.join(OUTPUT_DATA_PATH, 
+                                                     "weight_ecmwf_tco639.csv")
+    generated_weight_ecmwf_tco639_file_solution = os.path.join(COMPARE_DATA_PATH,
+                                                              "weight_ecmwf_tco639.csv")
+    ok_(compare_csv_decimal_files(generated_weight_ecmwf_tco639_file, 
+                                  generated_weight_ecmwf_tco639_file_solution))
 
     #weight_era_t511
     generated_weight_era_t511_file = os.path.join(OUTPUT_DATA_PATH, 
@@ -119,7 +119,7 @@ def test_run_era_interim_inflow():
                  generated_k_file,
                  generated_x_file,
                  generated_weight_ecmwf_t1279_file,
-                 generated_weight_ecmwf_tco369_file,
+                 generated_weight_ecmwf_tco639_file,
                  generated_weight_era_t511_file)
 
 if __name__ == '__main__':

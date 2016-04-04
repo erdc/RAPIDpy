@@ -8,7 +8,6 @@
 ##
 
 from datetime import datetime
-from filecmp import cmp as fcmp
 from netCDF4 import Dataset
 from nose.tools import ok_
 from numpy.testing import assert_almost_equal

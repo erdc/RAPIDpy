@@ -23,11 +23,11 @@ OUTPUT_DATA_PATH = os.path.join(MAIN_TESTS_FOLDER, 'output')
 #------------------------------------------------------------------------------
 # MAIN TEST SCRIPTS
 #------------------------------------------------------------------------------
-def test_run_era_interim_inflow():
+def test_gen_static_rapid_input():
     """
-    Checks generating inflow file from ERA Interim LSM
+    Checks generating static RAPID input
     """
-    print "TEST 1: TEST GENERATE INFLOW FILE FROM ERA INTERIM DATA"
+    print "TEST 1: TEST GENERATE STATIC RAPID INPUT DATA"
     CreateAllStaticECMWFRAPIDFiles(in_drainage_line=os.path.join(INPUT_DATA_PATH, 'flowline.shp'),
                                    river_id="COMID",
                                    length_id="LENGTHKM",

@@ -109,7 +109,7 @@ before_install:
 - make rapid
 
 #install python packages
-- pip install numpy netCDF4 shapely pyproj rtree
+- pip install numpy netCDF4 shapely pyproj rtree gdal scipy
 
 #*******************************************************************************
 #Installing RAPIDpy

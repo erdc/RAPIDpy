@@ -522,7 +522,7 @@ def run_lsm_rapid_process(rapid_executable_location,
             if len(lsm_file_list) < NUM_CPUS:
                 NUM_CPUS = len(lsm_file_list)
             mp_lock = multiprocessing.Manager().Lock()
-            partition_list, partition_index_list = partition(lsm_file_list, NUM_CPUS*3)
+            partition_list, partition_index_list = partition(lsm_file_list, NUM_CPUS*2)
             for loop_index, cpu_grouped_file_list in enumerate(partition_list):
                 if cpu_grouped_file_list and partition_index_list[loop_index]:
                     job_combinations.append((watershed.lower(),

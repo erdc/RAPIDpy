@@ -28,18 +28,6 @@ before_install:
 - sudo apt-get install -y g++ gfortran
 
 #-------------------------------------------------------------------------------
-#Add miniconda - from https://gist.github.com/dan-blanchard/7045057
-#-------------------------------------------------------------------------------
-- wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
-- chmod +x miniconda.sh
-- ./miniconda.sh -b
-- export PATH=$TRAVIS_BUILD_DIR/miniconda2/bin:$PATH
-- conda update --yes conda
-# The next couple lines fix a crash with multiprocessing on Travis and are not specific to using Miniconda
-- sudo rm -rf /dev/shm
-- sudo ln -s /run/shm /dev/shm
-
-#-------------------------------------------------------------------------------
 #Creating directory for installation of libraries used by RAPIDpy
 #-------------------------------------------------------------------------------
 - cd $TRAVIS_BUILD_DIR
@@ -48,13 +36,26 @@ before_install:
 - export INSTALLZ_DIR=$PWD
 
 #-------------------------------------------------------------------------------
+#Add miniconda - from https://gist.github.com/dan-blanchard/7045057
+#-------------------------------------------------------------------------------
+- cd $INSTALLZ_DIR
+- wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
+- chmod +x miniconda.sh
+- ./miniconda.sh -b
+- export PATH=$INSTALLZ_DIR/miniconda2/bin:$PATH
+- conda update --yes conda
+# The next couple lines fix a crash with multiprocessing on Travis and are not specific to using Miniconda
+- sudo rm -rf /dev/shm
+- sudo ln -s /run/shm /dev/shm
+
+#-------------------------------------------------------------------------------
 # Installing NetCDF, GIS, SciPy libraries
 #-------------------------------------------------------------------------------
 - sudo apt-get install -y python-dev zlib1g-dev libhdf5-serial-dev libnetcdf-dev libproj-dev libgeos-dev
 
 #install python packages
-- conda install --yes python=$TRAVIS_PYTHON_VERSION nose numpy scipy
-- pip install netCDF4 shapely pyproj rtree
+- conda install --yes python=$TRAVIS_PYTHON_VERSION nose numpy scipy netCDF4
+- pip install shapely pyproj rtree
 
 #-------------------------------------------------------------------------------
 #Installing netCDF 3.6.3

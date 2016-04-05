@@ -17,15 +17,27 @@
 language: python
 python:
   - "2.7"
-virtualenv:
-  system_site_packages: true
+notifications:
+  email: false
+
 #*******************************************************************************
 #Before installing RAPIDpy
 #*******************************************************************************
-
 before_install:
 - sudo apt-get update -qq
 - sudo apt-get install -y g++ gfortran
+
+#-------------------------------------------------------------------------------
+#Add miniconda - from https://gist.github.com/dan-blanchard/7045057
+#-------------------------------------------------------------------------------
+- wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
+- chmod +x miniconda.sh
+- ./miniconda.sh -b
+- export PATH=$TRAVIS_BUILD_DIR/miniconda/bin:$PATH
+- conda update --yes conda
+# The next couple lines fix a crash with multiprocessing on Travis and are not specific to using Miniconda
+- sudo rm -rf /dev/shm
+- sudo ln -s /run/shm /dev/shm
 
 #-------------------------------------------------------------------------------
 #Creating directory for installation of libraries used by RAPIDpy
@@ -36,24 +48,13 @@ before_install:
 - export INSTALLZ_DIR=$PWD
 
 #-------------------------------------------------------------------------------
-#Installing spatialindex
-#-------------------------------------------------------------------------------
-- cd $INSTALLZ_DIR
-- wget "http://download.osgeo.org/libspatialindex/spatialindex-src-1.7.1.tar.gz"
-- tar -xzf spatialindex-src-1.7.1.tar.gz
-- cd spatialindex-src-1.7.1
-- ./configure
-- make
-- sudo make install
-- sudo ldconfig
-
-#-------------------------------------------------------------------------------
 # Installing NetCDF, GIS, SciPy libraries
 #-------------------------------------------------------------------------------
 - sudo apt-get install -y python-dev zlib1g-dev libhdf5-serial-dev libnetcdf-dev libproj-dev libgeos-dev python-numpy python-scipy
 
 #install python packages
-- pip install numpy netCDF4 shapely pyproj rtree scipy
+- conda install --yes python=$TRAVIS_PYTHON_VERSION nose numpy scipy
+- pip install netCDF4 shapely pyproj rtree
 
 #-------------------------------------------------------------------------------
 #Installing netCDF 3.6.3
@@ -77,6 +78,18 @@ before_install:
 - ./configure PETSC_DIR=$PWD PETSC_ARCH=linux-gcc-cxx --download-fblaslapack=1 --download-mpich=1 --with-cc=gcc --with-cxx=g++ --with-fc=gfortran --with-clanguage=cxx --with-debugging=0
 - make PETSC_DIR=$PWD PETSC_ARCH=linux-gcc-cxx all
 - make PETSC_DIR=$PWD PETSC_ARCH=linux-gcc-cxx test
+
+#-------------------------------------------------------------------------------
+#Installing spatialindex
+#-------------------------------------------------------------------------------
+- cd $INSTALLZ_DIR
+- wget "http://download.osgeo.org/libspatialindex/spatialindex-src-1.7.1.tar.gz"
+- tar -xzf spatialindex-src-1.7.1.tar.gz
+- cd spatialindex-src-1.7.1
+- ./configure
+- make
+- sudo make install
+- sudo ldconfig
 
 #-------------------------------------------------------------------------------
 #Installing gdal 2.0.2
@@ -123,7 +136,7 @@ before_install:
 #*******************************************************************************
 install:
 - cd $TRAVIS_BUILD_DIR
-- python setup.py develop
+- python setup.py install
 #*******************************************************************************
 #Testing RAPIDpy
 #*******************************************************************************

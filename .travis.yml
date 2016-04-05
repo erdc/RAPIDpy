@@ -48,38 +48,6 @@ before_install:
 - sudo ln -s /run/shm /dev/shm
 
 #-------------------------------------------------------------------------------
-# Installing NetCDF, GIS, SciPy libraries
-#-------------------------------------------------------------------------------
-- sudo apt-get install -y python-dev zlib1g-dev libhdf5-serial-dev libnetcdf-dev libproj-dev libgeos-dev
-
-#install python packages
-- conda install --yes python=$TRAVIS_PYTHON_VERSION nose numpy scipy netCDF4
-- pip install shapely pyproj rtree
-
-#-------------------------------------------------------------------------------
-#Installing netCDF 3.6.3
-#-------------------------------------------------------------------------------
-- cd $INSTALLZ_DIR
-- wget "ftp://ftp.unidata.ucar.edu/pub/netcdf/netcdf-3.6.3.tar.gz"
-- mkdir netcdf-3.6.3-install
-- tar -xf netcdf-3.6.3.tar.gz
-- cd netcdf-3.6.3
-- ./configure --prefix=$INSTALLZ_DIR/netcdf-3.6.3-install
-- make check
-- make install
-
-#-------------------------------------------------------------------------------
-#Installing PETSc 3.6.2
-#-------------------------------------------------------------------------------
-- cd $INSTALLZ_DIR
-- wget "http://ftp.mcs.anl.gov/pub/petsc/release-snapshots/petsc-3.6.2.tar.gz" 
-- tar -xf petsc-3.6.2.tar.gz
-- cd petsc-3.6.2
-- ./configure PETSC_DIR=$PWD PETSC_ARCH=linux-gcc-cxx --download-fblaslapack=1 --download-mpich=1 --with-cc=gcc --with-cxx=g++ --with-fc=gfortran --with-clanguage=cxx --with-debugging=0
-- make PETSC_DIR=$PWD PETSC_ARCH=linux-gcc-cxx all
-- make PETSC_DIR=$PWD PETSC_ARCH=linux-gcc-cxx test
-
-#-------------------------------------------------------------------------------
 #Installing spatialindex
 #-------------------------------------------------------------------------------
 - cd $INSTALLZ_DIR
@@ -106,6 +74,38 @@ before_install:
 - export PATH=$GDAL_INSTALL_DIR/bin:$PATH
 - export LD_LIBRARY_PATH=$GDAL_INSTALL_DIR/lib:$PATH
 - export GDAL_DATA=$GDAL_INSTALL_DIR/share/gdal
+
+#-------------------------------------------------------------------------------
+# Installing NetCDF, GIS, SciPy libraries
+#-------------------------------------------------------------------------------
+- sudo apt-get install -y python-dev zlib1g-dev libhdf5-serial-dev libnetcdf-dev libproj-dev libgeos-dev
+
+#install python packages
+- conda install --yes python=$TRAVIS_PYTHON_VERSION nose numpy scipy netCDF4
+- pip install shapely pyproj rtree gdal
+
+#-------------------------------------------------------------------------------
+#Installing netCDF 3.6.3
+#-------------------------------------------------------------------------------
+- cd $INSTALLZ_DIR
+- wget "ftp://ftp.unidata.ucar.edu/pub/netcdf/netcdf-3.6.3.tar.gz"
+- mkdir netcdf-3.6.3-install
+- tar -xf netcdf-3.6.3.tar.gz
+- cd netcdf-3.6.3
+- ./configure --prefix=$INSTALLZ_DIR/netcdf-3.6.3-install
+- make check
+- make install
+
+#-------------------------------------------------------------------------------
+#Installing PETSc 3.6.2
+#-------------------------------------------------------------------------------
+- cd $INSTALLZ_DIR
+- wget "http://ftp.mcs.anl.gov/pub/petsc/release-snapshots/petsc-3.6.2.tar.gz" 
+- tar -xf petsc-3.6.2.tar.gz
+- cd petsc-3.6.2
+- ./configure PETSC_DIR=$PWD PETSC_ARCH=linux-gcc-cxx --download-fblaslapack=1 --download-mpich=1 --with-cc=gcc --with-cxx=g++ --with-fc=gfortran --with-clanguage=cxx --with-debugging=0
+- make PETSC_DIR=$PWD PETSC_ARCH=linux-gcc-cxx all
+- make PETSC_DIR=$PWD PETSC_ARCH=linux-gcc-cxx test
 
 #-------------------------------------------------------------------------------
 #Exporting environment variables 

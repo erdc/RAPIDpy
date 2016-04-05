@@ -76,15 +76,13 @@ before_install:
 #Installing spatialindex
 #-------------------------------------------------------------------------------
 - cd $INSTALLZ_DIR
-- mkdir spatialindex_install
-- export SPATIALINDEX_INSTALL_DIR=$INSTALLZ_DIR/spatialindex_install
 - wget "http://download.osgeo.org/libspatialindex/spatialindex-src-1.7.1.tar.gz"
 - tar -xzf spatialindex-src-1.7.1.tar.gz
 - cd spatialindex-src-1.7.1
-- ./configure --prefix=$SPATIALINDEX_INSTALL_DIR
+- ./configure
 - make
-- make install
-- export LD_LIBRARY_PATH=$SPATIALINDEX_INSTALL_DIR/lib:$PATH
+- sudo make install
+- sudo ldconfig
 
 #-------------------------------------------------------------------------------
 #Exporting environment variables 

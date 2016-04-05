@@ -35,6 +35,7 @@ before_install:
 - ./miniconda.sh -b
 - export PATH=/home/travis/miniconda2/bin:$PATH
 - conda update --yes conda
+- conda install --yes python=$TRAVIS_PYTHON_VERSION geos shapely pyproj
 # The next couple lines fix a crash with multiprocessing on Travis and are not specific to using Miniconda
 - sudo rm -rf /dev/shm
 - sudo ln -s /run/shm /dev/shm
@@ -46,6 +47,22 @@ before_install:
 - mkdir ../installz
 - cd ../installz
 - export INSTALLZ_DIR=$PWD
+
+#-------------------------------------------------------------------------------
+#Installing gdal 2.0.2
+#-------------------------------------------------------------------------------
+- cd $INSTALLZ_DIR
+- mkdir gdal_install
+- export GDAL_INSTALL_DIR=$INSTALLZ_DIR/gdal_install
+- wget "http://download.osgeo.org/gdal/2.0.2/gdal-2.0.2.tar.gz"
+- tar -xzf gdal-2.0.2.tar.gz
+- cd gdal-2.0.2
+- ./configure --with-python --prefix=$GDAL_INSTALL_DIR
+- make
+- make install
+- export PATH=$GDAL_INSTALL_DIR/bin:$PATH
+- export LD_LIBRARY_PATH=$GDAL_INSTALL_DIR/lib:$PATH
+- export GDAL_DATA=$GDAL_INSTALL_DIR/share/gdal
 
 #-------------------------------------------------------------------------------
 #Installing netCDF 3.6.3
@@ -98,9 +115,8 @@ before_install:
 #Installing RAPIDpy
 #*******************************************************************************
 install:
-- conda install --yes python=$TRAVIS_PYTHON_VERSION nose numpy scipy netCDF4 geos gdal
+- conda install --yes python=$TRAVIS_PYTHON_VERSION nose numpy scipy netCDF4
 - conda install --yes -c https://conda.anaconda.org/ioos rtree
-- pip install shapely pyproj
 - cd $TRAVIS_BUILD_DIR
 - python setup.py install
 #*******************************************************************************

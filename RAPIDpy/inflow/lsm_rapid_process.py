@@ -58,11 +58,11 @@ def generate_inflows_from_runoff(args):
         print("Runoff downscaling for: {0} {1}".format(watershed, subbasin))
         index_string = "Index: {0}".format(file_index_list[0])
         if len(file_index_list) > 1:
-            index_string += " to {1}".format(file_index_list[-1])
+            index_string += " to {0}".format(file_index_list[-1])
         print(index_string)
         runoff_string = "File(s): {0}".format(runoff_file_list[0])
         if len(runoff_file_list) > 1:
-            runoff_string += " to {1}".format(runoff_file_list[-1])
+            runoff_string += " to {0}".format(runoff_file_list[-1])
         print(runoff_string)
           
            
@@ -535,15 +535,15 @@ def run_lsm_rapid_process(rapid_executable_location,
                                              RAPID_Inflow_Tool,
                                              mp_lock))
                     #COMMENTED CODE IS FOR DEBUGGING
-##                    generate_inflows_from_runoff((watershed.lower(),
-##                                                  subbasin.lower(),
-##                                                  cpu_grouped_file_list,
-##                                                  partition_index_list[loop_index],
-##                                                  weight_table_file,
-##                                                  grid_type,
-##                                                  master_rapid_runoff_file,
-##                                                  RAPID_Inflow_Tool,
-##                                                  mp_lock))
+                    generate_inflows_from_runoff((watershed.lower(),
+                                                  subbasin.lower(),
+                                                  cpu_grouped_file_list,
+                                                  partition_index_list[loop_index],
+                                                  weight_table_file,
+                                                  grid_type,
+                                                  master_rapid_runoff_file,
+                                                  RAPID_Inflow_Tool,
+                                                  mp_lock))
             pool = multiprocessing.Pool(NUM_CPUS)
             #chunksize=1 makes it so there is only one task per cpu
             pool.imap(generate_inflows_from_runoff,

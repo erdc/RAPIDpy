@@ -535,15 +535,15 @@ def run_lsm_rapid_process(rapid_executable_location,
                                              RAPID_Inflow_Tool,
                                              mp_lock))
                     #COMMENTED CODE IS FOR DEBUGGING
-                    generate_inflows_from_runoff((watershed.lower(),
-                                                  subbasin.lower(),
-                                                  cpu_grouped_file_list,
-                                                  partition_index_list[loop_index],
-                                                  weight_table_file,
-                                                  grid_type,
-                                                  master_rapid_runoff_file,
-                                                  RAPID_Inflow_Tool,
-                                                  mp_lock))
+##                    generate_inflows_from_runoff((watershed.lower(),
+##                                                  subbasin.lower(),
+##                                                  cpu_grouped_file_list,
+##                                                  partition_index_list[loop_index],
+##                                                  weight_table_file,
+##                                                  grid_type,
+##                                                  master_rapid_runoff_file,
+##                                                  RAPID_Inflow_Tool,
+##                                                  mp_lock))
             pool = multiprocessing.Pool(NUM_CPUS)
             #chunksize=1 makes it so there is only one task per cpu
             pool.imap(generate_inflows_from_runoff,

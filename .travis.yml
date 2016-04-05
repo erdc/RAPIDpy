@@ -23,7 +23,7 @@ python:
 
 before_install:
 - sudo apt-get update -qq
-- sudo apt-get install -y g++ gfortran python-dev zlib1g-dev libhdf5-serial-dev libnetcdf-dev libproj-dev libgeos-dev
+- sudo apt-get install -y g++ gfortran python-dev zlib1g-dev libhdf5-serial-dev libnetcdf-dev libproj-dev libgeos-dev python-scipy
 
 #-------------------------------------------------------------------------------
 #Creating directory for installation of libraries used by RAPID
@@ -109,7 +109,7 @@ before_install:
 - make rapid
 
 #install python packages
-- pip install numpy netCDF4 scipy shapely pyproj rtree
+- pip install numpy netCDF4 shapely pyproj rtree
 
 #*******************************************************************************
 #Installing RAPIDpy

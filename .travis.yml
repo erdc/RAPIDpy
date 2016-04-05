@@ -28,11 +28,6 @@ before_install:
 - sudo apt-get install -y g++ gfortran
 
 #-------------------------------------------------------------------------------
-# Installing NetCDF, GIS, SciPy libraries
-#-------------------------------------------------------------------------------
-- sudo apt-get install -y python-dev zlib1g-dev libhdf5-serial-dev libnetcdf-dev libproj-dev libgeos-dev
-
-#-------------------------------------------------------------------------------
 #Add miniconda - from https://gist.github.com/dan-blanchard/7045057
 #-------------------------------------------------------------------------------
 - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
@@ -51,34 +46,6 @@ before_install:
 - mkdir ../installz
 - cd ../installz
 - export INSTALLZ_DIR=$PWD
-
-#-------------------------------------------------------------------------------
-#Installing spatialindex
-#-------------------------------------------------------------------------------
-- cd $INSTALLZ_DIR
-- wget "http://download.osgeo.org/libspatialindex/spatialindex-src-1.7.1.tar.gz"
-- tar -xzf spatialindex-src-1.7.1.tar.gz
-- cd spatialindex-src-1.7.1
-- ./configure
-- make
-- sudo make install
-- sudo ldconfig
-
-#-------------------------------------------------------------------------------
-#Installing gdal 2.0.2
-#-------------------------------------------------------------------------------
-- cd $INSTALLZ_DIR
-- mkdir gdal_install
-- export GDAL_INSTALL_DIR=$INSTALLZ_DIR/gdal_install
-- wget "http://download.osgeo.org/gdal/2.0.2/gdal-2.0.2.tar.gz"
-- tar -xzf gdal-2.0.2.tar.gz
-- cd gdal-2.0.2
-- ./configure --with-python --prefix=$GDAL_INSTALL_DIR
-- make
-- make install
-- export PATH=$GDAL_INSTALL_DIR/bin:$PATH
-- export LD_LIBRARY_PATH=$GDAL_INSTALL_DIR/lib:$PATH
-- export GDAL_DATA=$GDAL_INSTALL_DIR/share/gdal
 
 #-------------------------------------------------------------------------------
 #Installing netCDF 3.6.3
@@ -131,8 +98,9 @@ before_install:
 #Installing RAPIDpy
 #*******************************************************************************
 install:
-- conda install --yes python=$TRAVIS_PYTHON_VERSION nose numpy scipy netCDF4
-- pip install shapely pyproj rtree gdal
+- conda install --yes python=$TRAVIS_PYTHON_VERSION nose numpy scipy netCDF4 geos gdal
+- conda install -c https://conda.anaconda.org/ioos rtree
+- pip install shapely pyproj
 - cd $TRAVIS_BUILD_DIR
 - python setup.py install
 #*******************************************************************************

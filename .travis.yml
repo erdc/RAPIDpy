@@ -23,10 +23,8 @@ python:
 
 before_install:
 - sudo apt-get update -qq
-- sudo apt-get install -y g++ gfortran python-dev zlib1g-dev libhdf5-serial-dev libnetcdf-dev
+- sudo apt-get install -y g++ gfortran python-dev zlib1g-dev libhdf5-serial-dev libnetcdf-dev libproj-dev libgeos-dev
 
-#install netCDF4
-- pip install netCDF4
 #-------------------------------------------------------------------------------
 #Creating directory for installation of libraries used by RAPID
 #-------------------------------------------------------------------------------
@@ -59,6 +57,36 @@ before_install:
 - make PETSC_DIR=$PWD PETSC_ARCH=linux-gcc-cxx test
 
 #-------------------------------------------------------------------------------
+#Installing gdal 2.0.2
+#-------------------------------------------------------------------------------
+- cd $INSTALLZ_DIR
+- mkdir gdal_install
+- export GDAL_INSTALL_DIR=$INSTALLZ_DIR/gdal_install
+- wget "http://download.osgeo.org/gdal/2.0.2/gdal-2.0.2.tar.gz"
+- tar -xzf gdal-2.0.2.tar.gz
+- cd gdal-2.0.2
+- ./configure --with-python --prefix=$GDAL_INSTALL_DIR
+- make
+- make install
+- export PATH=$GDAL_INSTALL_DIR/bin:$PATH
+- export LD_LIBRARY_PATH=$GDAL_INSTALL_DIR/lib:$PATH
+- export GDAL_DATA=$GDAL_INSTALL_DIR/share/gdal
+
+#-------------------------------------------------------------------------------
+#Installing spatialindex
+#-------------------------------------------------------------------------------
+- cd $INSTALLZ_DIR
+- mkdir spatialindex_install
+- export SPATIALINDEX_INSTALL_DIR=$INSTALLZ_DIR/spatialindex_install
+- wget "http://download.osgeo.org/libspatialindex/spatialindex-src-1.7.1.tar.gz"
+- tar -xzf spatialindex-src-1.7.1.tar.gz
+- cd spatialindex-src-1.7.1
+- ./configure --prefix=$SPATIALINDEX_INSTALL_DIR
+- make
+- make install
+- export LD_LIBRARY_PATH=$SPATIALINDEX_INSTALL_DIR/lib:$PATH
+
+#-------------------------------------------------------------------------------
 #Exporting environment variables 
 #-------------------------------------------------------------------------------
 - cd $INSTALLZ_DIR
@@ -73,7 +101,6 @@ before_install:
 - export PATH=$PATH:/$PETSC_DIR/$PETSC_ARCH/bin
 - export PATH=$PATH:$INSTALLZ_DIR/netcdf-3.6.3-install/bin
 
-
 #-------------------------------------------------------------------------------
 #Installing RAPID
 #-------------------------------------------------------------------------------
@@ -82,6 +109,9 @@ before_install:
 - git clone https://github.com/c-h-david/rapid.git
 - cd ./rapid/src/
 - make rapid
+
+#install python packages
+- pip install numpy netCDF4 scipy shapely pyproj
 
 #*******************************************************************************
 #Installing RAPIDpy

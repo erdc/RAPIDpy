@@ -14,7 +14,7 @@
 #*******************************************************************************
 #System specifications for Travis CI
 #*******************************************************************************
-language: python      #Sets the language to C++
+language: python
 python:
   - "2.7"
 #*******************************************************************************
@@ -23,15 +23,35 @@ python:
 
 before_install:
 - sudo apt-get update -qq
-- sudo apt-get install -y g++ gfortran python-dev zlib1g-dev libhdf5-serial-dev libnetcdf-dev libproj-dev libgeos-dev python-scipy
+- sudo apt-get install -y g++ gfortran
 
 #-------------------------------------------------------------------------------
-#Creating directory for installation of libraries used by RAPID
+#Creating directory for installation of libraries used by RAPIDpy
 #-------------------------------------------------------------------------------
 - cd $TRAVIS_BUILD_DIR
 - mkdir ../installz
 - cd ../installz
 - export INSTALLZ_DIR=$PWD
+
+#-------------------------------------------------------------------------------
+#Installing spatialindex
+#-------------------------------------------------------------------------------
+- cd $INSTALLZ_DIR
+- wget "http://download.osgeo.org/libspatialindex/spatialindex-src-1.7.1.tar.gz"
+- tar -xzf spatialindex-src-1.7.1.tar.gz
+- cd spatialindex-src-1.7.1
+- ./configure
+- make
+- sudo make install
+- sudo ldconfig
+
+#-------------------------------------------------------------------------------
+# Installing NetCDF, GIS, SciPy libraries
+#-------------------------------------------------------------------------------
+- sudo apt-get install -y python-dev zlib1g-dev libhdf5-serial-dev libnetcdf-dev libproj-dev libgeos-dev python-numpy python-scipy
+
+#install python packages
+- pip install numpy netCDF4 shapely pyproj rtree scipy
 
 #-------------------------------------------------------------------------------
 #Installing netCDF 3.6.3
@@ -73,18 +93,6 @@ before_install:
 - export GDAL_DATA=$GDAL_INSTALL_DIR/share/gdal
 
 #-------------------------------------------------------------------------------
-#Installing spatialindex
-#-------------------------------------------------------------------------------
-- cd $INSTALLZ_DIR
-- wget "http://download.osgeo.org/libspatialindex/spatialindex-src-1.7.1.tar.gz"
-- tar -xzf spatialindex-src-1.7.1.tar.gz
-- cd spatialindex-src-1.7.1
-- ./configure
-- make
-- sudo make install
-- sudo ldconfig
-
-#-------------------------------------------------------------------------------
 #Exporting environment variables 
 #-------------------------------------------------------------------------------
 - cd $INSTALLZ_DIR
@@ -107,9 +115,6 @@ before_install:
 - git clone https://github.com/c-h-david/rapid.git
 - cd ./rapid/src/
 - make rapid
-
-#install python packages
-- pip install numpy netCDF4 shapely pyproj rtree gdal scipy
 
 #*******************************************************************************
 #Installing RAPIDpy

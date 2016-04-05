@@ -28,12 +28,9 @@ before_install:
 - sudo apt-get install -y g++ gfortran
 
 #-------------------------------------------------------------------------------
-#Creating directory for installation of libraries used by RAPIDpy
+# Installing NetCDF, GIS, SciPy libraries
 #-------------------------------------------------------------------------------
-- cd $TRAVIS_BUILD_DIR
-- mkdir ../installz
-- cd ../installz
-- export INSTALLZ_DIR=$PWD
+- sudo apt-get install -y python-dev zlib1g-dev libhdf5-serial-dev libnetcdf-dev libproj-dev libgeos-dev
 
 #-------------------------------------------------------------------------------
 #Add miniconda - from https://gist.github.com/dan-blanchard/7045057
@@ -48,9 +45,12 @@ before_install:
 - sudo ln -s /run/shm /dev/shm
 
 #-------------------------------------------------------------------------------
-# Installing NetCDF, GIS, SciPy libraries
+#Creating directory for installation of libraries used by RAPIDpy
 #-------------------------------------------------------------------------------
-- sudo apt-get install -y python-dev zlib1g-dev libhdf5-serial-dev libnetcdf-dev libproj-dev libgeos-dev
+- cd $TRAVIS_BUILD_DIR
+- mkdir ../installz
+- cd ../installz
+- export INSTALLZ_DIR=$PWD
 
 #-------------------------------------------------------------------------------
 #Installing spatialindex
@@ -79,12 +79,6 @@ before_install:
 - export PATH=$GDAL_INSTALL_DIR/bin:$PATH
 - export LD_LIBRARY_PATH=$GDAL_INSTALL_DIR/lib:$PATH
 - export GDAL_DATA=$GDAL_INSTALL_DIR/share/gdal
-
-#-------------------------------------------------------------------------------
-# Install python packages
-#-------------------------------------------------------------------------------
-- conda install --yes python=$TRAVIS_PYTHON_VERSION nose numpy scipy netCDF4
-- pip install shapely pyproj rtree gdal
 
 #-------------------------------------------------------------------------------
 #Installing netCDF 3.6.3
@@ -137,6 +131,8 @@ before_install:
 #Installing RAPIDpy
 #*******************************************************************************
 install:
+- conda install --yes python=$TRAVIS_PYTHON_VERSION nose numpy scipy netCDF4
+- pip install shapely pyproj rtree gdal
 - cd $TRAVIS_BUILD_DIR
 - python setup.py install
 #*******************************************************************************

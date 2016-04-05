@@ -58,11 +58,11 @@ def generate_inflows_from_runoff(args):
         print("Runoff downscaling for: {0} {1}".format(watershed, subbasin))
         index_string = "Index: {0}".format(file_index_list[0])
         if len(file_index_list) > 1:
-            index_string += " to {1}".format(file_index_list[-1])
+            index_string += " to {0}".format(file_index_list[-1])
         print(index_string)
         runoff_string = "File(s): {0}".format(runoff_file_list[0])
         if len(runoff_file_list) > 1:
-            runoff_string += " to {1}".format(runoff_file_list[-1])
+            runoff_string += " to {0}".format(runoff_file_list[-1])
         print(runoff_string)
           
            

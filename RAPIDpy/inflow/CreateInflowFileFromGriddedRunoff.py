@@ -142,6 +142,7 @@ class CreateInflowFileFromGriddedRunoff(object):
         m3_riv_var.grid_mapping = 'crs'
         m3_riv_var.cell_methods = "time: sum"
         data_out_nc.close()
+        
         try:
             data_out_nc = NET.Dataset(out_nc, "a", format="NETCDF3_CLASSIC")
             #rivid

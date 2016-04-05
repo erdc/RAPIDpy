@@ -135,6 +135,7 @@ class CreateInflowFileFromWRFHydroRunoff(CreateInflowFileFromGriddedRunoff):
 
 
             # start compute inflow
+            inflow_data = NUM.zeros((size_time, self.size_streamID))
             pointer = 0
             for stream_index in xrange(self.size_streamID):
                 npoints = int(self.dict_list[self.header_wt[4]][pointer])
@@ -152,24 +153,25 @@ class CreateInflowFileFromWRFHydroRunoff(CreateInflowFileFromGriddedRunoff):
                 ''''IMPORTANT NOTE: runoff variables in WRF-Hydro dataset is cumulative through time'''
                 ro_stream = NUM.concatenate([data_goal[0:1,],
                             NUM.subtract(data_goal[1:,],data_goal[:-1,])]) * area_sqm_npoints
-                                #only one process is allowed to write at a time to netcdf file
-                mp_lock.acquire()
-                data_out_nc = NET.Dataset(out_nc, "a", format = "NETCDF3_CLASSIC")
 
                 try:
                     #ignore masked values
-                    if ro_stream.sum() is NUM.ma.masked:
-                        data_out_nc.variables['m3_riv'][index*size_time:(index+1)*size_time,stream_index] = 0
-                    else:
-                        data_out_nc.variables['m3_riv'][index*size_time:(index+1)*size_time,stream_index] = ro_stream.sum(axis=1)
+                    if ro_stream.sum() is not NUM.ma.masked:
+                        inflow_data = ro_stream.sum(axis=1)
                 except ValueError:
+                    data_out_nc = NET.Dataset(out_nc)
                     print("M3 {0} {1}".format(len(data_out_nc.variables['m3_riv'][index*size_time:(index+1)*size_time,stream_index]), 
                                               data_out_nc.variables['m3_riv'][index*size_time:(index+1)*size_time,stream_index]))
                     print("RO {0} {1}".format(len(ro_stream.sum(axis=1)), 
                                               ro_stream.sum(axis=1)))
+                    data_out_nc.close()
                     raise
 
-                data_out_nc.close()
-                mp_lock.release()
-
                 pointer += npoints
+                
+            #only one process is allowed to write at a time to netcdf file
+            mp_lock.acquire()
+            data_out_nc = NET.Dataset(out_nc, "a", format = "NETCDF3_CLASSIC")
+            data_out_nc.variables['m3_riv'][index*size_time:(index+1)*size_time] = inflow_data
+            data_out_nc.close()
+            mp_lock.release()

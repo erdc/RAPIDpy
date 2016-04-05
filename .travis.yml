@@ -99,7 +99,7 @@ before_install:
 #*******************************************************************************
 install:
 - conda install --yes python=$TRAVIS_PYTHON_VERSION nose numpy scipy netCDF4 geos gdal
-- conda install -c https://conda.anaconda.org/ioos rtree
+- conda install --yes python=$TRAVIS_PYTHON_VERSION -c https://conda.anaconda.org/ioos rtree
 - pip install shapely pyproj
 - cd $TRAVIS_BUILD_DIR
 - python setup.py install

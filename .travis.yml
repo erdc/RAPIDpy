@@ -35,6 +35,9 @@ before_install:
 - ./miniconda.sh -b
 - export PATH=$TRAVIS_BUILD_DIR/miniconda/bin:$PATH
 - conda update --yes conda
+- conda create --yes -n condaenv python=2.7
+- conda install --yes -n condaenv pip
+- source activate condaenv
 # The next couple lines fix a crash with multiprocessing on Travis and are not specific to using Miniconda
 - sudo rm -rf /dev/shm
 - sudo ln -s /run/shm /dev/shm
@@ -50,7 +53,7 @@ before_install:
 #-------------------------------------------------------------------------------
 # Installing NetCDF, GIS, SciPy libraries
 #-------------------------------------------------------------------------------
-- sudo apt-get install -y python-dev zlib1g-dev libhdf5-serial-dev libnetcdf-dev libproj-dev libgeos-dev python-numpy python-scipy
+- sudo apt-get install -y python-dev zlib1g-dev libhdf5-serial-dev libnetcdf-dev libproj-dev libgeos-dev
 
 #install python packages
 - conda install --yes python=$TRAVIS_PYTHON_VERSION nose numpy scipy

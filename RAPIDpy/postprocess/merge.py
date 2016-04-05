@@ -248,9 +248,9 @@ class ConvertRAPIDOutputToCF(object):
             log('    crs_var', 'DEBUG', self.print_debug)
             crs_var = self.cf_nc.createVariable('crs', 'i4')
             crs_var.grid_mapping_name = 'latitude_longitude'
-            crs_var.epsg_code = 'EPSG:4269'  # NAD83, which is what NHD uses.
+            crs_var.epsg_code = 'EPSG:4326'  # WGS 84
             crs_var.semi_major_axis = 6378137.0
-            crs_var.inverse_flattening = 298.257222101
+            crs_var.inverse_flattening = 298.257223563
 
     def _write_comid_lat_lon_z(self):
         """Add latitude, longitude, and z values for each netCDF feature

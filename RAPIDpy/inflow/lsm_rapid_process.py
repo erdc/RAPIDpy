@@ -545,10 +545,8 @@ def run_lsm_rapid_process(rapid_executable_location,
 ##                                                  RAPID_Inflow_Tool,
 ##                                                  mp_lock))
             pool = multiprocessing.Pool(NUM_CPUS)
-            #chunksize=1 makes it so there is only one task per cpu
-            pool.imap(generate_inflows_from_runoff,
-                      job_combinations,
-                      chunksize=1)
+            pool.map(generate_inflows_from_runoff,
+                     job_combinations)
             pool.close()
             pool.join()
 

@@ -40,6 +40,14 @@ before_install:
 - sudo ln -s /run/shm /dev/shm
 
 #-------------------------------------------------------------------------------
+# Install required python packages
+#-----------------------------------------------------------------------------
+- conda install --yes python=$TRAVIS_PYTHON_VERSION nose numpy scipy netCDF4 gdal shapely
+- export GDAL_DATA=$HOME/miniconda2/share/gdal
+- pip install pyproj
+- conda install --yes -c https://conda.anaconda.org/ioos rtree
+
+#-------------------------------------------------------------------------------
 #Creating directory for installation of libraries used by RAPIDpy
 #-------------------------------------------------------------------------------
 - cd $TRAVIS_BUILD_DIR
@@ -98,10 +106,6 @@ before_install:
 #Installing RAPIDpy
 #*******************************************************************************
 install:
-- conda install --yes python=$TRAVIS_PYTHON_VERSION nose numpy scipy netCDF4 gdal shapely
-- export GDAL_DATA==$HOME/miniconda2/share/gdal
-- pip install pyproj
-- conda install --yes -c https://conda.anaconda.org/ioos rtree
 - cd $TRAVIS_BUILD_DIR
 - python setup.py install
 #*******************************************************************************

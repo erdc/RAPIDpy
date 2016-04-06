@@ -48,7 +48,7 @@ before_install:
 - conda install --yes -c https://conda.anaconda.org/ioos rtree
 
 #-------------------------------------------------------------------------------
-#Creating directory for installation of libraries used by RAPIDpy
+#Creating directory for installation of libraries used by RAPID
 #-------------------------------------------------------------------------------
 - cd $TRAVIS_BUILD_DIR
 - mkdir ../installz

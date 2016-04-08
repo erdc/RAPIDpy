@@ -10,7 +10,7 @@
 
 import os
 
-from network import (CreateNetworkConnectivity, CreateNetworkConnectivityTauDEM,
+from network import (CreateNetworkConnectivity, CreateNetworkConnectivityTauDEMTree,
                      CreateSubsetFile)
 from muskingum import (CreateMuskingumKfacFile, CreateMuskingumKFile, 
                        CreateConstMuskingumXFile)
@@ -45,8 +45,8 @@ def CreateAllStaticRAPIDFiles(in_drainage_line,
                                   rapid_connect_file,
                                   file_geodatabase)
     else:
-        CreateNetworkConnectivityTauDEM(taudem_network_connectivity_tree_file,
-                                        rapid_connect_file)
+        CreateNetworkConnectivityTauDEMTree(taudem_network_connectivity_tree_file,
+                                            rapid_connect_file)
         
     #river basin id file                          
     riv_bas_id_file = os.path.join(rapid_output_folder, 'riv_bas_id.csv')

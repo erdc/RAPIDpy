@@ -14,19 +14,39 @@
 #*******************************************************************************
 #System specifications for Travis CI
 #*******************************************************************************
-language: python      #Sets the language to C++
+language: python
 python:
   - "2.7"
+notifications:
+  email: false
+
 #*******************************************************************************
 #Before installing RAPIDpy
 #*******************************************************************************
-
 before_install:
 - sudo apt-get update -qq
-- sudo apt-get install -y g++ gfortran python-dev zlib1g-dev libhdf5-serial-dev libnetcdf-dev
+- sudo apt-get install -y g++ gfortran python-dev libproj-dev
 
-#install netCDF4
-- pip install netCDF4
+#-------------------------------------------------------------------------------
+#Add miniconda - from https://gist.github.com/dan-blanchard/7045057
+#-----------------------------------------------------------------------------
+- wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
+- chmod +x miniconda.sh
+- ./miniconda.sh -b
+- export PATH=$HOME/miniconda2/bin:$PATH
+- conda update --yes conda
+# The next couple lines fix a crash with multiprocessing on Travis and are not specific to using Miniconda
+- sudo rm -rf /dev/shm
+- sudo ln -s /run/shm /dev/shm
+
+#-------------------------------------------------------------------------------
+# Install required python packages
+#-----------------------------------------------------------------------------
+- conda install --yes python=$TRAVIS_PYTHON_VERSION nose numpy scipy netCDF4 gdal shapely
+- export GDAL_DATA=$HOME/miniconda2/share/gdal
+- pip install pyproj
+- conda install --yes -c https://conda.anaconda.org/ioos rtree
+
 #-------------------------------------------------------------------------------
 #Creating directory for installation of libraries used by RAPID
 #-------------------------------------------------------------------------------
@@ -73,14 +93,13 @@ before_install:
 - export PATH=$PATH:/$PETSC_DIR/$PETSC_ARCH/bin
 - export PATH=$PATH:$INSTALLZ_DIR/netcdf-3.6.3-install/bin
 
-
 #-------------------------------------------------------------------------------
 #Installing RAPID
 #-------------------------------------------------------------------------------
 - cd $TRAVIS_BUILD_DIR
 - cd ..
 - git clone https://github.com/c-h-david/rapid.git
-- cd ./rapid/src/
+- cd rapid/src
 - make rapid
 
 #*******************************************************************************
@@ -88,7 +107,7 @@ before_install:
 #*******************************************************************************
 install:
 - cd $TRAVIS_BUILD_DIR
-- python setup.py develop
+- python setup.py install
 #*******************************************************************************
 #Testing RAPIDpy
 #*******************************************************************************

@@ -23,7 +23,7 @@ class CreateInflowFileFromWRFHydroRunoff(CreateInflowFileFromGriddedRunoff):
                  subsurface_runoff_var="UDROFF",
                  time_step_seconds=1*3600):
         """Define the tool (tool name is the name of the class)."""
-        self.header_wt = ['StreamID', 'area_sqm', 'west_east', 'south_north',
+        self.header_wt = ['rivid', 'area_sqm', 'west_east', 'south_north',
                           'npoints']
         # According to David Gochis, underground runoff is "a major fraction of total river flow in most places"
         self.vars_oi = [lat_var, lon_var, surface_runoff_var, subsurface_runoff_var]
@@ -51,7 +51,7 @@ class CreateInflowFileFromWRFHydroRunoff(CreateInflowFileFromGriddedRunoff):
         data_nc.close()
 
     def execute(self, nc_file_list, index_list, in_weight_table, 
-                out_nc, grid_type):
+                out_nc, grid_type, mp_lock):
         """The source code of the tool."""
 
         """The source code of the tool."""
@@ -135,6 +135,7 @@ class CreateInflowFileFromWRFHydroRunoff(CreateInflowFileFromGriddedRunoff):
 
 
             # start compute inflow
+            inflow_data = NUM.zeros((size_time, self.size_streamID))
             pointer = 0
             for stream_index in xrange(self.size_streamID):
                 npoints = int(self.dict_list[self.header_wt[4]][pointer])
@@ -152,20 +153,25 @@ class CreateInflowFileFromWRFHydroRunoff(CreateInflowFileFromGriddedRunoff):
                 ''''IMPORTANT NOTE: runoff variables in WRF-Hydro dataset is cumulative through time'''
                 ro_stream = NUM.concatenate([data_goal[0:1,],
                             NUM.subtract(data_goal[1:,],data_goal[:-1,])]) * area_sqm_npoints
+
                 try:
                     #ignore masked values
-                    if ro_stream.sum() is NUM.ma.masked:
-                        data_out_nc.variables['m3_riv'][index*size_time:(index+1)*size_time,stream_index] = 0
-                    else:
-                        data_out_nc.variables['m3_riv'][index*size_time:(index+1)*size_time,stream_index] = ro_stream.sum(axis=1)
+                    if ro_stream.sum() is not NUM.ma.masked:
+                        inflow_data = ro_stream.sum(axis=1)
                 except ValueError:
+                    data_out_nc = NET.Dataset(out_nc)
                     print("M3 {0} {1}".format(len(data_out_nc.variables['m3_riv'][index*size_time:(index+1)*size_time,stream_index]), 
                                               data_out_nc.variables['m3_riv'][index*size_time:(index+1)*size_time,stream_index]))
                     print("RO {0} {1}".format(len(ro_stream.sum(axis=1)), 
                                               ro_stream.sum(axis=1)))
+                    data_out_nc.close()
                     raise
 
                 pointer += npoints
-
-
-        data_out_nc.close()
+                
+            #only one process is allowed to write at a time to netcdf file
+            mp_lock.acquire()
+            data_out_nc = NET.Dataset(out_nc, "a", format = "NETCDF3_CLASSIC")
+            data_out_nc.variables['m3_riv'][index*size_time:(index+1)*size_time] = inflow_data
+            data_out_nc.close()
+            mp_lock.release()

@@ -22,7 +22,7 @@ class CreateInflowFileFromLDASRunoff(CreateInflowFileFromGriddedRunoff):
                        subsurface_runoff_var="Qsb_GDS0_SFC_ave1h",
                        time_step_seconds=3*3600):
         """Define the attributes to look for"""
-        self.header_wt = ['StreamID', 'area_sqm', 'lon_index', 'lat_index', 'npoints']
+        self.header_wt = ['rivid', 'area_sqm', 'lon_index', 'lat_index', 'npoints']
         self.dims_oi = [lon_dim, lat_dim]
         self.vars_oi = [lon_var, lat_var, surface_runoff_var, subsurface_runoff_var]
         self.length_time = {"Hourly": 1}
@@ -55,7 +55,7 @@ class CreateInflowFileFromLDASRunoff(CreateInflowFileFromGriddedRunoff):
 
 
     def execute(self, nc_file_list, index_list, in_weight_table, 
-                out_nc, grid_type):
+                out_nc, grid_type, mp_lock):
                 
         """The source code of the tool."""
         if not os.path.exists(out_nc):
@@ -80,9 +80,6 @@ class CreateInflowFileFromLDASRunoff(CreateInflowFileFromGriddedRunoff):
 
         index_new = []
         conversion_factor = None
-        
-        # start compute inflow
-        data_out_nc = NET.Dataset(out_nc, "a", format = "NETCDF3_CLASSIC")
 
         #combine inflow data
         for nc_file_array_index, nc_file_array in enumerate(nc_file_list):
@@ -155,9 +152,12 @@ class CreateInflowFileFromLDASRunoff(CreateInflowFileFromGriddedRunoff):
                 #set negative values to zero
                 data_subset_surface_new[data_subset_surface_new<0] = 0
                 data_subset_subsurface_new[data_subset_subsurface_new<0] = 0
-                #set masked values to zero
-                data_subset_surface_new = data_subset_surface_new.filled(fill_value=0)
-                data_subset_subsurface_new = data_subset_subsurface_new.filled(fill_value=0)
+                try:
+                    #set masked values to zero
+                    data_subset_surface_new = data_subset_surface_new.filled(fill_value=0)
+                    data_subset_subsurface_new = data_subset_subsurface_new.filled(fill_value=0)
+                except AttributeError:
+                    pass
 
                 #combine data
                 if data_subset_surface_all is None:
@@ -170,6 +170,7 @@ class CreateInflowFileFromLDASRunoff(CreateInflowFileFromGriddedRunoff):
                 else:
                     data_subset_subsurface_all = NUM.add(data_subset_subsurface_all, data_subset_subsurface_new)
 
+            inflow_data = NUM.zeros(self.size_streamID)
             pointer = 0
             for stream_index in xrange(self.size_streamID):
                 npoints = int(self.dict_list[self.header_wt[4]][pointer])
@@ -185,13 +186,15 @@ class CreateInflowFileFromLDASRunoff(CreateInflowFileFromGriddedRunoff):
                 ro_stream = NUM.add(data_goal_surface, data_goal_subsurface) * area_sqm_npoints * conversion_factor
                 #filter nan
                 ro_stream = ro_stream[~NUM.isnan(ro_stream)]
-
+                
                 if ro_stream.any():
-                    data_out_nc.variables['m3_riv'][index,stream_index] = ro_stream.sum()
-                else:
-                    data_out_nc.variables['m3_riv'][index,stream_index] = 0
+                    inflow_data[stream_index] = ro_stream.sum()
                 
                 pointer += npoints
+            #only one process is allowed to write at a time to netcdf file
+            mp_lock.acquire()
+            data_out_nc = NET.Dataset(out_nc, "a", format = "NETCDF3_CLASSIC")
+            data_out_nc.variables['m3_riv'][index] = inflow_data
+            data_out_nc.close()
+            mp_lock.release()
 
-        # close the output netcdf dataset
-        data_out_nc.close()

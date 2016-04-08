@@ -71,7 +71,7 @@ class CreateInflowFileFromERAInterimRunoff(CreateInflowFileFromGriddedRunoff):
             return None
 
     def execute(self, nc_file_list, index_list, in_weight_table, 
-                out_nc, grid_type):
+                out_nc, grid_type, mp_lock):
                 
         """The source code of the tool."""
         if not os.path.exists(out_nc):
@@ -95,8 +95,6 @@ class CreateInflowFileFromERAInterimRunoff(CreateInflowFileFromGriddedRunoff):
         
         index_new = []
 
-        data_out_nc = NET.Dataset(out_nc, "a", format = "NETCDF3_CLASSIC")
-        
         # Validate the netcdf dataset
         vars_oi_index = self.dataValidation(nc_file_list[0])
 
@@ -139,6 +137,7 @@ class CreateInflowFileFromERAInterimRunoff(CreateInflowFileFromGriddedRunoff):
             # obtain a new subset of data
             data_subset_new = data_subset_all[:,index_new]
 
+            inflow_data = NUM.zeros((size_time, self.size_streamID))
             # start compute inflow
             pointer = 0
             for stream_index in xrange(self.size_streamID):
@@ -166,9 +165,12 @@ class CreateInflowFileFromERAInterimRunoff(CreateInflowFileFromGriddedRunoff):
                     #A) ERA Interim High Res (T511) - data is incremental
                     #from time 3/6/9/12/15/18/21/24
                     ro_stream = data_goal * area_sqm_npoints
-
-                data_out_nc.variables['m3_riv'][index*size_time:(index+1)*size_time,stream_index] = ro_stream.sum(axis = 1)
-            
+                inflow_data[:,stream_index] = ro_stream.sum(axis = 1)
                 pointer += npoints
-        # close the input and output netcdf datasets
-        data_out_nc.close()
+                
+            #only one process is allowed to write at a time to netcdf file
+            mp_lock.acquire()
+            data_out_nc = NET.Dataset(out_nc, "a", format = "NETCDF3_CLASSIC")
+            data_out_nc.variables['m3_riv'][index*size_time:(index+1)*size_time,:] = inflow_data
+            data_out_nc.close()
+            mp_lock.release()

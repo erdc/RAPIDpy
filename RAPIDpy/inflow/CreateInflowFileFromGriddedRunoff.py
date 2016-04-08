@@ -141,70 +141,76 @@ class CreateInflowFileFromGriddedRunoff(object):
         m3_riv_var.coordinates = 'lon lat'
         m3_riv_var.grid_mapping = 'crs'
         m3_riv_var.cell_methods = "time: sum"
-
-        #rivid
-        rivid_var = data_out_nc.createVariable('rivid', 'i4', 
-                                              ('rivid',))
-        rivid_var.long_name = 'unique identifier for each river reach'
-        rivid_var.units = '1'
-        rivid_var.cf_role = 'timeseries_id'
-        
-        rivid_var[:] = rivid_list
-
-        #time
-        time_var = data_out_nc.createVariable('time', 'i4',
-                                              ('time',))
-        time_var.long_name = 'time'
-        time_var.standard_name = 'time'
-        time_var.units = 'seconds since 1970-01-01 00:00:00+00:00'
-        time_var.axis = 'T'
-        time_var.calendar = 'gregorian'
-        time_var.bounds = 'time_bnds'
-
-        initial_time_seconds = (start_datetime_utc.replace(tzinfo=utc)- \
-                                datetime(1970,1,1, tzinfo=utc)).total_seconds()
-        final_time_seconds = initial_time_seconds + number_of_timesteps*simulation_time_step_seconds
-        time_array = np.arange(initial_time_seconds, final_time_seconds, simulation_time_step_seconds)
-        time_var[:] = time_array
-
-        #time_bnds
-        time_bnds_var = data_out_nc.createVariable('time_bnds', 'i4',
-                                                    ('time', 'nv',))
-        for time_index, time_element in enumerate(time_array):
-            time_bnds_var[time_index, 0] = time_element
-            time_bnds_var[time_index, 1] = time_element+simulation_time_step_seconds
-
-        #longitude
-        lon_var = data_out_nc.createVariable('lon', 'f8', ('rivid',),
-                                            fill_value=-9999.0)
-        lon_var.long_name = 'longitude of a point related to each river reach'
-        lon_var.standard_name = 'longitude'
-        lon_var.units = 'degrees_east'
-        lon_var.axis = 'X'
-
-        #latitude
-        lat_var = data_out_nc.createVariable('lat', 'f8', ('rivid',),
-                                            fill_value=-9999.0)
-        lat_var.long_name = 'latitude of a point related to each river reach'
-        lat_var.standard_name = 'latitude'
-        lat_var.units = 'degrees_north'
-        lat_var.axis = 'Y'
-                                   
-        crs_var = data_out_nc.createVariable('crs', 'i4')
-        crs_var.grid_mapping_name = 'latitude_longitude'
-        crs_var.epsg_code = 'EPSG:4326'  # WGS 84
-        crs_var.semi_major_axis = 6378137.0
-        crs_var.inverse_flattening = 298.257223563
-        
-        #add global attributes
-        data_out_nc.Conventions = 'CF-1.6'
-        data_out_nc.title = 'RAPID Inflow from {0}'.format(land_surface_model_description)
-        data_out_nc.history = 'date_created: {0}'.format(datetime.utcnow().replace(tzinfo=utc))
-        data_out_nc.featureType = 'timeSeries'
-        data_out_nc.institution = modeling_institution
-        
-        #write lat lon data
-        self._write_lat_lon(data_out_nc, in_rivid_lat_lon_z_file)
-        
-        #close file
         data_out_nc.close()
+        
+        try:
+            data_out_nc = NET.Dataset(out_nc, "a", format="NETCDF3_CLASSIC")
+            #rivid
+            rivid_var = data_out_nc.createVariable('rivid', 'i4', 
+                                                  ('rivid',))
+            rivid_var.long_name = 'unique identifier for each river reach'
+            rivid_var.units = '1'
+            rivid_var.cf_role = 'timeseries_id'
+            
+            rivid_var[:] = rivid_list
+    
+            #time
+            time_var = data_out_nc.createVariable('time', 'i4',
+                                                  ('time',))
+            time_var.long_name = 'time'
+            time_var.standard_name = 'time'
+            time_var.units = 'seconds since 1970-01-01 00:00:00+00:00'
+            time_var.axis = 'T'
+            time_var.calendar = 'gregorian'
+            time_var.bounds = 'time_bnds'
+    
+            initial_time_seconds = (start_datetime_utc.replace(tzinfo=utc)- \
+                                    datetime(1970,1,1, tzinfo=utc)).total_seconds()
+            final_time_seconds = initial_time_seconds + number_of_timesteps*simulation_time_step_seconds
+            time_array = np.arange(initial_time_seconds, final_time_seconds, simulation_time_step_seconds)
+            time_var[:] = time_array
+    
+            #time_bnds
+            time_bnds_var = data_out_nc.createVariable('time_bnds', 'i4',
+                                                        ('time', 'nv',))
+            for time_index, time_element in enumerate(time_array):
+                time_bnds_var[time_index, 0] = time_element
+                time_bnds_var[time_index, 1] = time_element+simulation_time_step_seconds
+    
+            #longitude
+            lon_var = data_out_nc.createVariable('lon', 'f8', ('rivid',),
+                                                fill_value=-9999.0)
+            lon_var.long_name = 'longitude of a point related to each river reach'
+            lon_var.standard_name = 'longitude'
+            lon_var.units = 'degrees_east'
+            lon_var.axis = 'X'
+    
+            #latitude
+            lat_var = data_out_nc.createVariable('lat', 'f8', ('rivid',),
+                                                fill_value=-9999.0)
+            lat_var.long_name = 'latitude of a point related to each river reach'
+            lat_var.standard_name = 'latitude'
+            lat_var.units = 'degrees_north'
+            lat_var.axis = 'Y'
+                                       
+            crs_var = data_out_nc.createVariable('crs', 'i4')
+            crs_var.grid_mapping_name = 'latitude_longitude'
+            crs_var.epsg_code = 'EPSG:4326'  # WGS 84
+            crs_var.semi_major_axis = 6378137.0
+            crs_var.inverse_flattening = 298.257223563
+            
+            #add global attributes
+            data_out_nc.Conventions = 'CF-1.6'
+            data_out_nc.title = 'RAPID Inflow from {0}'.format(land_surface_model_description)
+            data_out_nc.history = 'date_created: {0}'.format(datetime.utcnow().replace(tzinfo=utc))
+            data_out_nc.featureType = 'timeSeries'
+            data_out_nc.institution = modeling_institution
+            
+            #write lat lon data
+            self._write_lat_lon(data_out_nc, in_rivid_lat_lon_z_file)
+            
+            #close file
+            data_out_nc.close()
+        except RuntimeError:
+            print("File size too big to add data beforehand. Performing conversion after ...")
+            pass

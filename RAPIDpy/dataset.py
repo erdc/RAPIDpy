@@ -80,9 +80,8 @@ class RAPIDDataset(object):
             if len(self.qout_nc.dimensions['time'])>0:
                 if not (self.qout_nc.variables['time'][:] == masked).any():
                     try:
-                        timestep = (datetime.datetime.utcfromtimestamp(self.qout_nc.variables['time'][0])-
-                                    datetime.datetime.utcfromtimestamp(self.qout_nc.variables['time'][1])).seconds
-                        
+                        timestep = (datetime.datetime.utcfromtimestamp(self.qout_nc.variables['time'][1])-
+                                    datetime.datetime.utcfromtimestamp(self.qout_nc.variables['time'][0])).total_seconds()
                         if timestep > 0:
                             time_var_valid = True
                     except ValueError:
@@ -157,15 +156,15 @@ class RAPIDDataset(object):
 
     def get_daily_time_index_array(self):
         """
-	Returns an array of the first index of each day in the time array
-	"""
+        Returns an array of the first index of each day in the time array
+        """
         current_day = datetime.datetime.utcfromtimestamp(self.qout_nc.variables['time'][0])
         daily_time_index_array = [0]
         for idx, var_time in enumerate(self.get_time_array(return_datetime=True)):
             if current_day.day != var_time.day:
                  daily_time_index_array.append(idx)
-		 current_day = var_time
-	return daily_time_index_array
+            current_day = var_time
+        return daily_time_index_array
 
     def get_river_id_array(self):
         """

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 ##
-##  test_inflow.py
+##  test_gis.py
 ##  RAPIDpy
 ##
 ##  Created by Alan D. Snow.
@@ -50,9 +50,9 @@ def test_gen_static_rapid_input():
 
     #rapid_connect
     generated_rapid_connect_file = os.path.join(OUTPUT_DATA_PATH, 
-                                                  "rapid_connect.csv")
+                                                "rapid_connect.csv")
     generated_rapid_connect_file_solution = os.path.join(COMPARE_DATA_PATH,
-                                                           "rapid_connect.csv")
+                                                         "rapid_connect.csv")
     ok_(compare_csv_decimal_files(generated_rapid_connect_file, 
                                   generated_rapid_connect_file_solution))
 
@@ -98,17 +98,17 @@ def test_gen_static_rapid_input():
 
     #weight_ecmwf_tco369
     generated_weight_ecmwf_tco639_file = os.path.join(OUTPUT_DATA_PATH, 
-                                                     "weight_ecmwf_tco639.csv")
+                                                      "weight_ecmwf_tco639.csv")
     generated_weight_ecmwf_tco639_file_solution = os.path.join(COMPARE_DATA_PATH,
-                                                              "weight_ecmwf_tco639.csv")
+                                                               "weight_ecmwf_tco639.csv")
     ok_(compare_csv_decimal_files(generated_weight_ecmwf_tco639_file, 
                                   generated_weight_ecmwf_tco639_file_solution))
 
     #weight_era_t511
     generated_weight_era_t511_file = os.path.join(OUTPUT_DATA_PATH, 
-                                                     "weight_era_t511.csv")
+                                                  "weight_era_t511.csv")
     generated_weight_era_t511_file_solution = os.path.join(COMPARE_DATA_PATH,
-                                                              "weight_era_t511.csv")
+                                                           "weight_era_t511.csv")
     ok_(compare_csv_decimal_files(generated_weight_era_t511_file, 
                                   generated_weight_era_t511_file_solution))
 

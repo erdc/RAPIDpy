@@ -412,11 +412,34 @@ def test_generate_qinit_file():
                  qinit_cf_rapid_qout
                  )
 
+
+def test_download_usgs_daily_avg():
+    """
+    This tests downloading USGS daily avg data
+    """
+    print "TEST 12: TEST DOWNLOAD USGS DAILY AVERAGE DATA"
+
+    out_streamflow_file=os.path.join(OUTPUT_DATA_PATH,"gage_streamflow.csv")
+    out_stream_id_file=os.path.join(OUTPUT_DATA_PATH,"gage_rivid.csv")
+    
+    rapid_manager = RAPID("")
+    rapid_manager.generate_usgs_avg_daily_flows_opt(reach_id_gage_id_file=os.path.join(INPUT_DATA_PATH,"usgs_gage_id_rivid.csv"),
+											start_datetime=datetime(2000,1,1),
+    											end_datetime=datetime(2000,1,3),
+    											out_streamflow_file=out_streamflow_file, 
+    											out_stream_id_file=out_stream_id_file)
+                
+    compare_streamflow_file=os.path.join(COMPARE_DATA_PATH,"gage_streamflow.csv")
+    ok_(compare_csv_decimal_files(out_streamflow_file, compare_streamflow_file, header=False))
+
+    compare_stream_id_file=os.path.join(COMPARE_DATA_PATH,"gage_rivid.csv")
+    ok_(compare_csv_decimal_files(out_stream_id_file, compare_stream_id_file, header=False))
+    
 def test_extract_timeseries():
     """
     This tests extracting a timeseries from RAPID Qout file
     """
-    print "TEST 12: TEST EXTRACT TIMESERIES FROM QINIT FILE"
+    print "TEST 13: TEST EXTRACT TIMESERIES FROM QINIT FILE"
     
     #for writing entire time series to file from new rapid output
     input_qout_file = os.path.join(COMPARE_DATA_PATH, 'Qout_nasa_lis_3hr_20020830.nc')
@@ -485,7 +508,7 @@ def test_goodness_of_fit():
     """
     This tests the goodness of fit functions
     """
-    print "TEST 13: TEST GOODNESS OF FIT FUNCTIONS"
+    print "TEST 14: TEST GOODNESS OF FIT FUNCTIONS"
 
     reach_id_file = os.path.join(INPUT_DATA_PATH, 'obs_reach_id.csv') 
     observed_file = os.path.join(INPUT_DATA_PATH, 'obs_flow.csv') 
@@ -522,7 +545,7 @@ def test_cf_merge():
     """
     This tests merging two qout files
     """
-    print "TEST 14: TEST MERGE QOUT"
+    print "TEST 15: TEST MERGE QOUT"
 
     orig_qout_1 = os.path.join(INPUT_DATA_PATH, 'Qout_merge_3hr.nc')
     orig_qout_2 = os.path.join(INPUT_DATA_PATH, 'Qout_merge_6hr.nc')

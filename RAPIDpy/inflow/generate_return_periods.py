@@ -7,9 +7,10 @@
 ##  Copyright © 2015-2016 Alan D Snow and Scott D. Christensen. All rights reserved.
 ##  License: BSD-3 Clause
 
-from datetime import datetime
 import netCDF4 as nc
 import numpy as np
+from HydroStats.VDF import VDF
+
 from RAPIDpy import RAPIDDataset
 
 def generate_return_periods(qout_file, return_period_file, storm_duration_days=7):
@@ -29,6 +30,8 @@ def generate_return_periods(qout_file, return_period_file, storm_duration_days=7
             'Unique NHDPlus COMID identifier for each river reach feature')
 
         max_flow_var = return_period_nc.createVariable('max_flow', 'f8', ('rivid',))
+        return_period_100_var = return_period_nc.createVariable('return_period_100', 'f8', ('rivid',))
+        return_period_50_var = return_period_nc.createVariable('return_period_50', 'f8', ('rivid',))
         return_period_20_var = return_period_nc.createVariable('return_period_20', 'f8', ('rivid',))
         return_period_10_var = return_period_nc.createVariable('return_period_10', 'f8', ('rivid',))
         return_period_2_var = return_period_nc.createVariable('return_period_2', 'f8', ('rivid',))
@@ -54,25 +57,37 @@ def generate_return_periods(qout_file, return_period_file, storm_duration_days=7
         return_period_nc.variables['rivid'][:] = river_id_list
 
         print "Extracting Data and Generating Return Periods ..."
-        time_array = qout_nc_file.get_time_array()
-        num_years = int((datetime.utcfromtimestamp(time_array[-1])-datetime.utcfromtimestamp(time_array[0])).days/365.2425)
-        time_steps_per_day = (24*3600)/float((datetime.utcfromtimestamp(time_array[1])-datetime.utcfromtimestamp(time_array[0])).seconds)
-        step = max(1,int(time_steps_per_day * storm_duration_days))
-
-        for comid_index, comid in enumerate(river_id_list):
-
-            filtered_flow_data = qout_nc_file.get_daily_qout_index(comid_index, 
-                                                                   steps_per_group=step,
-				                                   mode="max")
-            sorted_flow_data = np.sort(filtered_flow_data)[:num_years:-1]
-
-            rp_index_20 = int((num_years + 1)/20.0)
-            rp_index_10 = int((num_years + 1)/10.0)
-            rp_index_2 = int((num_years + 1)/2.0)
+        time_array = qout_nc_file.get_time_array(return_datetime=True)
+        
+        for rivid_index, rivid in enumerate(river_id_list):
+            streamflow = np.nan_to_num(qout_nc_file.get_qout_index(rivid_index))
+            max_flow = np.amax(streamflow)
+            if max_flow > 0.1:
+                vdf_calc = VDF(time_array, 
+                               streamflow,
+                               np.array([storm_duration_days*24*60]),
+                               ['kde', 'silverman'],
+                               True
+                               )
+                               
+##                vdf_calc = VDF(time_array, 
+##                               streamflow,
+##                               np.array([storm_duration_days*24*60]),
+##                               ['gev'],
+##                               True
+##                               )
+                max_flow_var[rivid_index] = np.amax(streamflow)
+                return_period_100_var[rivid_index] = vdf_calc.calculate_return_period_curve(100)[0]
+                return_period_50_var[rivid_index] = vdf_calc.calculate_return_period_curve(50)[0]
+                return_period_20_var[rivid_index] = vdf_calc.calculate_return_period_curve(20)[0]
+                return_period_10_var[rivid_index] = vdf_calc.calculate_return_period_curve(10)[0]
+                return_period_2_var[rivid_index] = vdf_calc.calculate_return_period_curve(2)[0]
+        else:
+                return_period_100_var[rivid_index] = max_flow
+                return_period_50_var[rivid_index] = max_flow
+                return_period_20_var[rivid_index] = max_flow
+                return_period_10_var[rivid_index] = max_flow
+                return_period_2_var[rivid_index] = max_flow
             
-            max_flow_var[comid_index] = sorted_flow_data[0]
-            return_period_20_var[comid_index] = sorted_flow_data[rp_index_20]
-            return_period_10_var[comid_index] = sorted_flow_data[rp_index_10]
-            return_period_2_var[comid_index] = sorted_flow_data[rp_index_2]
 
         return_period_nc.close()

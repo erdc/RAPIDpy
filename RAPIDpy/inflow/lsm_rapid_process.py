@@ -339,13 +339,13 @@ def run_lsm_rapid_process(rapid_executable_location,
             RAPID_Inflow_Tool = CreateInflowFileFromERAInterimRunoff()
                  
         elif institution == "NASA GSFC":
-            print("Runoff file identified as LIS GRID")
             if title == "GLDAS2.0 LIS land surface model output":
+                print("Runoff file identified as GLDAS v2 LIS GRID")
                 #TODO: SNOWMELT
                 #this is the LIS model
                 weight_file_name = r'weight_gldas2\.csv'
                 grid_type = 'gldas2'
-                description = "GLDAS2.0 LIS land surface model hourly runoff"
+                description = "GLDAS2.0 LIS land surface model 3 hourly runoff"
                 model_name = "nasa"
                 
                 #time units are in minutes
@@ -356,6 +356,7 @@ def run_lsm_rapid_process(rapid_executable_location,
                     raise Exception("Unsupported GLDAS 2.0 time step.")
                 
             else:
+                print("Runoff file identified as LIS GRID")
                 #this is the LIS model
                 weight_file_name = r'weight_lis\.csv'
                 grid_type = 'lis'

@@ -435,6 +435,9 @@ def test_download_usgs_daily_avg():
     compare_stream_id_file=os.path.join(COMPARE_DATA_PATH,"gage_rivid.csv")
     ok_(compare_csv_decimal_files(out_stream_id_file, compare_stream_id_file, header=False))
     
+    remove_files(out_streamflow_file,
+                 out_stream_id_file)
+    
 def test_extract_timeseries():
     """
     This tests extracting a timeseries from RAPID Qout file

@@ -144,7 +144,7 @@ class CreateInflowFileFromLDASRunoff(CreateInflowFileFromGriddedRunoff):
                     
                 #reshape the runoff
                 if len_time_subset_surface > 1:
-                    data_subset_surface_runoff = data_subset_surface_runoff.reshape(len_lon_subset_surface, (len_lat_subset_surface * len_lon_subset_surface))
+                    data_subset_surface_runoff = data_subset_surface_runoff.reshape(len_time_subset_subsurface, (len_lat_subset_surface * len_lon_subset_surface))
                     data_subset_subsurface_runoff = data_subset_subsurface_runoff.reshape(len_time_subset_subsurface, (len_lat_subset_subsurface * len_lon_subset_subsurface))
                 else:
                     data_subset_surface_runoff = data_subset_surface_runoff.reshape(len_lat_subset_surface * len_lon_subset_surface)

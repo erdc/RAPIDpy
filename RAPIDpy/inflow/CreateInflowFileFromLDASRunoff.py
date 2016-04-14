@@ -111,14 +111,18 @@ class CreateInflowFileFromLDASRunoff(CreateInflowFileFromGriddedRunoff):
                     data_subset_surface_runoff = data_in_nc.variables[self.vars_oi[2]][min_lat_ind_all:max_lat_ind_all+1, min_lon_ind_all:max_lon_ind_all+1]
                     data_subset_subsurface_runoff = data_in_nc.variables[self.vars_oi[3]][min_lat_ind_all:max_lat_ind_all+1, min_lon_ind_all:max_lon_ind_all+1]
                     #check surface runoff dims
-                    len_time_subset_surface = 1
+                    len_time_subset_surface = 0
                     len_lat_subset_surface = data_subset_surface_runoff.shape[0]
                     len_lon_subset_surface = data_subset_surface_runoff.shape[1]
                     #check subsurface runoff dims
-                    len_time_subset_subsurface = 1
+                    len_time_subset_subsurface = 0
                     len_lat_subset_subsurface = data_subset_subsurface_runoff.shape[0]
                     len_lon_subset_subsurface = data_subset_subsurface_runoff.shape[1]
-                    
+
+                    #reshape the runoff
+                    data_subset_surface_runoff = data_subset_surface_runoff.reshape(len_lat_subset_surface * len_lon_subset_surface)
+                    data_subset_subsurface_runoff = data_subset_subsurface_runoff.reshape(len_lat_subset_subsurface * len_lon_subset_subsurface)
+
                 elif runoff_dimension_size == 3:
                     data_subset_surface_runoff = data_in_nc.variables[self.vars_oi[2]][:, min_lat_ind_all:max_lat_ind_all+1, min_lon_ind_all:max_lon_ind_all+1]
                     data_subset_subsurface_runoff = data_in_nc.variables[self.vars_oi[3]][:, min_lat_ind_all:max_lat_ind_all+1, min_lon_ind_all:max_lon_ind_all+1]
@@ -130,6 +134,9 @@ class CreateInflowFileFromLDASRunoff(CreateInflowFileFromGriddedRunoff):
                     len_time_subset_subsurface = data_subset_subsurface_runoff.shape[0]
                     len_lat_subset_subsurface = data_subset_subsurface_runoff.shape[1]
                     len_lon_subset_subsurface = data_subset_subsurface_runoff.shape[2]
+                    #reshape the runoff
+                    data_subset_surface_runoff = data_subset_surface_runoff.reshape(len_time_subset_subsurface, (len_lat_subset_surface * len_lon_subset_surface))
+                    data_subset_subsurface_runoff = data_subset_subsurface_runoff.reshape(len_time_subset_subsurface, (len_lat_subset_subsurface * len_lon_subset_subsurface))
 
                 #make sure they are the same
                 if len_lat_subset_surface != len_lat_subset_subsurface:
@@ -142,14 +149,6 @@ class CreateInflowFileFromLDASRunoff(CreateInflowFileFromGriddedRunoff):
                     data_in_nc.close()
                     raise Exception("Surface and subsurface time lengths do not agree ...")
                     
-                #reshape the runoff
-                if len_time_subset_surface > 1:
-                    data_subset_surface_runoff = data_subset_surface_runoff.reshape(len_time_subset_subsurface, (len_lat_subset_surface * len_lon_subset_surface))
-                    data_subset_subsurface_runoff = data_subset_subsurface_runoff.reshape(len_time_subset_subsurface, (len_lat_subset_subsurface * len_lon_subset_subsurface))
-                else:
-                    data_subset_surface_runoff = data_subset_surface_runoff.reshape(len_lat_subset_surface * len_lon_subset_surface)
-                    data_subset_subsurface_runoff = data_subset_subsurface_runoff.reshape(len_lat_subset_subsurface * len_lon_subset_subsurface)
-
                 if conversion_factor == None: 
                     #get conversion_factor
                     conversion_factor = 0.001 #convert from kg/m^2 (i.e. mm) to m
@@ -196,7 +195,7 @@ class CreateInflowFileFromLDASRunoff(CreateInflowFileFromGriddedRunoff):
                 else:
                     data_subset_subsurface_all = NUM.add(data_subset_subsurface_all, data_subset_subsurface_new)
 
-            if len_time_subset_subsurface > 1:
+            if len_time_subset_subsurface > 0:
                 inflow_data = NUM.zeros((len_time_subset_subsurface, self.size_streamID))
             else:
                 inflow_data = NUM.zeros(self.size_streamID)
@@ -213,7 +212,7 @@ class CreateInflowFileFromLDASRunoff(CreateInflowFileFromGriddedRunoff):
                 area_sqm_npoints = NUM.array([float(k) for k in self.dict_list[self.header_wt[1]][pointer : (pointer + npoints)]])
 
                 #assume data is incremental
-                if len_time_subset_subsurface > 1:
+                if len_time_subset_subsurface > 0:
                     data_goal_surface = data_subset_surface_all[:, pointer:(pointer + npoints)]
                     data_goal_subsurface = data_subset_subsurface_all[:, pointer:(pointer + npoints)]
                 else:
@@ -225,7 +224,7 @@ class CreateInflowFileFromLDASRunoff(CreateInflowFileFromGriddedRunoff):
                 ro_stream = ro_stream[~NUM.isnan(ro_stream)]
                 
                 if ro_stream.any():
-                    if len_time_subset_subsurface > 1:
+                    if len_time_subset_subsurface > 0:
                         inflow_data[:,stream_index] = ro_stream.sum(axis = 1)
                     else:
                         inflow_data[stream_index] = ro_stream.sum()

@@ -336,7 +336,8 @@ def run_lsm_rapid_process(rapid_executable_location,
                 raise Exception("Unsupported ECMWF time step.")
 
             total_num_time_steps=file_size_time*len(lsm_file_list)
-            RAPID_Inflow_Tool = CreateInflowFileFromERAInterimRunoff()                 
+            RAPID_Inflow_Tool = CreateInflowFileFromERAInterimRunoff()
+                 
         elif institution == "NASA GSFC":
             print("Runoff file identified as LIS GRID")
             if title == "GLDAS2.0 LIS land surface model output":
@@ -368,8 +369,7 @@ def run_lsm_rapid_process(rapid_executable_location,
                     lsm_example_file.close()
                     raise Exception("Unsupported LIS time step.")
             
-                total_num_time_steps=file_size_time*len(lsm_file_list)
-                
+            total_num_time_steps=file_size_time*len(lsm_file_list)
             RAPID_Inflow_Tool = CreateInflowFileFromLDASRunoff(latitude_dim,
                                                                longitude_dim,
                                                                latitude_var,

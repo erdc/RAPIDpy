@@ -196,7 +196,11 @@ class CreateInflowFileFromLDASRunoff(CreateInflowFileFromGriddedRunoff):
                 else:
                     data_subset_subsurface_all = NUM.add(data_subset_subsurface_all, data_subset_subsurface_new)
 
-            inflow_data = NUM.zeros(self.size_streamID)
+            if len_time_subset_subsurface > 1:
+                inflow_data = NUM.zeros((len_time_subset_subsurface, self.size_streamID))
+            else:
+                inflow_data = NUM.zeros(self.size_streamID)
+            
             pointer = 0
             for stream_index in xrange(self.size_streamID):
                 npoints = int(self.dict_list[self.header_wt[4]][pointer])
@@ -221,13 +225,19 @@ class CreateInflowFileFromLDASRunoff(CreateInflowFileFromGriddedRunoff):
                 ro_stream = ro_stream[~NUM.isnan(ro_stream)]
                 
                 if ro_stream.any():
-                    inflow_data[stream_index] = ro_stream.sum()
+                    if len_time_subset_subsurface > 1:
+                        inflow_data[:,stream_index] = ro_stream.sum(axis = 1)
+                    else:
+                        inflow_data[stream_index] = ro_stream.sum()
                 
                 pointer += npoints
             #only one process is allowed to write at a time to netcdf file
             mp_lock.acquire()
             data_out_nc = NET.Dataset(out_nc, "a", format = "NETCDF3_CLASSIC")
-            data_out_nc.variables['m3_riv'][index] = inflow_data
+            if len_time_subset_subsurface > 1:
+                data_out_nc.variables['m3_riv'][index*len_time_subset_subsurface:(index+1)*len_time_subset_subsurface,:] = inflow_data
+            else:
+                data_out_nc.variables['m3_riv'][index] = inflow_data
             data_out_nc.close()
             mp_lock.release()
 

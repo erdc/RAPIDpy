@@ -12,6 +12,7 @@ import os
 
 #local import
 from RAPIDpy.gis.workflow import CreateAllStaticECMWFRAPIDFiles
+from RAPIDpy.gis.network import CreateNetworkConnectivityNHDPlus
 from RAPIDpy.helper_functions import (compare_csv_decimal_files,
                                       remove_files)
 #GLOBAL VARIABLES
@@ -121,6 +122,24 @@ def test_gen_static_rapid_input():
                  generated_weight_ecmwf_t1279_file,
                  generated_weight_ecmwf_tco639_file,
                  generated_weight_era_t511_file)
+
+def test_gen_static_nhd_connect_rapid_input():
+    """
+    Checks generating static NHDPlus connect RAPID input
+    """
+    print "TEST 1: TEST GENERATE STATIC NHDPlus CONNECT RAPID INPUT DATA"
+    generated_rapid_connect_file = os.path.join(OUTPUT_DATA_PATH, 
+                                                "rapid_connect_nhd.csv")
+    CreateNetworkConnectivityNHDPlus(in_drainage_line=os.path.join(INPUT_DATA_PATH, 'flowline.shp'),
+                                     out_csv_file=generated_rapid_connect_file)
+    #rapid_connect
+    generated_rapid_connect_file_solution = os.path.join(COMPARE_DATA_PATH,
+                                                         "rapid_connect.csv")
+                                                         
+    ok_(compare_csv_decimal_files(generated_rapid_connect_file, 
+                                  generated_rapid_connect_file_solution))
+
+    remove_files(generated_rapid_connect_file)
 
 if __name__ == '__main__':
     import nose

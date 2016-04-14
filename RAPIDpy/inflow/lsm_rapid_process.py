@@ -116,25 +116,27 @@ def run_lsm_rapid_process(rapid_executable_location,
 
     for ensemble in ensemble_list:
         ensemble_file_ending = ".nc"
+        ensemble_file_ending4 = ".nc4"
         if ensemble != None:
             ensemble_file_ending = "_{0}.nc".format(ensemble)
+            ensemble_file_ending4 = "_{0}.nc4".format(ensemble)
         #get list of files
         lsm_file_list = []
         for subdir, dirs, files in os.walk(lsm_data_location):
-            for erai_file in files:
-                if erai_file.endswith(ensemble_file_ending):
-                    lsm_file_list.append(os.path.join(subdir, erai_file))
+            for lsm_file in files:
+                if lsm_file.endswith(ensemble_file_ending) or lsm_file.endswith(ensemble_file_ending4):
+                    lsm_file_list.append(os.path.join(subdir, lsm_file))
         
         lsm_file_list_subset = []
         
-        for erai_file in sorted(lsm_file_list):
-            match = re.search(r'\d{8}', erai_file)
+        for lsm_file in sorted(lsm_file_list):
+            match = re.search(r'\d{8}', lsm_file)
             file_date = datetime.strptime(match.group(0), "%Y%m%d")
             if file_date > simulation_end_datetime:
                 break
                 print file_date
             if file_date >= simulation_start_datetime:
-                lsm_file_list_subset.append(os.path.join(subdir, erai_file))
+                lsm_file_list_subset.append(os.path.join(subdir, lsm_file))
         print(lsm_file_list_subset[0])
         actual_simulation_start_datetime = datetime.strptime(re.search(r'\d{8}', lsm_file_list_subset[0]).group(0), "%Y%m%d")
         print(lsm_file_list_subset[-1])
@@ -213,6 +215,7 @@ def run_lsm_rapid_process(rapid_executable_location,
 
         surface_runoff_var=""
         subsurface_runoff_var=""
+        snowmelt_runoff_var=""
         for var in var_list:
             if var.startswith("SSRUN"):
                 #NLDAS/GLDAS
@@ -220,6 +223,15 @@ def run_lsm_rapid_process(rapid_executable_location,
             elif var.startswith("BGRUN"):
                 #NLDAS/GLDAS
                 subsurface_runoff_var = var
+            elif var == "Qs_acc":
+                #GLDAS v2
+                surface_runoff_var = var
+            elif var == "Qsb_acc":
+                #GLDAS v2
+                subsurface_runoff_var = var
+            elif var == "Qsm_acc":
+                #GLDAS v2
+                snowmelt_runoff_var = var
             elif var == "Qs_inst":
                 #LIS
                 surface_runoff_var = var
@@ -262,8 +274,13 @@ def run_lsm_rapid_process(rapid_executable_location,
         RAPID_Inflow_Tool = None
         total_num_time_steps = 0
         institution = ""
+        title = ""
         try:
             institution = lsm_example_file.getncattr("institution")
+        except AttributeError:
+            pass
+        try:
+            title = lsm_example_file.getncattr("title")
         except AttributeError:
             pass
         
@@ -319,24 +336,40 @@ def run_lsm_rapid_process(rapid_executable_location,
                 raise Exception("Unsupported ECMWF time step.")
 
             total_num_time_steps=file_size_time*len(lsm_file_list)
-            RAPID_Inflow_Tool = CreateInflowFileFromERAInterimRunoff()                 
+            RAPID_Inflow_Tool = CreateInflowFileFromERAInterimRunoff()
+                 
         elif institution == "NASA GSFC":
             print("Runoff file identified as LIS GRID")
-            #this is the LIS model
-            weight_file_name = r'weight_lis\.csv'
-            grid_type = 'lis'
-            description = "NASA GFC LIS Hourly Runoff"
-            model_name = "nasa"
-            #time units are in minutes
-            if file_size_time == 1:
-                #time_step = 1*3600 #hourly
-                time_step = 3*3600 #3-hourly
+            if title == "GLDAS2.0 LIS land surface model output":
+                #TODO: SNOWMELT
+                #this is the LIS model
+                weight_file_name = r'weight_gldas2\.csv'
+                grid_type = 'gldas2'
+                description = "GLDAS2.0 LIS land surface model hourly runoff"
+                model_name = "nasa"
+                
+                #time units are in minutes
+                if file_size_time == 1:
+                    time_step = 3*3600 #3-hourly
+                else:
+                    lsm_example_file.close()
+                    raise Exception("Unsupported GLDAS 2.0 time step.")
+                
             else:
-                lsm_example_file.close()
-                raise Exception("Unsupported LIS time step.")
-        
-            total_num_time_steps=file_size_time*len(lsm_file_list)
+                #this is the LIS model
+                weight_file_name = r'weight_lis\.csv'
+                grid_type = 'lis'
+                description = "NASA GFC LIS hourly runoff"
+                model_name = "nasa"
+                #time units are in minutes
+                if file_size_time == 1:
+                    #time_step = 1*3600 #hourly
+                    time_step = 3*3600 #3-hourly
+                else:
+                    lsm_example_file.close()
+                    raise Exception("Unsupported LIS time step.")
             
+            total_num_time_steps=file_size_time*len(lsm_file_list)
             RAPID_Inflow_Tool = CreateInflowFileFromLDASRunoff(latitude_dim,
                                                                longitude_dim,
                                                                latitude_var,

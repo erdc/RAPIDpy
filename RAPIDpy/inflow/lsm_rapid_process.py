@@ -116,25 +116,27 @@ def run_lsm_rapid_process(rapid_executable_location,
 
     for ensemble in ensemble_list:
         ensemble_file_ending = ".nc"
+        ensemble_file_ending4 = ".nc4"
         if ensemble != None:
             ensemble_file_ending = "_{0}.nc".format(ensemble)
+            ensemble_file_ending4 = "_{0}.nc4".format(ensemble)
         #get list of files
         lsm_file_list = []
         for subdir, dirs, files in os.walk(lsm_data_location):
-            for erai_file in files:
-                if erai_file.endswith(ensemble_file_ending):
-                    lsm_file_list.append(os.path.join(subdir, erai_file))
+            for lsm_file in files:
+                if lsm_file.endswith(ensemble_file_ending) or lsm_file.endswith(ensemble_file_ending4):
+                    lsm_file_list.append(os.path.join(subdir, lsm_file))
         
         lsm_file_list_subset = []
         
-        for erai_file in sorted(lsm_file_list):
-            match = re.search(r'\d{8}', erai_file)
+        for lsm_file in sorted(lsm_file_list):
+            match = re.search(r'\d{8}', lsm_file)
             file_date = datetime.strptime(match.group(0), "%Y%m%d")
             if file_date > simulation_end_datetime:
                 break
                 print file_date
             if file_date >= simulation_start_datetime:
-                lsm_file_list_subset.append(os.path.join(subdir, erai_file))
+                lsm_file_list_subset.append(os.path.join(subdir, lsm_file))
         print(lsm_file_list_subset[0])
         actual_simulation_start_datetime = datetime.strptime(re.search(r'\d{8}', lsm_file_list_subset[0]).group(0), "%Y%m%d")
         print(lsm_file_list_subset[-1])

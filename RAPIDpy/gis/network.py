@@ -97,7 +97,82 @@ def CreateNetworkConnectivityTauDEMTree(network_connectivity_tree_file,
     StreamIDNextDownIDToConnectivity(stream_id_array,
                                      next_down_id_array,
                                      out_csv_file)
+                                     
+def CreateNetworkConnectivityNHDPlus(in_drainage_line,
+                                     out_csv_file,
+                                     file_geodatabase=None):
+    """
+    Creates Network Connectivity input CSV file for RAPID
+    based on the NHDPlus drainage lines
+    """    
+    if file_geodatabase:
+        gdb_driver = ogr.GetDriverByName("OpenFileGDB")
+        ogr_file_geodatabase = gdb_driver.Open(file_geodatabase, 0)
+        ogr_drainage_line_shapefile_lyr = ogr_file_geodatabase.GetLayer(in_drainage_line)
+    else:
+        ogr_drainage_line_shapefile = ogr.Open(in_drainage_line)
+        ogr_drainage_line_shapefile_lyr = ogr_drainage_line_shapefile.GetLayer()
+        
+    ogr_drainage_line_definition = ogr_drainage_line_shapefile_lyr.GetLayerDefn()
+    
+    orig_field_names = []
+    for idx in xrange(ogr_drainage_line_definition.GetFieldCount()):
+        orig_field_names.append(ogr_drainage_line_definition.GetFieldDefn(idx).GetName())
+    
+    upper_field_names = [field.upper() for field in orig_field_names]
 
+    def get_field_name_index(upper_field_name, upper_field_names):
+        """
+        returns index of field name
+        """
+        try:
+            return upper_field_names.index(upper_field_name)
+        except ValueError:
+            raise IndexError("{0} not found in shapefile ..".format(upper_field_name))
+
+    rivid_field = orig_field_names[get_field_name_index('COMID', upper_field_names)]
+    fromnode_field = orig_field_names[get_field_name_index('FROMNODE', upper_field_names)]    
+    tonode_field = orig_field_names[get_field_name_index('TONODE', upper_field_names)]    
+    divergence_field = orig_field_names[get_field_name_index('DIVERGENCE', upper_field_names)]
+        
+    number_of_features = ogr_drainage_line_shapefile_lyr.GetFeatureCount()
+    rivid_list = np.zeros(number_of_features, dtype=np.int32)
+    fromnode_list = np.zeros(number_of_features, dtype=np.int32)
+    tonode_list = np.zeros(number_of_features, dtype=np.int32)
+    divergence_list = np.zeros(number_of_features, dtype=np.int32)
+    for feature_idx, catchment_feature in enumerate(ogr_drainage_line_shapefile_lyr):
+        rivid_list[feature_idx] = catchment_feature.GetField(rivid_field)
+        fromnode_list[feature_idx] = catchment_feature.GetField(fromnode_field)
+        tonode_list[feature_idx] = catchment_feature.GetField(tonode_field)
+        divergence_list[feature_idx] = catchment_feature.GetField(divergence_field)
+
+    #-------------------------------------------------------------------------------
+    #Compute connectivity
+    #-------------------------------------------------------------------------------
+    fromnode_list[fromnode_list==0] = -9999
+    #Some NHDPlus v1 reaches have FLOWDIR='With Digitized' but no info in VAA table
+    
+    fromnode_list[divergence_list==2] = -9999
+    divergence_list = [] #don't need this anymore
+    #Virtually disconnect the upstream node of all minor divergences
+
+    next_down_id_list = np.zeros(number_of_features, dtype=np.int32)
+    for rivid_index, rivid in enumerate(rivid_list):
+        try:
+            next_down_id_list[rivid_index] = rivid_list[np.where(fromnode_list==tonode_list[rivid_index])[0][0]]
+        except IndexError:
+            next_down_id_list[rivid_index] = -1 #this is an outlet
+            pass
+    #determine the downstream reach for each reach
+        
+    #empty unecessary lists
+    fromnode_list = []
+    tonode_list = []
+    
+    StreamIDNextDownIDToConnectivity(rivid_list,
+                                     next_down_id_list,
+                                     out_csv_file)
+                                     
 def CreateSubsetFile(in_drainage_line,
                      in_stream_id, 
                      out_csv_file,

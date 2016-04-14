@@ -11,7 +11,7 @@
 import os
 
 from network import (CreateNetworkConnectivity, CreateNetworkConnectivityTauDEMTree,
-                     CreateSubsetFile)
+                     CreateNetworkConnectivityNHDPlus, CreateSubsetFile)
 from muskingum import (CreateMuskingumKfacFile, CreateMuskingumKFile, 
                        CreateConstMuskingumXFile)
 from weight import CreateWeightTableECMWF
@@ -30,6 +30,7 @@ def CreateAllStaticRAPIDFiles(in_drainage_line,
                               kfac_length_units="km",
                               lambda_k=0.35,
                               x_value=0.3,
+                              nhdplus=False,
                               taudem_network_connectivity_tree_file=None,
                               file_geodatabase=None
                              ):
@@ -38,15 +39,18 @@ def CreateAllStaticRAPIDFiles(in_drainage_line,
     """
     #RAPID connect file
     rapid_connect_file = os.path.join(rapid_output_folder, 'rapid_connect.csv')
-    if not taudem_network_connectivity_tree_file:
+    if nhdplus:
+        CreateNetworkConnectivityNHDPlus(taudem_network_connectivity_tree_file,
+                                         rapid_connect_file)
+    elif taudem_network_connectivity_tree_file:
+        CreateNetworkConnectivityTauDEMTree(taudem_network_connectivity_tree_file,
+                                            rapid_connect_file)
+    else:
         CreateNetworkConnectivity(in_drainage_line,
                                   river_id,
                                   next_down_river_id,
                                   rapid_connect_file,
                                   file_geodatabase)
-    else:
-        CreateNetworkConnectivityTauDEMTree(taudem_network_connectivity_tree_file,
-                                            rapid_connect_file)
         
     #river basin id file                          
     riv_bas_id_file = os.path.join(rapid_output_folder, 'riv_bas_id.csv')
@@ -137,6 +141,7 @@ def CreateAllStaticECMWFRAPIDFiles(in_drainage_line,
                                    kfac_length_units="km",
                                    lambda_k=0.35,
                                    x_value=0.3,
+                                   nhdplus=False,
                                    taudem_network_connectivity_tree_file=None,
                                    file_geodatabase=None
                                    ):
@@ -157,6 +162,7 @@ def CreateAllStaticECMWFRAPIDFiles(in_drainage_line,
                               kfac_length_units,
                               lambda_k,
                               x_value,
+                              nhdplus,
                               taudem_network_connectivity_tree_file,
                               file_geodatabase)
                         

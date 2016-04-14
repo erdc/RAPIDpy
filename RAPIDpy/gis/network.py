@@ -147,14 +147,14 @@ def CreateNetworkConnectivityNHDPlus(in_drainage_line,
         divergence_list[feature_idx] = catchment_feature.GetField(divergence_field)
 
     #-------------------------------------------------------------------------------
-    #Compute connectivity
+    #Compute connectivity (based on: https://github.com/c-h-david/rrr/blob/master/src/rrr_riv_tot_gen_all_nhdplus.py)
     #-------------------------------------------------------------------------------
     fromnode_list[fromnode_list==0] = -9999
     #Some NHDPlus v1 reaches have FLOWDIR='With Digitized' but no info in VAA table
     
     fromnode_list[divergence_list==2] = -9999
-    divergence_list = [] #don't need this anymore
     #Virtually disconnect the upstream node of all minor divergences
+    divergence_list = [] #don't need this anymore
 
     next_down_id_list = np.zeros(number_of_features, dtype=np.int32)
     for rivid_index, rivid in enumerate(rivid_list):

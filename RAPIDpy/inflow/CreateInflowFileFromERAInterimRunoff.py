@@ -165,7 +165,7 @@ class CreateInflowFileFromERAInterimRunoff(CreateInflowFileFromGriddedRunoff):
                     #A) ERA Interim High Res (T511) - data is incremental
                     #from time 3/6/9/12/15/18/21/24
                     ro_stream = data_goal * area_sqm_npoints
-                inflow_data[:,stream_index] = ro_stream.sum(axis = 1)
+                inflow_data[:,stream_index] = ro_stream.sum(axis=1)
                 pointer += npoints
                 
             #only one process is allowed to write at a time to netcdf file

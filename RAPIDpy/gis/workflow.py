@@ -40,8 +40,9 @@ def CreateAllStaticRAPIDFiles(in_drainage_line,
     #RAPID connect file
     rapid_connect_file = os.path.join(rapid_output_folder, 'rapid_connect.csv')
     if nhdplus:
-        CreateNetworkConnectivityNHDPlus(taudem_network_connectivity_tree_file,
-                                         rapid_connect_file)
+        CreateNetworkConnectivityNHDPlus(in_drainage_line,
+                                         rapid_connect_file,
+                                         file_geodatabase)
     elif taudem_network_connectivity_tree_file:
         CreateNetworkConnectivityTauDEMTree(taudem_network_connectivity_tree_file,
                                             rapid_connect_file)

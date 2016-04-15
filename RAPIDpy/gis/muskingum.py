@@ -104,8 +104,8 @@ def CreateMuskingumKfacFile(in_drainage_line,
                         #if still no slope, set to 0.001
                         stream_slope = 0.001
                 
-                    length_slope_array.append(stream_length/stream_slope**0.5)
-                    kfac2_array.append(stream_length/celerity)
+                length_slope_array.append(stream_length/stream_slope**0.5)
+                kfac2_array.append(stream_length/celerity)
             else:
                 kfac = stream_length/celerity
                 kfac_writer.writerow(kfac)

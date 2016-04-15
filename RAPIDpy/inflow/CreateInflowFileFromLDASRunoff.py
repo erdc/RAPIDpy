@@ -188,7 +188,7 @@ class CreateInflowFileFromLDASRunoff(CreateInflowFileFromGriddedRunoff):
                 else:
                     data_subset_subsurface_all = NUM.add(data_subset_subsurface_all, data_subset_subsurface_new)
 
-            if runoff_dimension_size == 3 and and len_time_subset_surface > 1:
+            if runoff_dimension_size == 3 and len_time_subset_surface > 1:
                 inflow_data = NUM.zeros((len_time_subset_subsurface, self.size_streamID))
             else:
                 inflow_data = NUM.zeros(self.size_streamID)

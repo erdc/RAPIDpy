@@ -122,7 +122,7 @@ def run_lsm_rapid_process(rapid_executable_location,
             ensemble_file_ending4 = "_{0}.nc4".format(ensemble)
         #get list of files
         lsm_file_list = []
-        for subdir, dirs, files in os.walk(lsm_data_location):
+        for subdir, dirs, files in os.walk(lsm_data_location, followlinks=True):
             for lsm_file in files:
                 if lsm_file.endswith(ensemble_file_ending) or lsm_file.endswith(ensemble_file_ending4):
                     lsm_file_list.append(os.path.join(subdir, lsm_file))

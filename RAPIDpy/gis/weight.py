@@ -145,23 +145,22 @@ def RTreeCreateWeightTable(lsm_grid_lat, lsm_grid_lon,
                 feat_geom.Transform(proj_transform)
             catchment_polygon = shapely_loads(feat_geom.ExportToWkb())                
             for sub_lsm_grid_pos in rtree_idx.intersection(catchment_polygon.bounds):
-                if sub_lsm_grid_pos != catchment_pos:
-                    if catchment_polygon.intersects(lsm_grid_feature_list[sub_lsm_grid_pos]['polygon']):
-                        intersect_poly = catchment_polygon.intersection(lsm_grid_feature_list[sub_lsm_grid_pos]['polygon'])
-                        if not area_id:
-                            #attempt to calculate AREA
-                            poly_area = get_poly_area_geo(intersect_poly)
-                        else:
-                            poly_area = float(catchment_polygon.GetFeature(area_id))*intersect_poly.area/catchment_polygon.area
-                            
-                        index_lsm_grid_lon = np.where(lsm_grid_lon == lsm_grid_feature_list[sub_lsm_grid_pos]['lon'])[0][0]
-                        index_lsm_grid_lat = np.where(lsm_grid_lat == lsm_grid_feature_list[sub_lsm_grid_pos]['lat'])[0][0]            
-                        intersect_grid_info_list.append({'rivid' : rapid_connect_rivid,
-                                                         'area' : poly_area,
-                                                         'lsm_grid_lat': lsm_grid_feature_list[sub_lsm_grid_pos]['lat'],
-                                                         'lsm_grid_lon': lsm_grid_feature_list[sub_lsm_grid_pos]['lon'],
-                                                         'index_lsm_grid_lon': index_lsm_grid_lon,
-                                                         'index_lsm_grid_lat': index_lsm_grid_lat})
+                if catchment_polygon.intersects(lsm_grid_feature_list[sub_lsm_grid_pos]['polygon']):
+                    intersect_poly = catchment_polygon.intersection(lsm_grid_feature_list[sub_lsm_grid_pos]['polygon'])
+                    if not area_id:
+                        #attempt to calculate AREA
+                        poly_area = get_poly_area_geo(intersect_poly)
+                    else:
+                        poly_area = float(catchment_polygon.GetFeature(area_id))*intersect_poly.area/catchment_polygon.area
+                        
+                    index_lsm_grid_lon = np.where(lsm_grid_lon == lsm_grid_feature_list[sub_lsm_grid_pos]['lon'])[0][0]
+                    index_lsm_grid_lat = np.where(lsm_grid_lat == lsm_grid_feature_list[sub_lsm_grid_pos]['lat'])[0][0]            
+                    intersect_grid_info_list.append({'rivid' : rapid_connect_rivid,
+                                                     'area' : poly_area,
+                                                     'lsm_grid_lat': lsm_grid_feature_list[sub_lsm_grid_pos]['lat'],
+                                                     'lsm_grid_lon': lsm_grid_feature_list[sub_lsm_grid_pos]['lon'],
+                                                     'index_lsm_grid_lon': index_lsm_grid_lon,
+                                                     'index_lsm_grid_lat': index_lsm_grid_lat})
             npoints = len(intersect_grid_info_list)
             for intersect_grid_info in intersect_grid_info_list:
                 connectwriter.writerow([intersect_grid_info['rivid'],

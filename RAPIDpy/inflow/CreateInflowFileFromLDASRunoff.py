@@ -167,15 +167,15 @@ class CreateInflowFileFromLDASRunoff(CreateInflowFileFromGriddedRunoff):
                     data_subset_subsurface_new = data_subset_subsurface_runoff[:,index_new]
                 
                 #FILTER DATA
-                #set negative values to zero
-                data_subset_surface_new[data_subset_surface_new<0] = 0
-                data_subset_subsurface_new[data_subset_subsurface_new<0] = 0
                 try:
                     #set masked values to zero
                     data_subset_surface_new = data_subset_surface_new.filled(fill_value=0)
                     data_subset_subsurface_new = data_subset_subsurface_new.filled(fill_value=0)
                 except AttributeError:
                     pass
+                #set negative values to zero
+                data_subset_surface_new[data_subset_surface_new<0] = 0
+                data_subset_subsurface_new[data_subset_subsurface_new<0] = 0
 
                 #combine data
                 if data_subset_surface_all is None:
@@ -214,7 +214,7 @@ class CreateInflowFileFromLDASRunoff(CreateInflowFileFromGriddedRunoff):
                     
                 ro_stream = NUM.add(data_goal_surface, data_goal_subsurface) * area_sqm_npoints * conversion_factor
                 #filter nan
-                ro_stream = ro_stream[~NUM.isnan(ro_stream)]
+                ro_stream[NUM.isnan(ro_stream)] = 0
                 
                 if ro_stream.any():
                     if runoff_dimension_size == 3 and len_time_subset_surface > 1:

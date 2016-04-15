@@ -48,7 +48,7 @@ class CreateInflowFileFromGriddedRunoff(object):
                        self.dict_list[self.header_wt[i]].append(row[i])
                     self.count += 1
 
-        self.size_streamID = len(set(self.dict_list[self.header_wt[0]]))
+        self.size_streamID = len(np.unique(np.array(self.dict_list[self.header_wt[0]], dtype=np.int32)))
         
     def _write_lat_lon(self, data_out_nc, rivid_lat_lon_z_file):
         """Add latitude and longitude each netCDF feature
@@ -114,7 +114,7 @@ class CreateInflowFileFromGriddedRunoff(object):
                                  start_datetime_utc,
                                  number_of_timesteps,
                                  simulation_time_step_seconds,
-                                 in_riv_bas_id_file,
+                                 in_rapid_connect_file,
                                  in_rivid_lat_lon_z_file,
                                  land_surface_model_description,
                                  modeling_institution
@@ -126,7 +126,7 @@ class CreateInflowFileFromGriddedRunoff(object):
         # Create output inflow netcdf data
         print("Generating inflow file ...")
         data_out_nc = NET.Dataset(out_nc, "w", format="NETCDF3_CLASSIC")
-        rivid_list = get_rivid_list_from_file(in_riv_bas_id_file)
+        rivid_list = get_rivid_list_from_file(in_rapid_connect_file)
         #create dimensions
         data_out_nc.createDimension('time', number_of_timesteps)
         data_out_nc.createDimension('rivid', len(rivid_list))

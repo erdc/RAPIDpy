@@ -229,7 +229,7 @@ class CreateInflowFileFromLDASRunoff(CreateInflowFileFromGriddedRunoff):
             #only one process is allowed to write at a time to netcdf file
             mp_lock.acquire()
             data_out_nc = NET.Dataset(out_nc, "a", format = "NETCDF3_CLASSIC")
-            if runoff_dimension_size == 3:
+            if runoff_dimension_size == 3 and len_time_subset_surface > 1:
                 data_out_nc.variables['m3_riv'][index*len_time_subset_subsurface:(index+1)*len_time_subset_subsurface,:] = inflow_data
             else:
                 data_out_nc.variables['m3_riv'][index] = inflow_data

@@ -48,7 +48,10 @@ def CreateMuskingumKfacFile(in_drainage_line,
     for feature_idx, drainage_line_feature in enumerate(ogr_drainage_line_shapefile_lyr):
         river_id_list[feature_idx] = drainage_line_feature.GetField(stream_id)
         length_list[feature_idx] = drainage_line_feature.GetField(length_id)
-        slope_list[feature_idx] = drainage_line_feature.GetField(slope_id)
+        try:
+            slope_list[feature_idx] = drainage_line_feature.GetField(slope_id)
+        except TypeError:
+            pass
 
     if length_units == "m":
         length_list = length_list/1000.0

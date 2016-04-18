@@ -21,11 +21,16 @@ class CreateInflowFileFromLDASRunoff(CreateInflowFileFromGriddedRunoff):
                        surface_runoff_var, #"Qs_GDS0_SFC_ave1h",
                        subsurface_runoff_var, #"Qsb_GDS0_SFC_ave1h",
                        time_step_seconds, #=3*3600
+                       snowmelt_runoff_var=""
                        ):
         """Define the attributes to look for"""
         self.header_wt = ['rivid', 'area_sqm', 'lon_index', 'lat_index', 'npoints']
         self.dims_oi = [lon_dim, lat_dim]
         self.vars_oi = [lon_var, lat_var, surface_runoff_var, subsurface_runoff_var]
+        
+        if snowmelt_runoff_var:
+            self.vars_oi += [snowmelt_runoff_var]
+            
         self.length_time = {"Hourly": 1}
         self.time_step_seconds = time_step_seconds
         self.errorMessages = ["Missing Variable 'time'",
@@ -92,8 +97,7 @@ class CreateInflowFileFromLDASRunoff(CreateInflowFileFromGriddedRunoff):
             else:
                 nc_file_array = nc_file_array
                 
-            data_subset_surface_all = None
-            data_subset_subsurface_all = None
+            data_subset_all = None
 
             for nc_file in nc_file_array:
                 # Validate the netcdf dataset
@@ -108,35 +112,35 @@ class CreateInflowFileFromLDASRunoff(CreateInflowFileFromGriddedRunoff):
                 print("Calculating water inflows for {0} {1} ...".format(os.path.basename(nc_file) , grid_type))
                 runoff_dimension_size = len(data_in_nc.variables[self.vars_oi[2]].dimensions)
                 if runoff_dimension_size == 2:
-                    data_subset_surface_runoff = data_in_nc.variables[self.vars_oi[2]][min_lat_ind_all:max_lat_ind_all+1, min_lon_ind_all:max_lon_ind_all+1]
-                    data_subset_subsurface_runoff = data_in_nc.variables[self.vars_oi[3]][min_lat_ind_all:max_lat_ind_all+1, min_lon_ind_all:max_lon_ind_all+1]
-                    #check surface runoff dims
-                    len_time_subset_surface = 1
-                    len_lat_subset_surface = data_subset_surface_runoff.shape[0]
-                    len_lon_subset_surface = data_subset_surface_runoff.shape[1]
-                    #check subsurface runoff dims
-                    len_time_subset_subsurface = 1
-                    len_lat_subset_subsurface = data_subset_subsurface_runoff.shape[0]
-                    len_lon_subset_subsurface = data_subset_subsurface_runoff.shape[1]
+                    #obtain subset of surface and subsurface runoff
+                    data_subset_runoff = data_in_nc.variables[self.vars_oi[2]][min_lat_ind_all:max_lat_ind_all+1, min_lon_ind_all:max_lon_ind_all+1] + \
+                                         data_in_nc.variables[self.vars_oi[3]][min_lat_ind_all:max_lat_ind_all+1, min_lon_ind_all:max_lon_ind_all+1]
+                                         
+                    #add snowmelt if applicable
+                    if len(self.vars_oi) == 5:
+                        data_subset_runoff += data_in_nc.variables[self.vars_oi[4]][min_lat_ind_all:max_lat_ind_all+1, min_lon_ind_all:max_lon_ind_all+1]
+                    
+                    #get runoff dims
+                    len_time_subset = 1
+                    len_lat_subset = data_subset_runoff.shape[0]
+                    len_lon_subset = data_subset_runoff.shape[1]
 
                     #reshape the runoff
-                    data_subset_surface_runoff = data_subset_surface_runoff.reshape(len_lat_subset_surface * len_lon_subset_surface)
-                    data_subset_subsurface_runoff = data_subset_subsurface_runoff.reshape(len_lat_subset_subsurface * len_lon_subset_subsurface)
+                    data_subset_runoff = data_subset_runoff.reshape(len_lat_subset * len_lon_subset)
 
                 elif runoff_dimension_size == 3:
-                    data_subset_surface_runoff = data_in_nc.variables[self.vars_oi[2]][:, min_lat_ind_all:max_lat_ind_all+1, min_lon_ind_all:max_lon_ind_all+1]
-                    data_subset_subsurface_runoff = data_in_nc.variables[self.vars_oi[3]][:, min_lat_ind_all:max_lat_ind_all+1, min_lon_ind_all:max_lon_ind_all+1]
-                    #check surface runoff dims
-                    len_time_subset_surface = data_subset_surface_runoff.shape[0]
-                    len_lat_subset_surface = data_subset_surface_runoff.shape[1]
-                    len_lon_subset_surface = data_subset_surface_runoff.shape[2]
-                    #check subsurface runoff dims
-                    len_time_subset_subsurface = data_subset_subsurface_runoff.shape[0]
-                    len_lat_subset_subsurface = data_subset_subsurface_runoff.shape[1]
-                    len_lon_subset_subsurface = data_subset_subsurface_runoff.shape[2]
+                    #obtain subset of surface and subsurface runoff
+                    data_subset_runoff = data_in_nc.variables[self.vars_oi[2]][:, min_lat_ind_all:max_lat_ind_all+1, min_lon_ind_all:max_lon_ind_all+1] + \
+                                         data_in_nc.variables[self.vars_oi[3]][:, min_lat_ind_all:max_lat_ind_all+1, min_lon_ind_all:max_lon_ind_all+1]
+                    #add snowmelt if applicable
+                    if len(self.vars_oi) == 5:
+                        data_subset_runoff += data_in_nc.variables[self.vars_oi[4]][:, min_lat_ind_all:max_lat_ind_all+1, min_lon_ind_all:max_lon_ind_all+1]
+                    #get runoff dims
+                    len_time_subset = data_subset_runoff.shape[0]
+                    len_lat_subset = data_subset_runoff.shape[1]
+                    len_lon_subset = data_subset_runoff.shape[2]
                     #reshape the runoff
-                    data_subset_surface_runoff = data_subset_surface_runoff.reshape(len_time_subset_surface, (len_lat_subset_surface * len_lon_subset_surface))
-                    data_subset_subsurface_runoff = data_subset_subsurface_runoff.reshape(len_time_subset_subsurface, (len_lat_subset_subsurface * len_lon_subset_subsurface))
+                    data_subset_runoff = data_subset_runoff.reshape(len_time_subset, (len_lat_subset * len_lon_subset))
 
                 if conversion_factor == None: 
                     #get conversion_factor
@@ -156,40 +160,31 @@ class CreateInflowFileFromLDASRunoff(CreateInflowFileFromGriddedRunoff):
                     for r in range(0,self.count-1):
                         ind_lat_orig = lat_ind_all[r]
                         ind_lon_orig = lon_ind_all[r]
-                        index_new.append((ind_lat_orig - min_lat_ind_all)*len_lon_subset_surface + (ind_lon_orig - min_lon_ind_all))
+                        index_new.append((ind_lat_orig - min_lat_ind_all)*len_lon_subset + (ind_lon_orig - min_lon_ind_all))
 
                 #obtain a new subset of data
                 if runoff_dimension_size == 2:
-                    data_subset_surface_new = data_subset_surface_runoff[index_new]
-                    data_subset_subsurface_new = data_subset_subsurface_runoff[index_new]
+                    data_subset_new = data_subset_runoff[index_new]
                 elif runoff_dimension_size == 3:
-                    data_subset_surface_new = data_subset_surface_runoff[:,index_new]
-                    data_subset_subsurface_new = data_subset_subsurface_runoff[:,index_new]
+                    data_subset_new = data_subset_runoff[:, index_new]
                 
                 #FILTER DATA
                 try:
                     #set masked values to zero
-                    data_subset_surface_new = data_subset_surface_new.filled(fill_value=0)
-                    data_subset_subsurface_new = data_subset_subsurface_new.filled(fill_value=0)
+                    data_subset_new = data_subset_new.filled(fill_value=0)
                 except AttributeError:
                     pass
                 #set negative values to zero
-                data_subset_surface_new[data_subset_surface_new<0] = 0
-                data_subset_subsurface_new[data_subset_subsurface_new<0] = 0
+                data_subset_new[data_subset_new<0] = 0
 
                 #combine data
-                if data_subset_surface_all is None:
-                    data_subset_surface_all = data_subset_surface_new
+                if data_subset_all is None:
+                    data_subset_all = data_subset_new
                 else:
-                    data_subset_surface_all = NUM.add(data_subset_surface_all, data_subset_surface_new)
+                    data_subset_all = NUM.add(data_subset_all, data_subset_new)
                     
-                if data_subset_subsurface_all is None:
-                    data_subset_subsurface_all = data_subset_subsurface_new
-                else:
-                    data_subset_subsurface_all = NUM.add(data_subset_subsurface_all, data_subset_subsurface_new)
-
-            if runoff_dimension_size == 3 and len_time_subset_surface > 1:
-                inflow_data = NUM.zeros((len_time_subset_subsurface, self.size_streamID))
+            if runoff_dimension_size == 3 and len_time_subset > 1:
+                inflow_data = NUM.zeros((len_time_subset, self.size_streamID))
             else:
                 inflow_data = NUM.zeros(self.size_streamID)
             
@@ -206,18 +201,16 @@ class CreateInflowFileFromLDASRunoff(CreateInflowFileFromGriddedRunoff):
 
                 #assume data is incremental
                 if runoff_dimension_size == 3:
-                    data_goal_surface = data_subset_surface_all[:, pointer:(pointer + npoints)]
-                    data_goal_subsurface = data_subset_subsurface_all[:, pointer:(pointer + npoints)]
+                    data_goal = data_subset_all[:, pointer:(pointer + npoints)]
                 else:
-                    data_goal_surface = data_subset_surface_all[pointer:(pointer + npoints)]
-                    data_goal_subsurface = data_subset_subsurface_all[pointer:(pointer + npoints)]
+                    data_goal = data_subset_all[pointer:(pointer + npoints)]
                     
-                ro_stream = NUM.add(data_goal_surface, data_goal_subsurface) * area_sqm_npoints * conversion_factor
+                ro_stream = data_goal * area_sqm_npoints * conversion_factor
                 #filter nan
                 ro_stream[NUM.isnan(ro_stream)] = 0
                 
                 if ro_stream.any():
-                    if runoff_dimension_size == 3 and len_time_subset_surface > 1:
+                    if runoff_dimension_size == 3 and len_time_subset > 1:
                         inflow_data[:,stream_index] = ro_stream.sum(axis=1)
                     else:
                         inflow_data[stream_index] = ro_stream.sum()
@@ -226,8 +219,8 @@ class CreateInflowFileFromLDASRunoff(CreateInflowFileFromGriddedRunoff):
             #only one process is allowed to write at a time to netcdf file
             mp_lock.acquire()
             data_out_nc = NET.Dataset(out_nc, "a", format = "NETCDF3_CLASSIC")
-            if runoff_dimension_size == 3 and len_time_subset_surface > 1:
-                data_out_nc.variables['m3_riv'][index*len_time_subset_subsurface:(index+1)*len_time_subset_subsurface,:] = inflow_data
+            if runoff_dimension_size == 3 and len_time_subset > 1:
+                data_out_nc.variables['m3_riv'][index*len_time_subset:(index+1)*len_time_subset,:] = inflow_data
             else:
                 data_out_nc.variables['m3_riv'][index] = inflow_data
             data_out_nc.close()

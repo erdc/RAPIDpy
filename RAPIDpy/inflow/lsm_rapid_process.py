@@ -377,7 +377,8 @@ def run_lsm_rapid_process(rapid_executable_location,
                                                                longitude_var,
                                                                surface_runoff_var,
                                                                subsurface_runoff_var,
-                                                               time_step)
+                                                               time_step,
+                                                               snowmelt_runoff_var)
 
         elif institution == "Met Office, UK":
             print("Runoff file identified as Joules GRID")

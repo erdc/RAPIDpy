@@ -118,7 +118,8 @@ class CreateInflowFileFromLDASRunoff(CreateInflowFileFromGriddedRunoff):
                                          
                     #add snowmelt if applicable
                     if len(self.vars_oi) == 5:
-                        data_subset_runoff += data_in_nc.variables[self.vars_oi[4]][min_lat_ind_all:max_lat_ind_all+1, min_lon_ind_all:max_lon_ind_all+1]
+                        #multiply by 0.1 for assumed infiltration
+                        data_subset_runoff += 0.1 * data_in_nc.variables[self.vars_oi[4]][min_lat_ind_all:max_lat_ind_all+1, min_lon_ind_all:max_lon_ind_all+1]
                     
                     #get runoff dims
                     len_time_subset = 1

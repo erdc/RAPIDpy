@@ -10,12 +10,12 @@
 
 import os
 
-from network import (CreateNetworkConnectivity, CreateNetworkConnectivityTauDEMTree,
-                     CreateNetworkConnectivityNHDPlus, CreateSubsetFile)
-from muskingum import (CreateMuskingumKfacFile, CreateMuskingumKFile, 
-                       CreateConstMuskingumXFile)
-from weight import CreateWeightTableECMWF
-from centroid import FlowlineToPoint
+from .network import (CreateNetworkConnectivity, CreateNetworkConnectivityTauDEMTree,
+                      CreateNetworkConnectivityNHDPlus, CreateSubsetFile)
+from .muskingum import (CreateMuskingumKfacFile, CreateMuskingumKFile, 
+                        CreateConstMuskingumXFile)
+from .weight import CreateWeightTableECMWF
+from .centroid import FlowlineToPoint
 
 def CreateAllStaticRAPIDFiles(in_drainage_line,
                               river_id,

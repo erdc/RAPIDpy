@@ -36,7 +36,7 @@ def test_run_era_interim_inflow():
     """
     Checks generating inflow file from ERA Interim LSM
     """
-    print "TEST 1: TEST GENERATE INFLOW FILE FROM ERA INTERIM DATA"
+    print("TEST 1: TEST GENERATE INFLOW FILE FROM ERA INTERIM DATA")
     run_lsm_rapid_process(
         rapid_executable_location=RAPID_EXE_PATH,
         rapid_io_files_location=MAIN_TESTS_FOLDER,
@@ -102,7 +102,7 @@ def test_run_nldas2_inflow():
     """
     Checks generating inflow file from NLDAS V2 LSM
     """
-    print "TEST 1: TEST GENERATE INFLOW FILE FROM NLDAS V2 DATA"
+    print("TEST 1: TEST GENERATE INFLOW FILE FROM NLDAS V2 DATA")
     run_lsm_rapid_process(
         rapid_executable_location=RAPID_EXE_PATH,
         rapid_io_files_location=MAIN_TESTS_FOLDER,

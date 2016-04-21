@@ -10,6 +10,12 @@
 import os
 import re
 
+#in Python 3 xrange is now range
+try:
+    xrange
+except NameError:
+    xrange = range
+    pass
 #----------------------------------------------------------------------------------------
 # HELPER FUNCTIONS
 #----------------------------------------------------------------------------------------
@@ -32,7 +38,7 @@ def partition(lst, n):
     q, r = divmod(len(lst), n)
     indices = [q*i + min(i,r) for i in xrange(n+1)]
     return [lst[indices[i]:indices[i+1]] for i in xrange(n)], \
-           [range(indices[i],indices[i+1]) for i in xrange(n)]
+           [list(xrange(indices[i],indices[i+1])) for i in xrange(n)]
 
 def get_valid_watershed_list(input_directory):
     """

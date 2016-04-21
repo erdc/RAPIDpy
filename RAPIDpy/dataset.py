@@ -15,6 +15,12 @@ from numpy.ma import masked
 from pytz import utc
 import time
 
+#in Python 3 xrange is now range
+try:
+    xrange
+except NameError:
+    xrange = range
+    pass
 #------------------------------------------------------------------------------
 #Main Dataset Manager Class
 #------------------------------------------------------------------------------

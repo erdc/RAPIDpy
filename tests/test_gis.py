@@ -28,7 +28,7 @@ def test_gen_static_rapid_input():
     """
     Checks generating static RAPID input
     """
-    print "TEST 1: TEST GENERATE STATIC RAPID INPUT DATA"
+    print("TEST 1: TEST GENERATE STATIC RAPID INPUT DATA")
     CreateAllStaticECMWFRAPIDFiles(in_drainage_line=os.path.join(INPUT_DATA_PATH, 'flowline.shp'),
                                    river_id="COMID",
                                    length_id="LENGTHKM",
@@ -127,7 +127,7 @@ def test_gen_static_nhd_connect_rapid_input():
     """
     Checks generating static NHDPlus connect RAPID input
     """
-    print "TEST 1: TEST GENERATE STATIC NHDPlus CONNECT RAPID INPUT DATA"
+    print("TEST 1: TEST GENERATE STATIC NHDPlus CONNECT RAPID INPUT DATA")
     generated_rapid_connect_file = os.path.join(OUTPUT_DATA_PATH, 
                                                 "rapid_connect_nhd.csv")
     CreateNetworkConnectivityNHDPlus(in_drainage_line=os.path.join(INPUT_DATA_PATH, 'flowline.shp'),

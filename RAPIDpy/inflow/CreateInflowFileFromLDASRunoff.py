@@ -11,7 +11,14 @@ import netCDF4 as NET
 import numpy as NUM
 import os
 
-from CreateInflowFileFromGriddedRunoff import CreateInflowFileFromGriddedRunoff
+from .CreateInflowFileFromGriddedRunoff import CreateInflowFileFromGriddedRunoff
+
+#in Python 3 xrange is now range
+try:
+    xrange
+except NameError:
+    xrange = range
+    pass
 
 class CreateInflowFileFromLDASRunoff(CreateInflowFileFromGriddedRunoff):
     def __init__(self, lat_dim, #"g0_lat_0", 
@@ -52,7 +59,6 @@ class CreateInflowFileFromLDASRunoff(CreateInflowFileFromGriddedRunoff):
 
         for var in self.vars_oi:
             if var not in data_nc.variables.keys():
-                print var
                 data_nc.close()
                 raise Exception(self.errorMessages[2])
 
@@ -75,8 +81,8 @@ class CreateInflowFileFromLDASRunoff(CreateInflowFileFromGriddedRunoff):
         self.readInWeightTable(in_weight_table)
 
         #get indices of subset of data
-        lon_ind_all = [long(i) for i in self.dict_list[self.header_wt[2]]]
-        lat_ind_all = [long(j) for j in self.dict_list[self.header_wt[3]]]
+        lon_ind_all = [int(i) for i in self.dict_list[self.header_wt[2]]]
+        lat_ind_all = [int(j) for j in self.dict_list[self.header_wt[3]]]
 
         # Obtain a subset of  runoff data based on the indices in the weight table
         min_lon_ind_all = min(lon_ind_all)

@@ -39,7 +39,7 @@ def test_generate_rapid_input_file():
     """
     Checks RAPID input file generation with valid input
     """
-    print "TEST 1: GENERATE NAMELIST FILE"
+    print("TEST 1: GENERATE NAMELIST FILE")
     rapid_manager = RAPID(rapid_executable_location="",
                           use_all_processors=True,                          
                           ZS_TauR = 24*3600, #duration of routing procedure (time step of runoff data)
@@ -69,7 +69,7 @@ def test_update_rapid_input_file():
     """
     Checks RAPID input file update with valid input
     """
-    print "TEST 2: UPDATE NAMELIST FILE"
+    print("TEST 2: UPDATE NAMELIST FILE")
     rapid_manager = RAPID(rapid_executable_location="",
                           use_all_processors=True,                          
                          )
@@ -101,7 +101,7 @@ def test_update_rapid_invalid_input_file():
     """
     Checks RAPID input file update with valid input
     """
-    print "TEST 3: UPDATE WITH INVALID NAMELIST FILE"
+    print("TEST 3: UPDATE WITH INVALID NAMELIST FILE")
     rapid_manager = RAPID(rapid_executable_location="",
                           use_all_processors=True,                          
                          )
@@ -133,7 +133,7 @@ def test_update_rapid_numbers_input_file():
     """
     Checks RAPID input file update with number validation
     """
-    print "TEST 4: GENERATE NUMBERS FOR NAMELIST FILE"
+    print("TEST 4: GENERATE NUMBERS FOR NAMELIST FILE")
     rapid_manager = RAPID(rapid_executable_location="",
                           use_all_processors=True,
                           rapid_connect_file=os.path.join(INPUT_DATA_PATH, 'rapid_connect.csv'),
@@ -166,7 +166,7 @@ def test_update_rapid_runtime():
     """
     Checks RAPID input file update with number validation
     """
-    print "TEST 5: GENERATE RUNTIME FOR NAMELIST FILE"
+    print("TEST 5: GENERATE RUNTIME FOR NAMELIST FILE")
     rapid_manager = RAPID(rapid_executable_location="",
                           use_all_processors=True,
                           rapid_connect_file=os.path.join(INPUT_DATA_PATH, 'rapid_connect.csv'),
@@ -204,7 +204,7 @@ def test_qout_same():
     """
     Test function to compare RAPID simulation Qout
     """
-    print "TEST 6: TEST COMPARE RAPID QOUT"
+    print("TEST 6: TEST COMPARE RAPID QOUT")
     input_qout_file = os.path.join(COMPARE_DATA_PATH, 'Qout_nasa_lis_3hr_20020830.nc')
     input_qout_file_cf = os.path.join(COMPARE_DATA_PATH, 'Qout_nasa_lis_3hr_20020830_CF.nc')
    
@@ -215,7 +215,7 @@ def test_run_rapid_simulation():
     Test Running RAPID Simulation
     """
     
-    print "TEST 7: TEST RUNNING RAPID SIMULATION"
+    print("TEST 7: TEST RUNNING RAPID SIMULATION")
     rapid_executable_location = os.path.join(MAIN_TESTS_FOLDER,
                                              "..", "..",
                                              "rapid", "src", "rapid")
@@ -261,7 +261,7 @@ def test_convert_file_to_be_cf_compliant_new_format_comid_lat_lon_z():
     """
     Test Convert RAPID Output to be CF Compliant for new format with COMID_LAT_LON_Z
     """
-    print "TEST 8: TEST CONVERT RAPID OUTPUT TO CF COMPLIANT (COMID_LAT_LON_Z)"
+    print("TEST 8: TEST CONVERT RAPID OUTPUT TO CF COMPLIANT (COMID_LAT_LON_Z)")
 
     input_qout_file = os.path.join(COMPARE_DATA_PATH, 'Qout_nasa_lis_3hr_20020830.nc')
     temp_qout_file = os.path.join(OUTPUT_DATA_PATH, 'Qout_nasa_lis_3hr_20020830_test_cf_lat_lon_z.nc')
@@ -300,7 +300,7 @@ def test_convert_file_to_be_cf_compliant_new_format():
     """
     Test Convert RAPID Output to be CF Compliant for new format without COMID_LAT_LON_Z
     """
-    print "TEST 9: TEST CONVERT RAPID OUTPUT TO CF COMPLIANT (NO COMID_LAT_LON_Z)"
+    print("TEST 9: TEST CONVERT RAPID OUTPUT TO CF COMPLIANT (NO COMID_LAT_LON_Z)")
 
     input_qout_file = os.path.join(COMPARE_DATA_PATH, 'Qout_nasa_lis_3hr_20020830.nc')
     temp_qout_file = os.path.join(OUTPUT_DATA_PATH, 'Qout_nasa_lis_3hr_20020830_test_cf.nc')
@@ -337,7 +337,7 @@ def test_convert_file_to_be_cf_compliant_original_format():
     """
     Test Convert RAPID Output to be CF Compliant for original format
     """
-    print "TEST 10: TEST CONVERT RAPID OUTPUT TO CF COMPLIANT - ORIGINAL (COMID_LAT_LON_Z)"
+    print("TEST 10: TEST CONVERT RAPID OUTPUT TO CF COMPLIANT - ORIGINAL (COMID_LAT_LON_Z)")
 
     input_qout_file = os.path.join(COMPARE_DATA_PATH, 'Qout_nasa_lis_3hr_20020830_original.nc')
     temp_qout_file = os.path.join(OUTPUT_DATA_PATH, 'Qout_nasa_lis_3hr_20020830_original_test_cf.nc')
@@ -376,7 +376,7 @@ def test_generate_qinit_file():
     """
     This tests the qinit file function to create an input qinit file for RAPID
     """
-    print "TEST 11: TEST GENERATE QINIT FILE"
+    print("TEST 11: TEST GENERATE QINIT FILE")
     rapid_manager = RAPID(rapid_executable_location="",
                           rapid_connect_file=os.path.join(INPUT_DATA_PATH, 'rapid_connect.csv')
                          )
@@ -417,7 +417,7 @@ def test_download_usgs_daily_avg():
     """
     This tests downloading USGS daily avg data
     """
-    print "TEST 12: TEST DOWNLOAD USGS DAILY AVERAGE DATA"
+    print("TEST 12: TEST DOWNLOAD USGS DAILY AVERAGE DATA")
 
     out_streamflow_file=os.path.join(OUTPUT_DATA_PATH,"gage_streamflow.csv")
     out_stream_id_file=os.path.join(OUTPUT_DATA_PATH,"gage_rivid.csv")
@@ -442,7 +442,7 @@ def test_extract_timeseries():
     """
     This tests extracting a timeseries from RAPID Qout file
     """
-    print "TEST 13: TEST EXTRACT TIMESERIES FROM QINIT FILE"
+    print("TEST 13: TEST EXTRACT TIMESERIES FROM QINIT FILE")
     
     #for writing entire time series to file from new rapid output
     input_qout_file = os.path.join(COMPARE_DATA_PATH, 'Qout_nasa_lis_3hr_20020830.nc')
@@ -511,7 +511,7 @@ def test_goodness_of_fit():
     """
     This tests the goodness of fit functions
     """
-    print "TEST 14: TEST GOODNESS OF FIT FUNCTIONS"
+    print("TEST 14: TEST GOODNESS OF FIT FUNCTIONS")
 
     reach_id_file = os.path.join(INPUT_DATA_PATH, 'obs_reach_id.csv') 
     observed_file = os.path.join(INPUT_DATA_PATH, 'obs_flow.csv') 
@@ -548,7 +548,7 @@ def test_cf_merge():
     """
     This tests merging two qout files
     """
-    print "TEST 15: TEST MERGE QOUT"
+    print("TEST 15: TEST MERGE QOUT")
 
     orig_qout_1 = os.path.join(INPUT_DATA_PATH, 'Qout_merge_3hr.nc')
     orig_qout_2 = os.path.join(INPUT_DATA_PATH, 'Qout_merge_6hr.nc')

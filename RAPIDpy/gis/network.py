@@ -16,6 +16,15 @@ try:
 except Exception:
     raise Exception("You need the gdal python package to run this tool ...")
 
+#local
+from ..helper_functions import open_csv
+
+#in Python 3 xrange is now range
+try:
+    xrange
+except NameError:
+    xrange = range
+    pass
 
 def StreamIDNextDownIDToConnectivity(stream_id_array,
                                      next_down_id_array,
@@ -41,7 +50,7 @@ def StreamIDNextDownIDToConnectivity(stream_id_array,
         # append the list of Stream HydroID, NextDownID, Count of Upstream ID, and  HydroID of each Upstream into a larger list
         list_all.append(np.concatenate([np.array([hydroid,nextDownID,count_upstream]),list_upstreamID]).astype(int))
 
-    with open(out_csv_file,'wb') as csvfile:
+    with open_csv(out_csv_file,'w') as csvfile:
         connectwriter = csv_writer(csvfile)
         for row_list in list_all:
             out = np.concatenate([row_list, np.array([0 for i in xrange(max_count_upstream - row_list[2])])])
@@ -85,7 +94,7 @@ def CreateNetworkConnectivityTauDEMTree(network_connectivity_tree_file,
     """    
     stream_id_array = []
     next_down_id_array = []
-    with open(network_connectivity_tree_file, "rb") as csvfile:
+    with open_csv(network_connectivity_tree_file, "r") as csvfile:
         for row in csvfile:
             split_row = row.split()
             stream_id_array.append(split_row[0].strip()) #link number
@@ -223,7 +232,7 @@ def CreateSubsetFile(in_drainage_line,
         hydroid_list = np.sort(hydroid_list)
           
 
-    with open(out_csv_file,'wb') as csvfile:
+    with open_csv(out_csv_file,'w') as csvfile:
         connectwriter = csv_writer(csvfile)
         for hydroid in hydroid_list:
             connectwriter.writerow([hydroid])

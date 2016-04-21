@@ -14,6 +14,9 @@ try:
 except Exception:
     raise Exception("You need the gdal python package to run this tool ...")
 
+#local
+from ..helper_functions import open_csv
+
 def FlowlineToPoint(in_drainage_line,
                     river_id,
                     out_csv_file,
@@ -37,7 +40,7 @@ def FlowlineToPoint(in_drainage_line,
         proj_transform = osr.CoordinateTransformation(ogr_drainage_line_shapefile_lyr_proj, osr_geographic_proj)
 
     #print valid field names to table
-    with open(out_csv_file, 'wb') as outfile:
+    with open_csv(out_csv_file, 'w') as outfile:
         writer = csv_writer(outfile)
         writer.writerow(['rivid','lat','lon','z'])
         for feature in ogr_drainage_line_shapefile_lyr:

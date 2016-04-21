@@ -10,8 +10,16 @@
 import netCDF4 as NET
 import numpy as NUM
 import os
+from sys import version_info
 
-from CreateInflowFileFromGriddedRunoff import CreateInflowFileFromGriddedRunoff
+from .CreateInflowFileFromGriddedRunoff import CreateInflowFileFromGriddedRunoff
+
+#in Python 3 xrange is now range
+try:
+    xrange
+except NameError:
+    xrange = range
+    pass
 
 class CreateInflowFileFromERAInterimRunoff(CreateInflowFileFromGriddedRunoff):
     def __init__(self):
@@ -39,17 +47,27 @@ class CreateInflowFileFromERAInterimRunoff(CreateInflowFileFromGriddedRunoff):
 
         data_nc = NET.Dataset(in_nc)
         
-        dims = data_nc.dimensions.keys()
+        dims = data_nc.dimensions
+        if version_info[0] == 2:  #Python 2
+            dims = dims.keys()
+        if version_info[0] == 3:  #Python 3
+            dims = list(dims)
+            
         if dims not in self.dims_oi:
-            raise Exception(self.errorMessages[1])
+            raise Exception("{0} {1}".format(self.errorMessages[1],dims))
 
-        vars = data_nc.variables.keys()
+        vars = data_nc.variables
+        if version_info[0] == 2:  #Python 2
+            vars = vars.keys()
+        if version_info[0] == 3:  #Python 3
+            vars = list(vars)
+            
         if vars == self.vars_oi[0]:
             vars_oi_index = 0
         elif vars == self.vars_oi[1]:
             vars_oi_index = 1
         else:    
-            raise Exception(self.errorMessages[2])
+            raise Exception("{0} {1}".format(self.errorMessages[2],vars))
 
         return vars_oi_index
 
@@ -84,8 +102,8 @@ class CreateInflowFileFromERAInterimRunoff(CreateInflowFileFromGriddedRunoff):
         
         self.readInWeightTable(in_weight_table)
         
-        lon_ind_all = [long(i) for i in self.dict_list[self.header_wt[2]]]
-        lat_ind_all = [long(j) for j in self.dict_list[self.header_wt[3]]]
+        lon_ind_all = [int(i) for i in self.dict_list[self.header_wt[2]]]
+        lat_ind_all = [int(j) for j in self.dict_list[self.header_wt[3]]]
 
         # Obtain a subset of  runoff data based on the indices in the weight table
         min_lon_ind_all = min(lon_ind_all)
@@ -129,7 +147,7 @@ class CreateInflowFileFromERAInterimRunoff(CreateInflowFileFromGriddedRunoff):
 
             # compute new indices based on the data_subset_all
             if not index_new:
-                for r in range(0,self.count-1):
+                for r in xrange(self.count-1):
                     ind_lat_orig = lat_ind_all[r]
                     ind_lon_orig = lon_ind_all[r]
                     index_new.append((ind_lat_orig - min_lat_ind_all)*len_lon_subset_all + (ind_lon_orig - min_lon_ind_all))
@@ -160,17 +178,17 @@ class CreateInflowFileFromERAInterimRunoff(CreateInflowFileFromGriddedRunoff):
                     ro_first_half = NUM.concatenate([data_goal[0:1,], NUM.subtract(data_goal[1:4,], data_goal[0:3,])])
                     #from time 15/18/21/24 (time restarts at time 12, assumed to be zero)
                     ro_second_half = NUM.concatenate([data_goal[4:5,], NUM.subtract(data_goal[5:,], data_goal[4:7,])])
-                    ro_stream = NUM.concatenate([ro_first_half, ro_second_half]) * area_sqm_npoints
+                    ro_stream = NUM.multiply(NUM.concatenate([ro_first_half, ro_second_half]), area_sqm_npoints)
                 else:
                     #A) ERA Interim High Res (T511) - data is incremental
                     #from time 3/6/9/12/15/18/21/24
-                    ro_stream = data_goal * area_sqm_npoints
+                    ro_stream = NUM.multiply(data_goal, area_sqm_npoints)
                 inflow_data[:,stream_index] = ro_stream.sum(axis=1)
                 pointer += npoints
                 
             #only one process is allowed to write at a time to netcdf file
             mp_lock.acquire()
-            data_out_nc = NET.Dataset(out_nc, "a", format = "NETCDF3_CLASSIC")
+            data_out_nc = NET.Dataset(out_nc, "a", format="NETCDF3_CLASSIC")
             data_out_nc.variables['m3_riv'][index*size_time:(index+1)*size_time,:] = inflow_data
             data_out_nc.close()
             mp_lock.release()

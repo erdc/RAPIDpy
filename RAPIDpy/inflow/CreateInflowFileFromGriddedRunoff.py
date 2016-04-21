@@ -14,7 +14,14 @@ import numpy as np
 import os
 from pytz import utc
 #local
-from ..helper_functions import csv_to_list, get_rivid_list_from_file
+from ..helper_functions import csv_to_list, get_rivid_list_from_file, open_csv
+
+#in Python 3 xrange is now range
+try:
+    xrange
+except NameError:
+    xrange = range
+    pass
 
 class CreateInflowFileFromGriddedRunoff(object):
     def __init__(self):
@@ -31,7 +38,7 @@ class CreateInflowFileFromGriddedRunoff(object):
         self.dict_list = {self.header_wt[0]:[], self.header_wt[1]:[], self.header_wt[2]:[],
                           self.header_wt[3]:[], self.header_wt[4]:[]}
                      
-        with open(in_weight_table, "rb") as csvfile:
+        with open_csv(in_weight_table, "r") as csvfile:
             reader = csv.reader(csvfile)
             self.count = 0
             for row in reader:
@@ -59,7 +66,7 @@ class CreateInflowFileFromGriddedRunoff(object):
         if rivid_lat_lon_z_file and os.path.exists(rivid_lat_lon_z_file):
             #get list of COMIDS
             lookup_table = csv_to_list(rivid_lat_lon_z_file)[1:]
-            lookup_comids = np.array([int(float(row[0])) for row in lookup_table])
+            lookup_comids = np.array([int(float(row[0])) for row in lookup_table], dtype=np.int32)
         
             # Get relevant arrays while we update them
             nc_rivids = data_out_nc.variables['rivid'][:]

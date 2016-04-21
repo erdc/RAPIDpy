@@ -19,9 +19,9 @@ from requests import get
 from subprocess import Popen, PIPE
 
 #local
-from dataset import RAPIDDataset
-from helper_functions import csv_to_list, log
-from postprocess import ConvertRAPIDOutputToCF
+from .dataset import RAPIDDataset
+from .helper_functions import csv_to_list, log, open_csv
+from .postprocess import ConvertRAPIDOutputToCF
 
 #------------------------------------------------------------------------------
 #Main Dataset Manager Class
@@ -193,7 +193,7 @@ class RAPID(object):
                         stdout=PIPE, stderr=PIPE, shell=False)
         out, err = process.communicate()
         if err:
-            print err
+            print(err)
             raise Exception(err)
         
         return out.strip()
@@ -209,7 +209,7 @@ class RAPID(object):
                         stdout=PIPE, stderr=PIPE, shell=False)
         out, err = process.communicate()
         if err:
-            print err
+            print(err)
             raise Exception(err)
         
         return out.strip()
@@ -226,10 +226,10 @@ class RAPID(object):
     
     def update_parameters(self, **kwargs):
         """
-        Update AutoRoute parameters
+        Update RAPID parameters
         """
         #set arguments based off of user input
-        for key, value in kwargs.iteritems():
+        for key, value in list(kwargs.items()):
             if key in dir(self) and not key.startswith('_'):
                 setattr(self, key, value)
             else:
@@ -294,7 +294,7 @@ class RAPID(object):
         
         with open(file_path,'w') as new_file:
             new_file.write('&NL_namelist\n')
-            for attr, value in self.__dict__.iteritems():
+            for attr, value in sorted(list(self.__dict__.items())):
                 if not attr.startswith('_'):
                     if attr.startswith('BS'):
                         new_file.write("%s = .%s.\n" % (attr, str(value).lower()))
@@ -468,7 +468,7 @@ class RAPID(object):
         else:
             log('RAPID output:',
                 "INFO")
-            for line in out.split('\n'):
+            for line in out.split(b'\n'):
                 print(line)
         rapid_cleanup(temp_link_to_rapid, rapid_namelist_file, run_rapid_script)
         log("Time to run RAPID: %s" % (datetime.datetime.utcnow()-time_start),
@@ -509,7 +509,7 @@ class RAPID(object):
         
         log("Writing to file ...",
             "INFO")
-        with open(qinit_file, 'wb') as qinit_out:
+        with open_csv(qinit_file, 'w') as qinit_out:
             for init_flow in init_flows_array:
                 qinit_out.write('{}\n'.format(init_flow))
 
@@ -583,7 +583,7 @@ class RAPID(object):
 
             log("Writing to file ...",
                 "INFO")
-            with open(qinit_file, 'wb') as qinit_out:
+            with open_csv(qinit_file, 'w') as qinit_out:
                 for init_flow in init_flows_array:
                     qinit_out.write('{}\n'.format(init_flow))
 
@@ -676,12 +676,12 @@ class RAPID(object):
                 log("Writing Output ...",
                     "INFO")
                 np_array = np.array(gage_data_matrix).transpose()  
-                with open(out_streamflow_file, 'wb') as gage_data:
+                with open_csv(out_streamflow_file, 'w') as gage_data:
                     wf = csvwriter(gage_data)
                     for row in np_array:
                         wf.writerow(row)
                         
-                with open(out_stream_id_file, 'wb') as comid_data:
+                with open_csv(out_stream_id_file, 'w') as comid_data:
                     cf = csvwriter(comid_data)
                     for row in valid_comid_list:
                         cf.writerow([int(float(row))])

@@ -12,7 +12,14 @@ import os
 import netCDF4 as NET
 import numpy as NUM
 
-from CreateInflowFileFromGriddedRunoff import CreateInflowFileFromGriddedRunoff
+from .CreateInflowFileFromGriddedRunoff import CreateInflowFileFromGriddedRunoff
+
+#in Python 3 xrange is now range
+try:
+    xrange
+except NameError:
+    xrange = range
+    pass
 
 class CreateInflowFileFromWRFHydroRunoff(CreateInflowFileFromGriddedRunoff):
     def __init__(self, lat_dim="south_north",
@@ -44,7 +51,6 @@ class CreateInflowFileFromWRFHydroRunoff(CreateInflowFileFromGriddedRunoff):
 
         for var in self.vars_oi:
             if var not in data_nc.variables.keys():
-                print var
                 data_nc.close()
                 raise Exception("Invalid NetCDF variables ...")
         
@@ -71,8 +77,8 @@ class CreateInflowFileFromWRFHydroRunoff(CreateInflowFileFromGriddedRunoff):
         data_in_nc.close()
 
         #get indices of subset of data
-        we_ind_all = [long(i) for i in self.dict_list[self.header_wt[2]]]
-        sn_ind_all = [long(j) for j in self.dict_list[self.header_wt[3]]]
+        we_ind_all = [int(i) for i in self.dict_list[self.header_wt[2]]]
+        sn_ind_all = [int(j) for j in self.dict_list[self.header_wt[3]]]
 
         # Obtain a subset of  runoff data based on the indices in the weight table
         min_we_ind_all = min(we_ind_all)
@@ -107,7 +113,7 @@ class CreateInflowFileFromWRFHydroRunoff(CreateInflowFileFromGriddedRunoff):
                 data_in_nc = NET.Dataset(nc_file)
 
                 '''Calculate water inflows'''
-                print "Calculating water inflows for", os.path.basename(nc_file) , grid_type, "..."
+                print("Calculating water inflows for {0} {1} ...".format(os.path.basename(nc_file) , grid_type))
 
                 data_subset_all = data_in_nc.variables[self.vars_oi[2]][:,min_sn_ind_all:max_sn_ind_all+1, min_we_ind_all:max_we_ind_all+1]/1000 \
                                 + data_in_nc.variables[self.vars_oi[3]][:,min_sn_ind_all:max_sn_ind_all+1, min_we_ind_all:max_we_ind_all+1]/1000

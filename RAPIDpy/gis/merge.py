@@ -11,7 +11,7 @@
 import csv
 import numpy as np
 
-from RAPIDpy.helper_functions import csv_to_list
+from ..helper_functions import csv_to_list
  
 def MergeWeightTables(weight_table_file,
                       connectivity_file,

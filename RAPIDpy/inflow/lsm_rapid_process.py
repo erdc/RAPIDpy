@@ -12,17 +12,17 @@ import multiprocessing
 from netCDF4 import Dataset
 import os
 import re
-
+import traceback
 #local imports
-from RAPIDpy import RAPID
-from CreateInflowFileFromERAInterimRunoff import CreateInflowFileFromERAInterimRunoff
-from CreateInflowFileFromLDASRunoff import CreateInflowFileFromLDASRunoff
-from CreateInflowFileFromWRFHydroRunoff import CreateInflowFileFromWRFHydroRunoff
-from generate_return_periods import generate_return_periods
-from utilities import (case_insensitive_file_search,
-                       get_valid_watershed_list,
-                       get_watershed_subbasin_from_folder,
-                       partition)
+from ..rapid import RAPID
+from .CreateInflowFileFromERAInterimRunoff import CreateInflowFileFromERAInterimRunoff
+from .CreateInflowFileFromLDASRunoff import CreateInflowFileFromLDASRunoff
+from .CreateInflowFileFromWRFHydroRunoff import CreateInflowFileFromWRFHydroRunoff
+from .generate_return_periods import generate_return_periods
+from .utilities import (case_insensitive_file_search,
+                        get_valid_watershed_list,
+                        get_watershed_subbasin_from_folder,
+                        partition)
 
 
 #------------------------------------------------------------------------------
@@ -67,14 +67,20 @@ def generate_inflows_from_runoff(args):
           
            
         print("Converting inflow")
-        RAPID_Inflow_Tool.execute(nc_file_list=runoff_file_list,
-                                  index_list=file_index_list,
-                                  in_weight_table=weight_table_file,
-                                  out_nc=rapid_inflow_file,
-                                  grid_type=grid_type,
-                                  mp_lock=mp_lock,
-                                  )
-    
+        try:
+            RAPID_Inflow_Tool.execute(nc_file_list=runoff_file_list,
+                                      index_list=file_index_list,
+                                      in_weight_table=weight_table_file,
+                                      out_nc=rapid_inflow_file,
+                                      grid_type=grid_type,
+                                      mp_lock=mp_lock,
+                                      )
+        except Exception:
+            # This prints the type, value, and stack trace of the
+            # current exception being handled.
+            traceback.print_exc()
+            raise
+            
         time_finish_ecmwf = datetime.utcnow()
         print("Time to convert inflows: {0}".format(time_finish_ecmwf-time_start_all))
 
@@ -134,7 +140,6 @@ def run_lsm_rapid_process(rapid_executable_location,
             file_date = datetime.strptime(match.group(0), "%Y%m%d")
             if file_date > simulation_end_datetime:
                 break
-                print file_date
             if file_date >= simulation_start_datetime:
                 lsm_file_list_subset.append(os.path.join(subdir, lsm_file))
         print(lsm_file_list_subset[0])
@@ -492,13 +497,13 @@ def run_lsm_rapid_process(rapid_executable_location,
 
     	#VALIDATING INPUT IF DIVIDING BY 3
         if grid_type == 'nldas' or grid_type == 'lis' or grid_type == 'joules':
-	    num_extra_files = file_size_time*len(lsm_file_list) % 3
+            num_extra_files = file_size_time*len(lsm_file_list) % 3
             if num_extra_files != 0:
                 print("WARNING: Number of files needs to be divisible by 3. Remainder is {0}".format(num_extra_files))
                 print("This means your simulation will be truncated")
             total_num_time_steps=int(file_size_time*len(lsm_file_list)/3)
 
-        out_file_ending = "{0}_{1}_{2}hr_{3}".format(model_name, grid_type, time_step/3600, out_file_ending)
+        out_file_ending = "{0}_{1}_{2}hr_{3}".format(model_name, grid_type, int(time_step/3600), out_file_ending)
         #set up RAPID manager
         rapid_manager = RAPID(rapid_executable_location=rapid_executable_location,
                               cygwin_bin_location=cygwin_bin_location,

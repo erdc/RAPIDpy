@@ -10,7 +10,9 @@
 from datetime import datetime
 import netCDF4 as nc
 import numpy as np
-from RAPIDpy import RAPIDDataset
+
+#local
+from ..dataset import RAPIDDataset
 
 def generate_return_periods(qout_file, return_period_file, storm_duration_days=7):
     """
@@ -19,7 +21,7 @@ def generate_return_periods(qout_file, return_period_file, storm_duration_days=7
 
     #get ERA Interim Data Analyzed
     with RAPIDDataset(qout_file) as qout_nc_file:
-        print "Setting up Return Periods File ..."
+        print("Setting up Return Periods File ...")
         return_period_nc = nc.Dataset(return_period_file, 'w')
         
         return_period_nc.createDimension('rivid', qout_nc_file.size_river_id)
@@ -53,7 +55,7 @@ def generate_return_periods(qout_file, return_period_file, storm_duration_days=7
         river_id_list = qout_nc_file.get_river_id_array()
         return_period_nc.variables['rivid'][:] = river_id_list
 
-        print "Extracting Data and Generating Return Periods ..."
+        print("Extracting Data and Generating Return Periods ...")
         time_array = qout_nc_file.get_time_array()
         num_years = int((datetime.utcfromtimestamp(time_array[-1])-datetime.utcfromtimestamp(time_array[0])).days/365.2425)
         time_steps_per_day = (24*3600)/float((datetime.utcfromtimestamp(time_array[1])-datetime.utcfromtimestamp(time_array[0])).seconds)

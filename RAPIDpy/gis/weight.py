@@ -26,8 +26,8 @@ except Exception:
     raise Exception("You need the gdal, pyproj, shapely, and rtree python package to run these tools ...")
 
 #local
-from voronoi import pointsToVoronoiGridArray, pointsToVoronoiGridShapefile
-from ..helper_functions import get_rivid_list_from_file
+from .voronoi import pointsToVoronoiGridArray, pointsToVoronoiGridShapefile
+from ..helper_functions import get_rivid_list_from_file, open_csv
 
 gdal.UseExceptions()
 
@@ -117,7 +117,7 @@ def RTreeCreateWeightTable(lsm_grid_lat, lsm_grid_lon,
                     lsm_grid_feature_list[0]['lat']
                     ]
                     
-    with open(out_weight_table, 'wb') as csvfile:
+    with open_csv(out_weight_table, 'w') as csvfile:
         connectwriter = csv.writer(csvfile)
         connectwriter.writerow(['rivid', 'area_sqm', 'lon_index', 'lat_index', 
                                 'npoints', 'lsm_grid_lon', 'lsm_grid_lat'])
@@ -258,7 +258,7 @@ def GDALCreateWeightTable(lsm_grid_lat, lsm_grid_lon,
                     dummy_intersect_lsm_grid_lat
                     ]
                     
-    with open(out_weight_table, 'wb') as csvfile:
+    with open_csv(out_weight_table, 'w') as csvfile:
         connectwriter = csv.writer(csvfile)
         connectwriter.writerow(['rivid', 'area_sqm', 'lon_index', 'lat_index', 
                                 'npoints', 'lsm_grid_lon', 'lsm_grid_lat'])

@@ -16,9 +16,16 @@ try:
     from osgeo import ogr
 except Exception:
     raise Exception("You need the gdal python package to run this tool ...")
+   
+#local
+from ..helper_functions import csv_to_list, open_csv
 
-
-from RAPIDpy.helper_functions import csv_to_list
+#in Python 3 xrange is now range
+try:
+    xrange
+except NameError:
+    xrange = range
+    pass
 
 def CreateMuskingumKfacFile(in_drainage_line,
                             stream_id,
@@ -72,7 +79,7 @@ def CreateMuskingumKfacFile(in_drainage_line,
     else:
         raise Exception("Invalid formula type. Valid range: 1-3 ...")
     
-    with open(out_kfac_file,'wb') as kfacfile:
+    with open_csv(out_kfac_file,'w') as kfacfile:
         kfac_writer = csv_writer(kfacfile)
         for row in connectivity_table:
             streamID = int(float(row[0]))
@@ -140,7 +147,7 @@ def CreateMuskingumKFile(lambda_k,
     """
     kfac_table = csv_to_list(in_kfac_file)
     
-    with open(out_k_file,'wb') as kfile:
+    with open_csv(out_k_file,'w') as kfile:
         k_writer = csv_writer(kfile)
         for row in kfac_table:
              k_writer.writerow([lambda_k*float(row[0])])
@@ -160,7 +167,7 @@ def CreateMuskingumXFileFromDranageLine(in_drainage_line,
         ogr_drainage_line_shapefile = ogr.Open(in_drainage_line)
         ogr_drainage_line_shapefile_lyr = ogr_drainage_line_shapefile.GetLayer()
 
-    with open(out_x_file,'wb') as kfile:
+    with open_csv(out_x_file,'w') as kfile:
         x_writer = csv_writer(kfile)
         for drainage_line_feature in ogr_drainage_line_shapefile_lyr:
             x_writer.writerow([drainage_line_feature.GetField(x_id)])    
@@ -172,12 +179,12 @@ def CreateConstMuskingumXFile(x_val,
     Create muskingum X file from value that is constant all the way through
     """
     num_rivers = 0
-    with open(rapid_connect_file, "rb") as csvfile:
+    with open_csv(rapid_connect_file, "r") as csvfile:
         reader = csv_reader(csvfile)
         for row in reader:
             num_rivers+=1
 
-    with open(out_x_file,'wb') as kfile:
+    with open_csv(out_x_file,'w') as kfile:
         x_writer = csv_writer(kfile)
         for idx in xrange(num_rivers):
             x_writer.writerow([x_val])    

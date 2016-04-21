@@ -12,12 +12,28 @@ from numpy.testing import assert_almost_equal
 from numpy import array as np_array
 from numpy import float32 as np_float32
 from os import remove
+from sys import version_info
 
 #local imports
-from dataset import RAPIDDataset
+from .dataset import RAPIDDataset
+
 #------------------------------------------------------------------------------
 # HELPER FUNCTIONS
 #------------------------------------------------------------------------------
+def open_csv(csv_file, mode='r'):
+    """
+    Get mode depending on Python version
+    Based on: http://stackoverflow.com/questions/29840849/writing-a-csv-file-in-python-that-works-for-both-python-2-7-and-python-3-3-in
+    """
+    if version_info[0] == 2:  # Not named on 2.6
+        access = '{0}b'.format(mode)
+        kwargs = {}
+    else:
+        access = '{0}t'.format(mode)
+        kwargs = {'newline':''}
+        
+    return open(csv_file, access, **kwargs)
+        
 def log(message, severity, print_debug=True):
     """Logs, prints, or raises a message.
 
@@ -43,7 +59,7 @@ def csv_to_list(csv_file, delimiter=','):
     where every row is stored as a sublist, and each element
     in the sublist represents 1 cell in the table.
     """
-    with open(csv_file, 'rb') as csv_con:
+    with open_csv(csv_file) as csv_con:
         if len(delimiter) > 1:
             dialect = csv.Sniffer().sniff(csv_con.read(1024), delimiters=delimiter)
             csv_con.seek(0)
@@ -57,7 +73,7 @@ def get_rivid_list_from_file(in_rapid_connect):
     Gets the first row of rivids in rapid connect file or riv_bas_id file
     """
     rapid_connect_rivid_list = []
-    with open(in_rapid_connect, "rb") as csvfile:
+    with open_csv(in_rapid_connect) as csvfile:
         reader = csv.reader(csvfile, delimiter=",")
         for row in reader:
             rapid_connect_rivid_list.append(row[0])
@@ -67,18 +83,18 @@ def compare_csv_decimal_files(file1, file2, header=True):
     """
     This function compares two csv files
     """
-    with open(file1, 'rb') as fh1, \
-         open(file2, 'rb') as fh2:
+    with open_csv(file1) as fh1, \
+         open_csv(file2) as fh2:
         csv1 = csv.reader(fh1)
         csv2 = csv.reader(fh2)
         files_equal = True
         if header:
-            files_equal = (csv1.next() == csv2.next()) #header
+            files_equal = (next(csv1) == next(csv2)) #header
         while files_equal:
             try:
                 try:
-                    assert_almost_equal(np_array(csv1.next(), dtype=np_float32),
-                                        np_array(csv2.next(), dtype=np_float32),
+                    assert_almost_equal(np_array(next(csv1), dtype=np_float32),
+                                        np_array(next(csv2), dtype=np_float32),
                                         decimal=2)
                 except AssertionError:
                     files_equal = False
@@ -93,18 +109,18 @@ def compare_csv_timeseries_files(file1, file2, header=True):
     """
     This function compares two csv files
     """
-    with open(file1, 'rb') as fh1, \
-         open(file2, 'rb') as fh2:
+    with open_csv(file1) as fh1, \
+         open_csv(file2) as fh2:
         csv1 = csv.reader(fh1)
         csv2 = csv.reader(fh2)
         files_equal = True
         if header:
-            files_equal = (csv1.next() == csv2.next()) #header
+            files_equal = (next(csv1) == next(csv2)) #header
         while files_equal:
             try:
                 try:
-                    row1 = csv1.next()
-                    row2 = csv2.next()
+                    row1 = next(csv1)
+                    row2 = next(csv2)
                     files_equal = row1[0] == row2[0] #check dates
                     assert_almost_equal(np_array(row1[1:], dtype=np_float32),
                                         np_array(row2[1:], dtype=np_float32),
@@ -171,7 +187,7 @@ def compare_qout_files(dataset1_path, dataset2_path, Qout_var="Qout"):
                 decimal_test=-1
             except AssertionError as ex:
                 if decimal_test <= 1:
-                    print ex
+                    print(ex)
                 decimal_test-=1
                 pass
         log("Number of different timeseries: {0}".format(len(un_where_diff)),

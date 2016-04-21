@@ -14,6 +14,7 @@ import numpy as np
 import os
 from subprocess import PIPE, Popen
 from sys import getrecursionlimit, setrecursionlimit
+
 try:
     from osgeo import gdal, ogr, osr
     from pyproj import Geod
@@ -59,7 +60,7 @@ class TauDEM(object):
         if out:
             print("OUTPUT:")
             for line in out.split('\n'):
-                print line
+                print(line)
         if err:
             print("ERROR:")
             print(err)
@@ -280,7 +281,7 @@ class TauDEM(object):
         if out:
             print("OUTPUT:")
             for line in out.split('\n'):
-                print line
+                print(line)
         if err:
             print("ERROR:")
             print(err)

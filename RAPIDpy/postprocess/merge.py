@@ -66,6 +66,13 @@ from pytz import utc
 from ..dataset import RAPIDDataset
 from ..helper_functions import csv_to_list, remove_files, log
 
+#in Python 3 xrange is now range
+try:
+    xrange
+except NameError:
+    xrange = range
+    pass
+
 class ConvertRAPIDOutputToCF(object):
     """
     Class to convert RAPID output to be CF compliant        

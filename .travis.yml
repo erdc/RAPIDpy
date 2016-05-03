@@ -26,7 +26,7 @@ notifications:
 #*******************************************************************************
 before_install:
 - sudo apt-get update -qq
-- sudo apt-get install -y g++ gfortran python-dev libproj-dev
+- sudo apt-get install -y g++ gfortran
 
 #-------------------------------------------------------------------------------
 #Add miniconda - from https://gist.github.com/dan-blanchard/7045057
@@ -43,9 +43,9 @@ before_install:
 #-------------------------------------------------------------------------------
 # Install required python packages
 #-----------------------------------------------------------------------------
-- conda install --yes python=$TRAVIS_PYTHON_VERSION nose numpy scipy netCDF4 gdal shapely
+- conda install --yes python=$TRAVIS_PYTHON_VERSION nose numpy scipy netCDF4 gdal shapely pyproj
 - export GDAL_DATA=$HOME/miniconda2/share/gdal
-- pip install pyproj
+- pip install --upgrade pyproj
 - conda install --yes -c https://conda.anaconda.org/ioos rtree
 
 #-------------------------------------------------------------------------------
@@ -82,7 +82,6 @@ before_install:
 #-------------------------------------------------------------------------------
 #Exporting environment variables 
 #-------------------------------------------------------------------------------
-- cd $INSTALLZ_DIR
 - export TACC_NETCDF_LIB=$INSTALLZ_DIR/netcdf-3.6.3-install/lib
 - export TACC_NETCDF_INC=$INSTALLZ_DIR/netcdf-3.6.3-install/include
 - export PETSC_DIR=$INSTALLZ_DIR/petsc-3.6.2

@@ -8,13 +8,57 @@
 ##  License: BSD-3 Clause
 
 from datetime import datetime
+import multiprocessing
 import netCDF4 as nc
 import numpy as np
 
 #local
 from ..dataset import RAPIDDataset
+from utilities import partition
 
-def generate_return_periods(qout_file, return_period_file, storm_duration_days=7):
+def generate_single_return_period(qout_file, return_period_file,
+                                  rivid_index_list, step, num_years,
+                                  mp_lock):
+    """
+    This function calculates a single return period for a single reach
+    """
+    with RAPIDDataset(qout_file) as qout_nc_file: 
+        #get index of return period data
+        rp_index_20 = int((num_years + 1)/20.0)
+        rp_index_10 = int((num_years + 1)/10.0)
+        rp_index_2 = int((num_years + 1)/2.0)
+        
+        #iterate through rivids to generate return periods
+        for rivid_index in rivid_index_list:
+            filtered_flow_data = qout_nc_file.get_daily_qout_index(rivid_index,
+                                                                   steps_per_group=step,
+                                                                   mode="max")
+            sorted_flow_data = np.sort(filtered_flow_data)[:num_years:-1]
+            max_flow = sorted_flow_data[0]
+            if max_flow < 0.01:
+                print("WARNING: Return period data < 0.01 generated for rivid {0}" \
+                      .format(qout_nc_file.qout_nc.variables[qout_nc_file.river_id_dimension][rivid_index]))                
+            mp_lock.acquire()
+            return_period_nc = nc.Dataset(return_period_file, 'a')
+            return_period_nc.variables['max_flow'][rivid_index] = max_flow
+            return_period_nc.variables['return_period_20'][rivid_index] = sorted_flow_data[rp_index_20]
+            return_period_nc.variables['return_period_10'][rivid_index] = sorted_flow_data[rp_index_10]
+            return_period_nc.variables['return_period_2'][rivid_index] = sorted_flow_data[rp_index_2]
+            return_period_nc.close()
+            mp_lock.release()
+
+def generate_single_return_period_mp_worker(args):
+    """
+    Multiprocess worker function for generate_single_return_period
+    """
+    generate_single_return_period(qout_file=args[0], 
+                                  return_period_file=args[1], 
+                                  rivid_index_list=args[2], 
+                                  step=args[3], 
+                                  num_years=args[4], 
+                                  mp_lock=args[5])
+
+def generate_return_periods(qout_file, return_period_file, num_cpus, storm_duration_days=7):
     """
     Generate return period from RAPID Qout file
     """
@@ -54,27 +98,31 @@ def generate_return_periods(qout_file, return_period_file, storm_duration_days=7
 
         river_id_list = qout_nc_file.get_river_id_array()
         return_period_nc.variables['rivid'][:] = river_id_list
-
-        print("Extracting Data and Generating Return Periods ...")
-        time_array = qout_nc_file.get_time_array()
-        num_years = int((datetime.utcfromtimestamp(time_array[-1])-datetime.utcfromtimestamp(time_array[0])).days/365.2425)
-        time_steps_per_day = (24*3600)/float((datetime.utcfromtimestamp(time_array[1])-datetime.utcfromtimestamp(time_array[0])).seconds)
-        step = max(1,int(time_steps_per_day * storm_duration_days))
-
-        for comid_index, comid in enumerate(river_id_list):
-
-            filtered_flow_data = qout_nc_file.get_daily_qout_index(comid_index, 
-                                                                   steps_per_group=step,
-				                                   mode="max")
-            sorted_flow_data = np.sort(filtered_flow_data)[:num_years:-1]
-
-            rp_index_20 = int((num_years + 1)/20.0)
-            rp_index_10 = int((num_years + 1)/10.0)
-            rp_index_2 = int((num_years + 1)/2.0)
-            
-            max_flow_var[comid_index] = sorted_flow_data[0]
-            return_period_20_var[comid_index] = sorted_flow_data[rp_index_20]
-            return_period_10_var[comid_index] = sorted_flow_data[rp_index_10]
-            return_period_2_var[comid_index] = sorted_flow_data[rp_index_2]
-
         return_period_nc.close()
+
+        time_array = qout_nc_file.get_time_array()
+        
+    print("Extracting Data and Generating Return Periods ...")
+    num_years = int((datetime.utcfromtimestamp(time_array[-1])-datetime.utcfromtimestamp(time_array[0])).days/365.2425)
+    time_steps_per_day = (24*3600)/float((datetime.utcfromtimestamp(time_array[1])-datetime.utcfromtimestamp(time_array[0])).total_seconds())
+    step = max(1,int(time_steps_per_day * storm_duration_days))
+    
+    #generate multiprocessing jobs
+    mp_lock = multiprocessing.Manager().Lock()
+    job_combinations = []
+    partition_list, partition_index_list = partition(river_id_list, num_cpus*2)
+    for sub_partition_index_list in partition_index_list:
+        job_combinations.append((qout_file,
+                                 return_period_file,
+                                 sub_partition_index_list, 
+                                 step,
+                                 num_years,
+                                 mp_lock
+                                 ))
+
+    pool = multiprocessing.Pool(num_cpus)
+    pool.map(generate_single_return_period_mp_worker,
+             job_combinations)
+    pool.close()
+    pool.join()
+

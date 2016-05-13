@@ -29,7 +29,12 @@ def generate_single_return_period(qout_file, return_period_file,
         rp_index_2 = int((num_years + 1)/2.0)
         
         #iterate through rivids to generate return periods
-        for rivid_index in rivid_index_list:
+        max_flow_array = np.zeros(len(rivid_index_list))
+        return_20_array = np.zeros(len(rivid_index_list))
+        return_10_array = np.zeros(len(rivid_index_list))
+        return_2_array = np.zeros(len(rivid_index_list))
+        
+        for iter_idx, rivid_index in enumerate(rivid_index_list):
             filtered_flow_data = qout_nc_file.get_daily_qout_index(rivid_index,
                                                                    steps_per_group=step,
                                                                    mode="max")
@@ -37,15 +42,20 @@ def generate_single_return_period(qout_file, return_period_file,
             max_flow = sorted_flow_data[0]
             if max_flow < 0.01:
                 print("WARNING: Return period data < 0.01 generated for rivid {0}" \
-                      .format(qout_nc_file.qout_nc.variables[qout_nc_file.river_id_dimension][rivid_index]))                
-            mp_lock.acquire()
-            return_period_nc = nc.Dataset(return_period_file, 'a')
-            return_period_nc.variables['max_flow'][rivid_index] = max_flow
-            return_period_nc.variables['return_period_20'][rivid_index] = sorted_flow_data[rp_index_20]
-            return_period_nc.variables['return_period_10'][rivid_index] = sorted_flow_data[rp_index_10]
-            return_period_nc.variables['return_period_2'][rivid_index] = sorted_flow_data[rp_index_2]
-            return_period_nc.close()
-            mp_lock.release()
+                      .format(qout_nc_file.qout_nc.variables[qout_nc_file.river_id_dimension][rivid_index]))
+            max_flow_array[iter_idx] = max_flow
+            return_20_array[iter_idx] = sorted_flow_data[rp_index_20]
+            return_10_array[iter_idx] = sorted_flow_data[rp_index_10]
+            return_2_array[iter_idx] = sorted_flow_data[rp_index_2]
+
+        mp_lock.acquire()
+        return_period_nc = nc.Dataset(return_period_file, 'a')
+        return_period_nc.variables['max_flow'][rivid_index_list] = max_flow_array
+        return_period_nc.variables['return_period_20'][rivid_index_list] = return_20_array
+        return_period_nc.variables['return_period_10'][rivid_index_list] = return_10_array
+        return_period_nc.variables['return_period_2'][rivid_index_list] = return_2_array
+        return_period_nc.close()
+        mp_lock.release()
 
 def generate_single_return_period_mp_worker(args):
     """

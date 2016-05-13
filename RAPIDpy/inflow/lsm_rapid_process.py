@@ -626,6 +626,7 @@ def run_lsm_rapid_process(rapid_executable_location,
                     storm_length_days = 3
                     generate_return_periods(lsm_rapid_output_file,
                                             return_periods_file,
+                                            NUM_CPUS,
                                             storm_length_days)
                         
                 if generate_seasonal_initialization_file and os.path.exists(lsm_rapid_output_file) and lsm_rapid_output_file:

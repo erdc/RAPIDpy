@@ -14,7 +14,7 @@ import numpy as np
 
 #local
 from ..dataset import RAPIDDataset
-from utilities import partition
+from .utilities import partition
 
 def generate_single_return_period(qout_file, return_period_file,
                                   rivid_index_list, step, num_years,

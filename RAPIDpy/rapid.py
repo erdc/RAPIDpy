@@ -650,7 +650,6 @@ class RAPID(object):
                     gage_data = []
                     for time_step in time_series[1]['values'][0]['value']:
                         local_datetime = parse(time_step['dateTime'])
-                        print local_datetime, time_step['value']
                         if local_datetime > end_datetime:
                             break
                         

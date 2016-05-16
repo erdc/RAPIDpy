@@ -14,7 +14,8 @@ from dateutil.tz import tzoffset
 from multiprocessing import cpu_count
 import numpy as np
 import os
-from pytz import utc
+#USGS not returning tzinfo, so this is no longer needed
+#from pytz import utc
 from requests import get
 from subprocess import Popen, PIPE
 
@@ -599,16 +600,18 @@ class RAPID(object):
         """
         log("Generating avg streamflow file and stream id file required for calibration ...",
             "INFO")
-        reach_id_gage_id_list = csv_to_list(reach_id_gage_id_file) 
-        if start_datetime.tzinfo is None or start_datetime.tzinfo.utcoffset(start_datetime) is None:
-            start_datetime = start_datetime.replace(tzinfo=utc)
-        if end_datetime.tzinfo is None or end_datetime.tzinfo.utcoffset(end_datetime) is None:
-            end_datetime = end_datetime.replace(tzinfo=utc)
-            
+        reach_id_gage_id_list = csv_to_list(reach_id_gage_id_file)
+# USGS not returning tzinfo anymore, so removed tzinfo operations
+#       if start_datetime.tzinfo is None or start_datetime.tzinfo.utcoffset(start_datetime) is None:
+#            start_datetime = start_datetime.replace(tzinfo=utc)
+#        if end_datetime.tzinfo is None or end_datetime.tzinfo.utcoffset(end_datetime) is None:
+#            end_datetime = end_datetime.replace(tzinfo=utc)
         gage_data_matrix = []
         valid_comid_list = []
-        num_days_needed = (end_datetime-start_datetime).days
-    
+        
+        #add extra day as it includes the start date (e.g. 7-5 is 2 days, but have data for 5,6,7, so +1)
+        num_days_needed = (end_datetime-start_datetime).days + 1
+
         gage_id_list = []
         for row in reach_id_gage_id_list[1:]:
             station_id = row[1]
@@ -620,12 +623,14 @@ class RAPID(object):
         log("Querying Server for Data ..." ,
             "INFO")
     
-        #print station_id
         query_params = {
                         'format': 'json',
                         'sites': ",".join(gage_id_list),
-                        'startDT': start_datetime.astimezone(tzoffset(None, -18000)).strftime("%Y-%m-%d"),
-                        'endDT': end_datetime.astimezone(tzoffset(None, -18000)).strftime("%Y-%m-%d"),
+# USGS not returning tzinfo anymore, so removed tzinfo operations 
+#                        'startDT': start_datetime.astimezone(tzoffset(None, -18000)).strftime("%Y-%m-%d"),
+#                        'endDT': end_datetime.astimezone(tzoffset(None, -18000)).strftime("%Y-%m-%d"),
+                        'startDT': start_datetime.strftime("%Y-%m-%d"),
+                        'endDT': end_datetime.strftime("%Y-%m-%d"),
                         'parameterCd': '00060', #streamflow
                         'statCd': '00003' #average
                        }
@@ -645,6 +650,7 @@ class RAPID(object):
                     gage_data = []
                     for time_step in time_series[1]['values'][0]['value']:
                         local_datetime = parse(time_step['dateTime'])
+                        print local_datetime, time_step['value']
                         if local_datetime > end_datetime:
                             break
                         
@@ -672,6 +678,7 @@ class RAPID(object):
                                                                                            usgs_station_id,
                                                                                            num_days_needed-len(gage_data)),
                             "WARNING")
+
             if gage_data_matrix and valid_comid_list:
                 log("Writing Output ...",
                     "INFO")

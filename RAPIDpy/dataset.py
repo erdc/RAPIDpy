@@ -305,7 +305,7 @@ class RAPIDDataset(object):
         elif mode=="max":
     	    calc = np.max
         else:
-    	       raise Exception("Invalid calc mode ...")
+    	    raise Exception("Invalid calc mode ...")
 
         if self.is_time_variable_valid() and steps_per_group<=1:
             qout_arr = self.get_qout_index(reach_index)

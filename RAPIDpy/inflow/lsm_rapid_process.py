@@ -234,9 +234,12 @@ def run_lsm_rapid_process(rapid_executable_location,
             elif var == "Qsb_acc":
                 #GLDAS v2
                 subsurface_runoff_var = var
-            elif var == "Qsm_acc":
-                #GLDAS v2
-                snowmelt_runoff_var = var
+# SNOWMELT IS INCLUDED IN RUNOFF,
+# HOWEVER YOU CAN ADD RUNOFF OUTPUT
+# ANYWAY BY UNCOMMENTING:
+#            elif var == "Qsm_acc":
+#                #GLDAS v2
+#                snowmelt_runoff_var = var
             elif var == "Qs_inst":
                 #LIS
                 surface_runoff_var = var
@@ -562,7 +565,7 @@ def run_lsm_rapid_process(rapid_executable_location,
             if len(lsm_file_list) < NUM_CPUS:
                 NUM_CPUS = len(lsm_file_list)
             mp_lock = multiprocessing.Manager().Lock()
-            partition_list, partition_index_list = partition(lsm_file_list, NUM_CPUS*2)
+            partition_list, partition_index_list = partition(lsm_file_list, NUM_CPUS)
             for loop_index, cpu_grouped_file_list in enumerate(partition_list):
                 if cpu_grouped_file_list and partition_index_list[loop_index]:
                     job_combinations.append((watershed.lower(),

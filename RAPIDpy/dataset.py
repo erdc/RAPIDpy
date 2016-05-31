@@ -303,7 +303,7 @@ class RAPIDDataset(object):
         if mode=="mean":
             calc = np.mean
         elif mode=="max":
-    	       calc = np.max
+    	    calc = np.max
         else:
     	       raise Exception("Invalid calc mode ...")
 
@@ -370,7 +370,7 @@ class RAPIDDataset(object):
 
     def write_flows_to_csv(self, path_to_output_file,
                            reach_index=None, reach_id=None,
-                           daily=False):
+                           daily=False, mode="mean"):
         """
         Write out RAPID output to CSV file
         """
@@ -386,7 +386,7 @@ class RAPIDDataset(object):
                 with open(path_to_output_file, 'w') as outcsv:
                     writer = csv_writer(outcsv)
                     daily_time_index_array = self.get_daily_time_index_array()
-                    daily_qout = self.get_daily_qout_index(reach_index)
+                    daily_qout = self.get_daily_qout_index(reach_index, mode=mode)
                     time_array = self.get_time_array()
                     for idx, time_idx in enumerate(daily_time_index_array):
                         current_day = time.gmtime(time_array[time_idx])

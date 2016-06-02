@@ -21,7 +21,11 @@ try:
     from shapely.wkb import loads as shapely_loads
     from shapely.ops import cascaded_union
 except ImportError:
-    raise Exception("You need to install the gdal and shapely python packages to use this tool ...")
+    print("WARNING: Several GIS functions will not work. " \
+          "You need to install the gdal, pyproj, and shapely " \
+          "python packages for these functions to work ...")
+    pass
+
 #------------------------------------------------------------------------------
 # MAIN CLASS
 #------------------------------------------------------------------------------
@@ -621,12 +625,11 @@ class TauDEM(object):
         time_start = datetime.utcnow()
         
         #FILL PITS IF NEEDED
+        self.pit_filled_elevation_grid = pit_filled_elevation_grid
         if not pit_filled_elevation_grid:
             pit_filled_elevation_grid = os.path.join(output_directory, 'pit_filled_elevation_grid.tif')
             self.pitRemove(raw_elevation_dem,
                            pit_filled_elevation_grid)
-        else:
-            self.pit_filled_elevation_grid = pit_filled_elevation_grid
         
         #GENERATE D8 RASTERS
         self.flow_dir_grid = flow_dir_grid_d8

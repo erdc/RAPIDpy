@@ -406,14 +406,17 @@ class TauDEM(object):
     def dinfFlowDirection(self, 
                           flow_dir_grid,
                           slope_grid,
-                          pit_filled_elevation_grid):
+                          pit_filled_elevation_grid=None):
         """
         Calculates flow direction with Dinf method
         """                     
         print("PROCESS: DinfFlowDirection")
+        if pit_filled_elevation_grid:
+            self.pit_filled_elevation_grid = pit_filled_elevation_grid
+            
         # Construct the taudem command line.
         cmd = [os.path.join(self.taudem_exe_path, 'dinfflowdir'),
-               '-fel', pit_filled_elevation_grid, 
+               '-fel', self.pit_filled_elevation_grid, 
                '-ang', flow_dir_grid, 
                '-slp', slope_grid,
                ]
@@ -498,11 +501,10 @@ class TauDEM(object):
         if flow_dir_grid:
             self.flow_dir_grid = flow_dir_grid
 
-        self.contributing_area_grid = contributing_area_grid
         # Construct the taudem command line.
         cmd = [os.path.join(self.taudem_exe_path, 'aread8'),
                '-p', self.flow_dir_grid, 
-               '-ad8', self.contributing_area_grid,
+               '-ad8', contributing_area_grid,
                ]
                
         if outlet_shapefile:
@@ -521,21 +523,18 @@ class TauDEM(object):
     def streamDefByThreshold(self, 
                              stream_raster_grid,
                              threshold,
-                             contributing_area_grid=None,
+                             contributing_area_grid,
                              mask_grid=None,
                              ):
         """
         Calculates the stream definition by threshold
         """
         print("PROCESS: StreamDefByThreshold")
-        if contributing_area_grid:
-            self.contributing_area_grid = contributing_area_grid
-            
         self.stream_raster_grid = stream_raster_grid
         
         # Construct the taudem command line.
         cmd = [os.path.join(self.taudem_exe_path, 'threshold'),
-               '-ssa', self.contributing_area_grid, 
+               '-ssa', contributing_area_grid, 
                '-src', self.stream_raster_grid,
                '-thresh', str(threshold),
                ]
@@ -546,7 +545,7 @@ class TauDEM(object):
         self._run_mpi_cmd(cmd)
         
         #create projection file
-        self._add_prj_file(self.contributing_area_grid,
+        self._add_prj_file(contributing_area_grid,
                            self.stream_raster_grid)
                            
     def streamReachAndWatershed(self, 
@@ -601,26 +600,68 @@ class TauDEM(object):
         self._add_prj_file(self.pit_filled_elevation_grid,
                            out_watershed_grid)
                            
-    def demToStreamNetwork(self, elevation_dem, output_directory, 
-                           threshold=1000, delineate=False):
+    def demToStreamNetwork(self, 
+                           output_directory,
+                           raw_elevation_dem="", 
+                           pit_filled_elevation_grid="",
+                           flow_dir_grid_d8="",
+                           contributing_area_grid_d8="",
+                           flow_dir_grid_dinf="",
+                           contributing_area_grid_dinf="",
+                           use_dinf=False,
+                           threshold=1000, 
+                           delineate=False):
         """
         This function will run all of the processes to generate a stream network
         from an elevation dem
         """
 
         time_start = datetime.utcnow()
-        pit_filled_elevation_grid = os.path.join(output_directory, 'pit_filled_elevation_grid.tif')
-        self.pitRemove(elevation_dem,
-                       pit_filled_elevation_grid)
-        flow_dir_grid = os.path.join(output_directory, 'flow_dir_grid.tif')
-        slope_grid = os.path.join(output_directory, 'slope_grid.tif')
-        contributing_area_grid = os.path.join(output_directory, 'contributing_area_grid.tif')
-        self.d8FlowDirection(flow_dir_grid,
-                             slope_grid)
-        self.d8ContributingArea(contributing_area_grid)
+        
+        #FILL PITS IF NEEDED
+        if not pit_filled_elevation_grid:
+            pit_filled_elevation_grid = os.path.join(output_directory, 'pit_filled_elevation_grid.tif')
+            self.pitRemove(raw_elevation_dem,
+                           pit_filled_elevation_grid)
+        else:
+            self.pit_filled_elevation_grid = pit_filled_elevation_grid
+        
+        #GENERATE D8 RASTERS
+        self.flow_dir_grid = flow_dir_grid_d8
+        if not flow_dir_grid_d8:
+            flow_dir_grid_d8 = os.path.join(output_directory, 'flow_dir_grid_d8.tif')
+            slope_grid_d8 = os.path.join(output_directory, 'slope_grid_d8.tif')
+            self.d8FlowDirection(flow_dir_grid_d8,
+                                 slope_grid_d8)
+
+        self.contributing_area_grid = contributing_area_grid_d8
+        if not contributing_area_grid_d8:
+            contributing_area_grid_d8 = os.path.join(output_directory, 'contributing_area_grid_d8.tif')
+            self.d8ContributingArea(contributing_area_grid_d8)
+
         stream_raster_grid = os.path.join(output_directory, 'stream_raster_grid.tif')
-        self.streamDefByThreshold(stream_raster_grid,
-                                  threshold)
+        if use_dinf:
+            print("USING DINF METHOD TO GET STREAM DEFINITION ...")
+            if not flow_dir_grid_dinf:
+                flow_dir_grid_dinf = os.path.join(output_directory, 'flow_dir_grid_inf.tif')
+                slope_grid_dinf = os.path.join(output_directory, 'slope_grid_inf.tif')
+                self.dinfFlowDirection(flow_dir_grid_dinf,
+                                       slope_grid_dinf)
+            if not contributing_area_grid_dinf:
+                contributing_area_grid_dinf = os.path.join(output_directory, 'contributing_area_grid_dinf.tif')
+                self.dinfContributingArea(contributing_area_grid_dinf,
+                                          flow_dir_grid_dinf)
+    
+            self.streamDefByThreshold(stream_raster_grid,
+                                      threshold,
+                                      contributing_area_grid_dinf)
+        else:
+            print("USING D8 METHOD TO GET STREAM DEFINITION ...")
+            self.streamDefByThreshold(stream_raster_grid, 
+                                      threshold,
+                                      contributing_area_grid_d8)
+
+        #GENERATE STREAM NETWORK
         out_stream_order_grid = os.path.join(output_directory, 'stream_order_grid.tif')
         out_network_connectivity_tree = os.path.join(output_directory, 'network_connectivity_tree.txt')
         out_network_coordinates = os.path.join(output_directory, 'network_coordinates.txt')
@@ -636,4 +677,5 @@ class TauDEM(object):
         #convert watersed grid to shapefile
         out_watershed_shapefile = os.path.join(output_directory, 'watershed_shapefile.shp')                          
         self.rasterToPolygon(out_watershed_grid, out_watershed_shapefile)
-        print("TOTAL time to complete: {0}".format(datetime.utcnow()-time_start))
+        
+        print("Total time to complete: {0}".format(datetime.utcnow()-time_start))

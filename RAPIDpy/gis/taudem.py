@@ -32,7 +32,8 @@ class TauDEM(object):
     def __init__(self,
                  taudem_exe_path="", 
                  num_processors=1,
-                 use_all_processors=False):
+                 use_all_processors=False,
+                 mpiexec_path="mpiexec"):
         """
         Initializer
         """             
@@ -41,6 +42,7 @@ class TauDEM(object):
 
         self.taudem_exe_path = taudem_exe_path
         self.num_processors = num_processors
+        self.mpiexec_path = mpiexec_path
 
     def _run_mpi_cmd(self, cmd):
         """
@@ -53,7 +55,7 @@ class TauDEM(object):
         time_start = datetime.utcnow()
 
         # Construct the taudem command line.
-        cmd = ['mpiexec', '-n', str(self.num_processors)] + cmd
+        cmd = [self.mpiexec_path, '-n', str(self.num_processors)] + cmd
         print("Command Line: {0}".format(" ".join(cmd)))
         process = Popen(cmd, stdout=PIPE, stderr=PIPE, shell=False)
         out, err = process.communicate()

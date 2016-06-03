@@ -430,9 +430,9 @@ class TauDEM(object):
         self._run_mpi_cmd(cmd)
 
         #create projection files
-        self._add_prj_file(pit_filled_elevation_grid,
+        self._add_prj_file(self.pit_filled_elevation_grid,
                            flow_dir_grid)
-        self._add_prj_file(pit_filled_elevation_grid,
+        self._add_prj_file(self.pit_filled_elevation_grid,
                            slope_grid)
 
     def d8FlowDirection(self, 

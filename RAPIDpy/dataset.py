@@ -29,23 +29,30 @@ class RAPIDDataset(object):
     This class is designed to access data from the RAPID Qout
     netCDF file
     """
-    def __init__(self, filename):
+    def __init__(self, filename, river_id_dimension="", streamflow_dimension=""):
         """
         Initialize the class with variables given by the user
         """
         self.qout_nc = Dataset(filename, mode='r')
         
         #determine river ID dimension
-        if 'rivid' in self.qout_nc.dimensions:
-            self.river_id_dimension = 'rivid'
-        elif 'COMID' in self.qout_nc.dimensions:
-            self.river_id_dimension = 'COMID'
-        elif 'DrainLnID' in self.qout_nc.dimensions:
-            self.river_id_dimension = 'DrainLnID'
-        elif 'FEATUREID' in self.qout_nc.dimensions:
-            self.river_id_dimension = 'FEATUREID'
-        else:
-            raise Exception('ERROR: Could not find river ID dimension.')
+        self.river_id_dimension = river_id_dimension
+        if not river_id_dimension:
+            if 'rivid' in self.qout_nc.dimensions:
+                self.river_id_dimension = 'rivid'
+            elif 'COMID' in self.qout_nc.dimensions:
+                self.river_id_dimension = 'COMID'
+            elif 'station_id' in self.qout_nc.dimensions:
+                self.river_id_dimension = 'station_id'
+            elif 'DrainLnID' in self.qout_nc.dimensions:
+                self.river_id_dimension = 'DrainLnID'
+            elif 'FEATUREID' in self.qout_nc.dimensions:
+                self.river_id_dimension = 'FEATUREID'
+            else:
+                raise IndexError('ERROR: Could not find river ID dimension.')
+        elif river_id_dimension not in self.qout_nc.dimensions:
+            raise IndexError('ERROR: Could not find river ID dimension: {0}.'.format(river_id_dimension))
+            
         self.size_river_id = len(self.qout_nc.dimensions[self.river_id_dimension])
         
         
@@ -55,15 +62,21 @@ class RAPIDDataset(object):
         elif 'Time' in self.qout_nc.dimensions:
             self.size_time = len(self.qout_nc.dimensions['Time'])
         else:
-            raise Exception('ERROR: Could not find time dimension.')
+            raise IndexError('ERROR: Could not find time dimension.')
 
         #determin streamflow variable
-        if 'Qout' in self.qout_nc.variables:
-            self.q_var_name = 'Qout'
-        elif 'm3_riv' in self.qout_nc.variables:
-            self.q_var_name = 'm3_riv'
-        else:
-            raise Exception('ERROR: Could not find flow variable. Looked for Qout and m3_riv.')
+        self.q_var_name = streamflow_dimension
+        if not streamflow_dimension:
+            if 'Qout' in self.qout_nc.variables:
+                self.q_var_name = 'Qout'
+            elif 'streamflow' in self.qout_nc.variables:
+                self.q_var_name = 'streamflow'
+            elif 'm3_riv' in self.qout_nc.variables:
+                self.q_var_name = 'm3_riv'
+            else:
+                raise IndexError('ERROR: Could not find flow variable. Looked for Qout, streamflow, and m3_riv.')
+        elif not streamflow_dimension in self.qout_nc.variables:
+            raise IndexError('ERROR: Could not find flow variable. Looked for {0}.'.format(streamflow_dimension))
 
         self.size_q_var = len(self.qout_nc.variables[self.q_var_name])
 

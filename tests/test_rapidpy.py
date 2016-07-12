@@ -31,6 +31,10 @@ MAIN_TESTS_FOLDER = os.path.dirname(os.path.abspath(__file__))
 COMPARE_DATA_PATH = os.path.join(MAIN_TESTS_FOLDER, 'compare')
 INPUT_DATA_PATH = os.path.join(MAIN_TESTS_FOLDER, 'data')
 OUTPUT_DATA_PATH = os.path.join(MAIN_TESTS_FOLDER, 'output')
+RAPID_EXE_PATH = os.path.join(MAIN_TESTS_FOLDER,
+                              "..", "..",
+                              "rapid", "src", "rapid")
+CYGWIN_BIN_PATH = 'C:\\cygwin64\\bin'
 
 #------------------------------------------------------------------------------
 # MAIN TEST SCRIPTS
@@ -40,7 +44,8 @@ def test_generate_rapid_input_file():
     Checks RAPID input file generation with valid input
     """
     print("TEST 1: GENERATE NAMELIST FILE")
-    rapid_manager = RAPID(rapid_executable_location="",
+    rapid_manager = RAPID(rapid_executable_location=RAPID_EXE_PATH,
+                          cygwin_bin_location=CYGWIN_BIN_PATH,
                           use_all_processors=True,                          
                           ZS_TauR = 24*3600, #duration of routing procedure (time step of runoff data)
                           ZS_dtR = 15*60, #internal routing time step
@@ -70,7 +75,8 @@ def test_update_rapid_input_file():
     Checks RAPID input file update with valid input
     """
     print("TEST 2: UPDATE NAMELIST FILE")
-    rapid_manager = RAPID(rapid_executable_location="",
+    rapid_manager = RAPID(rapid_executable_location=RAPID_EXE_PATH,
+                          cygwin_bin_location=CYGWIN_BIN_PATH,
                           use_all_processors=True,                          
                          )
     rapid_manager.update_parameters(rapid_connect_file='rapid_connect.csv',
@@ -102,7 +108,8 @@ def test_update_rapid_invalid_input_file():
     Checks RAPID input file update with valid input
     """
     print("TEST 3: UPDATE WITH INVALID NAMELIST FILE")
-    rapid_manager = RAPID(rapid_executable_location="",
+    rapid_manager = RAPID(rapid_executable_location=RAPID_EXE_PATH,
+                          cygwin_bin_location=CYGWIN_BIN_PATH,
                           use_all_processors=True,                          
                          )
     rapid_manager.update_parameters(rapid_connect_file='rapid_connect.csv',
@@ -134,7 +141,8 @@ def test_update_rapid_numbers_input_file():
     Checks RAPID input file update with number validation
     """
     print("TEST 4: GENERATE NUMBERS FOR NAMELIST FILE")
-    rapid_manager = RAPID(rapid_executable_location="",
+    rapid_manager = RAPID(rapid_executable_location=RAPID_EXE_PATH,
+                          cygwin_bin_location=CYGWIN_BIN_PATH,
                           use_all_processors=True,
                           rapid_connect_file=os.path.join(INPUT_DATA_PATH, 'rapid_connect.csv'),
                           riv_bas_id_file=os.path.join(INPUT_DATA_PATH, 'riv_bas_id.csv'),
@@ -167,7 +175,8 @@ def test_update_rapid_runtime():
     Checks RAPID input file update with number validation
     """
     print("TEST 5: GENERATE RUNTIME FOR NAMELIST FILE")
-    rapid_manager = RAPID(rapid_executable_location="",
+    rapid_manager = RAPID(rapid_executable_location=RAPID_EXE_PATH,
+                          cygwin_bin_location=CYGWIN_BIN_PATH,
                           use_all_processors=True,
                           rapid_connect_file=os.path.join(INPUT_DATA_PATH, 'rapid_connect.csv'),
                           riv_bas_id_file=os.path.join(INPUT_DATA_PATH, 'riv_bas_id.csv'),
@@ -216,15 +225,12 @@ def test_run_rapid_simulation():
     """
     
     print("TEST 7: TEST RUNNING RAPID SIMULATION")
-    rapid_executable_location = os.path.join(MAIN_TESTS_FOLDER,
-                                             "..", "..",
-                                             "rapid", "src", "rapid")
-                                             
     generated_qout_file = os.path.join(OUTPUT_DATA_PATH, 'Qout_nasa_lis_3hr_20020830_generated.nc')
 
 
 
-    rapid_manager = RAPID(rapid_executable_location,
+    rapid_manager = RAPID(rapid_executable_location=RAPID_EXE_PATH,
+                          cygwin_bin_location=CYGWIN_BIN_PATH,
                           num_processors=1,
                           rapid_connect_file=os.path.join(INPUT_DATA_PATH, 'rapid_connect.csv'),
                           riv_bas_id_file=os.path.join(INPUT_DATA_PATH, 'riv_bas_id.csv'),
@@ -267,7 +273,8 @@ def test_convert_file_to_be_cf_compliant_new_format_comid_lat_lon_z():
     temp_qout_file = os.path.join(OUTPUT_DATA_PATH, 'Qout_nasa_lis_3hr_20020830_test_cf_lat_lon_z.nc')
     copy(input_qout_file, temp_qout_file)
     
-    rapid_manager = RAPID(rapid_executable_location="",
+    rapid_manager = RAPID(rapid_executable_location=RAPID_EXE_PATH,
+                          cygwin_bin_location=CYGWIN_BIN_PATH,
                           Qout_file=temp_qout_file,
                           rapid_connect_file=os.path.join(INPUT_DATA_PATH, 'rapid_connect.csv'),
                           ZS_TauR=3*3600)
@@ -306,7 +313,8 @@ def test_convert_file_to_be_cf_compliant_new_format():
     temp_qout_file = os.path.join(OUTPUT_DATA_PATH, 'Qout_nasa_lis_3hr_20020830_test_cf.nc')
     copy(input_qout_file, temp_qout_file)
     
-    rapid_manager = RAPID(rapid_executable_location="",
+    rapid_manager = RAPID(rapid_executable_location=RAPID_EXE_PATH,
+                          cygwin_bin_location=CYGWIN_BIN_PATH,
                           Qout_file=temp_qout_file,
                           rapid_connect_file=os.path.join(INPUT_DATA_PATH, 'rapid_connect.csv'),
                           ZS_TauR=3*3600)
@@ -343,7 +351,8 @@ def test_convert_file_to_be_cf_compliant_original_format():
     temp_qout_file = os.path.join(OUTPUT_DATA_PATH, 'Qout_nasa_lis_3hr_20020830_original_test_cf.nc')
     copy(input_qout_file, temp_qout_file)
     
-    rapid_manager = RAPID(rapid_executable_location="",
+    rapid_manager = RAPID(rapid_executable_location=RAPID_EXE_PATH,
+                          cygwin_bin_location=CYGWIN_BIN_PATH,
                           Qout_file=temp_qout_file,
                           rapid_connect_file=os.path.join(INPUT_DATA_PATH, 'rapid_connect.csv'),
                           ZS_TauR=3*3600)
@@ -377,7 +386,8 @@ def test_generate_qinit_file():
     This tests the qinit file function to create an input qinit file for RAPID
     """
     print("TEST 11: TEST GENERATE QINIT FILE")
-    rapid_manager = RAPID(rapid_executable_location="",
+    rapid_manager = RAPID(rapid_executable_location=RAPID_EXE_PATH,
+                          cygwin_bin_location=CYGWIN_BIN_PATH,
                           rapid_connect_file=os.path.join(INPUT_DATA_PATH, 'rapid_connect.csv')
                          )
 
@@ -422,7 +432,9 @@ def test_download_usgs_daily_avg():
     out_streamflow_file=os.path.join(OUTPUT_DATA_PATH,"gage_streamflow.csv")
     out_stream_id_file=os.path.join(OUTPUT_DATA_PATH,"gage_rivid.csv")
     
-    rapid_manager = RAPID("")
+    rapid_manager = RAPID(rapid_executable_location=RAPID_EXE_PATH,
+                          cygwin_bin_location=CYGWIN_BIN_PATH)
+    
     rapid_manager.generate_usgs_avg_daily_flows_opt(reach_id_gage_id_file=os.path.join(INPUT_DATA_PATH,"usgs_gage_id_rivid.csv"),
 											start_datetime=datetime(2000,1,1),
     											end_datetime=datetime(2000,1,3),

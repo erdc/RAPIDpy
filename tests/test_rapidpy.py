@@ -509,13 +509,40 @@ def test_extract_timeseries():
     cf_timeseries_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_timeseries.csv')    
     ok_(compare_csv_timeseries_files(cf_timeseries_file, cf_timeseries_file_solution, header=False))
 
+    #if file is CF compliant, you can write out daily average, filter by date, and use max mode
+    cf_timeseries_daily_date_file = os.path.join(OUTPUT_DATA_PATH, 'cf_timeseries_daily_date.csv')
+
+    with RAPIDDataset(cf_qout_file) as qout_nc:
+        qout_nc.write_flows_to_csv(cf_timeseries_daily_date_file,
+                                   reach_id=75224,
+                                   date_search_start=datetime(2002, 8, 31),
+                                   date_search_end=datetime(2002, 8, 31),
+                                   daily=True,
+                                   mode='max')
+
+    cf_timeseries_daily_date_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_timeseries_daily_date.csv')    
+    ok_(compare_csv_timeseries_files(cf_timeseries_daily_date_file, cf_timeseries_daily_date_file_solution, header=True))
+    
+    #if file is CF compliant, check write out timeseries and filter by date
+    cf_timeseries_date_file = os.path.join(OUTPUT_DATA_PATH, 'cf_timeseries_date.csv')
+    with RAPIDDataset(cf_qout_file) as qout_nc:
+        qout_nc.write_flows_to_csv(cf_timeseries_date_file,
+                                   date_search_start=datetime(2002, 8, 31),
+                                   #date_search_end=None,
+                                   reach_id=75224)
+
+    cf_timeseries_date_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_timeseries_date.csv')    
+    ok_(compare_csv_timeseries_files(cf_timeseries_date_file, cf_timeseries_date_file_solution, header=False))
+
     remove_files(new_timeseries_file, 
                  new_qout_file,
                  original_timeseries_file, 
                  original_qout_file,
                  cf_timeseries_file,
+                 cf_timeseries_date_file,
+                 cf_timeseries_daily_file,
+                 cf_timeseries_daily_date_file,
                  cf_qout_file,
-                 cf_timeseries_daily_file
                  )
 
     
@@ -608,10 +635,11 @@ def test_extract_timeseries_to_gssha():
     """
     print("TEST 16: TEST EXTRACT TIMESERIES FROM Qout file to GSSHA xys file")
     
-    #if file is CF compliant, you can write out daily average
     cf_input_qout_file = os.path.join(COMPARE_DATA_PATH, 'Qout_nasa_lis_3hr_20020830_CF.nc')
     cf_qout_file = os.path.join(OUTPUT_DATA_PATH, 'Qout_nasa_lis_3hr_20020830_CF.nc')
     copy(cf_input_qout_file, cf_qout_file)
+
+    #if file is CF compliant, you can write out daily average
     cf_timeseries_daily_file = os.path.join(OUTPUT_DATA_PATH, 'cf_timeseries_daily.xys')
 
     with RAPIDDataset(cf_qout_file) as qout_nc:
@@ -637,9 +665,42 @@ def test_extract_timeseries_to_gssha():
     cf_timeseries_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_timeseries.xys')    
     ok_(compare_csv_timeseries_files(cf_timeseries_file, cf_timeseries_file_solution, header=False))
 
+    #if file is CF compliant, you can write out daily average, filter by date, and use max mode
+    cf_timeseries_daily_date_file = os.path.join(OUTPUT_DATA_PATH, 'cf_timeseries_daily_date.xys')
+
+    with RAPIDDataset(cf_qout_file) as qout_nc:
+        qout_nc.write_flows_to_gssha_time_series(cf_timeseries_daily_date_file,
+                                                 series_name="RAPID_TO_GSSHA",
+                                                 grid_row=25,
+                                                 grid_col=9,
+                                                 reach_id=75224,
+                                                 date_search_start=datetime(2002, 8, 31),
+                                                 date_search_end=datetime(2002, 8, 31),
+                                                 daily=True,
+                                                 mode='max')
+
+    cf_timeseries_daily_date_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_timeseries_daily_date.xys')    
+    ok_(compare_csv_timeseries_files(cf_timeseries_daily_date_file, cf_timeseries_daily_date_file_solution, header=True))
+    
+    #if file is CF compliant, check write out timeseries and filter by date
+    cf_timeseries_date_file = os.path.join(OUTPUT_DATA_PATH, 'cf_timeseries_date.xys')
+    with RAPIDDataset(cf_qout_file) as qout_nc:
+        qout_nc.write_flows_to_gssha_time_series(cf_timeseries_date_file,
+                                                 series_name="RAPID_TO_GSSHA",
+                                                 grid_row=25,
+                                                 grid_col=9,
+                                                 date_search_start=datetime(2002, 8, 31),
+                                                 #date_search_end=None,
+                                                 reach_id=75224)
+
+    cf_timeseries_date_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_timeseries_date.xys')    
+    ok_(compare_csv_timeseries_files(cf_timeseries_date_file, cf_timeseries_date_file_solution, header=False))
+
     remove_files(cf_timeseries_file,
                  cf_qout_file,
-                 cf_timeseries_daily_file
+                 cf_timeseries_daily_file,
+                 cf_timeseries_daily_date_file,
+                 cf_timeseries_date_file,
                  )
                  
 

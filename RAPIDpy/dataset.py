@@ -414,7 +414,8 @@ class RAPIDDataset(object):
             qout_arr = self.get_qout_index(reach_index)
             if not daily_time_index_array:
                 daily_time_index_array = self.get_daily_time_index_array()
-                
+            
+            last_possible_index = daily_time_index_array[-1]+1
             len_daily_time_array = len(daily_time_index_array)
             daily_qout = np.zeros(len_daily_time_array)
             for idx in xrange(len_daily_time_array):
@@ -424,7 +425,7 @@ class RAPIDDataset(object):
                     daily_qout[idx] = calc(qout_arr[time_index_start:next_time_index])
                 elif idx+1 == len_daily_time_array:
                     if time_index_start < self.size_time - 1:
-                        daily_qout[idx] =  calc(qout_arr[time_index_start:-1])	
+                        daily_qout[idx] =  calc(qout_arr[time_index_start:last_possible_index])	
                     else:
                         daily_qout[idx] =  qout_arr[time_index_start]
             return daily_qout

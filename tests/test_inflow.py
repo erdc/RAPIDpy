@@ -14,7 +14,6 @@ from numpy.testing import assert_almost_equal
 import os
 from shutil import rmtree
 
-
 #local import
 from RAPIDpy.inflow import run_lsm_rapid_process
 from RAPIDpy.helper_functions import (compare_csv_decimal_files,

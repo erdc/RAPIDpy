@@ -15,12 +15,85 @@ from numpy.ma import masked
 from pytz import utc
 import time
 
+from .helper_functions import log, open_csv
+
 #in Python 3 xrange is now range
 try:
     xrange
 except NameError:
     xrange = range
     pass
+    
+#------------------------------------------------------------------------------
+#Helper Function
+#------------------------------------------------------------------------------
+def compare_qout_files(dataset1_path, dataset2_path, Qout_var="Qout"):
+    """
+    This function compares the output of RAPID Qout and tells you where they are different.
+    """
+    qout_same = False
+    
+    d1 = RAPIDDataset(dataset1_path)
+    d2 = RAPIDDataset(dataset2_path)
+
+    if len(d1.get_river_id_array()) != len(d2.get_river_id_array()):
+        log("Length of COMID/rivid input not the same.",
+            "ERROR")
+
+    if not (d1.get_river_id_array() == d2.get_river_id_array()).all():
+        log("COMID/rivid order is different in each dataset. Reordering data for comparison.",
+            "WARNING")
+        
+        d2_reordered_reach_index_list = []
+        for comid in d1.get_river_id_array():
+            d2_reordered_reach_index_list.append(where(d2.get_river_id_array()==comid)[0][0])
+        d2_reordered_qout = d2.get_qout_index(d2_reordered_reach_index_list)
+    else:
+        d2_reordered_qout = d2.get_qout()
+        
+    #get where the files are different
+    d1_qout = d1.get_qout()
+    where_diff = np.where(d1_qout != d2_reordered_qout)
+    un_where_diff = np.unique(where_diff[0])
+    
+    #if different, check to see how different
+    if un_where_diff.any():
+        decimal_test = 7
+        while decimal_test > 0:
+            try:
+                np.testing.assert_almost_equal(d1_qout,
+                                               d2_reordered_qout, 
+                                               decimal=decimal_test)
+                log("ALMOST EQUAL to {0} decimal places.".format(decimal_test),
+                    "INFO")
+                qout_same = True
+                decimal_test=-1
+            except AssertionError as ex:
+                if decimal_test <= 1:
+                    print(ex)
+                decimal_test-=1
+                pass
+        log("Number of different timeseries: {0}".format(len(un_where_diff)),
+            "INFO")
+        log("COMID idexes where different: {0}".format(un_where_diff),
+            "INFO")
+        log("COMID idexes where different: {0}".format(un_where_diff),
+            "INFO")
+        index = un_where_diff[0]
+        log("Dataset 1 example. COMID index: {0}".format(d1.get_qout_index(index)),
+            "INFO")
+        log("Dataset 2 example. COMID index: {0}".format(d2_reordered_qout[index, :]),
+            "INFO")
+    
+    else:
+        qout_same = True
+        log("Output Qout data is the same.",
+            "INFO")
+
+    d1.close()
+    d2.close()
+    return qout_same
+    
 #------------------------------------------------------------------------------
 #Main Dataset Manager Class
 #------------------------------------------------------------------------------
@@ -108,9 +181,11 @@ class RAPIDDataset(object):
     
         return time_var_valid
 
-    def get_time_array(self, datetime_simulation_start=None,
+    def get_time_array(self, 
+                       datetime_simulation_start=None,
                        simulation_time_step_seconds=None,
-                       return_datetime=False):
+                       return_datetime=False,
+                       time_index_array=None):
         """
         This method extracts or generates an array of time
         """
@@ -130,10 +205,13 @@ class RAPIDDataset(object):
                             " To get time array, add datetime_simulation_start"
                             " and simulation_time_step_seconds")
         
-        if not return_datetime:
-            return time_array
-        else:
+        if time_index_array:
+            time_array = time_array[time_index_array]
+
+        if return_datetime:
             return [datetime.datetime.utcfromtimestamp(t) for t in time_array]
+        
+        return time_array
 
     def get_time_index_range(self, date_search_start=None,
                              date_search_end=None,
@@ -145,7 +223,7 @@ class RAPIDDataset(object):
         """
         #get the range of time based on datetime range
         time_range = None
-        if 'time' in self.qout_nc.variables and (date_search_start is not None or date_search_end is not None):
+        if self.is_time_variable_valid() and (date_search_start is not None or date_search_end is not None):
             print("Determining time range ({0} to {1})...".format(date_search_start, date_search_end))
             time_array = self.qout_nc.variables['time'][:]
             if date_search_start is not None:
@@ -170,16 +248,25 @@ class RAPIDDataset(object):
         #get only one time step
         elif time_index is not None:
             time_range = time_index
+        #return all
+        else:
+            time_range = range(self.size_time)
         
         return time_range
 
-    def get_daily_time_index_array(self):
+    def get_daily_time_index_array(self, time_index_range=None):
         """
         Returns an array of the first index of each day in the time array
         """
-        current_day = datetime.datetime.utcfromtimestamp(self.qout_nc.variables['time'][0])
+        if not time_index_range:
+            datetime_array = self.get_time_array(return_datetime=True)
+        else:
+            datetime_array = self.get_time_array(time_index_array=time_index_range,
+                                                 return_datetime=True)
+       
+        current_day = datetime_array[0]
         daily_time_index_array = [0]
-        for idx, var_time in enumerate(self.get_time_array(return_datetime=True)):
+        for idx, var_time in enumerate(datetime_array):
             if current_day.day != var_time.day:
                  daily_time_index_array.append(idx)
             current_day = var_time
@@ -382,8 +469,12 @@ class RAPIDDataset(object):
 
 
     def write_flows_to_csv(self, path_to_output_file,
-                           reach_index=None, reach_id=None,
-                           daily=False, mode="mean"):
+                           reach_index=None, 
+                           reach_id=None,
+                           date_search_start=None,
+                           date_search_end=None,
+                           daily=False,
+                           mode="mean"):
         """
         Write out RAPID output to CSV file
         """
@@ -393,31 +484,74 @@ class RAPIDDataset(object):
             raise Exception("ERROR: Need reach id or reach index ...")
 
         #analyze and write
-        time_var_valid = self.is_time_variable_valid()
-        if time_var_valid:
-            if daily:
-                with open(path_to_output_file, 'w') as outcsv:
-                    writer = csv_writer(outcsv)
-                    daily_time_index_array = self.get_daily_time_index_array()
-                    daily_qout = self.get_daily_qout_index(reach_index, mode=mode)
+        if self.is_time_variable_valid():
+            time_index_range = self.get_time_index_range(date_search_start=date_search_start,
+                                                         date_search_end=date_search_end)
+            with open_csv(path_to_output_file, 'w') as outcsv:
+                writer = csv_writer(outcsv)
+                if daily:
+                    daily_time_index_array = self.get_daily_time_index_array(time_index_range)
+                    daily_qout = self.get_daily_qout_index(reach_index, daily_time_index_array, mode=mode)
                     time_array = self.get_time_array()
                     for idx, time_idx in enumerate(daily_time_index_array):
                         current_day = time.gmtime(time_array[time_idx])
                         #write last average
                         writer.writerow([time.strftime("%Y/%m/%d", current_day), daily_qout[idx]])
-            else:
-                qout_arr = self.get_qout_index(reach_index)
-                time_array = self.get_time_array()
-                with open(path_to_output_file, 'w') as outcsv:
-                    writer = csv_writer(outcsv)
-                    for index in xrange(len(qout_arr)):
-                        var_time = time.gmtime(time_array[index])
-                        writer.writerow([time.strftime("%Y/%m/%d %H:00", var_time), qout_arr[index]])
+                else:
+                    qout_arr = self.get_qout_index(reach_index, time_index_array=time_index_range)
+                    time_array = self.get_time_array(time_index_array=time_index_range)
+                    with open(path_to_output_file, 'wt', encoding='utf-8') as outcsv:
+                        for index in xrange(len(qout_arr)):
+                            var_time = time.gmtime(time_array[index])
+                            writer.writerow([time.strftime("%Y/%m/%d %H:00", var_time), qout_arr[index]])
 
         else:
             print("Valid time variable not found. Printing values only ...")
             qout_arr = self.get_qout_index(reach_index)
-            with open(path_to_output_file, 'w') as outcsv:
+            with open_csv(path_to_output_file, 'w') as outcsv:
                 writer = csv_writer(outcsv)
                 for index in xrange(len(qout_arr)):
                     writer.writerow([index, qout_arr[index]])
+
+    def write_flows_to_gssha_time_series(self, 
+                                         path_to_output_file,
+                                         series_name,
+                                         grid_row,
+                                         grid_col,
+                                         reach_index=None, 
+                                         reach_id=None,
+                                         date_search_start=None,
+                                         date_search_end=None,
+                                         daily=False, 
+                                         mode="mean"):
+        """
+        Write out RAPID output to GSSHA time seties file
+        """
+        if reach_id != None:
+            reach_index = self.get_river_index(reach_id)
+        elif reach_id == None and reach_index == None:
+            raise Exception("ERROR: Need reach id or reach index ...")
+
+        #analyze and write
+        if self.is_time_variable_valid():
+            time_index_range = self.get_time_index_range(date_search_start=date_search_start,
+                                                         date_search_end=date_search_end)
+            
+            with open_csv(path_to_output_file, 'w') as out_ts:
+                out_ts.write("XYS {0} {1} \"{2}\"\n".format(grid_row, grid_col, series_name))
+                if daily:
+                    daily_time_index_array = self.get_daily_time_index_array(time_index_range)
+                    daily_qout = self.get_daily_qout_index(reach_index, daily_time_index_array, mode=mode)
+                    time_array = self.get_time_array()
+                    for idx, time_idx in enumerate(daily_time_index_array):
+                        current_day = time.gmtime(time_array[time_idx])
+                        #write last average
+                        out_ts.write("\"{0}\" {1}\n".format(time.strftime("%m/%d/%Y %I:%M:%S %p", current_day), daily_qout[idx]))
+                else:
+                    qout_arr = self.get_qout_index(reach_index, time_index_array=time_index_range)
+                    time_array = self.get_time_array(time_index_array=time_index_range)
+                    for index in xrange(len(qout_arr)):
+                        var_time = time.gmtime(time_array[index])
+                        out_ts.write("\"{0}\" {1}\n".format(time.strftime("%m/%d/%Y %I:%M:%S %p", var_time), qout_arr[index]))
+        else:
+            raise IndexError("Valid time variable not found. Valid time variable required in Qout file to proceed ...")

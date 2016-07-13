@@ -7,15 +7,11 @@
 ##  Copyright © 2015 Alan D Snow. All rights reserved.
 ##
 import csv
-from numpy import where, unique
 from numpy.testing import assert_almost_equal
 from numpy import array as np_array
 from numpy import float32 as np_float32
 from os import remove
 from sys import version_info
-
-#local imports
-from .dataset import RAPIDDataset
 
 #------------------------------------------------------------------------------
 # HELPER FUNCTIONS
@@ -83,6 +79,11 @@ def compare_csv_decimal_files(file1, file2, header=True):
     """
     This function compares two csv files
     """
+    #CHECK NUM LINES
+    with open_csv(file1) as fh1, \
+         open_csv(file2) as fh2:
+         assert sum(1 for line1 in fh1) == sum(1 for line2 in fh2)
+    
     with open_csv(file1) as fh1, \
          open_csv(file2) as fh2:
         csv1 = csv.reader(fh1)
@@ -109,6 +110,11 @@ def compare_csv_timeseries_files(file1, file2, header=True):
     """
     This function compares two csv files
     """
+    #CHECK NUM LINES
+    with open_csv(file1) as fh1, \
+         open_csv(file2) as fh2:
+         assert sum(1 for line1 in fh1) == sum(1 for line2 in fh2)
+
     with open_csv(file1) as fh1, \
          open_csv(file2) as fh2:
         csv1 = csv.reader(fh1)
@@ -144,69 +150,3 @@ def remove_files(*args):
         except OSError:
             pass
 
-def compare_qout_files(dataset1_path, dataset2_path, Qout_var="Qout"):
-    """
-    This function compares the output of RAPID Qout and tells you where they are different.
-    """
-    qout_same = False
-    
-    d1 = RAPIDDataset(dataset1_path)
-    d2 = RAPIDDataset(dataset2_path)
-
-    if len(d1.get_river_id_array()) != len(d2.get_river_id_array()):
-        log("Length of COMID/rivid input not the same.",
-            "ERROR")
-
-    if not (d1.get_river_id_array() == d2.get_river_id_array()).all():
-        log("COMID/rivid order is different in each dataset. Reordering data for comparison.",
-            "WARNING")
-        
-        d2_reordered_reach_index_list = []
-        for comid in d1.get_river_id_array():
-            d2_reordered_reach_index_list.append(where(d2.get_river_id_array()==comid)[0][0])
-        d2_reordered_qout = d2.get_qout_index(d2_reordered_reach_index_list)
-    else:
-        d2_reordered_qout = d2.get_qout()
-        
-    #get where the files are different
-    d1_qout = d1.get_qout()
-    where_diff = where(d1_qout != d2_reordered_qout)
-    un_where_diff = unique(where_diff[0])
-    
-    #if different, check to see how different
-    if un_where_diff.any():
-        decimal_test = 7
-        while decimal_test > 0:
-            try:
-                assert_almost_equal(d1_qout,
-                                    d2_reordered_qout, 
-                                    decimal=decimal_test)
-                log("ALMOST EQUAL to {0} decimal places.".format(decimal_test),
-                    "INFO")
-                qout_same = True
-                decimal_test=-1
-            except AssertionError as ex:
-                if decimal_test <= 1:
-                    print(ex)
-                decimal_test-=1
-                pass
-        log("Number of different timeseries: {0}".format(len(un_where_diff)),
-            "INFO")
-        log("COMID idexes where different: {0}".format(un_where_diff),
-            "INFO")
-        log("COMID idexes where different: {0}".format(un_where_diff),
-            "INFO")
-        index = un_where_diff[0]
-        log("Dataset 1 example. COMID index: {0}".format(d1.get_qout_index(index)),
-            "INFO")
-        log("Dataset 2 example. COMID index: {0}".format(d2_reordered_qout[index, :]),
-            "INFO")
-    
-    else:
-        qout_same = True
-        log("Output Qout data is the same.",
-            "INFO")
-
-    d1.close()
-    d2.close()
-    return qout_same

@@ -18,9 +18,9 @@ from shutil import copy
 #local import
 from RAPIDpy import RAPID
 from RAPIDpy import RAPIDDataset
+from RAPIDpy.dataset import compare_qout_files
 from RAPIDpy.helper_functions import (compare_csv_decimal_files,
                                       compare_csv_timeseries_files,
-                                      compare_qout_files, 
                                       remove_files)
 
 from RAPIDpy.postprocess import find_goodness_of_fit
@@ -436,10 +436,10 @@ def test_download_usgs_daily_avg():
                           cygwin_bin_location=CYGWIN_BIN_PATH)
     
     rapid_manager.generate_usgs_avg_daily_flows_opt(reach_id_gage_id_file=os.path.join(INPUT_DATA_PATH,"usgs_gage_id_rivid.csv"),
-											start_datetime=datetime(2000,1,1),
-    											end_datetime=datetime(2000,1,3),
-    											out_streamflow_file=out_streamflow_file, 
-    											out_stream_id_file=out_stream_id_file)
+                                                    start_datetime=datetime(2000,1,1),
+                                                    end_datetime=datetime(2000,1,3),
+                                                    out_streamflow_file=out_streamflow_file, 
+                                                    out_stream_id_file=out_stream_id_file)
                 
     compare_streamflow_file=os.path.join(COMPARE_DATA_PATH,"gage_streamflow.csv")
     ok_(compare_csv_decimal_files(out_streamflow_file, compare_streamflow_file, header=False))
@@ -601,6 +601,48 @@ def test_cf_merge():
     
     remove_files(qout_1,
                  qout_2)
+
+def test_extract_timeseries_to_gssha():
+    """
+    This tests extracting a timeseries from RAPID Qout file to GSHHA xys file
+    """
+    print("TEST 16: TEST EXTRACT TIMESERIES FROM Qout file to GSSHA xys file")
+    
+    #if file is CF compliant, you can write out daily average
+    cf_input_qout_file = os.path.join(COMPARE_DATA_PATH, 'Qout_nasa_lis_3hr_20020830_CF.nc')
+    cf_qout_file = os.path.join(OUTPUT_DATA_PATH, 'Qout_nasa_lis_3hr_20020830_CF.nc')
+    copy(cf_input_qout_file, cf_qout_file)
+    cf_timeseries_daily_file = os.path.join(OUTPUT_DATA_PATH, 'cf_timeseries_daily.xys')
+
+    with RAPIDDataset(cf_qout_file) as qout_nc:
+        qout_nc.write_flows_to_gssha_time_series(cf_timeseries_daily_file,
+                                                 series_name="RAPID_TO_GSSHA",
+                                                 grid_row=25,
+                                                 grid_col=9,
+                                                 reach_index=20,
+                                                 daily=True)
+
+    cf_timeseries_daily_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_timeseries_daily.xys')    
+    ok_(compare_csv_timeseries_files(cf_timeseries_daily_file, cf_timeseries_daily_file_solution, header=True))
+    
+    #if file is CF compliant, check write out timeseries
+    cf_timeseries_file = os.path.join(OUTPUT_DATA_PATH, 'cf_timeseries.xys')
+    with RAPIDDataset(cf_qout_file) as qout_nc:
+        qout_nc.write_flows_to_gssha_time_series(cf_timeseries_file,
+                                                 series_name="RAPID_TO_GSSHA",
+                                                 grid_row=25,
+                                                 grid_col=9,
+                                                 reach_index=20)
+
+    cf_timeseries_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_timeseries.xys')    
+    ok_(compare_csv_timeseries_files(cf_timeseries_file, cf_timeseries_file_solution, header=False))
+
+    remove_files(cf_timeseries_file,
+                 cf_qout_file,
+                 cf_timeseries_daily_file
+                 )
+                 
+
 if __name__ == '__main__':
     import nose
     nose.main()

@@ -258,7 +258,7 @@ class RAPIDDataset(object):
         """
         Returns an array of the first index of each day in the time array
         """
-        if not time_index_range:
+        if time_index_range is None:
             datetime_array = self.get_time_array(return_datetime=True)
         else:
             datetime_array = self.get_time_array(time_index_array=time_index_range,

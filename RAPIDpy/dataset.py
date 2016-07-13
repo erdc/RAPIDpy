@@ -205,7 +205,7 @@ class RAPIDDataset(object):
                             " To get time array, add datetime_simulation_start"
                             " and simulation_time_step_seconds")
         
-        if time_index_array:
+        if time_index_array is not None:
             time_array = time_array[time_index_array]
 
         if return_datetime:
@@ -500,7 +500,7 @@ class RAPIDDataset(object):
                 else:
                     qout_arr = self.get_qout_index(reach_index, time_index_array=time_index_range)
                     time_array = self.get_time_array(time_index_array=time_index_range)
-                    with open(path_to_output_file, 'wt', encoding='utf-8') as outcsv:
+                    with open(path_to_output_file, 'w') as outcsv:
                         for index in xrange(len(qout_arr)):
                             var_time = time.gmtime(time_array[index])
                             writer.writerow([time.strftime("%Y/%m/%d %H:00", var_time), qout_arr[index]])

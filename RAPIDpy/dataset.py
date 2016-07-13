@@ -258,18 +258,21 @@ class RAPIDDataset(object):
         """
         Returns an array of the first index of each day in the time array
         """
+        idx = 0
         if time_index_range is None:
             datetime_array = self.get_time_array(return_datetime=True)
         else:
+            idx = time_index_range[0]
             datetime_array = self.get_time_array(time_index_array=time_index_range,
                                                  return_datetime=True)
        
         current_day = datetime_array[0]
-        daily_time_index_array = [0]
-        for idx, var_time in enumerate(datetime_array):
+        daily_time_index_array = [idx]
+        for var_time in datetime_array:
             if current_day.day != var_time.day:
                  daily_time_index_array.append(idx)
             current_day = var_time
+            idx += 1
         return daily_time_index_array
 
     def get_river_id_array(self):
@@ -536,7 +539,6 @@ class RAPIDDataset(object):
         if self.is_time_variable_valid():
             time_index_range = self.get_time_index_range(date_search_start=date_search_start,
                                                          date_search_end=date_search_end)
-            
             with open_csv(path_to_output_file, 'w') as out_ts:
                 out_ts.write("XYS {0} {1} \"{2}\"\n".format(grid_row, grid_col, series_name))
                 if daily:

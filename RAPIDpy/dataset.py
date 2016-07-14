@@ -202,7 +202,7 @@ class RAPIDDataset(object):
                         pass
     
         return time_var_valid
-
+    
     def get_time_array(self, 
                        datetime_simulation_start=None,
                        simulation_time_step_seconds=None,
@@ -420,43 +420,71 @@ class RAPIDDataset(object):
             raise Exception( "Invalid RAPID Qout file dimensions ...")
         return streamflow_array
 
-    def get_daily_qout_index(self, reach_index, daily_time_index_array=None, 
-			     steps_per_group=1, mode="mean"):
+    def get_daily_qout_index(self, river_index_array, 
+                             daily_time_index_array=None, 
+                             steps_per_group=1, 
+                             mode="mean"):
         """
         Gets the daily time series from RAPID output
         """
+        axis = None
         if mode=="mean":
             calc = np.mean
         elif mode=="max":
-    	    calc = np.max
+    	    calc = np.amax
         else:
     	    raise Exception("Invalid calc mode ...")
 
         if self.is_time_variable_valid() and steps_per_group<=1:
-            qout_arr = self.get_qout_index(reach_index)
+            qout_arr = self.get_qout_index(river_index_array)
+            qout_arr_dim_size = len(qout_arr.shape)
+            
             if not daily_time_index_array:
                 daily_time_index_array = self.get_daily_time_index_array()
             
             last_possible_index = daily_time_index_array[-1]+1
             len_daily_time_array = len(daily_time_index_array)
-            daily_qout = np.zeros(len_daily_time_array)
+            
+            
+            if qout_arr_dim_size > 1:
+                daily_qout = np.zeros((qout_arr.shape[0], len_daily_time_array))
+            else:
+                daily_qout = np.zeros(len_daily_time_array)
+                
             for idx in xrange(len_daily_time_array):
                 time_index_start = daily_time_index_array[idx]
                 if idx+1 < len_daily_time_array:
                     next_time_index = daily_time_index_array[idx+1]
-                    daily_qout[idx] = calc(qout_arr[time_index_start:next_time_index])
+                    if qout_arr_dim_size > 1:
+                        daily_qout[:,idx] = calc(qout_arr[:,time_index_start:next_time_index], axis=1)
+                    else:
+                        daily_qout[idx] = calc(qout_arr[time_index_start:next_time_index])
                 elif idx+1 == len_daily_time_array:
                     if time_index_start < self.size_time - 1:
-                        daily_qout[idx] =  calc(qout_arr[time_index_start:last_possible_index])	
+                        if qout_arr_dim_size > 1:
+                            daily_qout[:,idx] =  calc(qout_arr[:,time_index_start:last_possible_index], axis=1)
+                        else:
+                            daily_qout[idx] =  calc(qout_arr[time_index_start:last_possible_index])
                     else:
-                        daily_qout[idx] =  qout_arr[time_index_start]
+                        if qout_arr_dim_size > 1:
+                            daily_qout[:,idx] =  qout_arr[:,time_index_start]
+                        else:
+                            daily_qout[idx] =  qout_arr[time_index_start]
             return daily_qout
+            
         elif steps_per_group > 1:
-            flow_data = self.get_qout_index(reach_index)
+            flow_data = self.get_qout_index(river_index_array)
+            qout_arr_dim_size = len(flow_data.shape)
+            axis = None
+            if qout_arr_dim_size > 1:
+                axis = 1
             daily_qout = []
             for step_index in xrange(0, len(flow_data), steps_per_group):
-                flows_slice = flow_data[step_index:step_index + steps_per_group]
-                daily_qout.append(calc(flows_slice))
+                if qout_arr_dim_size > 1:
+                    flows_slice = flow_data[:,step_index:step_index + steps_per_group]
+                else:
+                    flows_slice = flow_data[step_index:step_index + steps_per_group]
+                daily_qout.append(calc(flows_slice, axis=axis))
             return np.array(daily_qout, np.float32)
         else:
             raise Exception("Must have steps_per_group set to a value greater than one "
@@ -539,18 +567,18 @@ class RAPIDDataset(object):
                 for index in xrange(len(qout_arr)):
                     writer.writerow([index, "{0:.5f}".format(qout_arr[index])])
 
-    def write_flows_to_gssha_time_series(self, 
-                                         path_to_output_file,
-                                         series_name,
-                                         series_id,
-                                         reach_index=None, 
-                                         reach_id=None,
-                                         date_search_start=None,
-                                         date_search_end=None,
-                                         daily=False, 
-                                         mode="mean"):
+    def write_flows_to_gssha_time_series_xys(self, 
+                                             path_to_output_file,
+                                             series_name,
+                                             series_id,
+                                             reach_index=None, 
+                                             reach_id=None,
+                                             date_search_start=None,
+                                             date_search_end=None,
+                                             daily=False, 
+                                             mode="mean"):
         """
-        Write out RAPID output to GSSHA time seties file
+        Write out RAPID output to GSSHA time series xys file
         """
         if reach_id != None:
             reach_index = self.get_river_index(reach_id)
@@ -577,5 +605,63 @@ class RAPIDDataset(object):
                     for index in xrange(len(qout_arr)):
                         date_str = time.strftime("%m/%d/%Y %I:%M:%S %p", time.gmtime(time_array[index]))
                         out_ts.write("\"{0}\" {1:.5f}\n".format(date_str, qout_arr[index]))
+        else:
+            raise IndexError("Valid time variable not found. Valid time variable required in Qout file to proceed ...")
+
+    def write_flows_to_gssha_time_series_ihg(self, 
+                                             path_to_output_file,
+                                             point_list,
+                                             date_search_start=None,
+                                             date_search_end=None,
+                                             daily=False, 
+                                             mode="mean"):
+        """
+        Write out RAPID output to GSSHA time series ihg file
+        """
+        #analyze and write
+        if self.is_time_variable_valid():
+            time_index_range = self.get_time_index_range(date_search_start=date_search_start,
+                                                         date_search_end=date_search_end)
+            with open_csv(path_to_output_file, 'w') as out_ts:
+                #####HEADER SECTION EXAMPLE:
+                #NUMPT 3
+                #POINT 1 599 0.0
+                #POINT 1 603 0.0
+                #POINT 1 605 0.0
+                
+                out_ts.write("NUMPT {0}\n".format(len(point_list)))
+                river_idx_list = []
+                for point in point_list:
+                    out_ts.write("POINT {0} {1} {2}\n".format(point['num_nodes'], #ASSUMPTION???? 
+                                                              point['link_id'], 
+                                                              point['baseflow'], #ASSUMPTION???? 
+                                                              ))
+                    river_idx_list.append(self.get_river_index(int(point['rapid_rivid'])))
+                
+                
+                #####INFLOW SECTION EXAMPLE:
+                #NRPDS 54
+                #INPUT 2002 01 01 00 00 15.551210 12.765090 0.000000
+                #INPUT 2002 01 02 00 00 15.480830 12.765090 0.000000
+                #INPUT 2002 01 03 00 00 16.078910 12.765090 0.000000
+                # ...
+                if daily:
+                    daily_time_index_array = self.get_daily_time_index_array(time_index_range)
+                    out_ts.write("NRDPS {0}\n".format(len(daily_time_index_array)))
+                    
+                    daily_qout_2d_array = self.get_daily_qout_index(river_idx_list, daily_time_index_array, mode=mode)
+                    time_array = self.get_time_array()
+                    for idx, time_idx in enumerate(daily_time_index_array):
+                        date_str = time.strftime("%Y %m %d %H %M %S", time.gmtime(time_array[time_idx]))
+                        qout_str = " ".join(["{0:.5f}".format(daily_qout) for daily_qout in daily_qout_2d_array[:, idx]])
+                        out_ts.write("INPUT {0} {1}\n".format(date_str, qout_str))
+                else:
+                    qout_2d_array = self.get_qout_index(river_idx_list, time_index_array=time_index_range)
+                    out_ts.write("NRDPS {0}\n".format(qout_2d_array.shape[1]))
+                    time_array = self.get_time_array(time_index_array=time_index_range)
+                    for index in xrange(qout_2d_array.shape[1]):
+                        date_str = time.strftime("%Y %m %d %H %M %S", time.gmtime(time_array[index]))
+                        qout_str = " ".join(["{0:.5f}".format(daily_qout) for daily_qout in qout_2d_array[:, index]])
+                        out_ts.write("INPUT {0} {1}\n".format(date_str, qout_str))
         else:
             raise IndexError("Valid time variable not found. Valid time variable required in Qout file to proceed ...")

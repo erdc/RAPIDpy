@@ -617,6 +617,8 @@ class RAPIDDataset(object):
                                              mode="mean"):
         """
         Write out RAPID output to GSSHA time series ihg file
+        See: http://www.gsshawiki.com/Surface_Water_Routing:Introducing_Dischage/Constituent_Hydrographs
+        GSSHA prj card: CHAN_POINT_INPUT 
         """
         #analyze and write
         if self.is_time_variable_valid():

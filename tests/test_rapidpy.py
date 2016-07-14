@@ -629,7 +629,7 @@ def test_cf_merge():
     remove_files(qout_1,
                  qout_2)
 
-def test_extract_timeseries_to_gssha():
+def test_extract_timeseries_to_gssha_xys():
     """
     This tests extracting a timeseries from RAPID Qout file to GSHHA xys file
     """
@@ -643,11 +643,11 @@ def test_extract_timeseries_to_gssha():
     cf_timeseries_daily_file = os.path.join(OUTPUT_DATA_PATH, 'cf_timeseries_daily.xys')
 
     with RAPIDDataset(cf_qout_file) as qout_nc:
-        qout_nc.write_flows_to_gssha_time_series(cf_timeseries_daily_file,
-                                                 series_name="RAPID_TO_GSSHA",
-                                                 series_id=25,
-                                                 reach_index=20,
-                                                 daily=True)
+        qout_nc.write_flows_to_gssha_time_series_xys(cf_timeseries_daily_file,
+                                                     series_name="RAPID_TO_GSSHA",
+                                                     series_id=25,
+                                                     reach_index=20,
+                                                     daily=True)
 
     cf_timeseries_daily_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_timeseries_daily.xys')    
     ok_(compare_csv_timeseries_files(cf_timeseries_daily_file, cf_timeseries_daily_file_solution, header=True))
@@ -655,10 +655,10 @@ def test_extract_timeseries_to_gssha():
     #if file is CF compliant, check write out timeseries
     cf_timeseries_file = os.path.join(OUTPUT_DATA_PATH, 'cf_timeseries.xys')
     with RAPIDDataset(cf_qout_file) as qout_nc:
-        qout_nc.write_flows_to_gssha_time_series(cf_timeseries_file,
-                                                 series_name="RAPID_TO_GSSHA",
-                                                 series_id=25,
-                                                 reach_index=20)
+        qout_nc.write_flows_to_gssha_time_series_xys(cf_timeseries_file,
+                                                     series_name="RAPID_TO_GSSHA",
+                                                     series_id=25,
+                                                     reach_index=20)
 
     cf_timeseries_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_timeseries.xys')    
     ok_(compare_csv_timeseries_files(cf_timeseries_file, cf_timeseries_file_solution, header=False))
@@ -667,14 +667,14 @@ def test_extract_timeseries_to_gssha():
     cf_timeseries_daily_date_file = os.path.join(OUTPUT_DATA_PATH, 'cf_timeseries_daily_date.xys')
 
     with RAPIDDataset(cf_qout_file) as qout_nc:
-        qout_nc.write_flows_to_gssha_time_series(cf_timeseries_daily_date_file,
-                                                 series_name="RAPID_TO_GSSHA",
-                                                 series_id=25,
-                                                 reach_id=75224,
-                                                 date_search_start=datetime(2002, 8, 31),
-                                                 date_search_end=datetime(2002, 8, 31),
-                                                 daily=True,
-                                                 mode='max')
+        qout_nc.write_flows_to_gssha_time_series_xys(cf_timeseries_daily_date_file,
+                                                     series_name="RAPID_TO_GSSHA",
+                                                     series_id=25,
+                                                     reach_id=75224,
+                                                     date_search_start=datetime(2002, 8, 31),
+                                                     date_search_end=datetime(2002, 8, 31),
+                                                     daily=True,
+                                                     mode='max')
 
     cf_timeseries_daily_date_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_timeseries_daily_date.xys')    
     ok_(compare_csv_timeseries_files(cf_timeseries_daily_date_file, cf_timeseries_daily_date_file_solution, header=True))
@@ -682,12 +682,12 @@ def test_extract_timeseries_to_gssha():
     #if file is CF compliant, check write out timeseries and filter by date
     cf_timeseries_date_file = os.path.join(OUTPUT_DATA_PATH, 'cf_timeseries_date.xys')
     with RAPIDDataset(cf_qout_file) as qout_nc:
-        qout_nc.write_flows_to_gssha_time_series(cf_timeseries_date_file,
-                                                 series_name="RAPID_TO_GSSHA",
-                                                 series_id=25,
-                                                 date_search_start=datetime(2002, 8, 31),
-                                                 #date_search_end=None,
-                                                 reach_id=75224)
+        qout_nc.write_flows_to_gssha_time_series_xys(cf_timeseries_date_file,
+                                                     series_name="RAPID_TO_GSSHA",
+                                                     series_id=25,
+                                                     date_search_start=datetime(2002, 8, 31),
+                                                     #date_search_end=None,
+                                                     reach_id=75224)
 
     cf_timeseries_date_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_timeseries_date.xys')    
     ok_(compare_csv_timeseries_files(cf_timeseries_date_file, cf_timeseries_date_file_solution, header=False))

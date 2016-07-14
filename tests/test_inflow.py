@@ -14,7 +14,6 @@ from numpy.testing import assert_almost_equal
 import os
 from shutil import rmtree
 
-
 #local import
 from RAPIDpy.inflow import run_lsm_rapid_process
 from RAPIDpy.helper_functions import (compare_csv_decimal_files,
@@ -28,6 +27,7 @@ OUTPUT_DATA_PATH = os.path.join(MAIN_TESTS_FOLDER, 'output')
 RAPID_EXE_PATH = os.path.join(MAIN_TESTS_FOLDER,
                               "..", "..",
                               "rapid", "src", "rapid")
+CYGWIN_BIN_PATH = 'C:\\cygwin64\\bin'
 
 #------------------------------------------------------------------------------
 # MAIN TEST SCRIPTS
@@ -39,6 +39,7 @@ def test_run_era_interim_inflow():
     print("TEST 1: TEST GENERATE INFLOW FILE FROM ERA INTERIM DATA")
     run_lsm_rapid_process(
         rapid_executable_location=RAPID_EXE_PATH,
+        cygwin_bin_location=CYGWIN_BIN_PATH,
         rapid_io_files_location=MAIN_TESTS_FOLDER,
         lsm_data_location=os.path.join(INPUT_DATA_PATH, 'erai3'), #path to folder with LSM data
         simulation_start_datetime=datetime(1980, 1, 1),
@@ -105,6 +106,7 @@ def test_run_nldas2_inflow():
     print("TEST 1: TEST GENERATE INFLOW FILE FROM NLDAS V2 DATA")
     run_lsm_rapid_process(
         rapid_executable_location=RAPID_EXE_PATH,
+        cygwin_bin_location=CYGWIN_BIN_PATH,
         rapid_io_files_location=MAIN_TESTS_FOLDER,
         lsm_data_location=os.path.join(INPUT_DATA_PATH, 'nldas2'), #path to folder with LSM data
         simulation_start_datetime=datetime(1980, 1, 1),

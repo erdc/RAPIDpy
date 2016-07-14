@@ -632,9 +632,9 @@ class RAPIDDataset(object):
                 out_ts.write("NUMPT {0}\n".format(len(point_list)))
                 river_idx_list = []
                 for point in point_list:
-                    out_ts.write("POINT {0} {1} {2}\n".format(point['num_nodes'], #ASSUMPTION???? 
+                    out_ts.write("POINT {0} {1} {2}\n".format(point['node_id'],
                                                               point['link_id'], 
-                                                              point['baseflow'], #ASSUMPTION???? 
+                                                              point['baseflow'],
                                                               ))
                     river_idx_list.append(self.get_river_index(int(point['rapid_rivid'])))
                 

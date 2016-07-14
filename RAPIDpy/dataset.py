@@ -648,20 +648,34 @@ class RAPIDDataset(object):
                 if daily:
                     daily_time_index_array = self.get_daily_time_index_array(time_index_range)
                     out_ts.write("NRDPS {0}\n".format(len(daily_time_index_array)))
-                    
                     daily_qout_2d_array = self.get_daily_qout_index(river_idx_list, daily_time_index_array, mode=mode)
+                    qout_num_dimensions = len(daily_qout_2d_array.shape)
                     time_array = self.get_time_array()
                     for idx, time_idx in enumerate(daily_time_index_array):
                         date_str = time.strftime("%Y %m %d %H %M %S", time.gmtime(time_array[time_idx]))
-                        qout_str = " ".join(["{0:.5f}".format(daily_qout) for daily_qout in daily_qout_2d_array[:, idx]])
+                        if qout_num_dimensions > 1:
+                            qout_str = " ".join(["{0:.5f}".format(daily_qout) for daily_qout in daily_qout_2d_array[:, idx]])
+                        else:
+                            qout_str = "{0:.5f}".format(daily_qout_2d_array[idx])
+                            
                         out_ts.write("INPUT {0} {1}\n".format(date_str, qout_str))
                 else:
                     qout_2d_array = self.get_qout_index(river_idx_list, time_index_array=time_index_range)
-                    out_ts.write("NRDPS {0}\n".format(qout_2d_array.shape[1]))
+                    qout_num_dimensions = len(qout_2d_array.shape)
+                    num_time_steps = qout_2d_array.shape[0]
+                    if qout_num_dimensions > 1:
+                        num_time_steps = qout_2d_array.shape[1]
+                    
+                    out_ts.write("NRDPS {0}\n".format(num_time_steps))
+                    
                     time_array = self.get_time_array(time_index_array=time_index_range)
-                    for index in xrange(qout_2d_array.shape[1]):
+                    for index in xrange(num_time_steps):
                         date_str = time.strftime("%Y %m %d %H %M %S", time.gmtime(time_array[index]))
-                        qout_str = " ".join(["{0:.5f}".format(daily_qout) for daily_qout in qout_2d_array[:, index]])
+                        if qout_num_dimensions > 1:
+                            qout_str = " ".join(["{0:.5f}".format(daily_qout) for daily_qout in qout_2d_array[:, index]])
+                        else:
+                            qout_str = "{0:.5f}".format(qout_2d_array[index])
+                        
                         out_ts.write("INPUT {0} {1}\n".format(date_str, qout_str))
         else:
             raise IndexError("Valid time variable not found. Valid time variable required in Qout file to proceed ...")

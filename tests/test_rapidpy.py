@@ -645,8 +645,7 @@ def test_extract_timeseries_to_gssha():
     with RAPIDDataset(cf_qout_file) as qout_nc:
         qout_nc.write_flows_to_gssha_time_series(cf_timeseries_daily_file,
                                                  series_name="RAPID_TO_GSSHA",
-                                                 grid_row=25,
-                                                 grid_col=9,
+                                                 series_id=25,
                                                  reach_index=20,
                                                  daily=True)
 
@@ -658,8 +657,7 @@ def test_extract_timeseries_to_gssha():
     with RAPIDDataset(cf_qout_file) as qout_nc:
         qout_nc.write_flows_to_gssha_time_series(cf_timeseries_file,
                                                  series_name="RAPID_TO_GSSHA",
-                                                 grid_row=25,
-                                                 grid_col=9,
+                                                 series_id=25,
                                                  reach_index=20)
 
     cf_timeseries_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_timeseries.xys')    
@@ -671,8 +669,7 @@ def test_extract_timeseries_to_gssha():
     with RAPIDDataset(cf_qout_file) as qout_nc:
         qout_nc.write_flows_to_gssha_time_series(cf_timeseries_daily_date_file,
                                                  series_name="RAPID_TO_GSSHA",
-                                                 grid_row=25,
-                                                 grid_col=9,
+                                                 series_id=25,
                                                  reach_id=75224,
                                                  date_search_start=datetime(2002, 8, 31),
                                                  date_search_end=datetime(2002, 8, 31),
@@ -687,8 +684,7 @@ def test_extract_timeseries_to_gssha():
     with RAPIDDataset(cf_qout_file) as qout_nc:
         qout_nc.write_flows_to_gssha_time_series(cf_timeseries_date_file,
                                                  series_name="RAPID_TO_GSSHA",
-                                                 grid_row=25,
-                                                 grid_col=9,
+                                                 series_id=25,
                                                  date_search_start=datetime(2002, 8, 31),
                                                  #date_search_end=None,
                                                  reach_id=75224)

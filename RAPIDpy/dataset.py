@@ -29,7 +29,10 @@ class RAPIDDataset(object):
     This class is designed to access data from the RAPID Qout
     netCDF file
     """
-    def __init__(self, filename, river_id_dimension="", streamflow_dimension=""):
+    def __init__(self, filename, 
+                 river_id_dimension="", 
+                 river_id_variable="", 
+                 streamflow_variable=""):
         """
         Initialize the class with variables given by the user
         """
@@ -42,8 +45,8 @@ class RAPIDDataset(object):
                 self.river_id_dimension = 'rivid'
             elif 'COMID' in self.qout_nc.dimensions:
                 self.river_id_dimension = 'COMID'
-            elif 'station_id' in self.qout_nc.dimensions:
-                self.river_id_dimension = 'station_id'
+            elif 'station' in self.qout_nc.dimensions:
+                self.river_id_dimension = 'station'
             elif 'DrainLnID' in self.qout_nc.dimensions:
                 self.river_id_dimension = 'DrainLnID'
             elif 'FEATUREID' in self.qout_nc.dimensions:
@@ -55,6 +58,25 @@ class RAPIDDataset(object):
             
         self.size_river_id = len(self.qout_nc.dimensions[self.river_id_dimension])
         
+        variable_keys = self.qout_nc.variables.keys()
+
+        #determine river ID variable
+        self.river_id_variable = river_id_variable
+        if not river_id_variable:
+            if 'rivid' in variable_keys:
+                self.river_id_variable = 'rivid'
+            elif 'COMID' in variable_keys:
+                self.river_id_variable = 'COMID'
+            elif 'station_id' in variable_keys:
+                self.river_id_variable = 'station_id'
+            elif 'DrainLnID' in variable_keys:
+                self.river_id_variable = 'DrainLnID'
+            elif 'FEATUREID' in variable_keys:
+                self.river_id_variable = 'FEATUREID'
+            else:
+                raise IndexError('ERROR: Could not find river ID variable.')
+        elif river_id_variable not in variable_keys:
+            raise IndexError('ERROR: Could not find river ID variable: {0}.'.format(river_id_variable))
         
         #determine time dimension
         if 'time' in self.qout_nc.dimensions:
@@ -65,18 +87,18 @@ class RAPIDDataset(object):
             raise IndexError('ERROR: Could not find time dimension.')
 
         #determin streamflow variable
-        self.q_var_name = streamflow_dimension
-        if not streamflow_dimension:
-            if 'Qout' in self.qout_nc.variables:
+        self.q_var_name = streamflow_variable
+        if not streamflow_variable:
+            if 'Qout' in variable_keys:
                 self.q_var_name = 'Qout'
-            elif 'streamflow' in self.qout_nc.variables:
+            elif 'streamflow' in variable_keys:
                 self.q_var_name = 'streamflow'
-            elif 'm3_riv' in self.qout_nc.variables:
+            elif 'm3_riv' in variable_keys:
                 self.q_var_name = 'm3_riv'
             else:
                 raise IndexError('ERROR: Could not find flow variable. Looked for Qout, streamflow, and m3_riv.')
-        elif not streamflow_dimension in self.qout_nc.variables:
-            raise IndexError('ERROR: Could not find flow variable. Looked for {0}.'.format(streamflow_dimension))
+        elif not streamflow_variable in variable_keys:
+            raise IndexError('ERROR: Could not find flow variable. Looked for {0}.'.format(streamflow_variable))
 
         self.size_q_var = len(self.qout_nc.variables[self.q_var_name])
 
@@ -189,7 +211,7 @@ class RAPIDDataset(object):
         """
         This method returns the river index array for this file
         """
-        return self.qout_nc.variables[self.river_id_dimension][:]
+        return self.qout_nc.variables[self.river_id_variable][:]
     
     def get_river_index(self, river_id):
         """

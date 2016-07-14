@@ -133,32 +133,6 @@ class RAPIDDataset(object):
         
         variable_keys = self.qout_nc.variables.keys()
 
-        #determine river ID variable
-        self.river_id_variable = river_id_variable
-        if not river_id_variable:
-            if 'rivid' in variable_keys:
-                self.river_id_variable = 'rivid'
-            elif 'COMID' in variable_keys:
-                self.river_id_variable = 'COMID'
-            elif 'station_id' in variable_keys:
-                self.river_id_variable = 'station_id'
-            elif 'DrainLnID' in variable_keys:
-                self.river_id_variable = 'DrainLnID'
-            elif 'FEATUREID' in variable_keys:
-                self.river_id_variable = 'FEATUREID'
-            else:
-                raise IndexError('ERROR: Could not find river ID variable.')
-        elif river_id_variable not in variable_keys:
-            raise IndexError('ERROR: Could not find river ID variable: {0}.'.format(river_id_variable))
-        
-        #determine time dimension
-        if 'time' in self.qout_nc.dimensions:
-            self.size_time = len(self.qout_nc.dimensions['time'])
-        elif 'Time' in self.qout_nc.dimensions:
-            self.size_time = len(self.qout_nc.dimensions['Time'])
-        else:
-            raise IndexError('ERROR: Could not find time dimension.')
-
         #determin streamflow variable
         self.q_var_name = streamflow_variable
         if not streamflow_variable:
@@ -174,6 +148,32 @@ class RAPIDDataset(object):
             raise IndexError('ERROR: Could not find flow variable. Looked for {0}.'.format(streamflow_variable))
 
         self.size_q_var = len(self.qout_nc.variables[self.q_var_name])
+
+        #determine time dimension
+        if 'time' in self.qout_nc.dimensions:
+            self.size_time = len(self.qout_nc.dimensions['time'])
+        elif 'Time' in self.qout_nc.dimensions:
+            self.size_time = len(self.qout_nc.dimensions['Time'])
+        else:
+            raise IndexError('ERROR: Could not find time dimension.')
+
+        #determine river ID variable
+        self.river_id_variable = river_id_variable
+        if not river_id_variable:
+            if 'rivid' in variable_keys:
+                self.river_id_variable = 'rivid'
+            elif 'COMID' in variable_keys:
+                self.river_id_variable = 'COMID'
+            elif 'station_id' in variable_keys:
+                self.river_id_variable = 'station_id'
+            elif 'DrainLnID' in variable_keys:
+                self.river_id_variable = 'DrainLnID'
+            elif 'FEATUREID' in variable_keys:
+                self.river_id_variable = 'FEATUREID'
+            else:
+                print('WARNING: Could not find river ID variable in {0}.'.format(variable_keys))
+        elif river_id_variable not in variable_keys:
+            print('WARNING: Could not find river ID variable: {0}.'.format(river_id_variable))
 
     def __enter__(self):
         return self

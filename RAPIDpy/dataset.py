@@ -500,14 +500,14 @@ class RAPIDDataset(object):
                     for idx, time_idx in enumerate(daily_time_index_array):
                         current_day = time.gmtime(time_array[time_idx])
                         #write last average
-                        writer.writerow([time.strftime("%Y/%m/%d", current_day), daily_qout[idx]])
+                        writer.writerow([time.strftime("%Y/%m/%d", current_day), "{0:.5f}".format(daily_qout[idx])])
                 else:
                     qout_arr = self.get_qout_index(reach_index, time_index_array=time_index_range)
                     time_array = self.get_time_array(time_index_array=time_index_range)
                     with open(path_to_output_file, 'w') as outcsv:
                         for index in xrange(len(qout_arr)):
                             var_time = time.gmtime(time_array[index])
-                            writer.writerow([time.strftime("%Y/%m/%d %H:00", var_time), qout_arr[index]])
+                            writer.writerow([time.strftime("%Y/%m/%d %H:00", var_time), "{0:.5f}".format(qout_arr[index])])
 
         else:
             print("Valid time variable not found. Printing values only ...")
@@ -515,13 +515,12 @@ class RAPIDDataset(object):
             with open_csv(path_to_output_file, 'w') as outcsv:
                 writer = csv_writer(outcsv)
                 for index in xrange(len(qout_arr)):
-                    writer.writerow([index, qout_arr[index]])
+                    writer.writerow([index, "{0:.5f}".format(qout_arr[index])])
 
     def write_flows_to_gssha_time_series(self, 
                                          path_to_output_file,
                                          series_name,
-                                         grid_row,
-                                         grid_col,
+                                         series_id,
                                          reach_index=None, 
                                          reach_id=None,
                                          date_search_start=None,
@@ -541,20 +540,20 @@ class RAPIDDataset(object):
             time_index_range = self.get_time_index_range(date_search_start=date_search_start,
                                                          date_search_end=date_search_end)
             with open_csv(path_to_output_file, 'w') as out_ts:
-                out_ts.write("XYS {0} {1} \"{2}\"\n".format(grid_row, grid_col, series_name))
                 if daily:
                     daily_time_index_array = self.get_daily_time_index_array(time_index_range)
                     daily_qout = self.get_daily_qout_index(reach_index, daily_time_index_array, mode=mode)
+                    out_ts.write("XYS {0} {1} \"{2}\"\r\n".format(series_id, len(daily_qout), series_name))
                     time_array = self.get_time_array()
                     for idx, time_idx in enumerate(daily_time_index_array):
-                        current_day = time.gmtime(time_array[time_idx])
-                        #write last average
-                        out_ts.write("\"{0}\" {1}\n".format(time.strftime("%m/%d/%Y %I:%M:%S %p", current_day), daily_qout[idx]))
+                        date_str = time.strftime("%m/%d/%Y %I:%M:%S %p", time.gmtime(time_array[time_idx]))
+                        out_ts.write("\"{0}\" {1:.5f}\n".format(date_str, daily_qout[idx]))
                 else:
                     qout_arr = self.get_qout_index(reach_index, time_index_array=time_index_range)
+                    out_ts.write("XYS {0} {1} \"{2}\"\r\n".format(series_id, len(qout_arr), series_name))
                     time_array = self.get_time_array(time_index_array=time_index_range)
                     for index in xrange(len(qout_arr)):
-                        var_time = time.gmtime(time_array[index])
-                        out_ts.write("\"{0}\" {1}\n".format(time.strftime("%m/%d/%Y %I:%M:%S %p", var_time), qout_arr[index]))
+                        date_str = time.strftime("%m/%d/%Y %I:%M:%S %p", time.gmtime(time_array[index]))
+                        out_ts.write("\"{0}\" {1:.5f}\n".format(date_str, qout_arr[index]))
         else:
             raise IndexError("Valid time variable not found. Valid time variable required in Qout file to proceed ...")

@@ -657,7 +657,7 @@ class RAPIDDataset(object):
                 # ...
                 if daily:
                     daily_time_index_array = self.get_daily_time_index_array(time_index_range)
-                    out_ts.write("NRDPS {0}\n".format(len(daily_time_index_array)))
+                    out_ts.write("NRPDS {0}\n".format(len(daily_time_index_array)))
                     daily_qout_2d_array = self.get_daily_qout_index(river_idx_list, daily_time_index_array, mode=mode)
                     qout_num_dimensions = len(daily_qout_2d_array.shape)
                     time_array = self.get_time_array()
@@ -676,7 +676,7 @@ class RAPIDDataset(object):
                     if qout_num_dimensions > 1:
                         num_time_steps = qout_2d_array.shape[1]
                     
-                    out_ts.write("NRDPS {0}\n".format(num_time_steps))
+                    out_ts.write("NRPDS {0}\n".format(num_time_steps))
                     
                     time_array = self.get_time_array(time_index_array=time_index_range)
                     for index in xrange(num_time_steps):

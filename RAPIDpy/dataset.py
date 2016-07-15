@@ -442,7 +442,15 @@ class RAPIDDataset(object):
             if not daily_time_index_array:
                 daily_time_index_array = self.get_daily_time_index_array()
             
-            last_possible_index = daily_time_index_array[-1]+1
+            last_possible_index = daily_time_index_array[-1]
+            #IF NOT END OF ALL TIME, MAKE SURE ENTIRE DAY IS CAPTURED
+            if last_possible_index < self.size_time-1:
+                remaining_time_index_array = self.get_daily_time_index_array(range(last_possible_index, self.size_time))
+                if len(remaining_time_index_array) > 1:
+                    last_possible_index = remaining_time_index_array[1]
+                else:
+                    last_possible_index = -1
+                
             len_daily_time_array = len(daily_time_index_array)
             
             

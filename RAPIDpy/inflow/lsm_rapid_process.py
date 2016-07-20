@@ -100,6 +100,7 @@ def run_lsm_rapid_process(rapid_executable_location,
                           generate_initialization_file=False,
                           use_all_processors=True,
                           num_processors=1,
+                          mpiexec_command="mpiexec",
                           cygwin_bin_location="",
                           modeling_institution="US Army Engineer Research and Development Center"
                           ):
@@ -511,6 +512,7 @@ def run_lsm_rapid_process(rapid_executable_location,
         rapid_manager = RAPID(rapid_executable_location=rapid_executable_location,
                               cygwin_bin_location=cygwin_bin_location,
                               num_processors=NUM_CPUS,
+                              mpiexec_command=mpiexec_command,
                               ZS_TauR=time_step, #duration of routing procedure (time step of runoff data)
                               ZS_dtR=15*60, #internal routing time step
                               ZS_TauM=total_num_time_steps*time_step, #total simulation time

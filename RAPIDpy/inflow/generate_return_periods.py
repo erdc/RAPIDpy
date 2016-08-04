@@ -122,13 +122,14 @@ def generate_return_periods(qout_file, return_period_file, num_cpus, storm_durat
     job_combinations = []
     partition_list, partition_index_list = partition(river_id_list, num_cpus*2)
     for sub_partition_index_list in partition_index_list:
-        job_combinations.append((qout_file,
-                                 return_period_file,
-                                 sub_partition_index_list, 
-                                 step,
-                                 num_years,
-                                 mp_lock
-                                 ))
+        if sub_partition_index_list:
+            job_combinations.append((qout_file,
+                                     return_period_file,
+                                     sub_partition_index_list, 
+                                     step,
+                                     num_years,
+                                     mp_lock
+                                     ))
 
     pool = multiprocessing.Pool(num_cpus)
     pool.map(generate_single_return_period_mp_worker,

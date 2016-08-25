@@ -48,6 +48,27 @@ def get_poly_area_geo(poly):
     reprojected_poly = shapely_transform(project_func, poly)
     return reprojected_poly.area
 
+def _get_lat_lon_indices(lsm_lat_array, lsm_lon_array, lat, lon):
+    """
+    Determines the index in the array (1D or 2D) where the 
+    lat/lon point is
+    """    
+    if lsm_lat_array.ndim == 2 and lsm_lon_array.ndim == 2:
+        lsm_lat_indices_from_lat, lsm_lon_indices_from_lat = np.where((lsm_lat_array == lat))
+        lsm_lat_indices_from_lon, lsm_lon_indices_from_lon = np.where((lsm_lon_array >= lon))
+
+        index_lsm_grid_lat = np.intersect1d(lsm_lat_indices_from_lat, lsm_lat_indices_from_lon)[0]
+        index_lsm_grid_lon = np.intersect1d(lsm_lon_indices_from_lat, lsm_lon_indices_from_lon)[0]
+
+    elif lsm_lat_array.ndim == 1 and lsm_lon_array.ndim == 1:
+        index_lsm_grid_lon = np.where(lsm_lon_array == lon)[0][0]
+        index_lsm_grid_lat = np.where(lsm_lat_array == lat)[0][0]
+    else:
+        raise IndexError("Lat/Lon lists have invalid dimensions. Only 1D or 2D arrays allowed ...")
+    
+    return index_lsm_grid_lat, index_lsm_grid_lon     
+   
+
 def find_nearest(array, value):
     """
     Get the nearest index to value searching for
@@ -109,9 +130,12 @@ def RTreeCreateWeightTable(lsm_grid_lat, lsm_grid_lon,
     print("Find LSM grid cells that intersect with each catchment")
     print("and write out weight table ...")
     
+    dummy_lat_index, dummy_lon_index = _get_lat_lon_indices(lsm_grid_lat, lsm_grid_lon, 
+                                                            lsm_grid_feature_list[0]['lat'], 
+                                                            lsm_grid_feature_list[0]['lon'])
     dummy_row_end = [0,
-                    np.where(lsm_grid_lon == lsm_grid_feature_list[0]['lon'])[0][0],
-                    np.where(lsm_grid_lat == lsm_grid_feature_list[0]['lat'])[0][0],
+                    dummy_lon_index,
+                    dummy_lat_index,
                     1,
                     lsm_grid_feature_list[0]['lon'],
                     lsm_grid_feature_list[0]['lat']
@@ -153,8 +177,9 @@ def RTreeCreateWeightTable(lsm_grid_lat, lsm_grid_lon,
                     else:
                         poly_area = float(catchment_polygon.GetFeature(area_id))*intersect_poly.area/catchment_polygon.area
                         
-                    index_lsm_grid_lon = np.where(lsm_grid_lon == lsm_grid_feature_list[sub_lsm_grid_pos]['lon'])[0][0]
-                    index_lsm_grid_lat = np.where(lsm_grid_lat == lsm_grid_feature_list[sub_lsm_grid_pos]['lat'])[0][0]            
+                    index_lsm_grid_lat, index_lsm_grid_lon = _get_lat_lon_indices(lsm_grid_lat, lsm_grid_lon, 
+                                                                                  lsm_grid_feature_list[sub_lsm_grid_pos]['lat'], 
+                                                                                  lsm_grid_feature_list[sub_lsm_grid_pos]['lon'])
                     intersect_grid_info_list.append({'rivid' : rapid_connect_rivid,
                                                      'area' : poly_area,
                                                      'lsm_grid_lat': lsm_grid_feature_list[sub_lsm_grid_pos]['lat'],
@@ -250,9 +275,12 @@ def GDALCreateWeightTable(lsm_grid_lat, lsm_grid_lon,
     dummy_intersect_lsm_grid_lat = dummy_intersect_feature.GetField('GRID_LAT')
     dummy_intersect_feature = None
     
+    dummy_lat_index, dummy_lon_index = _get_lat_lon_indices(lsm_grid_lat, lsm_grid_lon, 
+                                                            dummy_intersect_lsm_grid_lat, 
+                                                            dummy_intersect_lsm_grid_lon)
     dummy_row_end = [0,
-                    np.where(lsm_grid_lon == dummy_intersect_lsm_grid_lon)[0][0],
-                    np.where(lsm_grid_lat == dummy_intersect_lsm_grid_lat)[0][0],
+                    dummy_lon_index,
+                    dummy_lat_index,
                     1,
                     dummy_intersect_lsm_grid_lon,
                     dummy_intersect_lsm_grid_lat
@@ -284,9 +312,9 @@ def GDALCreateWeightTable(lsm_grid_lat, lsm_grid_lon,
                 intersect_lsm_grid_lon = intersect_feature.GetField('GRID_LON')
                 intersect_lsm_grid_lat = intersect_feature.GetField('GRID_LAT')
 
-                index_lsm_grid_lon = np.where(lsm_grid_lon == intersect_lsm_grid_lon)[0][0]
-                index_lsm_grid_lat = np.where(lsm_grid_lat == intersect_lsm_grid_lat)[0][0]
-                
+                index_lsm_grid_lat, index_lsm_grid_lon = _get_lat_lon_indices(lsm_grid_lat, lsm_grid_lon, 
+                                                                              intersect_lsm_grid_lat, 
+                                                                              intersect_lsm_grid_lon)
                 connectwriter.writerow([rapid_connect_rivid,
                                         poly_area,
                                         index_lsm_grid_lon,
@@ -351,7 +379,7 @@ def CreateWeightTableLDAS(in_ldas_nc,
                           method="rtree"):
                                       
     """
-    Create Weight Table for LDAS Grids
+    Create Weight Table for LDAS and 2D WRF, Joules, or LIS Grids
     """
     #extract ECMWF GRID
     data_ldas_nc = Dataset(in_ldas_nc)
@@ -371,54 +399,6 @@ def CreateWeightTableLDAS(in_ldas_nc,
                                file_geodatabase, area_id)
     elif method.lower() == "gdal" and not file_geodatabase:
         GDALCreateWeightTable(ldas_lat, ldas_lon, 
-                              in_catchment_shapefile, river_id,
-                              in_rapid_connect, out_weight_table)
-    else:
-        raise Exception("ERROR: Invalid run method. Valid run methods are rtree and gdal (no File Geodatabase support for GDAL method).")
-
-def CreateWeightTableLIS(in_lis_nc,
-                         in_nc_lon_var,
-                         in_nc_lat_var,
-                         in_nc_lon_dim,
-                         in_nc_lat_dim,
-                         in_catchment_shapefile, 
-                         river_id,
-                         in_rapid_connect, 
-                         out_weight_table,
-                         file_geodatabase=None,
-                         area_id=None, 
-                         method="rtree"):
-                                      
-    """
-    Create Weight Table for LDAS Grids
-    """
-    data_nc = Dataset(in_lis_nc)
-
-    # Obtain geographic coordinates
-    lon = np.unique(np.concatenate(data_nc.variables[in_nc_lon_var][:])) #assume [-180,180]
-    lat = np.unique(np.concatenate(data_nc.variables[in_nc_lat_var][:])) #assume [-90,90]
-    size_xdim = len(data_nc.dimensions[in_nc_lat_dim])
-    #remove missing lon values
-    if 'missing_value' in data_nc.variables[in_nc_lon_var].ncattrs():
-        lon = lon[lon!=data_nc.variables[in_nc_lon_var].getncattr('missing_value')]
-    if size_xdim != len(lon):
-        raise Exception("Latitude dimension in data does not match netCDF file dimension")
-    size_ydim = len(data_nc.dimensions[in_nc_lon_dim])
-    #remove missing lat values
-    if 'missing_value' in data_nc.variables[in_nc_lat_var].ncattrs():
-        lat = lat[lat!=data_nc.variables[in_nc_lat_var].getncattr('missing_value')]
-    if size_ydim != len(lat):
-        raise Exception("Latitude dimension in data does not match netCDF file dimension")
-    data_nc.close()
-
-    
-    if method.lower() == "rtree":
-        RTreeCreateWeightTable(lat, lon, 
-                               in_catchment_shapefile, river_id,
-                               in_rapid_connect, out_weight_table, 
-                               file_geodatabase, area_id)
-    elif method.lower() == "gdal" and not file_geodatabase:
-        GDALCreateWeightTable(lat, lon, 
                               in_catchment_shapefile, river_id,
                               in_rapid_connect, out_weight_table)
     else:

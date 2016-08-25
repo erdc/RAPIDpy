@@ -17,30 +17,65 @@ try:
 except Exception:
     raise Exception("You need scipy, gdal, and shapely python packages to run these tools ...")
 
-def pointsToVoronoiGridShapefile(lat, lon, vor_shp_path, extent=None):
+def _get_voronoi_centroid_array(lsm_lat_array, lsm_lon_array, extent):
     """
-    Converts points to grid via voronoi
+    This function generates a voronoi centroid point
+    list from arrays of latitude and longitude
     """
     if extent:
-        Ybuffer = 2 * abs(lat[0]-lat[1])
-        Xbuffer = 2 * abs(lon[0]-lon[1])
-        # Extract the lat and lon within buffered extent (buffer with 2* interval degree)
         YMin = extent[2]
         YMax = extent[3]
         XMin = extent[0]
         XMax = extent[1]
-        lat0 = lat[(lat >= (YMin - Ybuffer)) & (lat <= (YMax + Ybuffer))]
-        lon0 = lon[(lon >= (XMin - Xbuffer)) & (lon <= (XMax + Xbuffer))]
     else:
-        lat0 = lat
-        lon0 = lon
-    # collect point coordinates and ID
-    ptList = []
-    for lon_index, ptX in enumerate(lon0):
-        for lat_index, ptY in enumerate(lat0):
-            ptList.append([ptX, ptY]) 
+        lsm_lat_list = lsm_lat_array
+        lsm_lon_list = lsm_lon_array
 
-    voronoi_centroids = np.array(ptList) # set-up for input to Delaunay
+    ptList = []
+
+    if lsm_lat_array.ndim == 2 and lsm_lon_array.ndim == 2:
+         # generate point list with 2D lat lon lists
+         if extent:
+            #exctract subset within extent
+            lsm_dx = NUM.max(NUM.absolute(NUM.diff(lsm_lon_array)))
+            lsm_dy = NUM.max(NUM.absolute(NUM.diff(lsm_lat_array, axis=0)))
+            
+            lsm_lat_indices_from_lat, lsm_lon_indices_from_lat = NUM.where((lsm_lat_array >= (YMin - 2*lsm_dy)) & (lsm_lat_array <= (YMax + 2*lsm_dy)))
+            lsm_lat_indices_from_lon, lsm_lon_indices_from_lon = NUM.where((lsm_lon_array >= (XMin - 2*lsm_dx)) & (lsm_lon_array <= (XMax + 2*lsm_dx)))
+
+            lsm_lat_indices = NUM.intersect1d(lsm_lat_indices_from_lat, lsm_lat_indices_from_lon)
+            lsm_lon_indices = NUM.intersect1d(lsm_lon_indices_from_lat, lsm_lon_indices_from_lon)
+
+            lsm_lat_list = lsm_lat_array[lsm_lat_indices,:][:,lsm_lon_indices]
+            lsm_lon_list = lsm_lon_array[lsm_lat_indices,:][:,lsm_lon_indices]
+
+        # Create a list of geographic coordinate pairs
+        for i in range(len(lsm_lat_indices)):
+            for j in range(len(lsm_lon_indices)):
+                ptList.append([lsm_lon_list[i][j], lsm_lat_list[i][j]])
+    if lsm_lat_array.ndim == 1 and lsm_lon_array.ndim == 1:
+        #generate point list with 1D lat lon lists
+        if extent:
+            Ybuffer = 2 * abs(lat[0]-lat[1])
+            Xbuffer = 2 * abs(lon[0]-lon[1])
+            # Extract the lat and lon within buffered extent (buffer with 2* interval degree)
+            lsm_lat_list = lsm_lat_array[(lsm_lat_array >= (YMin - Ybuffer)) & (lsm_lat_array <= (YMax + Ybuffer))]
+            lsm_lon_list = lsm_lon_array[(lsm_lon_array >= (XMin - Xbuffer)) & (lsm_lon_array <= (XMax + Xbuffer))]
+            
+        # Create a list of geographic coordinate pairs
+        for ptX in lsm_lon_list:
+            for ptY in lsm_lat_list:
+                ptList.append([ptX, ptY])
+    else:
+        raise IndexError("Lat/Lon lists have invalid dimensions. Only 1D or 2D arrays allowed ...")
+
+    return np.array(ptList) # set-up for input to Delaunay    
+
+def pointsToVoronoiGridShapefile(lat, lon, vor_shp_path, extent=None):
+    """
+    Converts points to grid via voronoi
+    """
+    voronoi_centroids = _get_voronoi_centroid_array(lat, lon, extent)
 
     # set-up output polygon shp
     print("Creating output polygon shp {0}".format(os.path.basename(vor_shp_path)))
@@ -141,26 +176,7 @@ def pointsToVoronoiGridArray(lat, lon, extent=None):
     """
     Converts points to grid via voronoi
     """
-    if extent:
-        buffer = 2 * max(abs(lat[0]-lat[1]),abs(lon[0] - lon[1]))
-        # Extract the lat and lon within buffered extent (buffer with 2* interval degree)
-        YMin = extent[2]
-        YMax = extent[3]
-        XMin = extent[0]
-        XMax = extent[1]
-        lat0 = lat[(lat >= (YMin - buffer)) & (lat <= (YMax + buffer))]
-        lon0 = lon[(lon >= (XMin - buffer)) & (lon <= (XMax + buffer))]
-    else:
-        lat0 = lat
-        lon0 = lon
-    # collect point coordinates and ID
-    ptList = []
-    ptGridInfo = []
-    for lon_index, ptX in enumerate(lon0):
-        for lat_index, ptY in enumerate(lat0):
-            ptList.append([ptX, ptY]) 
-            ptGridInfo.append([lon_index, lat_index])
-    voronoi_centroids = np.array(ptList) # set-up for input to Delaunay
+    voronoi_centroids = _get_voronoi_centroid_array(lat, lon, extent)
     
     # find nodes surrounding polygon centroid
     # sort nodes in counterclockwise order

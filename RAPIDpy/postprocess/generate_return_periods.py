@@ -14,7 +14,7 @@ import numpy as np
 
 #local
 from ..dataset import RAPIDDataset
-from .utilities import partition
+from ..utilities import partition
 
 def generate_single_return_period(qout_file, return_period_file,
                                   rivid_index_list, step, num_years,
@@ -82,7 +82,7 @@ def generate_return_periods(qout_file, return_period_file, num_cpus=multiprocess
 
         timeSeries_var = return_period_nc.createVariable('rivid', 'i4', ('rivid',))
         timeSeries_var.long_name = (
-            'Unique NHDPlus COMID identifier for each river reach feature')
+            'unique identifier for each river reach')
 
         max_flow_var = return_period_nc.createVariable('max_flow', 'f8', ('rivid',))
         max_flow_var.long_name = 'maxumum streamflow'

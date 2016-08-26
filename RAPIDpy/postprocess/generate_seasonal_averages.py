@@ -72,7 +72,7 @@ def generate_seasonal_averages(qout_file, seasonal_average_file,
 
         timeSeries_var = seasonal_avg_nc.createVariable('rivid', 'i4', ('rivid',))
         timeSeries_var.long_name = (
-            'Unique NHDPlus COMID identifier for each river reach feature')
+            'unique identifier for each river reach')
 
         average_flow_var = seasonal_avg_nc.createVariable('average_flow', 'f8', ('rivid','day_of_year'))
         average_flow_var.long_name = 'seasonal average streamflow'

@@ -18,12 +18,12 @@ from ..rapid import RAPID
 from .CreateInflowFileFromERAInterimRunoff import CreateInflowFileFromERAInterimRunoff
 from .CreateInflowFileFromLDASRunoff import CreateInflowFileFromLDASRunoff
 from .CreateInflowFileFromWRFHydroRunoff import CreateInflowFileFromWRFHydroRunoff
-from .generate_return_periods import generate_return_periods
-from .generate_seasonal_averages import generate_seasonal_averages
-from .utilities import (case_insensitive_file_search,
-                        get_valid_watershed_list,
-                        get_watershed_subbasin_from_folder,
-                        partition)
+from ..postprocess.generate_return_periods import generate_return_periods
+from ..postprocess.generate_seasonal_averages import generate_seasonal_averages
+from ..utilities import (case_insensitive_file_search,
+                         get_valid_watershed_list,
+                         get_watershed_subbasin_from_folder,
+                         partition)
 
 
 #------------------------------------------------------------------------------

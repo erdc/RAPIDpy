@@ -44,14 +44,14 @@ def generate_single_seasonal_average(args):
             raise IndexError("No time steps found within range ...")
         
         streamflow_array = qout_nc_file.get_qout(time_index_array=time_indices)
-    
+
     avg_streamflow_array = np.mean(streamflow_array, axis=1)
     std_streamflow_array = np.std(streamflow_array, axis=1)
 
     mp_lock.acquire()
     seasonal_avg_nc = Dataset(seasonal_average_file, 'a')
-    seasonal_avg_nc.variables['average_flow'][day_of_year-1] = avg_streamflow_array
-    seasonal_avg_nc.variables['std_dev_flow'][day_of_year-1] = std_streamflow_array
+    seasonal_avg_nc.variables['average_flow'][:, day_of_year-1] = avg_streamflow_array
+    seasonal_avg_nc.variables['std_dev_flow'][:, day_of_year-1] = std_streamflow_array
     seasonal_avg_nc.close()
     mp_lock.release()
 

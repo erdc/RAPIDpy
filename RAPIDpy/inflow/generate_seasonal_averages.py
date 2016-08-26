@@ -31,12 +31,13 @@ def generate_single_seasonal_average(args):
         time_indices = []
         for idx, t in enumerate(qout_nc_file.get_time_array()):
             var_time = gmtime(t)
+            compare_yday = var_time.tm_yday
             #move day back one past because of leap year adds 
             #a day after feb 29 (day 60)
-            if isleap(var_time.tm_year) and var_time.tm_yday > 60:
-                var_time.tm_yday -= 1
+            if isleap(var_time.tm_year) and compare_yday > 60:
+                compare_yday -= 1
             #check if date within range of season
-            if var_time.tm_yday >= min_day and var_time.tm_yday < max_day:
+            if compare_yday >= min_day and compare_yday < max_day:
                 time_indices.append(idx)
     
         if not time_indices:
@@ -44,15 +45,15 @@ def generate_single_seasonal_average(args):
         
         streamflow_array = qout_nc_file.get_qout(time_index_array=time_indices)
     
-        avg_streamflow_array = np.mean(streamflow_array, axis=1)
-        std_streamflow_array = np.std(streamflow_array, axis=1)
+    avg_streamflow_array = np.mean(streamflow_array, axis=1)
+    std_streamflow_array = np.std(streamflow_array, axis=1)
 
-        mp_lock.acquire()
-        return_period_nc = Dataset(seasonal_average_file, 'a')
-        return_period_nc.variables['average_flow'][day_of_year-1] = avg_streamflow_array
-        return_period_nc.variables['std_dev_flow'][day_of_year-1] = std_streamflow_array
-        return_period_nc.close()
-        mp_lock.release()
+    mp_lock.acquire()
+    seasonal_avg_nc = Dataset(seasonal_average_file, 'a')
+    seasonal_avg_nc.variables['average_flow'][day_of_year-1] = avg_streamflow_array
+    seasonal_avg_nc.variables['std_dev_flow'][day_of_year-1] = std_streamflow_array
+    seasonal_avg_nc.close()
+    mp_lock.release()
 
 def generate_seasonal_averages(qout_file, seasonal_average_file, 
                                num_cpus=multiprocessing.cpu_count()):

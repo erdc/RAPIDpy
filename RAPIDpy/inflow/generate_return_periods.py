@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 ##
 ##  generate_return_periods.py
-##  spt_lsm_autorapid_process
+##  RAPIDpy
 ##
 ##  Created by Alan D. Snow and Scott D. Christensen.
 ##  Copyright © 2015-2016 Alan D Snow and Scott D. Christensen. All rights reserved.
@@ -68,7 +68,7 @@ def generate_single_return_period_mp_worker(args):
                                   num_years=args[4], 
                                   mp_lock=args[5])
 
-def generate_return_periods(qout_file, return_period_file, num_cpus, storm_duration_days=7):
+def generate_return_periods(qout_file, return_period_file, num_cpus=multiprocessing.cpu_count(), storm_duration_days=7):
     """
     Generate return period from RAPID Qout file
     """
@@ -85,9 +85,20 @@ def generate_return_periods(qout_file, return_period_file, num_cpus, storm_durat
             'Unique NHDPlus COMID identifier for each river reach feature')
 
         max_flow_var = return_period_nc.createVariable('max_flow', 'f8', ('rivid',))
+        max_flow_var.long_name = 'maxumum streamflow'
+        max_flow_var.units = 'm3/s'
+        
         return_period_20_var = return_period_nc.createVariable('return_period_20', 'f8', ('rivid',))
+        return_period_20_var.long_name = '20 year return period flow'
+        return_period_20_var.units = 'm3/s'
+        
         return_period_10_var = return_period_nc.createVariable('return_period_10', 'f8', ('rivid',))
+        return_period_10_var.long_name = '10 year return period flow'
+        return_period_10_var.units = 'm3/s'
+        
         return_period_2_var = return_period_nc.createVariable('return_period_2', 'f8', ('rivid',))
+        return_period_2_var.long_name = '2 year return period flow'
+        return_period_2_var.units = 'm3/s'
 
         lat_var = return_period_nc.createVariable('lat', 'f8', ('rivid',),
                                                   fill_value=-9999.0)

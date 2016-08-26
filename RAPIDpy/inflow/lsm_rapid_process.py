@@ -19,6 +19,7 @@ from .CreateInflowFileFromERAInterimRunoff import CreateInflowFileFromERAInterim
 from .CreateInflowFileFromLDASRunoff import CreateInflowFileFromLDASRunoff
 from .CreateInflowFileFromWRFHydroRunoff import CreateInflowFileFromWRFHydroRunoff
 from .generate_return_periods import generate_return_periods
+from .generate_seasonal_averages import generate_seasonal_averages
 from .utilities import (case_insensitive_file_search,
                         get_valid_watershed_list,
                         get_watershed_subbasin_from_folder,
@@ -96,6 +97,7 @@ def run_lsm_rapid_process(rapid_executable_location,
                           generate_rapid_namelist_file=True,
                           run_rapid_simulation=True,
                           generate_return_periods_file=False,
+                          generate_seasonal_averages_file=False,
                           generate_seasonal_initialization_file=False,
                           generate_initialization_file=False,
                           use_all_processors=True,
@@ -633,12 +635,22 @@ def run_lsm_rapid_process(rapid_executable_location,
                                             return_periods_file,
                                             NUM_CPUS,
                                             storm_length_days)
-                        
+                                            
+                #generate seasonal averages file   
+                if generate_seasonal_averages_file and os.path.exists(lsm_rapid_output_file) and lsm_rapid_output_file:
+                    seasonal_averages_file = os.path.join(master_watershed_output_directory,
+                                                          'seasonal_averages_{0}'.format(out_file_ending))
+                    generate_seasonal_averages(lsm_rapid_output_file,
+                                               seasonal_averages_file,
+                                               NUM_CPUS)
+                                               
+                #generate seasonal initialization file
                 if generate_seasonal_initialization_file and os.path.exists(lsm_rapid_output_file) and lsm_rapid_output_file:
                     seasonal_qinit_file = os.path.join(master_watershed_input_directory,
                                                        'seasonal_qinit_{0}.csv'.format(out_file_ending[:-3]))
                     rapid_manager.generate_seasonal_intitialization(seasonal_qinit_file)
     
+                #generate initialization file
                 if generate_initialization_file and os.path.exists(lsm_rapid_output_file) and lsm_rapid_output_file:
                     qinit_file = os.path.join(master_watershed_input_directory,
                                               'qinit_{0}.csv'.format(out_file_ending[:-3]))

@@ -64,7 +64,7 @@ def generate_seasonal_averages(qout_file, seasonal_average_file,
     """
     
     with RAPIDDataset(qout_file) as qout_nc_file:
-        print("Setting up Seasonal Average File ...")
+        print("Generating seasonal average file ...")
         seasonal_avg_nc = Dataset(seasonal_average_file, 'w')
         
         seasonal_avg_nc.createDimension('rivid', qout_nc_file.size_river_id)

@@ -27,6 +27,16 @@ from ..utilities import (case_insensitive_file_search,
 
 
 #------------------------------------------------------------------------------
+#FUNCTIONS
+#------------------------------------------------------------------------------
+def get_time_delta(file_ts1, file_ts2, date_match_string):
+    """
+    This function will extract the time delta based on the
+    dates from the file names or the dates in the files
+    """
+    
+    
+#------------------------------------------------------------------------------
 #MULTIPROCESSING FUNCTION
 #------------------------------------------------------------------------------
 def generate_inflows_from_runoff(args):
@@ -93,6 +103,8 @@ def run_lsm_rapid_process(rapid_executable_location,
                           lsm_data_location,
                           simulation_start_datetime,
                           simulation_end_datetime=datetime.utcnow(),
+                          file_datetime_pattern=None,
+                          expected_time_step=None,
                           ensemble_list=[None],
                           generate_rapid_namelist_file=True,
                           run_rapid_simulation=True,
@@ -138,24 +150,25 @@ def run_lsm_rapid_process(rapid_executable_location,
         
         lsm_file_list_subset = []
         
+        file_re_match = re.compile(r'\d{8}')
+        file_datetime_pattern = "%Y%m%d"      
+        
         for lsm_file in sorted(lsm_file_list):
-            match = re.search(r'\d{8}', lsm_file)
-            file_date = datetime.strptime(match.group(0), "%Y%m%d")
+            match = file_re_match.search(lsm_file)
+            file_date = datetime.strptime(match.group(0), file_datetime_pattern)
             if file_date > simulation_end_datetime:
                 break
             if file_date >= simulation_start_datetime:
                 lsm_file_list_subset.append(os.path.join(subdir, lsm_file))
-        print(lsm_file_list_subset[0])
-        actual_simulation_start_datetime = datetime.strptime(re.search(r'\d{8}', lsm_file_list_subset[0]).group(0), "%Y%m%d")
-        print(lsm_file_list_subset[-1])
-        actual_simulation_end_datetime = datetime.strptime(re.search(r'\d{8}', lsm_file_list_subset[-1]).group(0), "%Y%m%d")
-        
+                
         lsm_file_list = sorted(lsm_file_list_subset)
+
+        print("Running from {0} to {1}".format(lsm_file_list[0],
+                                               lsm_file_list[-1]))
         
         #check to see what kind of file we are dealing with
         lsm_example_file = Dataset(lsm_file_list[0])
 
-        
         #INDENTIFY LAT/LON DIMENSIONS
         dim_list = lsm_example_file.dimensions.keys()
 
@@ -259,10 +272,7 @@ def run_lsm_rapid_process(rapid_executable_location,
                 #ERA Interim
                 surface_runoff_var = var
             
-
-
         #IDENTIFY GRID TYPE & TIME STEP
-
         try:
             time_dim = "time"
             if "Time" in lsm_example_file.dimensions:
@@ -273,14 +283,9 @@ def run_lsm_rapid_process(rapid_executable_location,
             print("Assuming time dimension is 1")
             file_size_time = 1
 
-        out_file_ending = "{0}to{1}{2}".format(actual_simulation_start_datetime.strftime("%Y%m%d"), 
-                                               actual_simulation_end_datetime.strftime("%Y%m%d"), 
-                                               ensemble_file_ending)
-            
         weight_file_name = ''
         grid_type = ''
         model_name = ''
-        time_step = 0
         description = ""
         RAPID_Inflow_Tool = None
         total_num_time_steps = 0
@@ -335,12 +340,11 @@ def run_lsm_rapid_process(rapid_executable_location,
                 lsm_example_file.close()
                 raise Exception("Unsupported grid size.")
 
-            #time units are in hours
             if file_size_time == 1:
-                time_step = 24*3600 #daily
+                expected_time_step = 24*3600 #daily
                 description += " Daily Runoff"
             elif file_size_time == 8:
-                time_step = 3*3600 #3 hourly
+                expected_time_step = 3*3600 #3 hourly
                 description += " 3 Hourly Runoff"
             else:
                 lsm_example_file.close()
@@ -352,16 +356,15 @@ def run_lsm_rapid_process(rapid_executable_location,
         elif institution == "NASA GSFC":
             if title == "GLDAS2.0 LIS land surface model output":
                 print("Runoff file identified as GLDAS v2 LIS GRID")
-                #TODO: SNOWMELT
                 #this is the LIS model
                 weight_file_name = r'weight_gldas2\.csv'
                 grid_type = 'gldas2'
                 description = "GLDAS2.0 LIS land surface model 3 hourly runoff"
                 model_name = "nasa"
-                
-                #time units are in minutes
+                file_re_match = re.compile(r'\d{8}\.\d{2}')
+                file_datetime_pattern = "%Y%m%d.%H"      
                 if file_size_time == 1:
-                    time_step = 3*3600 #3-hourly
+                    expected_time_step = 3*3600 #3-hourly
                 else:
                     lsm_example_file.close()
                     raise Exception("Unsupported GLDAS 2.0 time step.")
@@ -371,12 +374,13 @@ def run_lsm_rapid_process(rapid_executable_location,
                 #this is the LIS model
                 weight_file_name = r'weight_lis\.csv'
                 grid_type = 'lis'
-                description = "NASA GFC LIS hourly runoff"
+                description = "NASA GSFC LIS hourly runoff"
                 model_name = "nasa"
-                #time units are in minutes
+                file_re_match = re.compile(r'\d{10}')
+                file_datetime_pattern = "%Y%m%d%H"      
                 if file_size_time == 1:
-                    #time_step = 1*3600 #hourly
-                    time_step = 3*3600 #3-hourly
+                    #expected_time_step = 1*3600 #hourly
+                    expected_time_step = 3*3600 #3-hourly
                 else:
                     lsm_example_file.close()
                     raise Exception("Unsupported LIS time step.")
@@ -388,7 +392,7 @@ def run_lsm_rapid_process(rapid_executable_location,
                                                                longitude_var,
                                                                surface_runoff_var,
                                                                subsurface_runoff_var,
-                                                               time_step,
+                                                               expected_time_step,
                                                                snowmelt_runoff_var)
 
         elif institution == "Met Office, UK":
@@ -398,10 +402,11 @@ def run_lsm_rapid_process(rapid_executable_location,
             grid_type = 'joules'
             description = "Met Office Joules Hourly Runoff"
             model_name = "met_office"
-            #time units are in minutes
+            file_re_match = re.compile(r'\d{10}')
+            file_datetime_pattern = "%Y%m%d%H"      
             if file_size_time == 1:
-                #time_step = 1*3600 #hourly
-                time_step = 3*3600 #3-hourly
+                #expected_time_step = 1*3600 #hourly
+                expected_time_step = 3*3600 #3-hourly
             else:
                 lsm_example_file.close()
                 raise Exception("Unsupported LIS time step.")
@@ -414,10 +419,12 @@ def run_lsm_rapid_process(rapid_executable_location,
                                                                longitude_var,
                                                                surface_runoff_var,
                                                                subsurface_runoff_var,
-                                                               time_step)
+                                                               expected_time_step)
         elif surface_runoff_var.startswith("SSRUN") \
             and subsurface_runoff_var.startswith("BGRUN"):
 
+            file_re_match = re.compile(r'\d{8}\.\d{2}')
+            file_datetime_pattern = "%Y%m%d.%H"      
             model_name = "nasa"
             if lat_dim_size == 600 and lon_dim_size == 1440:
                 print("Runoff file identified as GLDAS GRID")
@@ -434,7 +441,7 @@ def run_lsm_rapid_process(rapid_executable_location,
                 grid_type = 'gldas'
  
                 if file_size_time == 1:
-                    time_step = 3*3600 #3 hourly
+                    expected_time_step = 3*3600 #3 hourly
                 else:
                     lsm_example_file.close()
                     raise Exception("Unsupported GLDAS time step.")
@@ -457,8 +464,8 @@ def run_lsm_rapid_process(rapid_executable_location,
                 grid_type = 'nldas'
 
                 if file_size_time == 1:
-                    #time_step = 1*3600 #hourly
-                    time_step = 3*3600 #3 hourly
+                    #expected_time_step = 1*3600 #hourly
+                    expected_time_step = 3*3600 #3 hourly
                 else:
                     lsm_example_file.close()
                     raise Exception("Unsupported NLDAS time step.")
@@ -473,7 +480,7 @@ def run_lsm_rapid_process(rapid_executable_location,
                                                                longitude_var,
                                                                surface_runoff_var,
                                                                subsurface_runoff_var,
-                                                               time_step)
+                                                               expected_time_step)
         else:
             title = ""
             try:
@@ -485,7 +492,9 @@ def run_lsm_rapid_process(rapid_executable_location,
                 description = "WRF-Hydro Hourly Runoff"
                 weight_file_name = r'weight_wrf\.csv'
                 grid_type = 'wrf_hydro'
-                time_step = 1*3600 #1 hourly
+                file_re_match = re.compile(r'\d{10}')
+                file_datetime_pattern = "%Y%m%d%H"      
+                expected_time_step = 1*3600 #1 hourly
                 total_num_time_steps=file_size_time*len(lsm_file_list)
 
                 RAPID_Inflow_Tool = CreateInflowFileFromWRFHydroRunoff(latitude_dim,
@@ -494,22 +503,42 @@ def run_lsm_rapid_process(rapid_executable_location,
                                                                        longitude_var,
                                                                        surface_runoff_var,
                                                                        subsurface_runoff_var,
-                                                                       time_step)
+                                                                       expected_time_step)
             else:
                 lsm_example_file.close()
                 raise Exception("Unsupported runoff grid.")
         
         lsm_example_file.close()
 
-    	#VALIDATING INPUT IF DIVIDING BY 3
+        actual_simulation_start_datetime = datetime.strptime(file_re_match.search(lsm_file_list[0]).group(0), file_datetime_pattern)
+        actual_simulation_end_datetime = datetime.strptime(file_re_match.search(lsm_file_list[-1]).group(0), file_datetime_pattern)
+
+    	    #VALIDATING INPUT IF DIVIDING BY 3
+        time_step_multiply_factor = 1
         if grid_type == 'nldas' or grid_type == 'lis' or grid_type == 'joules':
             num_extra_files = file_size_time*len(lsm_file_list) % 3
             if num_extra_files != 0:
                 print("WARNING: Number of files needs to be divisible by 3. Remainder is {0}".format(num_extra_files))
                 print("This means your simulation will be truncated")
             total_num_time_steps=int(file_size_time*len(lsm_file_list)/3)
+            time_step_multiply_factor = 3
+            
 
-        out_file_ending = "{0}_{1}_{2}hr_{3}".format(model_name, grid_type, int(time_step/3600), out_file_ending)
+        time_step = int(expected_time_step)
+        if len(lsm_file_list) > 1:
+            time_step = int((datetime.strptime(file_re_match.search(lsm_file_list[1]).group(0), file_datetime_pattern) \
+                             - actual_simulation_start_datetime).total_seconds()*time_step_multiply_factor/float(file_size_time))
+            if time_step != int(expected_time_step):
+                print("WARNING: The time step used {0} is different than expected {1}".format(time_step, 
+                                                                                              expected_time_step))
+
+        out_file_ending = "{0}_{1}_{2}hr_{3}to{4}{5}".format(model_name, 
+                                                             grid_type, 
+                                                             int(time_step/3600),
+                                                             actual_simulation_start_datetime.strftime("%Y%m%d"), 
+                                                             actual_simulation_end_datetime.strftime("%Y%m%d"), 
+                                                             ensemble_file_ending)
+
         #set up RAPID manager
         rapid_manager = RAPID(rapid_executable_location=rapid_executable_location,
                               cygwin_bin_location=cygwin_bin_location,
@@ -548,7 +577,7 @@ def run_lsm_rapid_process(rapid_executable_location,
                                                                     r'comid_lat_lon_z\.csv')
             except Exception:
                 in_rivid_lat_lon_z_file = ""
-                print("WARNING: comid_lat_lon_z file not found. These will not be added ...")
+                print("WARNING: comid_lat_lon_z file not found. The lat/lon will not be added ...")
                 pass
             
             RAPID_Inflow_Tool.generateOutputInflowFile(out_nc=master_rapid_runoff_file,

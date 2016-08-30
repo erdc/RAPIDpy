@@ -10,7 +10,7 @@
 from csv import writer as csvwriter
 import datetime
 from dateutil.parser import parse
-from dateutil.tz import tzoffset
+#from dateutil.tz import tzoffset
 from multiprocessing import cpu_count
 import numpy as np
 import os

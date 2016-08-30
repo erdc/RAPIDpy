@@ -513,7 +513,7 @@ def run_lsm_rapid_process(rapid_executable_location,
         actual_simulation_start_datetime = datetime.strptime(file_re_match.search(lsm_file_list[0]).group(0), file_datetime_pattern)
         actual_simulation_end_datetime = datetime.strptime(file_re_match.search(lsm_file_list[-1]).group(0), file_datetime_pattern)
 
-    	    #VALIDATING INPUT IF DIVIDING BY 3
+        #VALIDATING INPUT IF DIVIDING BY 3
         time_step_multiply_factor = 1
         if grid_type == 'nldas' or grid_type == 'lis' or grid_type == 'joules':
             num_extra_files = file_size_time*len(lsm_file_list) % 3

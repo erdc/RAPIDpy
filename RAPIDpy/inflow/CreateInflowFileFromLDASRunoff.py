@@ -115,7 +115,7 @@ class CreateInflowFileFromLDASRunoff(CreateInflowFileFromGriddedRunoff):
                 data_in_nc = NET.Dataset(nc_file)
 
                 '''Calculate water inflows'''
-                print("Calculating water inflows for {0} {1} ...".format(os.path.basename(nc_file) , grid_type))
+                #print("Calculating water inflows for {0} {1} ...".format(os.path.basename(nc_file) , grid_type))
                 runoff_dimension_size = len(data_in_nc.variables[self.vars_oi[2]].dimensions)
                 if runoff_dimension_size == 2:
                     #obtain subset of surface and subsurface runoff

@@ -125,7 +125,7 @@ class CreateInflowFileFromERAInterimRunoff(CreateInflowFileFromGriddedRunoff):
             index = index_list[nc_file_array_index]
             
             '''Calculate water inflows'''
-            print("Calculating water inflows for {0} {1} ...".format(os.path.basename(nc_file) , grid_type))
+            #print("Calculating water inflows for {0} {1} ...".format(os.path.basename(nc_file) , grid_type))
 
             ''' Read the netcdf dataset'''
             data_in_nc = NET.Dataset(nc_file)

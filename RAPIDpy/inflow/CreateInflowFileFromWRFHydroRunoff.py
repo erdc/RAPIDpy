@@ -113,7 +113,7 @@ class CreateInflowFileFromWRFHydroRunoff(CreateInflowFileFromGriddedRunoff):
                 data_in_nc = NET.Dataset(nc_file)
 
                 '''Calculate water inflows'''
-                print("Calculating water inflows for {0} {1} ...".format(os.path.basename(nc_file) , grid_type))
+                #print("Calculating water inflows for {0} {1} ...".format(os.path.basename(nc_file) , grid_type))
 
                 data_subset_all = data_in_nc.variables[self.vars_oi[2]][:,min_sn_ind_all:max_sn_ind_all+1, min_we_ind_all:max_we_ind_all+1]/1000 \
                                 + data_in_nc.variables[self.vars_oi[3]][:,min_sn_ind_all:max_sn_ind_all+1, min_we_ind_all:max_we_ind_all+1]/1000

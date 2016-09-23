@@ -21,6 +21,18 @@ import sys
 sys.path.insert(0, os.path.abspath('..'))
 
 # -- General configuration ------------------------------------------------
+##TEMP SECTION UNTIL RTREE WORKS IN CONDA IN RTD
+#SEE: http://docs.readthedocs.io/en/latest/faq.html#i-get-import-errors-on-libraries-that-depend-on-c-modules
+from mock import Mock as MagicMock
+
+class Mock(MagicMock):
+    @classmethod
+    def __getattr__(cls, name):
+            return Mock()
+
+MOCK_MODULES = ['rtree']
+sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
+##END TEMP SECTION UNTIL RTREE WORKS IN CONDA IN RTD
 
 # If your documentation needs a minimal Sphinx version, state it here.
 #

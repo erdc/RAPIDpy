@@ -44,9 +44,12 @@ before_install:
 # Install required python packages
 #-----------------------------------------------------------------------------
 - conda install --yes nose numpy scipy netCDF4 gdal shapely pyproj
-#- export GDAL_DATA=$HOME/miniconda/share/gdal
 - conda install --yes -c conda-forge rtree
 - pip install coveralls
+#restart environment to get variables set
+#- export GDAL_DATA=$HOME/miniconda/share/gdal
+- source deactivate rapid
+- source activate rapid
 
 #-------------------------------------------------------------------------------
 #Creating directory for installation of libraries used by RAPID

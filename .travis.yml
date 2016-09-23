@@ -31,20 +31,18 @@ before_install:
 #-------------------------------------------------------------------------------
 #Add miniconda - from https://gist.github.com/dan-blanchard/7045057
 #-----------------------------------------------------------------------------
-- wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
+- echo $TRAVIS_PYTHON_VERSION
+- wget http://repo.continuum.io/miniconda/Miniconda${TRAVIS_PYTHON_VERSION:0:1}-latest-Linux-x86_64.sh -O miniconda.sh
 - chmod +x miniconda.sh
-- ./miniconda.sh -b
-- export PATH=$HOME/miniconda2/bin:$PATH
+- ./miniconda.sh -b -p $HOME/miniconda
+- export PATH=$HOME/miniconda/bin:$PATH
 - conda update --yes conda
-# The next couple lines fix a crash with multiprocessing on Travis and are not specific to using Miniconda
-- sudo rm -rf /dev/shm
-- sudo ln -s /run/shm /dev/shm
 
 #-------------------------------------------------------------------------------
 # Install required python packages
 #-----------------------------------------------------------------------------
-- conda install --yes python=$TRAVIS_PYTHON_VERSION nose numpy scipy netCDF4 gdal shapely pyproj
-#- export GDAL_DATA=$HOME/miniconda2/share/gdal
+- conda install --yes nose numpy scipy netCDF4 gdal shapely pyproj
+#- export GDAL_DATA=$HOME/miniconda/share/gdal
 - conda install --yes -c conda-forge rtree
 - pip install coveralls
 

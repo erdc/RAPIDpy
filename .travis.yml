@@ -35,7 +35,7 @@ before_install:
 - chmod +x miniconda.sh
 - ./miniconda.sh -b -p $HOME/miniconda
 - export PATH=$HOME/miniconda/bin:$PATH
-- conda update --yes conda
+- conda update --yes conda python
 #create environment in conda
 - conda create --yes --name rapid python=$TRAVIS_PYTHON_VERSION
 - source activate rapid

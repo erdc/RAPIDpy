@@ -44,9 +44,8 @@ before_install:
 # Install required python packages
 #-----------------------------------------------------------------------------
 - conda install --yes python=$TRAVIS_PYTHON_VERSION nose numpy scipy netCDF4 gdal shapely pyproj
-- export GDAL_DATA=$HOME/miniconda2/share/gdal
-- pip install --upgrade pyproj
-- conda install --yes -c https://conda.anaconda.org/ioos rtree
+#- export GDAL_DATA=$HOME/miniconda2/share/gdal
+- conda install --yes -c conda-forge rtree
 - pip install coveralls
 
 #-------------------------------------------------------------------------------

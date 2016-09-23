@@ -47,6 +47,7 @@ before_install:
 - export GDAL_DATA=$HOME/miniconda2/share/gdal
 - pip install --upgrade pyproj
 - conda install --yes -c https://conda.anaconda.org/ioos rtree
+- pip install coveralls
 
 #-------------------------------------------------------------------------------
 #Creating directory for installation of libraries used by RAPID
@@ -111,4 +112,9 @@ install:
 #*******************************************************************************
 #Testing RAPIDpy
 #*******************************************************************************
-script: nosetests
+- cd $TRAVIS_BUILD_DIR/tests
+script: 
+- nosetests --with-coverage --cover-package=RAPIDpy
+##ADD Coveralls stats for code coverage
+after_success:
+  - coveralls

@@ -2,8 +2,6 @@ name: rapid
 channels: !!python/tuple
 - !!python/unicode 'defaults'
 dependencies:
-- conda-forge::libspatialindex=1.8.5=1
-- conda-forge::rtree=0.8.2=py27_0
 - curl=7.49.0=1
 - gdal=2.1.0=py27_0
 - geos=3.5.0=0

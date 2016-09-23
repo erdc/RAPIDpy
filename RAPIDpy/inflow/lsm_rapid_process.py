@@ -104,7 +104,7 @@ def run_lsm_rapid_process(rapid_executable_location,
                           simulation_start_datetime,
                           simulation_end_datetime=datetime.utcnow(),
                           file_datetime_pattern=None,
-                          expected_time_step=None,
+                          file_datetime_re_pattern=None,
                           ensemble_list=[None],
                           generate_rapid_namelist_file=True,
                           run_rapid_simulation=True,
@@ -120,6 +120,45 @@ def run_lsm_rapid_process(rapid_executable_location,
                           ):
     """
     This is the main process to generate inflow for RAPID and to run RAPID
+    
+    Args:
+        rapid_executable_location(str): Path to the RAPID executable.
+        rapid_io_files_location(str): Path to the directory containing the input and output folders for RAPID.
+        lsm_data_location(str): Path to the directory containing the Land Surface Model output files.
+        simulation_start_datetime(datetime): Datetime object with date bound of earliest simulation start.
+        simulation_end_datetime(Optional[datetime]): Datetime object with date bound of latest simulation end. Defaults to datetime.utcnow().
+        file_datetime_pattern(Optional[str]): Datetime pattern for files (Ex. '%Y%m%d%H'). If set, file_datetime_re_pattern is required. Various defaults used by each model.
+        file_datetime_re_pattern(Optional[raw str]): Regex pattern to extract datetime (Ex. r'\d{10}'). If set, file_datetime_pattern is required. Various defaults used by each model.
+        ensemble_list(Optional[list]): This is the expexted ensemble name appended to the end of the file name.
+        generate_rapid_namelist_file(Optional[bool]): If True, this will create a RAPID namelist file for the run in your RAPID input directory. Default is True.
+        run_rapid_simulation(Optional[bool]): If True, the RAPID simulation will run after generating the inflow file. Default is True.
+        generate_return_periods_file(Optional[bool]): If True, the return period file will be generated in the output. Default is False.
+        generate_seasonal_averages_file(Optional[bool]): If True, the season average file will be generated. Default is False.
+        generate_seasonal_initialization_file(Optional[bool]): If True, an intialization based on the seasonal average for the current day of the year will be created. Default is False.
+        generate_initialization_file(Optional[bool]): If True, an initialization file from the last time step of the simulation willl be created. Default is False.
+        use_all_processors(Optional[bool]): If True, it will use all available processors to perform this operation. Default is True.
+        num_processors(Optional[int]): If use_all_processors is False, this argument will determine the number of processors to use. Default is 1.
+        mpiexec_command(Optional[str]): This is the command to execute RAPID. Default is "mpiexec".
+        cygwin_bin_location(Optional[str]): If using Windows, this is the path to the Cygwin bin location. Default is "".
+        modeling_institution(Optional[str]): This is the institution performing the modeling and is in the output files. Default is "US Army Engineer Research and Development Center".    
+    
+    Example::
+    
+        from datetime import datetime
+        from RAPIDpy.inflow import run_lsm_rapid_process
+        #------------------------------------------------------------------------------
+        #main process
+        #------------------------------------------------------------------------------
+        if __name__ == "__main__":
+            run_lsm_rapid_process(
+                rapid_executable_location='/home/alan/rapid/src/rapid',
+                rapid_io_files_location='/home/alan/rapid-io',
+                lsm_data_location='/home/alan/era_data',
+                simulation_start_datetime=datetime(1980, 1, 1),
+                simulation_end_datetime=datetime(2014, 12, 31),
+                generate_initialization_file=True, 
+            )
+    
     """
     time_begin_all = datetime.utcnow()
 
@@ -134,6 +173,14 @@ def run_lsm_rapid_process(rapid_executable_location,
 
     #get list of correclty formatted rapid input directories in rapid directory
     rapid_input_directories = get_valid_watershed_list(os.path.join(rapid_io_files_location, 'input'))
+    
+    if file_datetime_pattern is None or file_datetime_re_pattern is None:
+        main_file_re_match = re.compile(r'\d{8}')
+        main_file_datetime_pattern = "%Y%m%d" 
+    else:
+        main_file_re_match = re.compile(file_datetime_re_pattern)
+        main_file_datetime_pattern = file_datetime_pattern 
+        
 
     for ensemble in ensemble_list:
         ensemble_file_ending = ".nc"
@@ -150,12 +197,9 @@ def run_lsm_rapid_process(rapid_executable_location,
         
         lsm_file_list_subset = []
         
-        file_re_match = re.compile(r'\d{8}')
-        file_datetime_pattern = "%Y%m%d"      
-        
         for lsm_file in sorted(lsm_file_list):
-            match = file_re_match.search(lsm_file)
-            file_date = datetime.strptime(match.group(0), file_datetime_pattern)
+            match = main_file_re_match.search(lsm_file)
+            file_date = datetime.strptime(match.group(0), main_file_datetime_pattern)
             if file_date > simulation_end_datetime:
                 break
             if file_date >= simulation_start_datetime:
@@ -361,8 +405,11 @@ def run_lsm_rapid_process(rapid_executable_location,
                 grid_type = 'gldas2'
                 description = "GLDAS2.0 LIS land surface model 3 hourly runoff"
                 model_name = "nasa"
-                file_re_match = re.compile(r'\d{8}\.\d{2}')
-                file_datetime_pattern = "%Y%m%d.%H"      
+                
+                if file_datetime_pattern is None or file_datetime_re_pattern is None:
+                    file_datetime_re_pattern = r'\d{8}\.\d{2}'
+                    file_datetime_pattern = "%Y%m%d.%H"      
+                    
                 if file_size_time == 1:
                     expected_time_step = 3*3600 #3-hourly
                 else:
@@ -376,8 +423,11 @@ def run_lsm_rapid_process(rapid_executable_location,
                 grid_type = 'lis'
                 description = "NASA GSFC LIS hourly runoff"
                 model_name = "nasa"
-                file_re_match = re.compile(r'\d{10}')
-                file_datetime_pattern = "%Y%m%d%H"      
+
+                if file_datetime_pattern is None or file_datetime_re_pattern is None:
+                    file_datetime_re_pattern = r'\d{10}'
+                    file_datetime_pattern = "%Y%m%d%H"      
+
                 if file_size_time == 1:
                     #expected_time_step = 1*3600 #hourly
                     expected_time_step = 3*3600 #3-hourly
@@ -402,8 +452,11 @@ def run_lsm_rapid_process(rapid_executable_location,
             grid_type = 'joules'
             description = "Met Office Joules Hourly Runoff"
             model_name = "met_office"
-            file_re_match = re.compile(r'\d{10}')
-            file_datetime_pattern = "%Y%m%d%H"      
+
+            if file_datetime_pattern is None or file_datetime_re_pattern is None:
+                file_datetime_re_pattern = r'\d{10}'
+                file_datetime_pattern = "%Y%m%d%H"      
+
             if file_size_time == 1:
                 #expected_time_step = 1*3600 #hourly
                 expected_time_step = 3*3600 #3-hourly
@@ -423,8 +476,10 @@ def run_lsm_rapid_process(rapid_executable_location,
         elif surface_runoff_var.startswith("SSRUN") \
             and subsurface_runoff_var.startswith("BGRUN"):
 
-            file_re_match = re.compile(r'\d{8}\.\d{2}')
-            file_datetime_pattern = "%Y%m%d.%H"      
+            if file_datetime_pattern is None or file_datetime_re_pattern is None:
+                file_datetime_re_pattern = r'\d{8}\.\d{2}'
+                file_datetime_pattern = "%Y%m%d.%H"      
+
             model_name = "nasa"
             if lat_dim_size == 600 and lon_dim_size == 1440:
                 print("Runoff file identified as GLDAS GRID")
@@ -492,8 +547,11 @@ def run_lsm_rapid_process(rapid_executable_location,
                 description = "WRF-Hydro Hourly Runoff"
                 weight_file_name = r'weight_wrf\.csv'
                 grid_type = 'wrf_hydro'
-                file_re_match = re.compile(r'\d{10}')
-                file_datetime_pattern = "%Y%m%d%H"      
+
+                if file_datetime_pattern is None or file_datetime_re_pattern is None:
+                    file_datetime_re_pattern = r'\d{10}'
+                    file_datetime_pattern = "%Y%m%d%H"      
+
                 expected_time_step = 1*3600 #1 hourly
                 total_num_time_steps=file_size_time*len(lsm_file_list)
 
@@ -510,6 +568,14 @@ def run_lsm_rapid_process(rapid_executable_location,
         
         lsm_example_file.close()
 
+        #MAKE SURE PATTERN SET
+        if file_datetime_pattern is None or file_datetime_re_pattern is None:
+            file_re_match = main_file_re_match
+            file_datetime_pattern = main_file_datetime_pattern      
+        else:
+            file_re_match = re.compile(file_datetime_re_pattern)
+            file_datetime_pattern = file_datetime_pattern
+            
         actual_simulation_start_datetime = datetime.strptime(file_re_match.search(lsm_file_list[0]).group(0), file_datetime_pattern)
         actual_simulation_end_datetime = datetime.strptime(file_re_match.search(lsm_file_list[-1]).group(0), file_datetime_pattern)
 

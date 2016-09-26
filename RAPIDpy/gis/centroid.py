@@ -10,9 +10,11 @@
 
 from csv import writer as csv_writer
 try:
-    from osgeo import ogr, osr
+    from osgeo import gdal, ogr, osr
 except Exception:
     raise Exception("You need the gdal python package to run this tool ...")
+# Enable GDAL/OGR exceptions
+gdal.UseExceptions()
 
 #local
 from ..helper_functions import open_csv
@@ -22,8 +24,28 @@ def FlowlineToPoint(in_drainage_line,
                     out_csv_file,
                     file_geodatabase=None):
     """
-    Converts flowline feature to points in EPSG:4326
+    Converts flowline feature to a list of centroid points with their comid in EPSG:4326.
+
+    Args:
+        in_drainage_line(str): Path to the stream network (i.e. Drainage Line) shapefile.
+        river_id(str): The name of the field with the river ID (Ex. 'HydroID', 'COMID', or 'LINKNO').
+        out_csv_file(str): Path to the output csv file with the centroid points.
+        file_geodatabase(Optional[str]): Path to the file geodatabase. If you use this option, in_drainage_line is the name of the stream network feature class. (WARNING: Not always stable with GDAL.)
+    
+    Example::
+    
+        from RAPIDpy.gis.centroid import FlowlineToPoint
+        #------------------------------------------------------------------------------
+        #main process
+        #------------------------------------------------------------------------------
+        if __name__ == "__main__":
+            FlowlineToPoint(in_drainage_line='/path/to/drainageline.shp',
+                            river_id='LINKNO',
+                            out_csv_file='/path/to/comid_lat_lon_z.csv',
+                            )
+    
     """
+
     if file_geodatabase:
         gdb_driver = ogr.GetDriverByName("OpenFileGDB")
         ogr_file_geodatabase = gdb_driver.Open(file_geodatabase, 0)

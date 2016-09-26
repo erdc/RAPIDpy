@@ -12,9 +12,12 @@ from csv import writer as csv_writer
 import numpy as np
 
 try:
-    from osgeo import ogr
+    from osgeo import gdal, ogr
 except Exception:
     raise Exception("You need the gdal python package to run this tool ...")
+
+# Enable GDAL/OGR exceptions
+gdal.UseExceptions()
 
 #local
 from ..helper_functions import open_csv

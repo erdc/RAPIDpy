@@ -1,20 +1,26 @@
-GIS Tools
-=========
+RAPID GIS Tools
+===============
 
-For these tools to work, you need GIS dependencies installed (See :doc:`installation`).
+These tools generate the RAPID input files and weight table files from the GIS stream networks.
+
+
+.. note:: To generate your own network from a DEM see :doc:`gis_stream_network`
+
+.. note:: For these tools to work, you need GIS dependencies installed (See :doc:`installation`).
 
 There are also tools by Esri for ArcMap located here:
 
 - https://github.com/Esri/python-toolbox-for-rapid
 - https://github.com/erdc-cm/python-toolbox-for-rapid
 
-To generate your own network from a DEM see :doc:`gis_stream_network`
+Workflows
+---------
 
 Static RAPID Files
-------------------
+~~~~~~~~~~~~~~~~~~
 
 To prepare the static RAPID files (rapid\_connect.csv, riv\_bas\_id.csv,
-kfac.csv, k.csv, x.csv, comid\_lat\_lon\_z.csv)
+kfac.csv, k.csv, x.csv, comid\_lat\_lon\_z.csv) with default values.
 
 .. code:: python
 
@@ -38,7 +44,7 @@ kfac.csv, k.csv, x.csv, comid\_lat\_lon\_z.csv)
                                  )
 
 Weight Table Files
-------------------
+~~~~~~~~~~~~~~~~~~
 
 The weight tables are generated using an area weighted method based on
 Esri's RAPID\_Toolbox.
@@ -59,6 +65,24 @@ To generate the ECMWF weight table files
                                   rapid_connect_file=rapid_connect,
                                   )
 
+
+
+Individual Tools
+----------------
+
+Static RAPID Files
+~~~~~~~~~~~~~~~~~~
+.. autofunction:: RAPIDpy.gis.muskingum.CreateMuskingumKfacFile
+
+.. autofunction:: RAPIDpy.gis.muskingum.CreateMuskingumKFile
+
+.. autofunction:: RAPIDpy.gis.muskingum.CreateMuskingumXFileFromDranageLine
+
+.. autofunction:: RAPIDpy.gis.muskingum.CreateConstMuskingumXFile
+
+Weight Tables
+~~~~~~~~~~~~~
+
 To generate the NLDAS/GLDAS weight table files
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -77,6 +101,12 @@ To generate the NLDAS/GLDAS weight table files
                               river_id="HydroID",
                               in_rapid_connect=rapid_connect, 
                               out_weight_table=weight_file)
+
+Utilities
+---------
+
+.. autofunction:: RAPIDpy.gis.centroid.FlowlineToPoint
+
 
 How it works:
 -------------

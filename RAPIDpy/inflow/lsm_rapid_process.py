@@ -25,17 +25,6 @@ from ..utilities import (case_insensitive_file_search,
                          get_watershed_subbasin_from_folder,
                          partition)
 
-
-#------------------------------------------------------------------------------
-#FUNCTIONS
-#------------------------------------------------------------------------------
-def get_time_delta(file_ts1, file_ts2, date_match_string):
-    """
-    This function will extract the time delta based on the
-    dates from the file names or the dates in the files
-    """
-    
-    
 #------------------------------------------------------------------------------
 #MULTIPROCESSING FUNCTION
 #------------------------------------------------------------------------------

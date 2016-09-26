@@ -14,26 +14,7 @@ The source code for RAPID is located at https://github.com/c-h-david/rapid/. Oth
 
 [![Coverage Status](https://coveralls.io/repos/github/erdc-cm/RAPIDpy/badge.svg?branch=master)](https://coveralls.io/github/erdc-cm/RAPIDpy?branch=master)
 
+[![Docs](https://readthedocs.org/projects/rapidpy/badge/?version=latest)](http://rapidpy.readthedocs.io/en/latest)
 
-#Installation
-https://github.com/erdc-cm/RAPIDpy/wiki/Installation
+Documentation can be found at: http://rapidpy.readthedocs.io/en/latest
 
-#How to use:
-
-##Tools to prepare static input from GIS files:
-See: https://github.com/erdc-cm/RAPIDpy/wiki/GIS-Tools
-
-##Tools to prepare inflow and run RAPID::
-See: https://github.com/erdc-cm/RAPIDpy/wiki/Inflow-from-Land-Surface-Models
-
-##Running RAPID:
-See: https://github.com/erdc-cm/RAPIDpy/wiki/Running-RAPID
-
-##Calibration Tools:
-See: https://github.com/erdc-cm/RAPIDpy/wiki/Calibration
-												
-##Postprocessing Tools:
-See: https://github.com/erdc-cm/RAPIDpy/wiki/Postprocessing
-
-##Dataset Manager
-See: https://github.com/erdc-cm/RAPIDpy/wiki/RAPIDDataset

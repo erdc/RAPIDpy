@@ -13,9 +13,12 @@ from csv import writer as csv_writer
 import numpy as np
 
 try:
-    from osgeo import ogr
+    from osgeo import gdal, ogr
 except Exception:
     raise Exception("You need the gdal python package to run this tool ...")
+
+# Enable GDAL/OGR exceptions
+gdal.UseExceptions()
    
 #local
 from ..helper_functions import csv_to_list, open_csv
@@ -28,7 +31,7 @@ except NameError:
     pass
 
 def CreateMuskingumKfacFile(in_drainage_line,
-                            stream_id,
+                            river_id,
                             length_id,
                             slope_id,
                             celerity,
@@ -38,7 +41,44 @@ def CreateMuskingumKfacFile(in_drainage_line,
                             length_units="km",
                             file_geodatabase=None):
     """
-    Creates the Kfac file for calibration
+    Creates the Kfac file for calibration.
+
+    Formula Type Options:
+    
+    1. River Length/Celerity; 
+    2. Eta*River Length/Sqrt(River Slope); and 3 is
+    3. Eta*River Length/Sqrt(River Slope) [0.05, 0.95]
+    
+    Where Eta = Average(River Length/Co of all rivers) / Average(River Length/Sqrt(River Slope) of all rivers)
+    
+    Args:
+        in_drainage_line(str): Path to the stream network (i.e. Drainage Line) shapefile.
+        river_id(str): The name of the field with the river ID (Ex. 'HydroID', 'COMID', or 'LINKNO').
+        length_id(str): The field name containging the length of the river segment (Ex. 'LENGTHKM' or 'Length').
+        celerity(float): The flow wave celerity for the watershed in meters per second. 1 km/hr or 1000.0/3600.0 m/s is a reasonable value if unknown.
+        formula_type(int): An integer representing the formula type to use when calculating kfac. 
+        in_connectivity_file(str): The path to the RAPID connectivity file.
+        out_kfac_file(str): The path to the output kfac file.
+        length_units(str): The units for the length_id field. Supported types are "m" for meters and "km" for kilometers.
+        file_geodatabase(Optional[str]): Path to the file geodatabase. If you use this option, in_drainage_line is the name of the stream network feature class. (WARNING: Not always stable with GDAL.)
+    
+    Example::
+    
+        from RAPIDpy.gis.muskingum import CreateMuskingumKfacFile
+        #------------------------------------------------------------------------------
+        #main process
+        #------------------------------------------------------------------------------
+        if __name__ == "__main__":
+            CreateMuskingumKfacFile(in_drainage_line='/path/to/drainageline.shp',
+                                    river_id='LINKNO',
+                                    length_id='Length',
+                                    slope_id,
+                                    celerity,
+                                    formula_type,
+                                    in_connectivity_file,
+                                    out_kfac_file='/path/to/kfac.csv',
+                                    length_units="m",
+                                    file_geodatabase=None)    
     """
     if file_geodatabase:
         gdb_driver = ogr.GetDriverByName("OpenFileGDB")
@@ -53,7 +93,7 @@ def CreateMuskingumKfacFile(in_drainage_line,
     length_list = np.zeros(number_of_features, dtype=np.float32)
     slope_list = np.zeros(number_of_features, dtype=np.float32)
     for feature_idx, drainage_line_feature in enumerate(ogr_drainage_line_shapefile_lyr):
-        river_id_list[feature_idx] = drainage_line_feature.GetField(stream_id)
+        river_id_list[feature_idx] = drainage_line_feature.GetField(river_id)
         length = drainage_line_feature.GetField(length_id)
         if length is not None:
             length_list[feature_idx] = length
@@ -143,7 +183,24 @@ def CreateMuskingumKFile(lambda_k,
                          in_kfac_file,
                          out_k_file):
     """
-    Creates muskingum k file from kfac file
+    Creates muskingum k file from kfac file.
+    
+    Args:
+        lambda_k(float): The value for lambda given from RAPID after the calibration process. If no calibration has been performed, 0.3 is reasonable.
+        in_kfac_file(str): The path to the input kfac file.
+        out_k_file(str): The path to the output k file.
+    
+    Example::
+    
+        from RAPIDpy.gis.muskingum import CreateMuskingumKFile
+        #------------------------------------------------------------------------------
+        #main process
+        #------------------------------------------------------------------------------
+        if __name__ == "__main__":
+            CreateMuskingumKFile(lambda_k=0.3,
+                                 in_kfac_file='/path/to/kfac.csv',
+                                 out_k_file='/path/to/k.csv',
+                                 )
     """
     kfac_table = csv_to_list(in_kfac_file)
     
@@ -157,7 +214,25 @@ def CreateMuskingumXFileFromDranageLine(in_drainage_line,
                                         out_x_file,
                                         file_geodatabase=None):
     """
-    Create muskingum X file from drainage line
+    Create muskingum X file from drainage line.
+
+    Args:
+        in_drainage_line(str): Path to the stream network (i.e. Drainage Line) shapefile.
+        x_id(str): The name of the muksingum X field (i.e. 'Musk_x').
+        out_x_file(str): The path to the output x file.
+        file_geodatabase(Optional[str]): Path to the file geodatabase. If you use this option, in_drainage_line is the name of the stream network feature class. (WARNING: Not always stable with GDAL.)
+    
+    Example::
+    
+        from RAPIDpy.gis.muskingum import CreateMuskingumXFileFromDranageLine
+        #------------------------------------------------------------------------------
+        #main process
+        #------------------------------------------------------------------------------
+        if __name__ == "__main__":
+            CreateMuskingumXFileFromDranageLine(lambda_k=0.3,
+                                                in_kfac_file='/path/to/kfac.csv',
+                                                out_k_file='/path/to/k.csv',
+                                                )
     """
     if file_geodatabase:
         gdb_driver = ogr.GetDriverByName("OpenFileGDB")
@@ -173,13 +248,30 @@ def CreateMuskingumXFileFromDranageLine(in_drainage_line,
             x_writer.writerow([drainage_line_feature.GetField(x_id)])    
 
 def CreateConstMuskingumXFile(x_val,
-                              rapid_connect_file,
+                              in_connectivity_file,
                               out_x_file):
     """
-    Create muskingum X file from value that is constant all the way through
+    Create muskingum X file from value that is constant all the way through for each river segment.
+    
+    Args:
+        x_val(float): Value for the muskingum X parameter [0-0.5].
+        in_connectivity_file(str): The path to the RAPID connectivity file.
+        out_x_file(str): The path to the output x file.
+    
+    Example::
+    
+        from RAPIDpy.gis.muskingum import CreateConstMuskingumXFile
+        #------------------------------------------------------------------------------
+        #main process
+        #------------------------------------------------------------------------------
+        if __name__ == "__main__":
+            CreateConstMuskingumXFile(x_val=0.35,
+                                      in_connectivity_file='/path/to/rapid_connect.csv',
+                                      out_x_file='/path/to/x.csv',
+                                      )
     """
     num_rivers = 0
-    with open_csv(rapid_connect_file, "r") as csvfile:
+    with open_csv(in_connectivity_file, "r") as csvfile:
         reader = csv_reader(csvfile)
         for row in reader:
             num_rivers+=1

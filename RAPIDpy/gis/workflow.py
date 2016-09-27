@@ -21,7 +21,7 @@ def CreateAllStaticRAPIDFiles(in_drainage_line,
                               river_id,
                               length_id,
                               slope_id,
-                              next_down_river_id,
+                              next_down_id,
                               rapid_output_folder,
                               kfac_celerity=1000.0/3600.0,
                               kfac_formula_type=3,
@@ -33,7 +33,39 @@ def CreateAllStaticRAPIDFiles(in_drainage_line,
                               file_geodatabase=None
                              ):
     """
-    Create All Static RAPID Input Files
+    To generate the static RAPID files (rapid_connect.csv, riv_bas_id.csv,
+    kfac.csv, k.csv, x.csv, comid_lat_lon_z.csv) with default values.
+    
+    Args:
+        in_drainage_line(str): Path to the stream network (i.e. Drainage Line) shapefile.
+        river_id(str): The name of the field with the river ID (Ex. 'HydroID', 'COMID', or 'LINKNO').
+        length_id(str): The field name containging the length of the river segment (Ex. 'LENGTHKM' or 'Length').
+        slope_id(str): The field name containging the slope of the river segment (Ex. 'Avg_Slope' or 'Slope').
+        next_down_id(str): The name of the field with the river ID of the next downstream river segment (Ex. 'NextDownID' or 'DSLINKNO').
+        rapid_output_folder(str): The path to the folder where all of the RAPID output will be generated.
+        kfac_celerity(Optional[float]): The flow wave celerity for the watershed in meters per second. 1 km/hr or 1000.0/3600.0 m/s is a reasonable value if unknown.
+        kfac_formula_type(Optional[int]): An integer representing the formula type to use when calculating kfac. Default is 3.
+        kfac_length_units(Optional[str]): The units for the length_id field. Supported types are "m" for meters and "km" for kilometers. Default is "km".
+        lambda_k(Optional[float]): The value for lambda given from RAPID after the calibration process. Default is 0.35.
+        x_value(Optional[float]): Value for the muskingum X parameter [0-0.5]. Default is 0.3.
+        nhdplus(Optional[bool]): If True, the drainage line is from the NHDPlus dataset with the VAA fields COMID, FROMNODE, TONODE, and DIVERGENCE. Default is False.
+        taudem_network_connectivity_tree_file(Optional[str]): If set, the connectivity file will be generated from the TauDEM connectivity tree file.
+        file_geodatabase(Optional[str]): Path to the file geodatabase. If you use this option, in_drainage_line is the name of the stream network feature class. (WARNING: Not always stable with GDAL.)
+    
+    Example::
+    
+        from RAPIDpy.gis.workflow import CreateAllStaticRAPIDFiles
+        #------------------------------------------------------------------------------
+        #main process
+        #------------------------------------------------------------------------------
+        if __name__=="__main__":
+            CreateAllStaticRAPIDFiles(in_drainage_line="/path/to/drainage_line.shp",
+                                      river_id="HydroID",
+                                      length_id="LENGTHKM",
+                                      slope_id="SLOPE",
+                                      next_down_river_id="NextDownID",
+                                      rapid_output_folder="/path/to/rapid/output",
+                                     )
     """
     #RAPID connect file
     rapid_connect_file = os.path.join(rapid_output_folder, 'rapid_connect.csv')
@@ -47,7 +79,7 @@ def CreateAllStaticRAPIDFiles(in_drainage_line,
     else:
         CreateNetworkConnectivity(in_drainage_line,
                                   river_id,
-                                  next_down_river_id,
+                                  next_down_id,
                                   rapid_connect_file,
                                   file_geodatabase)
         
@@ -93,7 +125,27 @@ def CreateAllStaticECMWFFiles(in_catchment,
                               file_geodatabase=None
                               ):
     """
-    This creates all of the ECMWF grid weight tables
+    This creates all of the ECMWF grid weight tables using an area weighted method based on Esri's RAPID_Toolbox.
+    
+    Args:
+        in_catchment(str): Path to the Catchment shapefile.
+        catchment_river_id(str): The name of the field with the river ID (Ex. 'DrainLnID' or 'LINKNO').
+        rapid_output_folder(str): The path to the folder where all of the RAPID output will be generated.
+        rapid_connect_file(str): The path to the RAPID connectivity file.
+        file_geodatabase(Optional[str]): Path to the file geodatabase. If you use this option, in_drainage_line is the name of the stream network feature class. (WARNING: Not always stable with GDAL.)
+    
+    Example::
+    
+        from RAPIDpy.gis.workflow import CreateAllStaticECMWFFiles
+        #------------------------------------------------------------------------------
+        #main process
+        #------------------------------------------------------------------------------
+        if __name__=="__main__":
+            CreateAllStaticECMWFFiles(in_catchment="/path/to/catchment.shp",
+                                      catchment_river_id="DrainLnID",
+                                      rapid_output_folder="/path/to/rapid/output",
+                                      rapid_connect_file="/path/to/rapid_connect.csv",
+                                      )
     """
     lsm_grid_folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'lsm_grids')    
 
@@ -105,7 +157,7 @@ def CreateAllStaticECMWFFiles(in_catchment,
                            catchment_river_id,
                            rapid_connect_file, 
                            weight_ecmwf_t1279_file,
-                           file_geodatabase)
+                           file_geodatabase=file_geodatabase)
 
     #create from ECMWF low reslution grid
     ecmwf_tco639_grid_file = os.path.join(lsm_grid_folder, 'runoff_ecmwf_tco639_grid.nc')
@@ -115,7 +167,7 @@ def CreateAllStaticECMWFFiles(in_catchment,
                            catchment_river_id,
                            rapid_connect_file, 
                            weight_ecmwf_tco639_file,
-                           file_geodatabase)
+                           file_geodatabase=file_geodatabase)
 
     #create from ERA Interim grid
     era_t511_grid_file = os.path.join(lsm_grid_folder, 'runoff_era_t511_grid.nc')
@@ -125,13 +177,13 @@ def CreateAllStaticECMWFFiles(in_catchment,
                            catchment_river_id,
                            rapid_connect_file, 
                            weight_era_t511_file,
-                           file_geodatabase)
+                           file_geodatabase=file_geodatabase)
 
 def CreateAllStaticECMWFRAPIDFiles(in_drainage_line,
                                    river_id,
                                    length_id,
                                    slope_id,
-                                   next_down_river_id,
+                                   next_down_id,
                                    in_catchment,
                                    catchment_river_id,
                                    rapid_output_folder,
@@ -145,14 +197,49 @@ def CreateAllStaticECMWFRAPIDFiles(in_drainage_line,
                                    file_geodatabase=None
                                    ):
     """
-    This creates all of the static rapid files and ECMWF grid weight tables
+    This creates all of the static RAPID files and ECMWF grid weight tables.
+    
+    Args:
+        in_drainage_line(str): Path to the stream network (i.e. Drainage Line) shapefile.
+        river_id(str): The name of the field with the river ID (Ex. 'HydroID', 'COMID', or 'LINKNO').
+        length_id(str): The field name containging the length of the river segment (Ex. 'LENGTHKM' or 'Length').
+        slope_id(str): The field name containging the slope of the river segment (Ex. 'Avg_Slope' or 'Slope').
+        next_down_id(str): The name of the field with the river ID of the next downstream river segment (Ex. 'NextDownID' or 'DSLINKNO').
+        in_catchment(str): Path to the Catchment shapefile.
+        catchment_river_id(str): The name of the field with the river ID (Ex. 'DrainLnID' or 'LINKNO').
+        rapid_output_folder(str): The path to the folder where all of the RAPID output will be generated.
+        kfac_celerity(Optional[float]): The flow wave celerity for the watershed in meters per second. 1 km/hr or 1000.0/3600.0 m/s is a reasonable value if unknown.
+        kfac_formula_type(Optional[int]): An integer representing the formula type to use when calculating kfac. Default is 3.
+        kfac_length_units(Optional[str]): The units for the length_id field. Supported types are "m" for meters and "km" for kilometers. Default is "km".
+        lambda_k(Optional[float]): The value for lambda given from RAPID after the calibration process. Default is 0.35.
+        x_value(Optional[float]): Value for the muskingum X parameter [0-0.5]. Default is 0.3.
+        nhdplus(Optional[bool]): If True, the drainage line is from the NHDPlus dataset with the VAA fields COMID, FROMNODE, TONODE, and DIVERGENCE. Default is False.
+        taudem_network_connectivity_tree_file(Optional[str]): If set, the connectivity file will be generated from the TauDEM connectivity tree file.
+        file_geodatabase(Optional[str]): Path to the file geodatabase. If you use this option, in_drainage_line is the name of the stream network feature class. (WARNING: Not always stable with GDAL.)
+    
+    Example::
+    
+        from RAPIDpy.gis.workflow import CreateAllStaticECMWFRAPIDFiles
+        #------------------------------------------------------------------------------
+        #main process
+        #------------------------------------------------------------------------------
+        if __name__=="__main__":
+            CreateAllStaticECMWFRAPIDFiles(in_drainage_line="/path/to/drainage_line.shp",
+                                           river_id="HydroID",
+                                           length_id="LENGTHKM",
+                                           slope_id="SLOPE",
+                                           next_down_id="NextDownID",
+                                           in_catchment="/path/to/catchment.shp",
+                                           catchment_river_id="DrainLnID",
+                                           rapid_output_folder="/path/to/rapid/output",
+                                          )
     """
     #create all RAPID files
     CreateAllStaticRAPIDFiles(in_drainage_line,
                               river_id,
                               length_id,
                               slope_id,
-                              next_down_river_id,
+                              next_down_id,
                               rapid_output_folder,
                               kfac_celerity,
                               kfac_formula_type,

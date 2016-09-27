@@ -46,7 +46,7 @@ def compare_qout_files(dataset1_path, dataset2_path, Qout_var="Qout"):
         
         d2_reordered_reach_index_list = []
         for comid in d1.get_river_id_array():
-            d2_reordered_reach_index_list.append(where(d2.get_river_id_array()==comid)[0][0])
+            d2_reordered_reach_index_list.append(np.where(d2.get_river_id_array()==comid)[0][0])
         d2_reordered_qout = d2.get_qout_index(d2_reordered_reach_index_list)
     else:
         d2_reordered_qout = d2.get_qout()
@@ -100,8 +100,24 @@ def compare_qout_files(dataset1_path, dataset2_path, Qout_var="Qout"):
 class RAPIDDataset(object):
     """
     This class is designed to access data from the RAPID Qout
-    netCDF file
+    NetCDF file.
+    
+    Attributes:
+        filename(str): Path to the RAPID Qout NetCDF file.
+        river_id_dimension(Optional[str]): Name of the river ID dimension. Default is to search through a standard list.
+        river_id_variable(Optional[str]): Name of the river ID variable. Default is to search through a standard list.
+        streamflow_variable(Optional[str]): Name of the streamflow varaible. Default is to search through a standard list.
+
+    Example::
+    
+        from RAPIDpy import RAPIDDataset
+
+        path_to_rapid_qout = '/path/to/Qout.nc'
+        with RAPIDDataset(path_to_rapid_qout) as qout_nc:
+            #USE FUNCTIONS TO ACCESS DATA HERE
+                         
     """
+
     def __init__(self, filename, 
                  river_id_dimension="", 
                  river_id_variable="", 
@@ -187,7 +203,19 @@ class RAPIDDataset(object):
     def is_time_variable_valid(self):
         """
         This function returns whether or not the time variable
-        is valid
+        is valid.
+        
+        Returns:
+            boolean: True if the time variable is valid, otherwise false.
+        
+        Example::
+        
+            from RAPIDpy import RAPIDDataset
+    
+            path_to_rapid_qout = '/path/to/Qout.nc'
+            with RAPIDDataset(path_to_rapid_qout) as qout_nc:
+                if qout_nc.is_time_variable_valid():
+                    #DO WORK HERE
         """
         time_var_valid = False
         if 'time' in self.qout_nc.variables.keys():
@@ -209,7 +237,41 @@ class RAPIDDataset(object):
                        return_datetime=False,
                        time_index_array=None):
         """
-        This method extracts or generates an array of time
+        This method extracts or generates an array of time. The new version of RAPID output has the time array stored. 
+        However, the old version requires the user to know when the simulation began and the time step of the output.
+        
+        Parameters:
+            datetime_simulation_start(Optional[datetime]): This is a datetime object with the date of the simulation start time.
+            simulation_time_step_seconds(Optional[integer]): This is the time step of the simulation output in seconds.
+            return_datetime(Optional[boolean]): If true, it converts the data to a list of datetime objects. Default is False.
+            time_index_array(Optional[list or np.array]): This is used to extract the datetime vales. This can be from the *get_time_index_range* function.
+            
+        Returns:
+            list: An array of integers representing seconds since Jan 1, 1970 UTC or datetime objects if return_datetime is set to True.
+        
+        This example demonstrates how to retrieve or generate a time array to go
+        along with your RAPID streamflow series::
+        
+            from RAPIDpy import RAPIDDataset
+    
+            path_to_rapid_qout = '/path/to/Qout.nc'
+            with RAPIDDataset(path_to_rapid_qout) as qout_nc:
+                #CF-Compliant version
+                if qout_nc.is_time_variable_valid():
+                    time_array = qout_nc.get_time_array()
+                    
+                    #or, to get datetime array
+                    time_datetime = qout_nc.get_time_array(return_datetime=True)
+                #Original version
+                else:
+                    time_array = qout_nc.get_time_array(datetime_simulation_start=datetime(1980, 1, 1),
+                                                        simulation_time_step_seconds=3*3600)
+                                                        
+                    #or, to get datetime array
+                    time_datetime = qout_nc.get_time_array(datetime_simulation_start=datetime(1980, 1, 1),
+                                                           simulation_time_step_seconds=3*3600,
+                                                           return_datetime=True)
+                    
         """
         time_array = []
 
@@ -241,7 +303,33 @@ class RAPIDDataset(object):
                              time_index_end=None,
                              time_index=None):
         """
-        Generates a time index range based on datetimes
+        Generates a time index range based on time bounds given. This is useful for subset data extraction.
+        
+        Parameters:
+            date_search_start(Optional[datetime]): This is a datetime object with the date of the minimum date for starting.
+            date_search_end(Optional[datetime]): This is a datetime object with the date of the maximum date for ending.
+            time_index_start(Optional[int]): This is the index of the start of the time array subset. Useful for the old file version.
+            time_index_end(Optional[int]): This is the index of the end of the time array subset. Useful for the old file version.
+            time_index(Optional[int]): This is the index of time to return in the case that your code only wants one index. Used internally.
+            
+        Returns:
+            index_array: This is an array used to extract a subset of data.
+        
+        Example::
+        
+            from RAPIDpy import RAPIDDataset
+    
+            path_to_rapid_qout = '/path/to/Qout.nc'
+            with RAPIDDataset(path_to_rapid_qout) as qout_nc:
+                #CF-Compliant version
+                if qout_nc.is_time_variable_valid():
+                    time_index_range = qout_nc.get_time_index_range(date_search_start=datetime(1980, 1, 1),
+                                                                    date_search_end=datetime(1980, 12, 11))
+                #Original version
+                else:
+                    time_index_range = qout_nc.get_time_index_range(time_index_start=22,
+                                                                    time_index_end=40)
+                    
         """
         #get the range of time based on datetime range
         time_range = None
@@ -299,14 +387,39 @@ class RAPIDDataset(object):
 
     def get_river_id_array(self):
         """
-        This method returns the river index array for this file
-        """
+        This method returns the river ID array for this file.
+        
+        Returns:
+            numpy.array: An array of the river ID's
+        
+        Example::
+        
+            from RAPIDpy import RAPIDDataset
+    
+            path_to_rapid_qout = '/path/to/Qout.nc'
+            with RAPIDDataset(path_to_rapid_qout) as qout_nc:
+                river_ids = qout_nc.get_river_id_array()
+                
+        """ 
         return self.qout_nc.variables[self.river_id_variable][:]
     
     def get_river_index(self, river_id):
         """
         This method retrieves the river index in the netCDF
-        dataset corresponding to the river ID
+        dataset corresponding to the river ID.
+
+        Returns:
+            int: The index of the river ID's in the file
+        
+        Example::
+        
+            from RAPIDpy import RAPIDDataset
+    
+            path_to_rapid_qout = '/path/to/Qout.nc'
+            river_id = 53458
+            
+            with RAPIDDataset(path_to_rapid_qout) as qout_nc:
+                river_index = qout_nc.get_river_index(river_id)
         """
         try:
             return np.where(self.get_river_id_array()==river_id)[0][0]
@@ -350,9 +463,51 @@ class RAPIDDataset(object):
                  time_index=None,
                  time_index_array=None):
         """
-        This method extracts streamflow data by river id
-        It allows for extracting single or multiple river streamflow arrays
-        It has options to extract by date or by date index
+        This method extracts streamflow data by a single river ID or by a river ID array. 
+        It has options to extract by date or by date index.
+        
+        Parameters:
+            river_id_array(Optional[list or int]): A single river ID or an array of river IDs.
+            date_search_start(Optional[datetime]): This is a datetime object with the date of the minimum date for starting.
+            date_search_end(Optional[datetime]): This is a datetime object with the date of the maximum date for ending.
+            time_index_start(Optional[int]): This is the index of the start of the time array subset. Useful for the old file version.
+            time_index_end(Optional[int]): This is the index of the end of the time array subset. Useful for the old file version.
+            time_index(Optional[int]): This is the index of time to return in the case that your code only wants one index. Used internally.
+            time_index_array(Optional[list or np.array]): This is used to extract the vales only for particular dates. This can be from the *get_time_index_range* function.
+            
+        Returns:
+            numpy.array: This is a 1D or 2D array or a single value depending on your input search. 
+        
+        This example demonstrates how to retrieve the streamflow associated with
+        the reach you are interested in::
+
+            from RAPIDpy import RAPIDDataset
+    
+            path_to_rapid_qout = '/path/to/Qout.nc'
+            river_id = 500
+            with RAPIDDataset(path_to_rapid_qout) as qout_nc:
+                streamflow_array = qout_nc.get_qout(river_id)
+
+        This example demonstrates how to retrieve the streamflow within a date
+        range associated with the reach you are interested in::
+
+            from RAPIDpy import RAPIDDataset
+    
+            path_to_rapid_qout = '/path/to/Qout.nc'
+            river_id = 500
+            with RAPIDDataset(path_to_rapid_qout) as qout_nc:
+
+                #CF-Compliant version
+                if qout_nc.is_time_variable_valid():
+                    streamflow_array = qout_nc.get_qout(river_id,
+                                                        date_search_start=datetime(1985,1,1),
+                                                        date_search_end=datetime(1985,2,4))
+                #Original version
+                else:
+                    streamflow_array = qout_nc.get_qout(river_id,
+                                                        time_index_start=20,
+                                                        time_index_end=25)
+                    
         """
         #get indices of where the streamflow data is
         riverid_index_list_subset = None
@@ -420,12 +575,43 @@ class RAPIDDataset(object):
             raise Exception( "Invalid RAPID Qout file dimensions ...")
         return streamflow_array
 
-    def get_daily_qout_index(self, river_index_array, 
+    def get_daily_qout_index(self, 
+                             river_index_array, 
                              daily_time_index_array=None, 
                              steps_per_group=1, 
                              mode="mean"):
         """
-        Gets the daily time series from RAPID output
+        Gets the daily time series from RAPID output from river ID index.
+        
+        Parameters:
+            river_index_array(list or int): A single river index or an array of river indices.
+            daily_time_index_array(Optional[list of time indices]): This is a list of indices from the get_daily_time_index_array function.
+            steps_per_group(Optional[int]): This is how many time steps per day. This is for the old version of RAPID Qout.
+            mode(Optional[str]): You can get the daily average "mean" or the maximum "max".
+            
+        Returns:
+            numpy.array: This is a 1D or 2D array or a single value depending on your input search. 
+        
+        This example demonstrates how to get daily streamflow averages as an
+        array::
+
+        Example::
+        
+            from RAPIDpy import RAPIDDataset
+    
+            path_to_rapid_qout = '/path/to/Qout.nc'
+            river_id = 500
+            with RAPIDDataset(path_to_rapid_qout) as qout_nc:
+                river_index = qout_nc.get_river_index(river_id)
+
+                #CF-Compliant version
+                if qout_nc.is_time_variable_valid():
+                    streamflow_array = qout_nc.get_daily_qout_index(river_index)
+                #Original version
+                else:
+                    streamflow_array = qout_nc.get_daily_qout_index(river_index,
+                                                                    steps_per_group=8, #average 8 timesteps together for 1 day
+                                                                    )
         """
         axis = None
         if mode=="mean":
@@ -498,10 +684,41 @@ class RAPIDDataset(object):
             raise Exception("Must have steps_per_group set to a value greater than one "
                             "due to non CF-Compliant Qout file ...")
 
-    def get_daily_qout(self, river_id, daily_time_index_array=None,
-                       steps_per_group=1, mode="mean"):
+    def get_daily_qout(self, 
+                       river_id, 
+                       daily_time_index_array=None,
+                       steps_per_group=1, 
+                       mode="mean"):
         """
-        Retrieves the daily qout for river id from RAPID time series
+        Retrieves the daily qout for a river ID from RAPID time series
+        
+        Parameters:
+            river_index_array(list or int): A single river index or an array of river indices.
+            daily_time_index_array(Optional[list of time indices]): This is a list of indices from the get_daily_time_index_array function.
+            steps_per_group(Optional[int]): This is how many time steps per day. This is for the old version of RAPID Qout.
+            mode(Optional[str]): You can get the daily average "mean" or the maximum "max". Defauls is "mean".
+            
+        Returns:
+            numpy.array: This is a 1D or 2D array or a single value depending on your input search. 
+        
+        This example demonstrates how to get daily streamflow averages as an
+        array::
+        
+            from RAPIDpy import RAPIDDataset
+    
+            path_to_rapid_qout = '/path/to/Qout.nc'
+            river_id = 500
+            with RAPIDDataset(path_to_rapid_qout) as qout_nc:
+                #CF-Compliant version
+                if qout_nc.is_time_variable_valid():
+                    streamflow_array = qout_nc.get_daily_qout(river_id)
+                #Original version
+                else:
+                    #average 8 timesteps together for 1 day
+                    streamflow_array = qout_nc.get_daily_qout(river_id,
+                                                              steps_per_group=8, 
+                                                              )
+    
         """
         self.get_daily_qout_index(self.get_river_index(river_id),
                                   daily_time_index_array,
@@ -538,7 +755,46 @@ class RAPIDDataset(object):
                            daily=False,
                            mode="mean"):
         """
-        Write out RAPID output to CSV file
+        Write out RAPID output to CSV file.
+        
+        .. note:: Need either *reach\_id* or *reach\_index* parameter, but either can be used.
+        
+        Parameters:
+            path_to_output_file(str): Path to the output csv file.
+            reach_index(Optional[datetime]): This is the index of the river in the file you want the streamflow for.
+            reach_id(Optional[datetime]): This is the river ID that you want the streamflow for.
+            date_search_start(Optional[datetime]): This is a datetime object with the date of the minimum date for starting.
+            date_search_end(Optional[datetime]): This is a datetime object with the date of the maximum date for ending.
+            daily(Optional[boolean]): If True and the file is CF-Compliant, write out daily flows.
+            mode(Optional[str]): You can get the daily average "mean" or the maximum "max". Defauls is "mean".
+
+        Example::
+        
+            from RAPIDpy import RAPIDDataset
+    
+            path_to_rapid_qout = '/path/to/Qout.nc'
+
+            with RAPIDDataset(path_to_rapid_qout) as qout_nc:
+                #for writing entire time series to file
+                qout_nc.write_flows_to_csv('/timeseries/Qout_3624735.csv', 
+                                           reach_id=3624735,
+                                           )
+                                      
+                river_index = qout_nc.get_river_index(river_id)
+                
+                #if file is CF compliant, you can write out daily average
+                qout_nc.write_flows_to_csv('/timeseries/Qout_daily.csv',
+                                           reach_index=river_index,
+                                           daily=True,
+                                           )
+                #if file is CF compliant, you can filter by date
+                qout_nc.write_flows_to_csv('/timeseries/Qout_daily_date_filter.csv',
+                                           reach_index=river_index,
+                                           daily=True,
+                                           date_search_start=datetime(2002, 8, 31),
+                                           date_search_end=datetime(2002, 9, 15),
+                                           mode="max"
+                                           )        
         """
         if reach_id != None:
             reach_index = self.get_river_index(reach_id)
@@ -586,7 +842,52 @@ class RAPIDDataset(object):
                                              daily=False, 
                                              mode="mean"):
         """
-        Write out RAPID output to GSSHA time series xys file
+        Write out RAPID output to GSSHA WMS time series xys file.
+        
+        Parameters:
+            path_to_output_file(str): Path to the output xys file.
+            series_name(str): The name for the series.
+            series_id(int): The ID to give the series.
+            reach_index(Optional[datetime]): This is the index of the river in the file you want the streamflow for.
+            reach_id(Optional[datetime]): This is the river ID that you want the streamflow for.
+            date_search_start(Optional[datetime]): This is a datetime object with the date of the minimum date for starting.
+            date_search_end(Optional[datetime]): This is a datetime object with the date of the maximum date for ending.
+            daily(Optional[boolean]): If True and the file is CF-Compliant, write out daily flows.
+            mode(Optional[str]): You can get the daily average "mean" or the maximum "max". Defauls is "mean".
+
+        Example::
+        
+            from RAPIDpy import RAPIDDataset
+    
+            path_to_rapid_qout = '/path/to/Qout.nc'
+
+            with RAPIDDataset(path_to_rapid_qout) as qout_nc:
+                #for writing entire time series to file
+                qout_nc.write_flows_to_gssha_time_series_xys('/timeseries/Qout_3624735.xys',
+                                                             series_name="RAPID_TO_GSSHA_{0}".format(river_id),
+                                                             series_id=34,
+                                                             reach_id=3624735,
+                                                             )
+                                      
+                river_index = qout_nc.get_river_index(river_id)
+                
+                #if file is CF compliant, you can write out daily average
+                qout_nc.write_flows_to_gssha_time_series_xys('/timeseries/Qout_daily.xys',
+                                                             series_name="RAPID_TO_GSSHA_{0}".format(river_id),
+                                                             series_id=34,
+                                                             reach_index=river_index,
+                                                             daily=True,
+                                                             )
+                #if file is CF compliant, you can filter by date
+                qout_nc.write_flows_to_gssha_time_series_xys('/timeseries/Qout_daily_date_filter.xys',
+                                                             series_name="RAPID_TO_GSSHA_{0}".format(river_id),
+                                                             series_id=34,
+                                                             reach_index=river_index,
+                                                             daily=True,
+                                                             date_search_start=datetime(2002, 8, 31),
+                                                             date_search_end=datetime(2002, 9, 15),
+                                                             mode="max"
+                                                             )        
         """
         if reach_id != None:
             reach_index = self.get_river_index(reach_id)
@@ -625,8 +926,69 @@ class RAPIDDataset(object):
                                              mode="mean"):
         """
         Write out RAPID output to GSSHA time series ihg file
-        See: http://www.gsshawiki.com/Surface_Water_Routing:Introducing_Dischage/Constituent_Hydrographs
-        GSSHA prj card: CHAN_POINT_INPUT 
+        
+        .. note:: See: http://www.gsshawiki.com/Surface_Water_Routing:Introducing_Dischage/Constituent_Hydrographs
+        
+        .. note:: GSSHA prosect card is CHAN_POINT_INPUT
+        
+        Parameters:
+            path_to_output_file(str): Path to the output xys file.
+            point_list(list): List of dictionaries with link_id, node_id, baseflow, and rapid_rivid.
+            date_search_start(Optional[datetime]): This is a datetime object with the date of the minimum date for starting.
+            date_search_end(Optional[datetime]): This is a datetime object with the date of the maximum date for ending.
+            daily(Optional[boolean]): If True and the file is CF-Compliant, write out daily flows.
+            mode(Optional[str]): You can get the daily average "mean" or the maximum "max". Defauls is "mean".
+
+        Example::
+        
+            from RAPIDpy import RAPIDDataset
+    
+            path_to_rapid_qout = '/path/to/Qout.nc'
+            
+            #list to connect the RAPID rivers to GSSHA rivers
+            point_list = [
+                          {
+                           'link_id': 599,
+                           'node_id': 1,
+                           'baseflow': 0.0,
+                           'rapid_rivid': 80968,
+                          },
+                          {
+                           'link_id': 603,
+                           'node_id': 1,
+                           'baseflow': 0.0,
+                           'rapid_rivid': 80967,
+                          },
+                          {
+                           'link_id': 605,
+                           'node_id': 1,
+                           'baseflow': 0.0,
+                           'rapid_rivid': 80966,
+                          },
+                         ]
+                         
+            with RAPIDDataset(path_to_rapid_qout) as qout_nc:
+                #for writing entire time series to file
+                qout_nc.write_flows_to_gssha_time_series_ihg('/timeseries/Qout_3624735.ihg',
+                                                             point_list,
+                                                             )
+                                      
+                river_index = qout_nc.get_river_index(river_id)
+                
+                #if file is CF compliant, you can write out daily average
+                qout_nc.write_flows_to_gssha_time_series_ihg('/timeseries/Qout_3624735.ihg',
+                                                             point_list,
+                                                             daily=True,
+                                                             )
+                #if file is CF compliant, you can filter by date
+                qout_nc.write_flows_to_gssha_time_series_ihg('/timeseries/Qout_daily_date_filter.ihg',
+                                                             point_list,
+                                                             daily=True,
+                                                             date_search_start=datetime(2002, 8, 31),
+                                                             date_search_end=datetime(2002, 9, 15),
+                                                             mode="max"
+                                                             )        
+        
         """
         #analyze and write
         if self.is_time_variable_valid():

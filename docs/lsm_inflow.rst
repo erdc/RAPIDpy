@@ -45,6 +45,7 @@ Example:
 
     $ ls /rapid-io/input
     nfie_texas_gulf_region-huc_2_12
+
     $ ls /rapid-io/input/nfie_texas_gulf_region-huc_2_12
     comid_lat_lon_z.csv
     k.csv
@@ -52,7 +53,12 @@ Example:
     riv_bas_id.csv
     weight_era_t511.csv
     weight_nldas.csv
+    weight_gldas.csv
+    weight_lis.csv
+    weight_wrf.csv
     x.csv
+
+If you have not generated these files yet, see :doc:`gis_tools` 
 
 Step 5: Run the code
 --------------------

@@ -103,17 +103,12 @@ def pointsToVoronoiGridShapefile(lat, lon, vor_shp_path, extent=None):
         voronoi_poly_points = []
         if -1 not in vert_index_list and len(vert_index_list) > 3:
             voronoi_poly_points = voronoi_verticies[vert_index_list]
-        elif vert_index_list.any():
+        elif vert_index_list.size>0:
             #ASSUME RECTANGLE
             vert_index_list = vert_index_list[vert_index_list>=0]
-            num_verts = 0
-            if vert_index_list.any():
-                num_verts = 1
-                if hasattr(vert_index_list, "__len__"):
-                    num_verts = len(vert_index_list)
             voronoi_poly_points = voronoi_verticies[vert_index_list]
             #CASE 1: 2 valid voronoi vertices
-            if num_verts == 2:
+            if vert_index_list.size == 2:
                 center_lon = voronoi_centroids[point_id][0]
                 center_lat = voronoi_centroids[point_id][1]
                 corner_lon1 = voronoi_poly_points[0][0]
@@ -136,9 +131,8 @@ def pointsToVoronoiGridShapefile(lat, lon, vor_shp_path, extent=None):
                                                     [corner_lon2, corner_lat2],
                                                     [center_lon+dLon, corner_lat2],
                                                     [center_lon+dLon, corner_lat1]])
-                #print "TWO", voronoi_poly_points
             #CADE 2: 1 valid voronoi vertex
-            elif num_verts == 1:
+            elif vert_index_list.size == 1:
                 center_lon = voronoi_centroids[point_id][0]
                 center_lat = voronoi_centroids[point_id][1]
                 corner_lon = voronoi_poly_points[0][0]
@@ -150,8 +144,7 @@ def pointsToVoronoiGridShapefile(lat, lon, vor_shp_path, extent=None):
                                                 [center_lon + dLon, corner_lat],
                                                 [center_lon + dLon, center_lat + dLat],
                                                 [corner_lon, center_lat + dLat]])
-                #print "ONE", voronoi_poly_points
-                
+
         if len(voronoi_poly_points) == 4:
             poly = ogr.Geometry(ogr.wkbPolygon)
             ring = ogr.Geometry(ogr.wkbLinearRing)
@@ -193,17 +186,11 @@ def pointsToVoronoiGridArray(lat, lon, extent=None):
         voronoi_poly_points = []
         if -1 not in vert_index_list and len(vert_index_list) > 3:
             voronoi_poly_points = voronoi_verticies[vert_index_list]
-        elif vert_index_list.any():
-            #ASSUME RECTANGLE
+        elif vert_index_list.size>0:
             vert_index_list = vert_index_list[vert_index_list>=0]
-            num_verts = 0
-            if vert_index_list.any():
-                num_verts = 1
-                if hasattr(vert_index_list, "__len__"):
-                    num_verts = len(vert_index_list)
             voronoi_poly_points = voronoi_verticies[vert_index_list]
             #CASE 1: 2 valid voronoi vertices
-            if num_verts == 2:
+            if vert_index_list.size == 2:
                 center_lon = voronoi_centroids[point_id][0]
                 center_lat = voronoi_centroids[point_id][1]
                 corner_lon1 = voronoi_poly_points[0][0]
@@ -226,9 +213,8 @@ def pointsToVoronoiGridArray(lat, lon, extent=None):
                                                     [corner_lon2, corner_lat2],
                                                     [center_lon+dLon, corner_lat2],
                                                     [center_lon+dLon, corner_lat1]])
-                #print "TWO", voronoi_poly_points
-            #CADE 2: 1 valid voronoi vertex
-            elif num_verts == 1:
+            #CASE 2: 1 valid voronoi vertex
+            elif vert_index_list.size == 1:
                 center_lon = voronoi_centroids[point_id][0]
                 center_lat = voronoi_centroids[point_id][1]
                 corner_lon = voronoi_poly_points[0][0]
@@ -240,7 +226,6 @@ def pointsToVoronoiGridArray(lat, lon, extent=None):
                                                 [center_lon + dLon, corner_lat],
                                                 [center_lon + dLon, center_lat + dLat],
                                                 [corner_lon, center_lat + dLat]])
-                #print "ONE", voronoi_poly_points
                 
         if len(voronoi_poly_points) == 4:
             feature_list.append({'polygon': Polygon(voronoi_poly_points),

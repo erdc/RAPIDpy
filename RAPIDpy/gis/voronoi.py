@@ -71,9 +71,61 @@ def _get_voronoi_centroid_array(lsm_lat_array, lsm_lon_array, extent):
 
     return np.array(ptList) # set-up for input to Delaunay    
 
+def _get_voronoi_poly_points(vert_index_list, voronoi_vertices, voronoi_centroid):
+    """
+    This function returns the corner points for a polygon from scipy voronoi information
+    """
+    voronoi_poly_points = []
+    if -1 not in vert_index_list and len(vert_index_list) > 3:
+        voronoi_poly_points = voronoi_vertices[vert_index_list]
+    elif vert_index_list.size>0:
+        #ASSUME RECTANGLE
+        vert_index_list = vert_index_list[vert_index_list>=0]
+        voronoi_poly_points = voronoi_vertices[vert_index_list]
+        #CASE 1: 2 valid voronoi vertices
+        if vert_index_list.size == 2:
+            center_lon = voronoi_centroid[0]
+            center_lat = voronoi_centroid[1]
+            corner_lon1 = voronoi_poly_points[0][0]
+            corner_lat1 = voronoi_poly_points[0][1]
+            corner_lon2 = voronoi_poly_points[1][0]
+            corner_lat2 = voronoi_poly_points[1][1]
+            
+            #check if need to add points in lon or lat
+            if abs(corner_lon1-corner_lon2) > abs(corner_lat1-corner_lat2):
+                dLat = center_lat - corner_lat1
+                #append the corners in order
+                voronoi_poly_points = np.array([[corner_lon1, corner_lat1],
+                                                [corner_lon2, corner_lat2],
+                                                [corner_lon2, center_lat + dLat],
+                                                [corner_lon1, center_lat + dLat]])
+            else:
+                dLon = center_lon - corner_lon1
+                #append the corners in order
+                voronoi_poly_points = np.array([[corner_lon1, corner_lat1],
+                                                [corner_lon2, corner_lat2],
+                                                [center_lon+dLon, corner_lat2],
+                                                [center_lon+dLon, corner_lat1]])
+        #CADE 2: 1 valid voronoi vertex
+        elif vert_index_list.size == 1:
+            center_lon = voronoi_centroid[0]
+            center_lat = voronoi_centroid[1]
+            corner_lon = voronoi_poly_points[0][0]
+            corner_lat = voronoi_poly_points[0][1]
+            dLat = center_lat - corner_lat
+            dLon = center_lon - corner_lon
+            #append the corners in order
+            voronoi_poly_points = np.array([[corner_lon, corner_lat],
+                                            [center_lon + dLon, corner_lat],
+                                            [center_lon + dLon, center_lat + dLat],
+                                            [corner_lon, center_lat + dLat]])
+
+
+    return voronoi_poly_points
+
 def pointsToVoronoiGridShapefile(lat, lon, vor_shp_path, extent=None):
     """
-    Converts points to grid via voronoi
+    Converts points to shapefile grid via voronoi
     """
     voronoi_centroids = _get_voronoi_centroid_array(lat, lon, extent)
 
@@ -95,56 +147,14 @@ def pointsToVoronoiGridShapefile(lat, lon, vor_shp_path, extent=None):
     print("Building Voronoi polygons...")
     #compute voronoi
     voronoi_manager  = Voronoi(voronoi_centroids)
-    voronoi_verticies = voronoi_manager.vertices
+    voronoi_vertices = voronoi_manager.vertices
     voronoi_regions = voronoi_manager.regions
-    point_id = 0
-    for point_index in voronoi_manager.point_region:
-        vert_index_list = np.array(voronoi_regions[point_index])
-        voronoi_poly_points = []
-        if -1 not in vert_index_list and len(vert_index_list) > 3:
-            voronoi_poly_points = voronoi_verticies[vert_index_list]
-        elif vert_index_list.size>0:
-            #ASSUME RECTANGLE
-            vert_index_list = vert_index_list[vert_index_list>=0]
-            voronoi_poly_points = voronoi_verticies[vert_index_list]
-            #CASE 1: 2 valid voronoi vertices
-            if vert_index_list.size == 2:
-                center_lon = voronoi_centroids[point_id][0]
-                center_lat = voronoi_centroids[point_id][1]
-                corner_lon1 = voronoi_poly_points[0][0]
-                corner_lat1 = voronoi_poly_points[0][1]
-                corner_lon2 = voronoi_poly_points[1][0]
-                corner_lat2 = voronoi_poly_points[1][1]
-                
-                #check if need to add points in lon or lat
-                if abs(corner_lon1-corner_lon2) > abs(corner_lat1-corner_lat2):
-                    dLat = center_lat - corner_lat1
-                    #append the corners in order
-                    voronoi_poly_points = np.array([[corner_lon1, corner_lat1],
-                                                    [corner_lon2, corner_lat2],
-                                                    [corner_lon2, center_lat + dLat],
-                                                    [corner_lon1, center_lat + dLat]])
-                else:
-                    dLon = center_lon - corner_lon1
-                    #append the corners in order
-                    voronoi_poly_points = np.array([[corner_lon1, corner_lat1],
-                                                    [corner_lon2, corner_lat2],
-                                                    [center_lon+dLon, corner_lat2],
-                                                    [center_lon+dLon, corner_lat1]])
-            #CADE 2: 1 valid voronoi vertex
-            elif vert_index_list.size == 1:
-                center_lon = voronoi_centroids[point_id][0]
-                center_lat = voronoi_centroids[point_id][1]
-                corner_lon = voronoi_poly_points[0][0]
-                corner_lat = voronoi_poly_points[0][1]
-                dLat = center_lat - corner_lat
-                dLon = center_lon - corner_lon
-                #append the corners in order
-                voronoi_poly_points = np.array([[corner_lon, corner_lat],
-                                                [center_lon + dLon, corner_lat],
-                                                [center_lon + dLon, center_lat + dLat],
-                                                [corner_lon, center_lat + dLat]])
-
+    for point_id, region_index in enumerate(voronoi_manager.point_region):
+        vert_index_list = np.array(voronoi_regions[region_index])
+        voronoi_centroid = voronoi_centroids[point_id]
+        voronoi_poly_points = _get_voronoi_poly_points(vert_index_list, 
+                                                       voronoi_vertices, 
+                                                       voronoi_centroid)
         if len(voronoi_poly_points) == 4:
             poly = ogr.Geometry(ogr.wkbPolygon)
             ring = ogr.Geometry(ogr.wkbLinearRing)
@@ -157,17 +167,15 @@ def pointsToVoronoiGridShapefile(lat, lon, vor_shp_path, extent=None):
             ring.AddPoint(loopLon,loopLat)
             poly.AddGeometry(ring)
             feat = ogr.Feature(layerDefn)
-            feat.SetField('GRID_LON', voronoi_centroids[point_id][0])
-            feat.SetField('GRID_LAT', voronoi_centroids[point_id][1])
+            feat.SetField('GRID_LON', voronoi_centroid[0])
+            feat.SetField('GRID_LAT', voronoi_centroid[1])
             feat.SetGeometry(poly)  
             layer.CreateFeature(feat)
             feat = poly = ring = None
-                
-        point_id+=1
 
 def pointsToVoronoiGridArray(lat, lon, extent=None):
     """
-    Converts points to grid via voronoi
+    Converts points to grid array via voronoi
     """
     voronoi_centroids = _get_voronoi_centroid_array(lat, lon, extent)
     
@@ -177,60 +185,19 @@ def pointsToVoronoiGridArray(lat, lon, extent=None):
     print("Building Voronoi polygons...")
     #compute voronoi
     voronoi_manager  = Voronoi(voronoi_centroids)
-    voronoi_verticies = voronoi_manager.vertices
+    voronoi_vertices = voronoi_manager.vertices
     voronoi_regions = voronoi_manager.regions
-    point_id = 0
     feature_list = []
-    for point_index in voronoi_manager.point_region:
-        vert_index_list = np.array(voronoi_regions[point_index])
-        voronoi_poly_points = []
-        if -1 not in vert_index_list and len(vert_index_list) > 3:
-            voronoi_poly_points = voronoi_verticies[vert_index_list]
-        elif vert_index_list.size>0:
-            vert_index_list = vert_index_list[vert_index_list>=0]
-            voronoi_poly_points = voronoi_verticies[vert_index_list]
-            #CASE 1: 2 valid voronoi vertices
-            if vert_index_list.size == 2:
-                center_lon = voronoi_centroids[point_id][0]
-                center_lat = voronoi_centroids[point_id][1]
-                corner_lon1 = voronoi_poly_points[0][0]
-                corner_lat1 = voronoi_poly_points[0][1]
-                corner_lon2 = voronoi_poly_points[1][0]
-                corner_lat2 = voronoi_poly_points[1][1]
-                
-                #check if need to add points in lon or lat
-                if abs(corner_lon1-corner_lon2) > abs(corner_lat1-corner_lat2):
-                    dLat = center_lat - corner_lat1
-                    #append the corners in order
-                    voronoi_poly_points = np.array([[corner_lon1, corner_lat1],
-                                                    [corner_lon2, corner_lat2],
-                                                    [corner_lon2, center_lat + dLat],
-                                                    [corner_lon1, center_lat + dLat]])
-                else:
-                    dLon = center_lon - corner_lon1
-                    #append the corners in order
-                    voronoi_poly_points = np.array([[corner_lon1, corner_lat1],
-                                                    [corner_lon2, corner_lat2],
-                                                    [center_lon+dLon, corner_lat2],
-                                                    [center_lon+dLon, corner_lat1]])
-            #CASE 2: 1 valid voronoi vertex
-            elif vert_index_list.size == 1:
-                center_lon = voronoi_centroids[point_id][0]
-                center_lat = voronoi_centroids[point_id][1]
-                corner_lon = voronoi_poly_points[0][0]
-                corner_lat = voronoi_poly_points[0][1]
-                dLat = center_lat - corner_lat
-                dLon = center_lon - corner_lon
-                #append the corners in order
-                voronoi_poly_points = np.array([[corner_lon, corner_lat],
-                                                [center_lon + dLon, corner_lat],
-                                                [center_lon + dLon, center_lat + dLat],
-                                                [corner_lon, center_lat + dLat]])
+    for point_id, region_index in enumerate(voronoi_manager.point_region):
+        vert_index_list = np.array(voronoi_regions[region_index])
+        voronoi_centroid = voronoi_centroids[point_id]
+        voronoi_poly_points = _get_voronoi_poly_points(vert_index_list, 
+                                                       voronoi_vertices, 
+                                                       voronoi_centroid)
                 
         if len(voronoi_poly_points) == 4:
             feature_list.append({'polygon': Polygon(voronoi_poly_points),
-                                 'lon' : voronoi_centroids[point_id][0],
-                                 'lat' : voronoi_centroids[point_id][1]})
+                                 'lon' : voronoi_centroid[0],
+                                 'lat' : voronoi_centroid[1]})
                 
-        point_id+=1
     return feature_list

@@ -24,7 +24,7 @@ https://github.com/c-h-david/rapid.
 .. |Build Status| image:: https://travis-ci.org/erdc-cm/RAPIDpy.svg?branch=master
    :target: https://travis-ci.org/erdc-cm/RAPIDpy
 .. |Coverage Status| image:: https://coveralls.io/repos/github/erdc-cm/RAPIDpy/badge.svg?branch=master
-   :target: https://coveralls.io/repos/github/erdc-cm/RAPIDpy
+   :target: https://coveralls.io/github/erdc-cm/RAPIDpy
 .. |License (3-Clause BSD)| image:: https://img.shields.io/badge/license-BSD%203--Clause-yellow.svg
    :target: https://github.com/erdc-cm/RAPIDpy/blob/master/LICENSE
 

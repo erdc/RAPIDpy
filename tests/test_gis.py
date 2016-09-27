@@ -33,7 +33,7 @@ def test_gen_static_rapid_input():
                                    river_id="COMID",
                                    length_id="LENGTHKM",
                                    slope_id="Slope",
-                                   next_down_river_id="NextDownID",
+                                   next_down_id="NextDownID",
                                    in_catchment=os.path.join(INPUT_DATA_PATH, 'catchment.shp'),
                                    catchment_river_id="FEATUREID",
                                    rapid_output_folder=OUTPUT_DATA_PATH,
@@ -131,7 +131,7 @@ def test_gen_static_nhd_connect_rapid_input():
     generated_rapid_connect_file = os.path.join(OUTPUT_DATA_PATH, 
                                                 "rapid_connect_nhd.csv")
     CreateNetworkConnectivityNHDPlus(in_drainage_line=os.path.join(INPUT_DATA_PATH, 'flowline.shp'),
-                                     out_csv_file=generated_rapid_connect_file)
+                                     out_connectivity_file=generated_rapid_connect_file)
     #rapid_connect
     generated_rapid_connect_file_solution = os.path.join(COMPARE_DATA_PATH,
                                                          "rapid_connect.csv")

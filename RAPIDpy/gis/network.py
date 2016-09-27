@@ -60,13 +60,33 @@ def StreamIDNextDownIDToConnectivity(stream_id_array,
             connectwriter.writerow(out.astype(int))
 
 def CreateNetworkConnectivity(in_drainage_line,
-                              stream_id,
+                              river_id,
                               next_down_id,
-                              out_csv_file,
+                              out_connectivity_file,
                               file_geodatabase=None):
     """
     Creates Network Connectivity input CSV file for RAPID
-    based on the Drainage Line feature class with HydroID and NextDownID fields
+    based on the Drainage Line shapefile with river ID and next downstream ID fields
+
+    Args:
+        in_drainage_line(str): Path to the stream network (i.e. Drainage Line) shapefile.
+        river_id(str): The name of the field with the river ID (Ex. 'HydroID', 'COMID', or 'LINKNO').
+        next_down_id(str): The name of the field with the river ID of the next downstream river segment (Ex. 'NextDownID' or 'DSLINKNO').
+        out_connectivity_file(str): The path to the output connectivity file.
+        file_geodatabase(Optional[str]): Path to the file geodatabase. If you use this option, in_drainage_line is the name of the stream network feature class. (WARNING: Not always stable with GDAL.)
+    
+    Example::
+    
+        from RAPIDpy.gis.network import CreateNetworkConnectivity
+        #------------------------------------------------------------------------------
+        #main process
+        #------------------------------------------------------------------------------
+        if __name__ == "__main__":
+            CreateNetworkConnectivity(in_drainage_line='/path/to/drainageline.shp',
+                                      river_id='LINKNO',
+                                      next_down_id='DSLINKNO',
+                                      out_connectivity_file='/path/to/rapid_connect.csv',
+                                     )
     """    
     if file_geodatabase:
         gdb_driver = ogr.GetDriverByName("OpenFileGDB")
@@ -79,7 +99,7 @@ def CreateNetworkConnectivity(in_drainage_line,
     stream_id_array = []
     next_down_id_array = []
     for drainage_line_feature in ogr_drainage_line_shapefile_lyr:
-        stream_id_array.append(drainage_line_feature.GetField(stream_id))
+        stream_id_array.append(drainage_line_feature.GetField(river_id))
         next_down_id_array.append(drainage_line_feature.GetField(next_down_id))
     
     stream_id_array = np.array(stream_id_array, dtype=np.int32)
@@ -87,7 +107,7 @@ def CreateNetworkConnectivity(in_drainage_line,
 
     StreamIDNextDownIDToConnectivity(stream_id_array,
                                      next_down_id_array,
-                                     out_csv_file)
+                                     out_connectivity_file)
                                      
 def CreateNetworkConnectivityTauDEMTree(network_connectivity_tree_file,
                                         out_csv_file):
@@ -111,11 +131,27 @@ def CreateNetworkConnectivityTauDEMTree(network_connectivity_tree_file,
                                      out_csv_file)
                                      
 def CreateNetworkConnectivityNHDPlus(in_drainage_line,
-                                     out_csv_file,
+                                     out_connectivity_file,
                                      file_geodatabase=None):
     """
     Creates Network Connectivity input CSV file for RAPID
-    based on the NHDPlus drainage lines
+    based on the NHDPlus drainage lines with COMID, FROMNODE, TONODE, and DIVERGENCE fields.
+    
+    Args:
+        in_drainage_line(str): Path to the stream network (i.e. Drainage Line) shapefile.
+        out_connectivity_file(str): The path to the output connectivity file.
+        file_geodatabase(Optional[str]): Path to the file geodatabase. If you use this option, in_drainage_line is the name of the stream network feature class. (WARNING: Not always stable with GDAL.)
+    
+    Example::
+    
+        from RAPIDpy.gis.network import CreateNetworkConnectivityNHDPlus
+        #------------------------------------------------------------------------------
+        #main process
+        #------------------------------------------------------------------------------
+        if __name__ == "__main__":
+            CreateNetworkConnectivityNHDPlus(in_drainage_line='/path/to/drainageline.shp',
+                                             out_connectivity_file='/path/to/rapid_connect.csv',
+                                             )
     """    
     if file_geodatabase:
         gdb_driver = ogr.GetDriverByName("OpenFileGDB")
@@ -183,15 +219,33 @@ def CreateNetworkConnectivityNHDPlus(in_drainage_line,
     
     StreamIDNextDownIDToConnectivity(rivid_list,
                                      next_down_id_list,
-                                     out_csv_file)
+                                     out_connectivity_file)
                                      
 def CreateSubsetFile(in_drainage_line,
-                     in_stream_id, 
-                     out_csv_file,
+                     river_id, 
+                     out_riv_bas_id_file,
                      file_geodatabase=None):
     """
     Creates River Basin ID subset input CSV file for RAPID
-    based on the Drainage Line feature class with HydroID and NextDownID fields"
+    based on the Drainage Line shapefile with river ID and next downstream ID fields
+
+    Args:
+        in_drainage_line(str): Path to the stream network (i.e. Drainage Line) shapefile.
+        river_id(str): The name of the field with the river ID (Ex. 'HydroID', 'COMID', or 'LINKNO').
+        out_riv_bas_id_file(str): The path to the output river basin ID subset file.
+        file_geodatabase(Optional[str]): Path to the file geodatabase. If you use this option, in_drainage_line is the name of the stream network feature class. (WARNING: Not always stable with GDAL.)
+    
+    Example::
+    
+        from RAPIDpy.gis.network import CreateSubsetFile
+        #------------------------------------------------------------------------------
+        #main process
+        #------------------------------------------------------------------------------
+        if __name__ == "__main__":
+            CreateSubsetFile(in_drainage_line='/path/to/drainageline.shp',
+                             river_id='LINKNO',
+                             out_riv_bas_id_file='/path/to/riv_bas_id.csv',
+                             )
     """    
     
     if file_geodatabase:
@@ -222,7 +276,7 @@ def CreateSubsetFile(in_drainage_line,
     '''The script line below makes sure that rows in the subset file are
        arranged in descending order of NextDownID of stream segements'''
     for drainage_line_feature in ogr_drainage_line_shapefile_lyr:
-        hydroid_list.append(drainage_line_feature.GetField(in_stream_id))
+        hydroid_list.append(drainage_line_feature.GetField(river_id))
         if sort_field:
             hydroseq_list.append(drainage_line_feature.GetField(sort_field))
 
@@ -235,7 +289,7 @@ def CreateSubsetFile(in_drainage_line,
         hydroid_list = np.sort(hydroid_list)
           
 
-    with open_csv(out_csv_file,'w') as csvfile:
+    with open_csv(out_riv_bas_id_file,'w') as csvfile:
         connectwriter = csv_writer(csvfile)
         for hydroid in hydroid_list:
             connectwriter.writerow([hydroid])

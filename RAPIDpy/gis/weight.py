@@ -332,14 +332,41 @@ def GDALCreateWeightTable(lsm_grid_lat, lsm_grid_lon,
 def CreateWeightTableECMWF(in_ecmwf_nc, 
                            in_catchment_shapefile, 
                            river_id,
-                           in_rapid_connect, 
+                           in_connectivity_file, 
                            out_weight_table,
-                           file_geodatabase=None,
+                           method="rtree",
                            area_id=None, 
-                           method="rtree"):
+                           file_geodatabase=None,
+                           ):
                                       
     """
     Create Weight Table for ECMWF Grids
+    
+    .. note:: The grids are in the RAPIDpy package under the gis/lsm_grids folder.
+
+    Args:
+        in_ecmwf_nc(str): Path to the ECMWF NetCDF grid.
+        in_catchment_shapefile(str): Path to the Catchment shapefile.
+        river_id(str): The name of the field with the river ID (Ex. 'DrainLnID' or 'LINKNO').
+        in_connectivity_file(str): The path to the RAPID connectivity file.
+        out_weight_table(str): The path to the output weight table file.
+        method(Optional[str]): The method for generating the weight table. Supported types are "rtree" and "gdal". RTree is tested, faster, and is the default.
+        area_id(Optional[str]): The name of the field with the area of each catchment stored in meters squared. Default is it calculate the area.
+        file_geodatabase(Optional[str]): Path to the file geodatabase. If you use this option, in_drainage_line is the name of the stream network feature class. (WARNING: Not always stable with GDAL.)
+    
+    Example::
+    
+        from RAPIDpy.gis.weight import CreateWeightTableECMWF
+        #------------------------------------------------------------------------------
+        #main process
+        #------------------------------------------------------------------------------
+        if __name__ == "__main__":
+            CreateWeightTableECMWF(in_ecmwf_nc='/path/to/runoff_ecmwf_grid.nc'
+                                   in_catchment_shapefile='/path/to/catchment.shp',
+                                   river_id='LINKNO',
+                                   in_connectivity_file='/path/to/rapid_connect.csv',
+                                   out_weight_table='/path/to/ecmwf_weight.csv',
+                                   )    
     """
     #extract ECMWF GRID
     data_ecmwf_nc = Dataset(in_ecmwf_nc)
@@ -358,12 +385,12 @@ def CreateWeightTableECMWF(in_ecmwf_nc,
     if method.lower() == "rtree":
         RTreeCreateWeightTable(ecmwf_lat, ecmwf_lon, 
                                in_catchment_shapefile, river_id,
-                               in_rapid_connect, out_weight_table, 
+                               in_connectivity_file, out_weight_table, 
                                file_geodatabase, area_id)
     elif method.lower() == "gdal" and not file_geodatabase:
         GDALCreateWeightTable(ecmwf_lat, ecmwf_lon, 
                               in_catchment_shapefile, river_id,
-                              in_rapid_connect, out_weight_table)
+                              in_connectivity_file, out_weight_table)
     else:
         raise Exception("ERROR: Invalid run method. Valid run methods are rtree and gdal (no File Geodatabase support for GDAL method).")
 
@@ -372,14 +399,42 @@ def CreateWeightTableLDAS(in_ldas_nc,
                           in_nc_lat_var,
                           in_catchment_shapefile, 
                           river_id,
-                          in_rapid_connect, 
+                          in_connectivity_file, 
                           out_weight_table,
                           file_geodatabase=None,
                           area_id=None, 
                           method="rtree"):
                                       
     """
-    Create Weight Table for LDAS and 2D WRF, Joules, or LIS Grids
+    Create Weight Table for NLDAS, GLDAS grids as well as for 2D WRF, Joules, or LIS Grids
+
+    Args:
+        in_ldas_nc(str): Path to the land surface model NetCDF grid.
+        in_nc_lon_var(str): The variable name in the NetCDF file for the longitude.
+        in_nc_lat_var(str): The variable name in the NetCDF file for the latitude.
+        in_catchment_shapefile(str): Path to the Catchment shapefile.
+        river_id(str): The name of the field with the river ID (Ex. 'DrainLnID' or 'LINKNO').
+        in_connectivity_file(str): The path to the RAPID connectivity file.
+        out_weight_table(str): The path to the output weight table file.
+        method(Optional[str]): The method for generating the weight table. Supported types are "rtree" and "gdal". RTree is tested, faster, and is the default.
+        area_id(Optional[str]): The name of the field with the area of each catchment stored in meters squared. Default is it calculate the area.
+        file_geodatabase(Optional[str]): Path to the file geodatabase. If you use this option, in_drainage_line is the name of the stream network feature class. (WARNING: Not always stable with GDAL.)
+    
+    Example::
+    
+        from RAPIDpy.gis.weight import CreateWeightTableLDAS
+        #------------------------------------------------------------------------------
+        #main process
+        #------------------------------------------------------------------------------
+        if __name__ == "__main__":
+            CreateWeightTableLDAS(in_ecmwf_nc='/path/to/runoff_grid.nc'
+                                  in_nc_lon_var="lon_110",
+                                  in_nc_lat_var="lat_110",
+                                  in_catchment_shapefile='/path/to/catchment.shp',
+                                  river_id='LINKNO',
+                                  in_connectivity_file='/path/to/rapid_connect.csv',
+                                  out_weight_table='/path/to/ldas_weight.csv',
+                                  )    
     """
     #extract ECMWF GRID
     data_ldas_nc = Dataset(in_ldas_nc)
@@ -395,11 +450,11 @@ def CreateWeightTableLDAS(in_ldas_nc,
     if method.lower() == "rtree":
         RTreeCreateWeightTable(ldas_lat, ldas_lon, 
                                in_catchment_shapefile, river_id,
-                               in_rapid_connect, out_weight_table, 
+                               in_connectivity_file, out_weight_table, 
                                file_geodatabase, area_id)
     elif method.lower() == "gdal" and not file_geodatabase:
         GDALCreateWeightTable(ldas_lat, ldas_lon, 
                               in_catchment_shapefile, river_id,
-                              in_rapid_connect, out_weight_table)
+                              in_connectivity_file, out_weight_table)
     else:
         raise Exception("ERROR: Invalid run method. Valid run methods are rtree and gdal (no File Geodatabase support for GDAL method).")

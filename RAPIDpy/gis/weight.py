@@ -13,8 +13,6 @@ from datetime import datetime
 from functools import partial
 from netCDF4 import Dataset
 import numpy as np
-import os
-from subprocess import PIPE, Popen
 
 try:
     from osgeo import gdal, ogr, osr
@@ -26,7 +24,7 @@ except Exception:
     raise Exception("You need the gdal, pyproj, shapely, and rtree python package to run these tools ...")
 
 #local
-from .voronoi import pointsToVoronoiGridArray, pointsToVoronoiGridShapefile
+from .voronoi import pointsToVoronoiGridArray
 from ..helper_functions import get_rivid_list_from_file, open_csv
 
 gdal.UseExceptions()
@@ -106,6 +104,13 @@ def RTreeCreateWeightTable(lsm_grid_lat, lsm_grid_lon,
         extent = [min(x), max(x), min(y), max(y)]
             
     lsm_grid_feature_list = pointsToVoronoiGridArray(lsm_grid_lat, lsm_grid_lon, extent)
+    
+    ##COMMENTED LINES FOR TESTING
+    ##import os
+    ##from .voronoi import pointsToVoronoiGridShapefile
+    ##vor_shp_path = os.path.join(os.path.dirname(in_catchment_shapefile), "test_grid.shp")
+    ##pointsToVoronoiGridShapefile(lsm_grid_lat, lsm_grid_lon, vor_shp_path, extent)
+    
     time_end_lsm_grid_thiessen = datetime.utcnow()
     print(time_end_lsm_grid_thiessen - time_start_all)
     
@@ -200,141 +205,12 @@ def RTreeCreateWeightTable(lsm_grid_lat, lsm_grid_lon,
     print(time_end_all - time_end_lsm_grid_rtree)
     print("TOTAL TIME: {0}".format(time_end_all - time_start_all))  
     
-def GDALCreateWeightTable(lsm_grid_lat, lsm_grid_lon,
-                          in_catchment_shapefile, river_id,
-                          in_rapid_connect, out_weight_table):
-                              
-    time_start_all = datetime.utcnow()    
-    
-    print("Generating LSM Thiessen Shapefile ...")
-    time_start_lsm_grid_thiessen = datetime.utcnow()
 
-    shapefile_working_directory = os.path.dirname(in_catchment_shapefile)
-
-    ogr_catchment_shapefile = ogr.Open(in_catchment_shapefile)
-    ogr_catchment_shapefile_lyr = ogr_catchment_shapefile.GetLayer()
-    ogr_catchment_shapefile_lyr_proj = ogr_catchment_shapefile_lyr.GetSpatialRef()
-    osr_geographic_proj = osr.SpatialReference()
-    osr_geographic_proj.ImportFromEPSG(4326)
-    #reproject if needed
-    if ogr_catchment_shapefile_lyr_proj != osr_geographic_proj:
-        print("Reprojecting Catchment to EPSG:4326 ...")
-        reprojected_shapefile_name = "{0}_epsg4326.shp".format(os.path.splitext(in_catchment_shapefile)[0])
-        process = Popen(["ogr2ogr", "-f", "ESRI Shapefile",
-                         reprojected_shapefile_name,
-                         in_catchment_shapefile,
-                         "-t_srs", "EPSG:4326", 
-                         "-s_srs", ogr_catchment_shapefile_lyr_proj.ExportToProj4(),
-                         ],
-                         stdout=PIPE, stderr=PIPE, shell=False)
-        out, err = process.communicate()
-        if err:
-            print("WARNINGS Reprojecting ...")
-                
-        ogr_catchment_shapefile = ogr_catchment_shapefile_lyr = None
-        ogr_catchment_shapefile_lyr_proj = None
-        in_catchment_shapefile = reprojected_shapefile_name
-        
-    print("Generating LSM thiesen polygon ...")
-    ogr_catchment_shapefile = ogr.Open(in_catchment_shapefile)
-    ogr_catchment_shapefile_lyr = ogr_catchment_shapefile.GetLayer()
-    extent = ogr_catchment_shapefile_lyr.GetExtent()
-    ogr_catchment_shapefile = ogr_catchment_shapefile_lyr = None
-            
-    lsm_grid_thiessen_shapefile = os.path.join(shapefile_working_directory, "lsm_grid_thiesen_poly.shp")
-    pointsToVoronoiGridShapefile(lsm_grid_lat, lsm_grid_lon, lsm_grid_thiessen_shapefile, extent)
-    time_end_lsm_grid_thiessen = datetime.utcnow()
-    print(time_end_lsm_grid_thiessen - time_start_lsm_grid_thiessen)
-    
-    print("Intersecting LSM thiesen shapefile with catchment ...")
-    ogr_ds = ogr.Open(shapefile_working_directory, True)
-    SQL = """\
-          SELECT ST_Intersection(A.geometry, B.geometry) AS geometry, A.*, B.*
-          FROM {0} A, {1} B
-          WHERE ST_Intersects(A.geometry, B.geometry)
-          """.format(os.path.basename(os.path.splitext(in_catchment_shapefile)[0]),
-                     os.path.basename(os.path.splitext(lsm_grid_thiessen_shapefile)[0]))
-    intersected_layer = ogr_ds.ExecuteSQL(SQL, dialect='SQLITE')
-    
-    time_end_intersect = datetime.utcnow()
-    print(time_end_intersect - time_end_lsm_grid_thiessen)
-    print("Retrieving intersected layer river id list ...")
-    intersect_rivid_list = []
-    for intersect_feature in intersected_layer:
-        intersect_rivid_list.append(intersect_feature.GetField(river_id))
-     
-    intersect_rivid_list = np.array(intersect_rivid_list, dtype=np.int32)
-        
-    print("Reading in RAPID connect file ...")
-    rapid_connect_rivid_list = get_rivid_list_from_file(in_rapid_connect)
-
-    print("Find ECMWF grid cells that intersect with each catchment")
-    print("and write out weight table ...")
-    dummy_intersect_feature = intersected_layer.GetFeature(0)
-    dummy_intersect_lsm_grid_lon = dummy_intersect_feature.GetField('GRID_LON')
-    dummy_intersect_lsm_grid_lat = dummy_intersect_feature.GetField('GRID_LAT')
-    dummy_intersect_feature = None
-    
-    dummy_lat_index, dummy_lon_index = _get_lat_lon_indices(lsm_grid_lat, lsm_grid_lon, 
-                                                            dummy_intersect_lsm_grid_lat, 
-                                                            dummy_intersect_lsm_grid_lon)
-    dummy_row_end = [0,
-                    dummy_lon_index,
-                    dummy_lat_index,
-                    1,
-                    dummy_intersect_lsm_grid_lon,
-                    dummy_intersect_lsm_grid_lat
-                    ]
-                    
-    with open_csv(out_weight_table, 'w') as csvfile:
-        connectwriter = csv.writer(csvfile)
-        connectwriter.writerow(['rivid', 'area_sqm', 'lon_index', 'lat_index', 
-                                'npoints', 'lsm_grid_lon', 'lsm_grid_lat'])
-            
-        for rapid_connect_rivid in rapid_connect_rivid_list:
-            intersect_positions = np.where(intersect_rivid_list==rapid_connect_rivid)[0]
-            num_ind_points = len(intersect_positions)
-            if num_ind_points <= 0:
-                # if point not in array, append dummy data for one point of data
-                # streamID, area_sqm, lon_index, lat_index, npoints
-                connectwriter.writerow([rapid_connect_rivid] + dummy_row_end)
-                continue
-            
-            for intersect_index in intersect_positions:
-                intersect_feature = intersected_layer.GetFeature(intersect_index)
-                
-                feat_geom = intersect_feature.GetGeometryRef()
-                intersect_polygon = shapely_loads(feat_geom.ExportToWkb())                
-
-                #attempt to calculate AREA
-                poly_area = get_poly_area_geo(intersect_polygon)
-                    
-                intersect_lsm_grid_lon = intersect_feature.GetField('GRID_LON')
-                intersect_lsm_grid_lat = intersect_feature.GetField('GRID_LAT')
-
-                index_lsm_grid_lat, index_lsm_grid_lon = _get_lat_lon_indices(lsm_grid_lat, lsm_grid_lon, 
-                                                                              intersect_lsm_grid_lat, 
-                                                                              intersect_lsm_grid_lon)
-                connectwriter.writerow([rapid_connect_rivid,
-                                        poly_area,
-                                        index_lsm_grid_lon,
-                                        index_lsm_grid_lat,
-                                        num_ind_points,
-                                        intersect_lsm_grid_lon,
-                                        intersect_lsm_grid_lat])
-            
-
-    time_end_all = datetime.utcnow()                                        
-    print(time_end_all - time_end_intersect)
-
-    print("TOTAL TIME: {0}".format(time_end_all - time_start_all))  
-           
 def CreateWeightTableECMWF(in_ecmwf_nc, 
                            in_catchment_shapefile, 
                            river_id,
                            in_connectivity_file, 
                            out_weight_table,
-                           method="rtree",
                            area_id=None, 
                            file_geodatabase=None,
                            ):
@@ -350,7 +226,6 @@ def CreateWeightTableECMWF(in_ecmwf_nc,
         river_id(str): The name of the field with the river ID (Ex. 'DrainLnID' or 'LINKNO').
         in_connectivity_file(str): The path to the RAPID connectivity file.
         out_weight_table(str): The path to the output weight table file.
-        method(Optional[str]): The method for generating the weight table. Supported types are "rtree" and "gdal". RTree is tested, faster, and is the default.
         area_id(Optional[str]): The name of the field with the area of each catchment stored in meters squared. Default is it calculate the area.
         file_geodatabase(Optional[str]): Path to the file geodatabase. If you use this option, in_drainage_line is the name of the stream network feature class. (WARNING: Not always stable with GDAL.)
     
@@ -382,17 +257,10 @@ def CreateWeightTableECMWF(in_ecmwf_nc,
     ecmwf_lat = data_ecmwf_nc.variables[in_ecmwf_lat_var][:] #assume [-90,90]
     data_ecmwf_nc.close()
     
-    if method.lower() == "rtree":
-        RTreeCreateWeightTable(ecmwf_lat, ecmwf_lon, 
-                               in_catchment_shapefile, river_id,
-                               in_connectivity_file, out_weight_table, 
-                               file_geodatabase, area_id)
-    elif method.lower() == "gdal" and not file_geodatabase:
-        GDALCreateWeightTable(ecmwf_lat, ecmwf_lon, 
-                              in_catchment_shapefile, river_id,
-                              in_connectivity_file, out_weight_table)
-    else:
-        raise Exception("ERROR: Invalid run method. Valid run methods are rtree and gdal (no File Geodatabase support for GDAL method).")
+    RTreeCreateWeightTable(ecmwf_lat, ecmwf_lon, 
+                           in_catchment_shapefile, river_id,
+                           in_connectivity_file, out_weight_table, 
+                           file_geodatabase, area_id)
 
 def CreateWeightTableLDAS(in_ldas_nc,
                           in_nc_lon_var,
@@ -401,9 +269,8 @@ def CreateWeightTableLDAS(in_ldas_nc,
                           river_id,
                           in_connectivity_file, 
                           out_weight_table,
-                          file_geodatabase=None,
                           area_id=None, 
-                          method="rtree"):
+                          file_geodatabase=None):
                                       
     """
     Create Weight Table for NLDAS, GLDAS grids as well as for 2D WRF, Joules, or LIS Grids
@@ -416,7 +283,6 @@ def CreateWeightTableLDAS(in_ldas_nc,
         river_id(str): The name of the field with the river ID (Ex. 'DrainLnID' or 'LINKNO').
         in_connectivity_file(str): The path to the RAPID connectivity file.
         out_weight_table(str): The path to the output weight table file.
-        method(Optional[str]): The method for generating the weight table. Supported types are "rtree" and "gdal". RTree is tested, faster, and is the default.
         area_id(Optional[str]): The name of the field with the area of each catchment stored in meters squared. Default is it calculate the area.
         file_geodatabase(Optional[str]): Path to the file geodatabase. If you use this option, in_drainage_line is the name of the stream network feature class. (WARNING: Not always stable with GDAL.)
     
@@ -447,14 +313,7 @@ def CreateWeightTableLDAS(in_ldas_nc,
     ldas_lat = data_ldas_nc.variables[in_nc_lat_var][:] #assume [-90,90]
     data_ldas_nc.close()
     
-    if method.lower() == "rtree":
-        RTreeCreateWeightTable(ldas_lat, ldas_lon, 
-                               in_catchment_shapefile, river_id,
-                               in_connectivity_file, out_weight_table, 
-                               file_geodatabase, area_id)
-    elif method.lower() == "gdal" and not file_geodatabase:
-        GDALCreateWeightTable(ldas_lat, ldas_lon, 
-                              in_catchment_shapefile, river_id,
-                              in_connectivity_file, out_weight_table)
-    else:
-        raise Exception("ERROR: Invalid run method. Valid run methods are rtree and gdal (no File Geodatabase support for GDAL method).")
+    RTreeCreateWeightTable(ldas_lat, ldas_lon, 
+                           in_catchment_shapefile, river_id,
+                           in_connectivity_file, out_weight_table, 
+                           file_geodatabase, area_id)

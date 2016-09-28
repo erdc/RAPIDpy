@@ -50,13 +50,13 @@ Manual:
 Bash:
 ^^^^^
 
-Install Prereqs::
+1. Install Prereqs::
     
     $ wget https://raw.githubusercontent.com/snowman2/rapid/master/rapid_install_prereqs.sh
     $ chmod u+x rapid_install_prereqs.sh
     $ ./rapid_install_prereqs.sh
 
-Append this to the ~/.bashrc or ~/.bash_profile::
+2. Append this to the ~/.bashrc or ~/.bash_profile::
 
     INSTALLZ_DIR=$HOME/installz
     #-------------------------------------------------------------------------------
@@ -73,6 +73,13 @@ Append this to the ~/.bashrc or ~/.bash_profile::
     export PATH=$PATH:$PETSC_DIR/$PETSC_ARCH/bin
     export PATH=$PATH:$INSTALLZ_DIR/netcdf-3.6.3-install/bin
 
+3. Restart Terminal
+
+4. Clone RAPID repository and make::
+
+    $ git clone https://github.com/c-h-david/rapid.git
+    $ cd rapid/src
+    $ make rapid 
 
 Step 2: Install Python Packages
 -------------------------------

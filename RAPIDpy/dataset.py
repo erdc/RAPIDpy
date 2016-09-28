@@ -9,7 +9,7 @@
 
 from csv import writer as csv_writer
 import datetime
-from netCDF4 import Dataset
+from netCDF4 import Dataset, num2date
 import numpy as np
 from numpy.ma import masked
 from pytz import utc
@@ -293,6 +293,8 @@ class RAPIDDataset(object):
             time_array = time_array[time_index_array]
 
         if return_datetime:
+            if self.qout_nc.variables['time'].units:
+                return num2date(time_array, self.qout_nc.variables['time'].units)
             return [datetime.datetime.utcfromtimestamp(t) for t in time_array]
         
         return time_array

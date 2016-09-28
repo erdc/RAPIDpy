@@ -275,13 +275,19 @@ class RAPIDDataset(object):
         """
         time_array = []
 
+        epoch = datetime.datetime(1970,1,1, tzinfo=utc)
+        time_units = "seconds since {0}".format(epoch)
+        
         #CF-1.6 compliant file
         if self.is_time_variable_valid():
             time_array = self.qout_nc.variables['time'][:]
+            if self.qout_nc.variables['time'].units:
+                time_units = self.qout_nc.variables['time'].units
+            
         #Original Qout file
         elif datetime_simulation_start is not None and simulation_time_step_seconds is not None:
             initial_time_seconds = (datetime_simulation_start.replace(tzinfo=utc)-
-                                    datetime.datetime(1970,1,1, tzinfo=utc)).total_seconds()+simulation_time_step_seconds
+                                    epoch).total_seconds()+simulation_time_step_seconds
             final_time_seconds = initial_time_seconds + self.size_time*simulation_time_step_seconds
             time_array = np.arange(initial_time_seconds, final_time_seconds, simulation_time_step_seconds)
         else:
@@ -293,9 +299,7 @@ class RAPIDDataset(object):
             time_array = time_array[time_index_array]
 
         if return_datetime:
-            if self.qout_nc.variables['time'].units:
-                return num2date(time_array, self.qout_nc.variables['time'].units)
-            return [datetime.datetime.utcfromtimestamp(t) for t in time_array]
+            return num2date(time_array, time_units)
         
         return time_array
 

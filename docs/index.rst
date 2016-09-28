@@ -36,7 +36,6 @@ Contents:
    installation
    gis_stream_network    
    gis_tools
-   calibration
    running_rapid
    lsm_inflow
    rapid_dataset

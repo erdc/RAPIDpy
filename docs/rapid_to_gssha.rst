@@ -32,6 +32,7 @@ Step 2: Determine Link & Node Connection to RAPID river ID
 
 Step 2.1: Add XYS File in WMS
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+See Aquaveo's WMS Tutorial: http://wmstutorials-10.1.aquaveo.com/55%20Gssha-Applications-OverlandBoundaryConditions.pdf
 
 Step 2.2: Look at Generated IHG File to find Link & Node
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

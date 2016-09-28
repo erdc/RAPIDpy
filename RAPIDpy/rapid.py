@@ -41,8 +41,10 @@ class RAPID(object):
         ksp_type(Optional[str]): This is the solver type. Default is "richardson".
         **kwargs(Optional[str]): Keyword arguments matching the input parameters in the RAPID namelist.
 
-    Linux Example::
+    Linux Example:
     
+    .. code:: python
+        
         from RAPIDpy import RAPID
         
         rapid_manager = RAPID(rapid_executable_location='~/work/rapid/run/rapid'
@@ -530,7 +532,9 @@ class RAPID(object):
                                                 It will be updated with any parameters added to
                                                 the RAPID manager.
         
-        Linux Example::
+        Linux Example:
+        
+        .. code:: python
         
             from RAPIDpy import RAPID
             
@@ -672,12 +676,24 @@ class RAPID(object):
 
     def generate_qinit_from_past_qout(self, qinit_file, time_index=-1):
         """
-        Generate qinit from qout file
+        Generate qinit from a RAPID qout file
 
         Parameters:
             qinit_file(str): Path to output qinit_file.
             time_index(Optional[int]): Index of simulation to generate initial flow file. Default is the end.
+
+        Example::
+        
+            from RAPIDpy import RAPID
+            
+            rapid_manager = RAPID(Qout_file='/output_mississippi-nfie/Qout_k2v1_2005to2009.nc', 
+                                  rapid_connect_file='/input_mississippi_nfie/rapid_connect_ECMWF.csv'
+                                 )
+                                 
+            rapid_manager.generate_qinit_from_past_qout(qinit_file='/input_mississippi_nfie/Qinit_2008_flood.csv',
+                                                        time_index=10162)
         """
+
         if not self.Qout_file or not os.path.exists(self.Qout_file):
             log('Missing Qout_file. Please set before running this function ...',
                 "ERROR")
@@ -718,20 +734,33 @@ class RAPID(object):
         log("Initialization Complete!",
             "INFO")
 
-    def generate_seasonal_intitialization(self, qinit_file,
+    def generate_seasonal_intitialization(self, 
+                                          qinit_file,
                                           datetime_start_initialization=datetime.datetime.utcnow()):
         """
-        This function loops through a CF compliant rapid streamflow
-        file to produce estimates for current streamflow based on
-        the seasonal average over the data within the historical streamflow
-        file.
+        This creates a seasonal qinit file from a RAPID qout file. This
+        requires a simulation Qout file with a longer time period of record and
+        to be CF compliant. It takes the average of the current date +- 3 days
+        and goes back as far as possible. 
         
         Parameters:
             qinit_file(str): Path to output qinit_file.
-            datetime_start_initialization(datetime): Datetime object with date of simulation to 
+            datetime_start_initialization(Optional[datetime]): Datetime object with date of simulation to 
                                                      go back through the years and get a running average
-                                                     to generate streamflow initialization.
+                                                     to generate streamflow initialization. Default is utcnow.
+
+
+        This example shows how to use it:
         
+        .. code:: python
+        
+            from RAPIDpy.rapid import RAPID
+            
+            rapid_manager = RAPID(Qout_file='/output_mississippi-nfie/Qout_2000to2015.nc', 
+                                  rapid_connect_file='/input_mississippi_nfie/rapid_connect_ECMWF.csv'
+                                  )
+        
+            rapid_manager.generate_seasonal_intitialization(qinit_file='/input_mississippi_nfie/Qinit_seasonal_avg_jan_1.csv')
         """
         #get information from datasets
         if not self.Qout_file or not os.path.exists(self.Qout_file):
@@ -828,7 +857,9 @@ class RAPID(object):
         .. warning:: The code skips gages that do not have data
                      for the entire time period.
         
-        Simple Example::
+        Simple Example:
+        
+        .. code:: python
         
             import datetime
             from os.path import join

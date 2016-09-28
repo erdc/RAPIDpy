@@ -7,8 +7,8 @@ Merge RAPID Output
 You can use this to combine consecutive RAPID output files into one
 file.
 
-WARNING: This code replaces the first file with the combined output and
-deletes the second file. BACK UP YOUR FILES!!!!
+.. warning:: This code replaces the first file with the combined output and
+             deletes the second file. BACK UP YOUR FILES!!!!
 
 Example:
 
@@ -36,34 +36,14 @@ Generate qinit from past qout
 RAPIDpy also creates a qinit file from a RAPID qout file. This example
 shows how.
 
-.. code:: python
-
-    from RAPIDpy import RAPID
-    rapid_manager = RAPID(Qout_file='/output_mississippi-nfie/Qout_k2v1_2005to2009.nc', 
-                          rapid_connect_file='/input_mississippi_nfie/rapid_connect_ECMWF.csv'
-                         )
-    rapid_manager.generate_qinit_from_past_qout(qinit_file='/input_mississippi_nfie/Qinit_2008_flood.csv',
-                            time_index=10162) #time_index is optional, if not included it will be last time step
+.. automethod:: RAPIDpy.rapid.RAPID.generate_qinit_from_past_qout(qinit_file, time_index=-1)
+    :noindex:                                                
 
 Generate seasonal qinit from past qout
 --------------------------------------
 
-RAPIDpy also creates a seasonal qinit file from a RAPID qout file. This
-requires a simulation Qout file with a longer time period of record and
-to be CF compliant. It takes the average of the current date +- 3 days
-and goes back as far as possible. This example shows how to use it.
-
-.. code:: python
-
-    from RAPIDpy.rapid import RAPID
-    rapid_manager = RAPID(Qout_file='/output_mississippi-nfie/Qout_2000to2015.nc', 
-                          rapid_connect_file='/input_mississippi_nfie/rapid_connect_ECMWF.csv'
-                          )
-
-    rapid_manager.generate_seasonal_intitialization(qinit_file='/input_mississippi_nfie/Qinit_seasonal_avg_jan_1.csv',
-                                                    #datetime_start_initialization, #this is optional, default is utcnow
-                                                    )
-                                                    
+.. automethod:: RAPIDpy.rapid.RAPID.generate_seasonal_intitialization(qinit_file,datetime_start_initialization=datetime.datetime.utcnow())
+    :noindex:                                                
 
 Goodness of Fit
 ---------------

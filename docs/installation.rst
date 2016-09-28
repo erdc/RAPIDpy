@@ -141,18 +141,18 @@ Download & Install Miniconda
 Install all dependencies
 ''''''''''''''''''''''''
 
-Open CMD window:
+Open CMD terminal:
 
 ::
 
-    $ conda update --yes conda python
-    $ conda create --name rapid python=2
-    $ source activate rapid
-    $ conda install --yes nose numpy scipy netCDF4 gdal pyproj pytz python-dateutil
-    $ conda install --yes -c conda-forge rtree
-    $ conda install --yes -c anaconda shapely
-    $ source deactivate rapid
-    $ source activate rapid
+    > conda update --yes conda python
+    > conda create --name rapid python=2
+    > activate rapid
+    > conda install --yes nose numpy scipy netCDF4 gdal pyproj pytz python-dateutil
+    > conda install --yes -c conda-forge rtree
+    > conda install --yes -c scitools shapely
+    > deactivate 
+    > activate rapid
 
 Method 2: Manual install
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -241,6 +241,8 @@ To get the latest stable version:
     $ pip install RAPIDpy
 
 To install the latest version:
+
+.. note:: If you don't have git, you can download the code from https://github.com/erdc-cm/RAPIDpy
 
 ::
 

@@ -25,23 +25,66 @@ from .helper_functions import csv_to_list, log, open_csv
 from .postprocess import ConvertRAPIDOutputToCF
 
 #------------------------------------------------------------------------------
-#Main Dataset Manager Class
+#Main RAPID Manager Class
 #------------------------------------------------------------------------------
 class RAPID(object):
     """
     This class is designed to prepare the rapid_namelist file and run 
-    the RAPID program.
+    the RAPID program. There are also other utilities added.
+
+    Attributes:
+        rapid_executable_location(Optional[str]): Path to the RAPID executable location.
+        num_processors(Optional[int]): Number of procesors to use. Default is 1. Overridden if *use_all_processors* is True. 
+        use_all_processors(Optional[bool]): If set to True, the RAPID program will use all available processors. Default is False.
+        cygwin_bin_location(Optional[str]): If using Windows, this is the path to the Cygwin 'bin' directory.
+        mpiexec_command(Optional[str]): This is the mpi execute commmand. Default is "mpiexec".
+        ksp_type(Optional[str]): This is the solver type. Default is "richardson".
+        **kwargs(Optional[str]): Keyword arguments matching the input parameters in the RAPID namelist.
+
+    Linux Example::
+    
+        from RAPIDpy import RAPID
+        
+        rapid_manager = RAPID(rapid_executable_location='~/work/rapid/run/rapid'
+                              use_all_processors=True,
+                              ZS_TauR=24*3600, #duration of routing procedure (time step of runoff data)
+                              ZS_dtR=15*60, #internal routing time step
+                              ZS_TauM=365*24*3600, #total simulation time 
+                              ZS_dtM=24*3600 #input time step 
+                             )
+                             
+    Windows with Cygwin Example::
+
+        from RAPIDpy import RAPID
+        
+        rapid_manager = RAPID(rapid_executable_location='C:/cygwin64/home/username/work/rapid/run/rapid',
+                              cygwin_bin_location='C:/cygwin64/bin',
+                              use_all_processors=True, 
+                              ZS_TauR=24*3600, #duration of routing procedure (time step of runoff data)
+                              ZS_dtR=15*60, #internal routing time step
+                              ZS_TauM=365*24*3600, #total simulation time 
+                              ZS_dtM=24*3600 #input time step 
+                             )
     """
-    def __init__(self, rapid_executable_location="", num_processors=1, 
-                 use_all_processors=False, cygwin_bin_location="",
-                 mpiexec_command="mpiexec", ksp_type="richardson",
+    def __init__(self, 
+                 rapid_executable_location="", 
+                 num_processors=1, 
+                 use_all_processors=False, 
+                 cygwin_bin_location="",
+                 mpiexec_command="mpiexec", 
+                 ksp_type="richardson",
                  **kwargs):
         """
         Initialize the class with variables given by the user
         """
-        self._rapid_executable_location = rapid_executable_location
-        if os.name == "nt" and (not cygwin_bin_location or not os.path.exists(cygwin_bin_location)):
+        if rapid_executable_location and not os.path.exists(rapid_executable_location):
+            raise Exception("Path to rapid_executable_location '{0}' invalid ...".format(rapid_executable_location))
+            
+        if os.name == "nt" and (not cygwin_bin_location or not os.path.exists(cygwin_bin_location))\
+            and rapid_executable_location:
             raise Exception("Required to have cygwin_bin_location set if using windows!")
+            
+        self._rapid_executable_location = rapid_executable_location
         self._cygwin_bin_location = cygwin_bin_location
         self._cygwin_bash_exe_location = os.path.join(cygwin_bin_location, "bash.exe")
         self._mpiexec_command = mpiexec_command
@@ -227,7 +270,29 @@ class RAPID(object):
     
     def update_parameters(self, **kwargs):
         """
-        Update RAPID parameters
+        You can add or update rapid namelist parameters by using the name of 
+        the variable in the rapid namelist file (this is case sensitive).
+
+        Parameters:
+            **kwargs(Optional[str]): Keyword arguments matching the input parameters in the RAPID namelist.
+
+        Example::
+        
+            from RAPIDpy import RAPID
+            
+            rapid_manager = RAPID(
+                                    #ADD PARAMETERS
+                                 )
+                                 
+            rapid_manager.update_parameters(rapid_connect_file='../rapid-io/input/rapid_connect.csv',
+                                            Vlat_file='../rapid-io/input/m3_riv.nc',
+                                            riv_bas_id_file='../rapid-io/input/riv_bas_id.csv,
+                                            k_file='../rapid-io/input/k.csv',
+                                            x_file='../rapid-io/input/x.csv',
+                                            Qout_file='../rapid-io/output/Qout.nc',
+                                            )
+        
+            
         """
         #set arguments based off of user input
         for key, value in list(kwargs.items()):
@@ -239,7 +304,22 @@ class RAPID(object):
     
     def update_reach_number_data(self):
         """
-        Updates the reach number data based on input files
+        Update the reach number data for the namelist based on input files.
+
+        .. warning:: You need to make sure you set *rapid_connect_file* and *riv_bas_id_file* before running this function.
+
+        Example::
+        
+            from RAPIDpy import RAPID
+            
+            rapid_manager = RAPID(
+                                  #ADD PARAMETERS
+                                  rapid_connect_file='../rapid-io/input/rapid_connect.csv',
+                                  riv_bas_id_file='../rapid-io/input/riv_bas_id.csv,
+                                 )
+                                 
+            rapid_manager.update_reach_number_data()
+                                 
         """
         
         if not self.rapid_connect_file or not self.rapid_connect_file:
@@ -261,8 +341,23 @@ class RAPID(object):
     
     def update_simulation_runtime(self):
         """
-        Updates the total simulation runtime from
-        the m3 file and the time step
+        Updates the total simulation duration from
+        the m3 file (Vlat_file) and the time step (ZS_TauR).
+        
+        .. warning:: You need to set the m3 file (Vlat_file) and the 
+                     time step (ZS_TauR) before runnning this function.
+        
+        Example::
+        
+            from RAPIDpy import RAPID
+            
+            rapid_manager = RAPID(
+                                  #ADD PARAMETERS
+                                  Vlat_file='../rapid-io/input/m3_riv.csv',
+                                  ZS_TauR=3*3600,
+                                 )
+    
+            rapid_manager.update_simulation_runtime()
         """
         if not self.Vlat_file or not os.path.exists(self.Vlat_file):
             log("Need Vlat_file to proceed ...",
@@ -282,18 +377,22 @@ class RAPID(object):
             self.ZS_TauM = m3_nc.size_time*self.ZS_TauR
             self.ZS_TauO = m3_nc.size_time*self.ZS_TauR
 
-    def generate_namelist_file(self, file_path):
+    def generate_namelist_file(self, rapid_namelist_file):
         """
-        Generate rapid_namelist file
+        Generate rapid_namelist file.
+
+        Parameters:
+            rapid_namelist_file(str): Path of namelist file to generate from 
+                                      parameters added to the RAPID manager.
         """
         log("Generating RAPID namelist file ...",
             "INFO")
         try:
-            os.remove(file_path)
+            os.remove(rapid_namelist_file)
         except OSError:
             pass
         
-        with open(file_path,'w') as new_file:
+        with open(rapid_namelist_file,'w') as new_file:
             new_file.write('&NL_namelist\n')
             for attr, value in sorted(list(self.__dict__.items())):
                 if not attr.startswith('_'):
@@ -310,14 +409,19 @@ class RAPID(object):
                             new_file.write("%s = \'%s\'\n" % (attr, value))
             new_file.write("/\n")
         
-    def update_namelist_file(self, file_path):
+    def update_namelist_file(self, rapid_namelist_file):
         """
         Update existing namelist file with new parameters
+
+        Parameters:
+            rapid_namelist_file(str): Path of namelist file to use in the simulation. 
+                                      It will be updated with any parameters added to
+                                      the RAPID manager.
         """
-        if os.path.exists(file_path) and file_path:
+        if os.path.exists(rapid_namelist_file) and rapid_namelist_file:
             log("Adding missing inputs from RAPID input file ...",
                 "INFO")
-            old_file = open(file_path, 'r')
+            old_file = open(rapid_namelist_file, 'r')
             for line in old_file:
                 line = line.strip()
                 if not line[:1].isalpha() or not line:
@@ -348,7 +452,7 @@ class RAPID(object):
                         "INFO")
             old_file.close()
             
-            self.generate_namelist_file(file_path)
+            self.generate_namelist_file(rapid_namelist_file)
         else:
             log("RAPID namelist file to update not found.",
                 "ERROR")
@@ -358,7 +462,43 @@ class RAPID(object):
                                  comid_lat_lon_z_file="",
                                  project_name="Normal RAPID project"):
         """
-        Converts RAPID output to be CF compliant
+        This function converts the RAPID output to be CF compliant. This will require
+        a *comid_lat_lon_z.csv* file (See: :func:`~RAPIDpy.gis.centroid.FlowlineToPoint` 
+        to generate the file). 
+        
+        .. note:: It prepends time an initial flow to your simulation from the *qinit_file*.
+                  If no qinit file is given, an initial value of zero is added.
+        
+        .. warning:: This will delete your original Qout file.
+        
+        Parameters:
+            simulation_start_datetime(datetime): Datetime object with the start date of the simulation.
+            comid_lat_lon_z_file(Optional[str]): Path to the *comid_lat_lon_z.csv* file. If none given, spatial information will be skipped.
+            project_name(Optional[str]): Name of project to add to the RAPID output file.
+
+        Example::
+        
+            from RAPIDpy import RAPID
+
+            rapid_manager = RAPID(rapid_executable_location='~/work/rapid/run/rapid'
+                                  use_all_processors=True,
+                                  ZS_TauR=24*3600, 
+                                  ZS_dtR=15*60, 
+                                  ZS_TauM=365*24*3600, 
+                                  ZS_dtM=24*3600
+                                  rapid_connect_file='../rapid-io/input/rapid_connect.csv',
+                                  Vlat_file='../rapid-io/input/m3_riv.nc',
+                                  riv_bas_id_file='../rapid-io/input/riv_bas_id.csv,
+                                  k_file='../rapid-io/input/k.csv',
+                                  x_file='../rapid-io/input/x.csv',
+                                  Qout_file='../rapid-io/output/Qout.nc',
+                                 )
+
+            rapid_manager.run()
+            
+            rapid_manager.make_output_CF_compliant(simulation_start_datetime=datetime.datetime(1980, 1, 1),
+                                                   comid_lat_lon_z_file='../rapid-io/input/comid_lat_lon_z.csv',
+                                                   project_name="ERA Interim Historical flows by US Army ERDC")         
         """
         need_to_convert = True
         with RAPIDDataset(self.Qout_file) as qout_nc:
@@ -382,6 +522,61 @@ class RAPID(object):
     def run(self, rapid_namelist_file=""):
         """
         Run RAPID program and generate file based on inputs
+        This will generate your rapid_namelist file and run RAPID from wherever
+        you call this script (your working directory).
+        
+        Parameters:
+            rapid_namelist_file(Optional(str)): Path of namelist file to use in the simulation. 
+                                                It will be updated with any parameters added to
+                                                the RAPID manager.
+        
+        Linux Example::
+        
+            from RAPIDpy import RAPID
+            
+            rapid_manager = RAPID(rapid_executable_location='~/work/rapid/run/rapid'
+                                  use_all_processors=True,
+                                 )
+
+            rapid_manager.update_parameters(rapid_connect_file='../rapid-io/input/rapid_connect.csv',
+                                            Vlat_file='../rapid-io/input/m3_riv.nc',
+                                            riv_bas_id_file='../rapid-io/input/riv_bas_id.csv,
+                                            k_file='../rapid-io/input/k.csv',
+                                            x_file='../rapid-io/input/x.csv',
+                                            Qout_file='../rapid-io/output/Qout.nc',
+                                            )
+                
+            rapid_manager.update_reach_number_data()
+            rapid_manager.update_simulation_runtime()
+            rapid_manager.run(rapid_namelist_file='../rapid-io/input/rapid_namelist')
+                                 
+        Windows with Cygwin Example::
+    
+            from RAPIDpy import RAPID
+            from os import path
+            
+            rapid_manager = RAPID(rapid_executable_location='C:/cygwin64/home/username/work/rapid/run/rapid',
+                                  cygwin_bin_location='C:/cygwin64/bin',
+                                  use_all_processors=True, 
+                                  ZS_TauR=24*3600, 
+                                  ZS_dtR=15*60, 
+                                  ZS_TauM=365*24*3600, 
+                                  ZS_dtM=24*3600
+                                 )
+                                 
+            rapid_input_folder = 'C:/cygwin64/home/username/work/rapid-io/input'      
+            rapid_output_folder = 'C:/cygwin64/home/username/work/rapid-io/output'      
+            rapid_manager.update_parameters(rapid_connect_file=path.join(rapid_input_folder, 'rapid_connect.csv'),
+                                            Vlat_file=path.join(rapid_input_folder, 'm3_riv.nc'),
+                                            riv_bas_id_file=path.join(rapid_input_folder, 'riv_bas_id.csv'),
+                                            k_file=path.join(rapid_input_folder, 'k.csv'),
+                                            x_file=path.join(rapid_input_folder, 'x.csv'),
+                                            Qout_file=path.join(rapid_output_folder, 'Qout.nc'),
+                                            )
+                
+            rapid_manager.update_reach_number_data()
+            rapid_manager.update_simulation_runtime()
+            rapid_manager.run()
         """
     
         if not self._rapid_executable_location or not self._rapid_executable_location:
@@ -478,6 +673,10 @@ class RAPID(object):
     def generate_qinit_from_past_qout(self, qinit_file, time_index=-1):
         """
         Generate qinit from qout file
+
+        Parameters:
+            qinit_file(str): Path to output qinit_file.
+            time_index(Optional[int]): Index of simulation to generate initial flow file. Default is the end.
         """
         if not self.Qout_file or not os.path.exists(self.Qout_file):
             log('Missing Qout_file. Please set before running this function ...',
@@ -526,6 +725,13 @@ class RAPID(object):
         file to produce estimates for current streamflow based on
         the seasonal average over the data within the historical streamflow
         file.
+        
+        Parameters:
+            qinit_file(str): Path to output qinit_file.
+            datetime_start_initialization(datetime): Datetime object with date of simulation to 
+                                                     go back through the years and get a running average
+                                                     to generate streamflow initialization.
+        
         """
         #get information from datasets
         if not self.Qout_file or not os.path.exists(self.Qout_file):
@@ -591,12 +797,86 @@ class RAPID(object):
             log("Initialization Complete!",
                 "INFO")
 
-    def generate_usgs_avg_daily_flows_opt(self, reach_id_gage_id_file,
-                                          start_datetime, end_datetime,
-                                          out_streamflow_file, out_stream_id_file):
+    def generate_usgs_avg_daily_flows_opt(self, 
+                                          reach_id_gage_id_file,
+                                          start_datetime, 
+                                          end_datetime,
+                                          out_streamflow_file, 
+                                          out_stream_id_file):
         """
-        Generate streamflow file and stream id file required for calibration 
-        based on usgs gage ids associated with stream ids
+        Generate daily streamflow file and stream id file required for calibration 
+        or for substituting flows based on USGS gage ids associated with stream ids.
+        
+        Parameters:
+            reach_id_gage_id_file(str): Path to reach_id_gage_id file.
+            start_datetime(datetime): A datetime object with the start date to download data.
+            end_datetime(datetime): A datetime object with the end date to download data.
+            out_streamflow_file(str): The path to output the streamflow file for RAPID.
+            out_stream_id_file(str): The path to output the stream ID file associated with the streamflow file for RAPID.
+
+        Example *reach_id_gage_id_file*::
+        
+            COMID, USGS_GAGE_ID
+            2000, 503944
+            ...
+
+        .. warning:: Overuse will get you blocked from downloading data from USGS.
+        
+        .. warning:: This code does not clean the data in any way. Thus, you
+                     are likely to run into issues if you simply use the raw data.
+                     
+        .. warning:: The code skips gages that do not have data
+                     for the entire time period.
+        
+        Simple Example::
+        
+            import datetime
+            from os.path import join
+            from RAPIDpy import RAPID
+            
+            main_path = "/home/username/data"
+
+            rapid_manager = RAPID()
+            rapid_manager.generate_usgs_avg_daily_flows_opt(reach_id_gage_id_file=join(main_path,"mississippi_usgsgage_id_comid.csv"),
+                                                            start_datetime=datetime.datetime(2000,1,1),
+                                                            end_datetime=datetime.datetime(2014,12,31),
+                                                            out_streamflow_file=join(main_path,"streamflow_2000_2014.csv"), 
+                                                            out_stream_id_file=join(main_path,"streamid_2000_2014.csv"))
+                                                            
+        
+        Complex Example::
+        
+            import datetime
+            from os.path import join
+            from RAPIDpy import RAPID
+            
+            main_path = "/home/username/data"
+                
+            rapid_manager = RAPID(rapid_executable_location='~/work/rapid/run/rapid'
+                                  use_all_processors=True,
+                                  ZS_TauR=24*3600, 
+                                  ZS_dtR=15*60, 
+                                  ZS_TauM=365*24*3600, 
+                                  ZS_dtM=24*3600
+                                 )
+
+            rapid_manager.update_parameters(rapid_connect_file='../rapid-io/input/rapid_connect.csv',
+                                            Vlat_file='../rapid-io/input/m3_riv.nc',
+                                            riv_bas_id_file='../rapid-io/input/riv_bas_id.csv,
+                                            k_file='../rapid-io/input/k.csv',
+                                            x_file='../rapid-io/input/x.csv',
+                                            Qout_file='../rapid-io/output/Qout.nc',
+                                            )
+                
+            rapid_manager.update_reach_number_data()
+            rapid_manager.update_simulation_runtime()
+            rapid_manager.generate_usgs_avg_daily_flows_opt(reach_id_gage_id_file=join(main_path,"mississippi_usgsgage_id_comid.csv"),
+                                                            start_datetime=datetime.datetime(2000,1,1),
+                                                            end_datetime=datetime.datetime(2014,12,31),
+                                                            out_streamflow_file=join(main_path,"streamflow_2000_2014.csv"), 
+                                                            out_stream_id_file=join(main_path,"streamid_2000_2014.csv"))
+            rapid_manager.run()
+
         """
         log("Generating avg streamflow file and stream id file required for calibration ...",
             "INFO")

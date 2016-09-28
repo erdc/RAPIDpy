@@ -40,6 +40,7 @@ Contents:
    lsm_inflow
    rapid_dataset
    postprocessing
+   rapid_to_gssha
 
 Indices and tables
 ==================

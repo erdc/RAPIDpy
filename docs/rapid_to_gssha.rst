@@ -1,8 +1,8 @@
 RAPID to GSSHA
 ==============
 
-It is possible to use RAPID streamflow as a boundary condition to the 
-Gridded Surface Subsurface Hydrologic Analysis (GSSHA) model.
+It is possible to use RAPID streamflow as an overland flow boundary condition  
+to the Gridded Surface Subsurface Hydrologic Analysis (GSSHA) model.
 
 What is GSSHA?
 --------------
@@ -61,4 +61,7 @@ Step 2.1: Generate XYS File
 
 Step 2.2: Add XYS File in WMS
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-See Aquaveo's WMS Tutorial: http://wmstutorials-10.1.aquaveo.com/55%20Gssha-Applications-OverlandBoundaryConditions.pdf
+
+In the Distributed Hydrology section, go to *Overland Flow Boundary Conditions in GSSHA (Tutorial 55)* at http://www.aquaveo.com/software/wms-learning-tutorials
+
+Here is a direct link to the document: http://wmstutorials-10.1.aquaveo.com/55%20Gssha-Applications-OverlandBoundaryConditions.pdf

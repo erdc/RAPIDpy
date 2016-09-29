@@ -708,30 +708,33 @@ def test_extract_timeseries_to_gssha_ihg():
     cf_input_qout_file = os.path.join(COMPARE_DATA_PATH, 'Qout_nasa_lis_3hr_20020830_CF.nc')
     cf_qout_file = os.path.join(OUTPUT_DATA_PATH, 'Qout_nasa_lis_3hr_20020830_CF.nc')
     copy(cf_input_qout_file, cf_qout_file)
-    point_list = [
-                  {'node_id': 1,
-                   'link_id': 599,
-                   'baseflow': 0.0,
-                   'rapid_rivid': 75224,
-                  },
-                  {'node_id': 1,
-                   'link_id': 603,
-                   'baseflow': 0.0,
-                   'rapid_rivid': 75225,
-                  },
-                  {'node_id': 1,
-                   'link_id': 605,
-                   'baseflow': 0.0,
-                   'rapid_rivid': 75226,
-                  },
-                 ]
+    connection_list = [
+                        {
+                          'node_id': 1,
+                          'link_id': 599,
+                          'baseflow': 0.0,
+                          'rapid_rivid': 75224,
+                        },
+                        {
+                          'node_id': 1,
+                          'link_id': 603,
+                          'baseflow': 0.0,
+                          'rapid_rivid': 75225,
+                        },
+                        {
+                          'node_id': 1,
+                          'link_id': 605,
+                          'baseflow': 0.0,
+                          'rapid_rivid': 75226,
+                        },
+                     ]
 
     #if file is CF compliant, you can write out daily average
     cf_timeseries_daily_file = os.path.join(OUTPUT_DATA_PATH, 'cf_timeseries_daily.ihg')
 
     with RAPIDDataset(cf_qout_file) as qout_nc:
         qout_nc.write_flows_to_gssha_time_series_ihg(cf_timeseries_daily_file,
-                                                     point_list=point_list,
+                                                     connection_list=connection_list,
                                                      daily=True)
 
     cf_timeseries_daily_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_timeseries_daily.ihg')    
@@ -741,7 +744,7 @@ def test_extract_timeseries_to_gssha_ihg():
     cf_timeseries_file = os.path.join(OUTPUT_DATA_PATH, 'cf_timeseries.ihg')
     with RAPIDDataset(cf_qout_file) as qout_nc:
         qout_nc.write_flows_to_gssha_time_series_ihg(cf_timeseries_file,
-                                                     point_list=point_list[:1],
+                                                     connection_list=connection_list[:1],
                                                      )
 
     cf_timeseries_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_timeseries.ihg')    
@@ -752,7 +755,7 @@ def test_extract_timeseries_to_gssha_ihg():
 
     with RAPIDDataset(cf_qout_file) as qout_nc:
         qout_nc.write_flows_to_gssha_time_series_ihg(cf_timeseries_daily_date_file,
-                                                     point_list=point_list[:1],
+                                                     connection_list=connection_list[:1],
                                                      date_search_start=datetime(2002, 8, 31),
                                                      date_search_end=datetime(2002, 8, 31, 23, 59, 59),
                                                      daily=True,
@@ -765,7 +768,7 @@ def test_extract_timeseries_to_gssha_ihg():
     cf_timeseries_date_file = os.path.join(OUTPUT_DATA_PATH, 'cf_timeseries_date.ihg')
     with RAPIDDataset(cf_qout_file) as qout_nc:
         qout_nc.write_flows_to_gssha_time_series_ihg(cf_timeseries_date_file,
-                                                     point_list=point_list,
+                                                     connection_list=connection_list,
                                                      date_search_start=datetime(2002, 8, 31),
                                                      #date_search_end=None,
                                                      )

@@ -44,10 +44,10 @@ def compare_qout_files(dataset1_path, dataset2_path, Qout_var="Qout"):
         log("COMID/rivid order is different in each dataset. Reordering data for comparison.",
             "WARNING")
         
-        d2_reordered_reach_index_list = []
+        d2_reordered_river_index_list = []
         for comid in d1.get_river_id_array():
-            d2_reordered_reach_index_list.append(np.where(d2.get_river_id_array()==comid)[0][0])
-        d2_reordered_qout = d2.get_qout_index(d2_reordered_reach_index_list)
+            d2_reordered_river_index_list.append(np.where(d2.get_river_id_array()==comid)[0][0])
+        d2_reordered_qout = d2.get_qout_index(d2_reordered_river_index_list)
     else:
         d2_reordered_qout = d2.get_qout()
         
@@ -754,8 +754,8 @@ class RAPIDDataset(object):
 
 
     def write_flows_to_csv(self, path_to_output_file,
-                           reach_index=None, 
-                           reach_id=None,
+                           river_index=None, 
+                           river_id=None,
                            date_search_start=None,
                            date_search_end=None,
                            daily=False,
@@ -767,44 +767,79 @@ class RAPIDDataset(object):
         
         Parameters:
             path_to_output_file(str): Path to the output csv file.
-            reach_index(Optional[datetime]): This is the index of the river in the file you want the streamflow for.
-            reach_id(Optional[datetime]): This is the river ID that you want the streamflow for.
+            river_index(Optional[datetime]): This is the index of the river in the file you want the streamflow for.
+            river_id(Optional[datetime]): This is the river ID that you want the streamflow for.
             date_search_start(Optional[datetime]): This is a datetime object with the date of the minimum date for starting.
             date_search_end(Optional[datetime]): This is a datetime object with the date of the maximum date for ending.
             daily(Optional[boolean]): If True and the file is CF-Compliant, write out daily flows.
             mode(Optional[str]): You can get the daily average "mean" or the maximum "max". Defauls is "mean".
 
-        Example::
+        Example writing entire time series to file:
+        
+        .. code:: python
         
             from RAPIDpy import RAPIDDataset
     
+            river_id = 3624735
             path_to_rapid_qout = '/path/to/Qout.nc'
 
             with RAPIDDataset(path_to_rapid_qout) as qout_nc:
                 #for writing entire time series to file
                 qout_nc.write_flows_to_csv('/timeseries/Qout_3624735.csv', 
-                                           reach_id=3624735,
+                                           river_id=river_id,
                                            )
                                       
                 river_index = qout_nc.get_river_index(river_id)
                 
                 #if file is CF compliant, you can write out daily average
                 qout_nc.write_flows_to_csv('/timeseries/Qout_daily.csv',
-                                           reach_index=river_index,
+                                           river_index=river_index,
                                            daily=True,
                                            )
+                                           
+        Example writing entire time series as daily average to file:
+        
+        .. code:: python
+        
+            from RAPIDpy import RAPIDDataset
+    
+            river_id = 3624735
+            path_to_rapid_qout = '/path/to/Qout.nc'
+
+            with RAPIDDataset(path_to_rapid_qout) as qout_nc:
+                #NOTE: Getting the river index is not necessary
+                #this is just an example of how to use this                                      
+                river_index = qout_nc.get_river_index(river_id)
+                
+                #if file is CF compliant, you can write out daily average
+                qout_nc.write_flows_to_csv('/timeseries/Qout_daily.csv',
+                                           river_index=river_index,
+                                           daily=True,
+                                           )
+
+        Example writing entire time series as daily average to file:
+        
+        .. code:: python
+        
+            from datetime import datetime
+            from RAPIDpy import RAPIDDataset
+    
+            river_id = 3624735
+            path_to_rapid_qout = '/path/to/Qout.nc'
+
+            with RAPIDDataset(path_to_rapid_qout) as qout_nc:
                 #if file is CF compliant, you can filter by date
                 qout_nc.write_flows_to_csv('/timeseries/Qout_daily_date_filter.csv',
-                                           reach_index=river_index,
+                                           river_index=river_index,
                                            daily=True,
                                            date_search_start=datetime(2002, 8, 31),
                                            date_search_end=datetime(2002, 9, 15),
                                            mode="max"
                                            )        
         """
-        if reach_id != None:
-            reach_index = self.get_river_index(reach_id)
-        elif reach_id == None and reach_index == None:
+        if river_id != None:
+            river_index = self.get_river_index(river_id)
+        elif river_id == None and river_index == None:
             raise Exception("ERROR: Need reach id or reach index ...")
 
         #analyze and write
@@ -815,14 +850,14 @@ class RAPIDDataset(object):
                 writer = csv_writer(outcsv)
                 if daily:
                     daily_time_index_array = self.get_daily_time_index_array(time_index_range)
-                    daily_qout = self.get_daily_qout_index(reach_index, daily_time_index_array, mode=mode)
+                    daily_qout = self.get_daily_qout_index(river_index, daily_time_index_array, mode=mode)
                     time_array = self.get_time_array()
                     for idx, time_idx in enumerate(daily_time_index_array):
                         current_day = time.gmtime(time_array[time_idx])
                         #write last average
                         writer.writerow([time.strftime("%Y/%m/%d", current_day), "{0:.5f}".format(daily_qout[idx])])
                 else:
-                    qout_arr = self.get_qout_index(reach_index, time_index_array=time_index_range)
+                    qout_arr = self.get_qout_index(river_index, time_index_array=time_index_range)
                     time_array = self.get_time_array(time_index_array=time_index_range)
                     with open(path_to_output_file, 'w') as outcsv:
                         for index in xrange(len(qout_arr)):
@@ -831,7 +866,7 @@ class RAPIDDataset(object):
 
         else:
             print("Valid time variable not found. Printing values only ...")
-            qout_arr = self.get_qout_index(reach_index)
+            qout_arr = self.get_qout_index(river_index)
             with open_csv(path_to_output_file, 'w') as outcsv:
                 writer = csv_writer(outcsv)
                 for index in xrange(len(qout_arr)):
@@ -841,8 +876,8 @@ class RAPIDDataset(object):
                                              path_to_output_file,
                                              series_name,
                                              series_id,
-                                             reach_index=None, 
-                                             reach_id=None,
+                                             river_index=None, 
+                                             river_id=None,
                                              date_search_start=None,
                                              date_search_end=None,
                                              daily=False, 
@@ -854,50 +889,81 @@ class RAPIDDataset(object):
             path_to_output_file(str): Path to the output xys file.
             series_name(str): The name for the series.
             series_id(int): The ID to give the series.
-            reach_index(Optional[datetime]): This is the index of the river in the file you want the streamflow for.
-            reach_id(Optional[datetime]): This is the river ID that you want the streamflow for.
+            river_index(Optional[datetime]): This is the index of the river in the file you want the streamflow for.
+            river_id(Optional[datetime]): This is the river ID that you want the streamflow for.
             date_search_start(Optional[datetime]): This is a datetime object with the date of the minimum date for starting.
             date_search_end(Optional[datetime]): This is a datetime object with the date of the maximum date for ending.
             daily(Optional[boolean]): If True and the file is CF-Compliant, write out daily flows.
             mode(Optional[str]): You can get the daily average "mean" or the maximum "max". Defauls is "mean".
 
-        Example::
+        Example writing entire time series to file:
+        
+        .. code:: python
         
             from RAPIDpy import RAPIDDataset
     
+            river_id = 3624735
             path_to_rapid_qout = '/path/to/Qout.nc'
 
             with RAPIDDataset(path_to_rapid_qout) as qout_nc:
-                #for writing entire time series to file
+                #for 
                 qout_nc.write_flows_to_gssha_time_series_xys('/timeseries/Qout_3624735.xys',
                                                              series_name="RAPID_TO_GSSHA_{0}".format(river_id),
                                                              series_id=34,
-                                                             reach_id=3624735,
+                                                             river_id=river_id,
                                                              )
                                       
+        Example writing entire time series as daily average to file:
+        
+        .. code:: python
+        
+            from RAPIDpy import RAPIDDataset
+    
+            river_id = 3624735
+            path_to_rapid_qout = '/path/to/Qout.nc'
+
+            with RAPIDDataset(path_to_rapid_qout) as qout_nc:
+                #NOTE: Getting the river index is not necessary
+                #this is just an example of how to use this                                      
                 river_index = qout_nc.get_river_index(river_id)
                 
                 #if file is CF compliant, you can write out daily average
                 qout_nc.write_flows_to_gssha_time_series_xys('/timeseries/Qout_daily.xys',
                                                              series_name="RAPID_TO_GSSHA_{0}".format(river_id),
                                                              series_id=34,
-                                                             reach_index=river_index,
+                                                             river_index=river_index,
                                                              daily=True,
                                                              )
-                #if file is CF compliant, you can filter by date
+
+        Example writing subset of time series as daily maximum to file:
+        
+        .. code:: python
+        
+            from datetime import datetime
+            from RAPIDpy import RAPIDDataset
+            
+            river_id = 3624735
+            path_to_rapid_qout = '/path/to/Qout.nc'
+
+            with RAPIDDataset(path_to_rapid_qout) as qout_nc:
+                #NOTE: Getting the river index is not necessary
+                #this is just an example of how to use this                                      
+                river_index = qout_nc.get_river_index(river_id)
+                
+                #if file is CF compliant, you can filter by date and get daily values
                 qout_nc.write_flows_to_gssha_time_series_xys('/timeseries/Qout_daily_date_filter.xys',
                                                              series_name="RAPID_TO_GSSHA_{0}".format(river_id),
                                                              series_id=34,
-                                                             reach_index=river_index,
-                                                             daily=True,
+                                                             river_index=river_index,
                                                              date_search_start=datetime(2002, 8, 31),
                                                              date_search_end=datetime(2002, 9, 15),
+                                                             daily=True,
                                                              mode="max"
                                                              )        
         """
-        if reach_id != None:
-            reach_index = self.get_river_index(reach_id)
-        elif reach_id == None and reach_index == None:
+        if river_id != None:
+            river_index = self.get_river_index(river_id)
+        elif river_id == None and river_index == None:
             raise Exception("ERROR: Need reach id or reach index ...")
 
         #analyze and write
@@ -907,14 +973,14 @@ class RAPIDDataset(object):
             with open_csv(path_to_output_file, 'w') as out_ts:
                 if daily:
                     daily_time_index_array = self.get_daily_time_index_array(time_index_range)
-                    daily_qout = self.get_daily_qout_index(reach_index, daily_time_index_array, mode=mode)
+                    daily_qout = self.get_daily_qout_index(river_index, daily_time_index_array, mode=mode)
                     out_ts.write("XYS {0} {1} \"{2}\"\r\n".format(series_id, len(daily_qout), series_name))
                     time_array = self.get_time_array()
                     for idx, time_idx in enumerate(daily_time_index_array):
                         date_str = time.strftime("%m/%d/%Y %I:%M:%S %p", time.gmtime(time_array[time_idx]))
                         out_ts.write("\"{0}\" {1:.5f}\n".format(date_str, daily_qout[idx]))
                 else:
-                    qout_arr = self.get_qout_index(reach_index, time_index_array=time_index_range)
+                    qout_arr = self.get_qout_index(river_index, time_index_array=time_index_range)
                     out_ts.write("XYS {0} {1} \"{2}\"\r\n".format(series_id, len(qout_arr), series_name))
                     time_array = self.get_time_array(time_index_array=time_index_range)
                     for index in xrange(len(qout_arr)):
@@ -945,7 +1011,9 @@ class RAPIDDataset(object):
             daily(Optional[boolean]): If True and the file is CF-Compliant, write out daily flows.
             mode(Optional[str]): You can get the daily average "mean" or the maximum "max". Defauls is "mean".
 
-        Example::
+        Example writing entire time series to file:
+        
+        .. code:: python
         
             from RAPIDpy import RAPIDDataset
     
@@ -979,22 +1047,60 @@ class RAPIDDataset(object):
                                                              point_list,
                                                              )
                                       
-                river_index = qout_nc.get_river_index(river_id)
-                
+        Example writing entire time series as daily average to file:
+        
+        .. code:: python
+        
+            from RAPIDpy import RAPIDDataset
+    
+            path_to_rapid_qout = '/path/to/Qout.nc'
+            
+            #list to connect the RAPID rivers to GSSHA rivers
+            point_list = [
+                          {
+                           'link_id': 599,
+                           'node_id': 1,
+                           'baseflow': 0.0,
+                           'rapid_rivid': 80968,
+                          },
+                         ]
+                         
+            with RAPIDDataset(path_to_rapid_qout) as qout_nc:
                 #if file is CF compliant, you can write out daily average
                 qout_nc.write_flows_to_gssha_time_series_ihg('/timeseries/Qout_3624735.ihg',
                                                              point_list,
                                                              daily=True,
                                                              )
-                #if file is CF compliant, you can filter by date
+                                                             
+        
+        Example writing subset of time series as daily maximum to file:
+        
+        .. code:: python
+        
+            from datetime import datetime
+            from RAPIDpy import RAPIDDataset
+    
+            path_to_rapid_qout = '/path/to/Qout.nc'
+            
+            #list to connect the RAPID rivers to GSSHA rivers
+            point_list = [
+                          {
+                           'link_id': 599,
+                           'node_id': 1,
+                           'baseflow': 0.0,
+                           'rapid_rivid': 80968,
+                          },
+                         ]
+                         
+            with RAPIDDataset(path_to_rapid_qout) as qout_nc:
+                #if file is CF compliant, you can filter by date and get daily values
                 qout_nc.write_flows_to_gssha_time_series_ihg('/timeseries/Qout_daily_date_filter.ihg',
                                                              point_list,
-                                                             daily=True,
                                                              date_search_start=datetime(2002, 8, 31),
                                                              date_search_end=datetime(2002, 9, 15),
+                                                             daily=True,
                                                              mode="max"
                                                              )        
-        
         """
         #analyze and write
         if self.is_time_variable_valid():

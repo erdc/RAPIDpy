@@ -991,7 +991,7 @@ class RAPIDDataset(object):
 
     def write_flows_to_gssha_time_series_ihg(self, 
                                              path_to_output_file,
-                                             point_list,
+                                             connection_list,
                                              date_search_start=None,
                                              date_search_end=None,
                                              daily=False, 
@@ -1005,7 +1005,7 @@ class RAPIDDataset(object):
         
         Parameters:
             path_to_output_file(str): Path to the output xys file.
-            point_list(list): List of dictionaries with link_id, node_id, baseflow, and rapid_rivid.
+            connection_list(list): List of dictionaries with link_id, node_id, baseflow, and rapid_rivid.
             date_search_start(Optional[datetime]): This is a datetime object with the date of the minimum date for starting.
             date_search_end(Optional[datetime]): This is a datetime object with the date of the maximum date for ending.
             daily(Optional[boolean]): If True and the file is CF-Compliant, write out daily flows.
@@ -1020,31 +1020,25 @@ class RAPIDDataset(object):
             path_to_rapid_qout = '/path/to/Qout.nc'
             
             #list to connect the RAPID rivers to GSSHA rivers
-            point_list = [
-                          {
-                           'link_id': 599,
-                           'node_id': 1,
-                           'baseflow': 0.0,
-                           'rapid_rivid': 80968,
-                          },
-                          {
-                           'link_id': 603,
-                           'node_id': 1,
-                           'baseflow': 0.0,
-                           'rapid_rivid': 80967,
-                          },
-                          {
-                           'link_id': 605,
-                           'node_id': 1,
-                           'baseflow': 0.0,
-                           'rapid_rivid': 80966,
-                          },
-                         ]
+            connection_list = [
+                               {
+                                 'link_id': 599,
+                                 'node_id': 1,
+                                 'baseflow': 0.0,
+                                 'rapid_rivid': 80968,
+                               },
+                               {
+                                 'link_id': 603,
+                                 'node_id': 1,
+                                 'baseflow': 0.0,
+                                 'rapid_rivid': 80967,
+                               },
+                             ]
                          
             with RAPIDDataset(path_to_rapid_qout) as qout_nc:
                 #for writing entire time series to file
                 qout_nc.write_flows_to_gssha_time_series_ihg('/timeseries/Qout_3624735.ihg',
-                                                             point_list,
+                                                             connection_list,
                                                              )
                                       
         Example writing entire time series as daily average to file:
@@ -1056,19 +1050,19 @@ class RAPIDDataset(object):
             path_to_rapid_qout = '/path/to/Qout.nc'
             
             #list to connect the RAPID rivers to GSSHA rivers
-            point_list = [
-                          {
-                           'link_id': 599,
-                           'node_id': 1,
-                           'baseflow': 0.0,
-                           'rapid_rivid': 80968,
-                          },
-                         ]
+            connection_list = [
+                               {
+                                 'link_id': 599,
+                                 'node_id': 1,
+                                 'baseflow': 0.0,
+                                 'rapid_rivid': 80968,
+                               },
+                              ]
                          
             with RAPIDDataset(path_to_rapid_qout) as qout_nc:
                 #if file is CF compliant, you can write out daily average
                 qout_nc.write_flows_to_gssha_time_series_ihg('/timeseries/Qout_3624735.ihg',
-                                                             point_list,
+                                                             connection_list,
                                                              daily=True,
                                                              )
                                                              
@@ -1083,19 +1077,19 @@ class RAPIDDataset(object):
             path_to_rapid_qout = '/path/to/Qout.nc'
             
             #list to connect the RAPID rivers to GSSHA rivers
-            point_list = [
-                          {
-                           'link_id': 599,
-                           'node_id': 1,
-                           'baseflow': 0.0,
-                           'rapid_rivid': 80968,
-                          },
-                         ]
+            connection_list = [
+                               {
+                                 'link_id': 599,
+                                 'node_id': 1,
+                                 'baseflow': 0.0,
+                                 'rapid_rivid': 80968,
+                               },
+                             ]
                          
             with RAPIDDataset(path_to_rapid_qout) as qout_nc:
                 #if file is CF compliant, you can filter by date and get daily values
                 qout_nc.write_flows_to_gssha_time_series_ihg('/timeseries/Qout_daily_date_filter.ihg',
-                                                             point_list,
+                                                             connection_list,
                                                              date_search_start=datetime(2002, 8, 31),
                                                              date_search_end=datetime(2002, 9, 15),
                                                              daily=True,
@@ -1113,14 +1107,14 @@ class RAPIDDataset(object):
                 #POINT 1 603 0.0
                 #POINT 1 605 0.0
                 
-                out_ts.write("NUMPT {0}\n".format(len(point_list)))
+                out_ts.write("NUMPT {0}\n".format(len(connection_list)))
                 river_idx_list = []
-                for point in point_list:
-                    out_ts.write("POINT {0} {1} {2}\n".format(point['node_id'],
-                                                              point['link_id'], 
-                                                              point['baseflow'],
+                for connection in connection_list:
+                    out_ts.write("POINT {0} {1} {2}\n".format(connection['node_id'],
+                                                              connection['link_id'], 
+                                                              connection['baseflow'],
                                                               ))
-                    river_idx_list.append(self.get_river_index(int(point['rapid_rivid'])))
+                    river_idx_list.append(self.get_river_index(int(connection['rapid_rivid'])))
                 
                 
                 #####INFLOW SECTION EXAMPLE:

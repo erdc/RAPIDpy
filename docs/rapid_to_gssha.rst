@@ -20,26 +20,45 @@ States Army Corps of Engineers (USACE).
 
 Tutorial
 --------
+There are two ways to input RAPID as a boundary condition for GSSHA. 
+One is to connect the GSSHA stream network link and node to the RAPID
+river ID and generate the IHG file. The other is to generate an XYS 
+timeseries file and add it to the netork using WMS.  
 
-Step 1: Generate XYS File
-~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. automethod:: RAPIDpy.dataset.RAPIDDataset.write_flows_to_gssha_time_series_xys(path_to_output_file,series_name,series_id,reach_index=None,reach_id=None,date_search_start=None,date_search_end=None,daily=False,mode="mean")
-    :noindex:
+Method 1: Generate IHG File
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Step 2: Determine Link & Node Connection to RAPID river ID
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Step 1.1: Look at Stream Network in WMS to find Link & Node
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+1. Open GSSHA project in WMS
 
-Step 2.1: Add XYS File in WMS
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-See Aquaveo's WMS Tutorial: http://wmstutorials-10.1.aquaveo.com/55%20Gssha-Applications-OverlandBoundaryConditions.pdf
+    - Switch to 2-D Grid Module
+    - In the top menu: *GSSHA -> Open Project File*
 
-Step 2.2: Look at Generated IHG File to find Link & Node
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2. Turn on *Stream Link Numbers* Display
 
-Step 3: Generate other IHG Files
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    - In the top menu: *Display -> Display Options*
+    - Select *Map Data* in top left box
+    - In the center box, make sure *Stream Link Numbers* is checked under the Arcs subsection.
+
+3. Determin the Link ID by looking on model.
+
+Step 1.2: Connect RAPID river ID to GSSHA Link & Node and Generate IHG
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. automethod:: RAPIDpy.dataset.RAPIDDataset.write_flows_to_gssha_time_series_ihg(path_to_output_file,point_list,date_search_start=None,date_search_end=None,daily=False,mode="mean")
     :noindex:
 
+
+Method 2: Generate XYS File
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Step 2.1: Generate XYS File
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. automethod:: RAPIDpy.dataset.RAPIDDataset.write_flows_to_gssha_time_series_xys(path_to_output_file,series_name,series_id,reach_index=None,reach_id=None,date_search_start=None,date_search_end=None,daily=False,mode="mean")
+    :noindex:
+
+Step 2.2: Add XYS File in WMS
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+See Aquaveo's WMS Tutorial: http://wmstutorials-10.1.aquaveo.com/55%20Gssha-Applications-OverlandBoundaryConditions.pdf

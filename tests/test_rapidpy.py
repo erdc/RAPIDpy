@@ -464,7 +464,7 @@ def test_extract_timeseries():
     
     with RAPIDDataset(new_qout_file) as qout_nc:
         qout_nc.write_flows_to_csv(new_timeseries_file,
-                                   reach_id=75224)
+                                   river_id=75224)
                                    
         if qout_nc.is_time_variable_valid():
             original_timeseries_file_solution = os.path.join(COMPARE_DATA_PATH, 'original_timeseries.csv')
@@ -481,7 +481,7 @@ def test_extract_timeseries():
     
     with RAPIDDataset(original_qout_file) as qout_nc:
         qout_nc.write_flows_to_csv(original_timeseries_file,
-                                   reach_id=75224)
+                                   river_id=75224)
     original_timeseries_file_solution = os.path.join(COMPARE_DATA_PATH, 'original_timeseries-notime.csv')
         
     ok_(compare_csv_timeseries_files(original_timeseries_file, original_timeseries_file_solution, header=False))
@@ -494,7 +494,7 @@ def test_extract_timeseries():
 
     with RAPIDDataset(cf_qout_file) as qout_nc:
         qout_nc.write_flows_to_csv(cf_timeseries_daily_file,
-                                   reach_index=20,
+                                   river_index=20,
                                    daily=True)
 
     cf_timeseries_daily_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_timeseries_daily.csv')    
@@ -504,7 +504,7 @@ def test_extract_timeseries():
     cf_timeseries_file = os.path.join(OUTPUT_DATA_PATH, 'cf_timeseries.csv')
     with RAPIDDataset(cf_qout_file) as qout_nc:
         qout_nc.write_flows_to_csv(cf_timeseries_file,
-                                   reach_index=20)
+                                   river_index=20)
 
     cf_timeseries_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_timeseries.csv')    
     ok_(compare_csv_timeseries_files(cf_timeseries_file, cf_timeseries_file_solution, header=False))
@@ -514,7 +514,7 @@ def test_extract_timeseries():
 
     with RAPIDDataset(cf_qout_file) as qout_nc:
         qout_nc.write_flows_to_csv(cf_timeseries_daily_date_file,
-                                   reach_id=75224,
+                                   river_id=75224,
                                    date_search_start=datetime(2002, 8, 31),
                                    date_search_end=datetime(2002, 8, 31, 23, 59, 59),
                                    daily=True,
@@ -529,7 +529,7 @@ def test_extract_timeseries():
         qout_nc.write_flows_to_csv(cf_timeseries_date_file,
                                    date_search_start=datetime(2002, 8, 31),
                                    #date_search_end=None,
-                                   reach_id=75224)
+                                   river_id=75224)
 
     cf_timeseries_date_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_timeseries_date.csv')    
     ok_(compare_csv_timeseries_files(cf_timeseries_date_file, cf_timeseries_date_file_solution, header=False))
@@ -646,7 +646,7 @@ def test_extract_timeseries_to_gssha_xys():
         qout_nc.write_flows_to_gssha_time_series_xys(cf_timeseries_daily_file,
                                                      series_name="RAPID_TO_GSSHA",
                                                      series_id=25,
-                                                     reach_index=20,
+                                                     river_index=20,
                                                      daily=True)
 
     cf_timeseries_daily_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_timeseries_daily.xys')    
@@ -658,7 +658,7 @@ def test_extract_timeseries_to_gssha_xys():
         qout_nc.write_flows_to_gssha_time_series_xys(cf_timeseries_file,
                                                      series_name="RAPID_TO_GSSHA",
                                                      series_id=25,
-                                                     reach_index=20)
+                                                     river_index=20)
 
     cf_timeseries_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_timeseries.xys')    
     ok_(compare_csv_timeseries_files(cf_timeseries_file, cf_timeseries_file_solution, header=False))
@@ -670,7 +670,7 @@ def test_extract_timeseries_to_gssha_xys():
         qout_nc.write_flows_to_gssha_time_series_xys(cf_timeseries_daily_date_file,
                                                      series_name="RAPID_TO_GSSHA",
                                                      series_id=25,
-                                                     reach_id=75224,
+                                                     river_id=75224,
                                                      date_search_start=datetime(2002, 8, 31),
                                                      date_search_end=datetime(2002, 8, 31, 23, 59, 59),
                                                      daily=True,
@@ -687,7 +687,7 @@ def test_extract_timeseries_to_gssha_xys():
                                                      series_id=25,
                                                      date_search_start=datetime(2002, 8, 31),
                                                      #date_search_end=None,
-                                                     reach_id=75224)
+                                                     river_id=75224)
 
     cf_timeseries_date_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_timeseries_date.xys')    
     ok_(compare_csv_timeseries_files(cf_timeseries_date_file, cf_timeseries_date_file_solution, header=False))

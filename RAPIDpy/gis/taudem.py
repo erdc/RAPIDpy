@@ -14,6 +14,7 @@ import numpy as np
 import os
 from subprocess import PIPE, Popen
 from sys import getrecursionlimit, setrecursionlimit
+from past.builtins import xrange
 
 try:
     from osgeo import gdal, ogr, osr

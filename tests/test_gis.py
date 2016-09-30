@@ -7,13 +7,16 @@
 ##  Copyright © 2016 Alan D Snow. All rights reserved.
 ##
 
+from glob import glob
 from nose.tools import ok_
 import os
+from osgeo import ogr
 
 #local import
 from RAPIDpy.gis.weight import CreateWeightTableECMWF, CreateWeightTableLDAS
 from RAPIDpy.gis.workflow import CreateAllStaticECMWFRAPIDFiles
 from RAPIDpy.gis.network import CreateNetworkConnectivityNHDPlus
+from RAPIDpy.gis.taudem import TauDEM
 from RAPIDpy.helper_functions import (compare_csv_decimal_files,
                                       remove_files)
 #GLOBAL VARIABLES
@@ -300,6 +303,79 @@ def test_gen_weight_table_joules():
 
     remove_files(generated_weight_table_file)
 
+def test_extract_sub_network_taudem():
+    """
+    Checks extracting sub network from larger network
+    """
+    print("TEST 9: TEST EXTRACTING SUB NETWORK FROM LARGER NETWORK")
+    td = TauDEM()
+    
+    subset_network_file = os.path.join(OUTPUT_DATA_PATH, "DrainageLineSubset2.shp")
+    #to extract a specific network
+    td.extractSubNetwork(network_file=os.path.join(GIS_INPUT_DATA_PATH, 'u-k', "DrainageLineSubset.shp"),
+                         out_subset_network_file=subset_network_file,
+                         outlet_ids=[42911], #list of outlet ids
+                         river_id_field="HydroID",
+                         next_down_id_field="NextDownID",
+                         river_magnitude_field="HydroID",
+                         safe_mode=False,
+                         )
+    
+    #to extract the subset watersheds using subset river network
+    subset_watershed_file = os.path.join(OUTPUT_DATA_PATH,"CatchmentSubset2.shp")
+    td.extractSubsetFromWatershed(subset_network_file=subset_network_file,
+                                  subset_network_river_id_field="HydroID",
+                                  watershed_file=os.path.join(GIS_INPUT_DATA_PATH, 'u-k', 'CatchmentSubset.shp'),
+                                  watershed_network_river_id_field="DrainLnID",
+                                  out_watershed_subset_file=subset_watershed_file)
+                                                         
+    #Test results
+    subset_network_shapefile = ogr.Open(subset_network_file)
+    subset_network_layer = subset_network_shapefile.GetLayer()
+
+    ogr_watershed_shapefile = ogr.Open(subset_watershed_file)
+    ogr_watershed_shapefile_lyr = ogr_watershed_shapefile.GetLayer()
+
+    number_of_network_features = subset_network_layer.GetFeatureCount()
+    number_of_watershed_features = ogr_watershed_shapefile_lyr.GetFeatureCount()
+    
+    #count number of features
+    ok_(number_of_network_features==7)
+    ok_(number_of_watershed_features==7)
+    
+    #make sure IDs correct
+    network_id_list = [42911,42891,42747,42748,42892,42841,42846]    
+    for feature_idx, network_feature in enumerate(subset_network_layer):
+        ok_(network_feature.GetField("HydroID") in network_id_list)
+    for feature_idx, watershed_feature in enumerate(ogr_watershed_shapefile_lyr):
+        ok_(watershed_feature.GetField("DrainLnID") in network_id_list)
+     
+    #make sure all fields are there
+     
+     #TEST WATERSHED
+    subset_watershed_layer_defn = ogr_watershed_shapefile_lyr.GetLayerDefn()
+    num_watershed_fields = subset_watershed_layer_defn.GetFieldCount()
+
+    watershed_field_names = ['Shape_Leng','Shape_Area','HydroID','GridID','DrainLnID']
+    ok_(num_watershed_fields==len(watershed_field_names))    
+    for i in range(num_watershed_fields):
+        ok_(subset_watershed_layer_defn.GetFieldDefn(i).GetNameRef() in watershed_field_names)
+          
+    #TEST NETWORK                                         
+    subset_network_layer_defn = subset_network_layer.GetLayerDefn()
+    num_network_fields = subset_network_layer_defn.GetFieldCount()
+
+    network_field_names = ['arcid','from_node','to_node','HydroID','GridID','NextDownID',
+                           'SLength','Avg_Slope','LENGTHKM','Shape_Leng','Musk_x','watershed','subbasin']
+    ok_(num_network_fields==len(network_field_names))    
+    for i in range(num_network_fields):
+        ok_(subset_network_layer_defn.GetFieldDefn(i).GetNameRef() in network_field_names)
+    
+    #cleanup
+    remove_files(*glob(os.path.join(OUTPUT_DATA_PATH,"DrainageLineSubset2.*")))
+    remove_files(*glob(os.path.join(OUTPUT_DATA_PATH,"CatchmentSubset2.*")))
+
 if __name__ == '__main__':
-    import nose
-    nose.main()
+    #import nose
+    #nose.main()
+    test_extract_sub_network_taudem()

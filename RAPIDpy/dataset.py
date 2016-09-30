@@ -12,17 +12,11 @@ import datetime
 from netCDF4 import Dataset, num2date
 import numpy as np
 from numpy.ma import masked
+from past.builtins import xrange
 from pytz import utc
 import time
 
 from .helper_functions import log, open_csv
-
-#in Python 3 xrange is now range
-try:
-    xrange
-except NameError:
-    xrange = range
-    pass
     
 #------------------------------------------------------------------------------
 #Helper Function

@@ -10,15 +10,9 @@
 import netCDF4 as NET
 import numpy as NUM
 import os
+from past.builtins import xrange
 
 from .CreateInflowFileFromGriddedRunoff import CreateInflowFileFromGriddedRunoff
-
-#in Python 3 xrange is now range
-try:
-    xrange
-except NameError:
-    xrange = range
-    pass
 
 class CreateInflowFileFromLDASRunoff(CreateInflowFileFromGriddedRunoff):
     def __init__(self, lat_dim, #"g0_lat_0", 

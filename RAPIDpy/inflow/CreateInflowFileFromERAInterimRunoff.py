@@ -11,15 +11,9 @@ import netCDF4 as NET
 import numpy as NUM
 import os
 from sys import version_info
+from past.builtins import xrange
 
 from .CreateInflowFileFromGriddedRunoff import CreateInflowFileFromGriddedRunoff
-
-#in Python 3 xrange is now range
-try:
-    xrange
-except NameError:
-    xrange = range
-    pass
 
 class CreateInflowFileFromERAInterimRunoff(CreateInflowFileFromGriddedRunoff):
     def __init__(self):

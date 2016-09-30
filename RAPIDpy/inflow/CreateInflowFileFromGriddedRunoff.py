@@ -12,16 +12,11 @@ from datetime import datetime
 import netCDF4 as NET
 import numpy as np
 import os
+from past.builtins import xrange
 from pytz import utc
+
 #local
 from ..helper_functions import csv_to_list, get_rivid_list_from_file, open_csv
-
-#in Python 3 xrange is now range
-try:
-    xrange
-except NameError:
-    xrange = range
-    pass
 
 class CreateInflowFileFromGriddedRunoff(object):
     def __init__(self):

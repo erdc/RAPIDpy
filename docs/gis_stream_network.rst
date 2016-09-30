@@ -37,56 +37,35 @@ How To Use
 ----------
 
 Initialize TauDEM Manager
-
-.. code:: python
-
-    from RAPIDpy.gis.taudem import TauDEM
-    td = TauDEM("/path/to/scripts/TauDEM",
-                num_processors=1, #default is one, can change this for processing
-                use_all_processors=False, #default is False, if True it will use all cores
-                )
+~~~~~~~~~~~~~~~~~~~~~~~~~
+.. autoclass:: RAPIDpy.gis.taudem.TauDEM
 
 Generate network from DEM
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. code:: python
-
-    elevation_dem = '/path/to/dem.tiff'
-    output_directory = '/path/to/output/files'
-    td.demToStreamNetwork(elevation_dem, 
-                          output_directory, 
-                          threshold=1000, #See: http://hydrology.usu.edu/taudem/taudem5/help53/StreamDefinitionByThreshold.html
-                          )
+.. automethod:: RAPIDpy.gis.taudem.TauDEM.demToStreamNetwork(output_directory,raw_elevation_dem="",pit_filled_elevation_grid="",flow_dir_grid_d8="",contributing_area_grid_d8="",flow_dir_grid_dinf="",contributing_area_grid_dinf="",use_dinf=False,threshold=1000,delineate=False)
 
 Add Length in meters attribute
-
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. code:: python
 
-    td.addLengthMeters(os.path.join(output_directory,"stream_reach_file.shp"))
+.. automethod:: RAPIDpy.gis.taudem.TauDEM.addLengthMeters(stream_network)
 
 Extract Sub Network
+~~~~~~~~~~~~~~~~~~~
 
-.. code:: python
+STEP 1: Extract sub network from stream network
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+There are two options to do this.
 
-    #to let the code find the largest network
-    td.extractLargestSubNetwork(network_file=os.path.join(output_directory,"stream_reach_file.shp"),                                         
-                                out_subset_network_file=os.path.join(output_directory,"stream_reach_file_subset.shp"),
-                                river_id_field="LINKNO",
-                                next_down_id_field="DSLINKNO",
-                                river_magnitude_field="Magnitude",
-                                safe_mode=True, #this will prevent your machine from crashing. If you are sure it will work, set to False.
-                                )
-    #to extract a specific network
-    td.extractLargestSubNetwork(network_file=os.path.join(output_directory,"stream_reach_file.shp"),                                         
-                                out_subset_network_file=os.path.join(output_directory,"stream_reach_file_subset.shp"),
-                                outlet_ids=[60830], #list of outlet ids
-                                river_id_field="LINKNO",
-                                next_down_id_field="DSLINKNO",
-                                river_magnitude_field="Magnitude",
-                                safe_mode=True, #this will prevent your machine from crashing. If you are sure it will work, set to False.
-                                )
-    #to extract the subset watersheds using subset river network
-    td.extractSubsetFromWatershed(subset_network_file=os.path.join(output_directory,"stream_reach_file_subset.shp"),
-                                  subset_network_river_id_field="LINKNO",
-                                  watershed_file=os.path.join(output_directory,"watershed_shapefile.shp"),
-                                  watershed_network_river_id_field="LINKNO",
-                                  out_watershed_subset_file=os.path.join(output_directory,"watershed_shapefile_subset.shp"))
+1. Choose your own outlet point: :func:`~RAPIDpy.gis.taudem.TauDEM.extractSubNetwork()`
+2. Or let the code find the larges network: :func:`~RAPIDpy.gis.taudem.TauDEM.extractLargestSubNetwork()`.
+
+.. automethod:: RAPIDpy.gis.taudem.TauDEM.extractSubNetwork(network_file,out_subset_network_file,outlet_ids,river_id_field,next_down_id_field,river_magnitude_field,safe_mode=True)
+
+.. automethod:: RAPIDpy.gis.taudem.TauDEM.extractLargestSubNetwork(network_file,out_subset_network_file,river_id_field,next_down_id_field,river_magnitude_field,safe_mode=True)
+
+STEP 2: Extract sub network from catchments
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: RAPIDpy.gis.taudem.TauDEM.extractSubsetFromWatershed(subset_network_file,subset_network_river_id_field,watershed_file,watershed_network_river_id_field,out_watershed_subset_file)

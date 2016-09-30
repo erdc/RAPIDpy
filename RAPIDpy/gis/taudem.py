@@ -32,6 +32,19 @@ except ImportError:
 class TauDEM(object):
     """
     TauDEM process manager
+    
+    Attributes:
+        taudem_exe_path(Optional[str]): Path to TauDEM executable. This is requred to use TauDEM functionality.
+        num_processors(Optional[int]): Number of proessors to use with TauDEM. It only works if *use_all_processors*=False.
+        use_all_processors(Optional[bool]): If True, the TauDEM processes will use all avaialble processors.
+        mpiexec_path(Optional[str]): Path to mpiexec command. Default is "mpiexec".
+    
+    .. code:: python
+
+        from RAPIDpy.gis.taudem import TauDEM
+        
+        td = TauDEM("/path/to/scripts/TauDEM", use_all_processors=True)
+
     """
     def __init__(self,
                  taudem_exe_path="", 
@@ -102,7 +115,35 @@ class TauDEM(object):
                           safe_mode=True):
         """
         Extracts a subset river network from the main river network based on
-        the outlet ids
+        the outlet IDs.
+
+        Parameters:
+            network_file(str): Path to the stream network shapefile.
+            out_subset_network_file(str): Path to the output subset stream network shapefile.
+            outlet_ids(list): List if integers reperesenting the outlet IDs to be included in the subset stream network.
+            river_id_field(str): Name of the river ID field in the stream network shapefile.
+            next_down_id_field(str): Name if the field with the river ID of the next downstream river segment in the stream network shapefile.
+            river_magnitude_field(str): Name of the river magnitude field in the stream network shapefile.
+            safe_mode(Optional[bool]): If True, it will kill the simulation early before over taxing your computer. If you are confident your computer can handle it, set it to False.
+            
+        Here is an example of how to use this:
+        
+        .. code:: python
+        
+            import os
+            from RAPIDpy.gis.taudem import TauDEM
+            
+            td = TauDEM()
+            
+            output_directory = '/path/to/output/files'
+            td.extractSubNetwork(network_file=os.path.join(output_directory,"stream_reach_file.shp"),
+                                 out_subset_network_file=os.path.join(output_directory,"stream_reach_file_subset.shp"),
+                                 outlet_ids=[60830],
+                                 river_id_field="LINKNO",
+                                 next_down_id_field="DSLINKNO",
+                                 river_magnitude_field="Magnitude",
+                                 )
+        
         """
         network_shapefile = ogr.Open(network_file)
         network_layer = network_shapefile.GetLayer()
@@ -194,7 +235,32 @@ class TauDEM(object):
                                  river_magnitude_field,
                                  safe_mode=True):
         """
-        Extracts the larges sub network from the watershed
+        Extracts the larges sub network from the watershed based on the magnitude parameter.
+        
+        Parameters:
+            network_file(str): Path to the stream network shapefile.
+            out_subset_network_file(str): Path to the output subset stream network shapefile.
+            river_id_field(str): Name of the river ID field in the stream network shapefile.
+            next_down_id_field(str): Name if the field with the river ID of the next downstream river segment in the stream network shapefile.
+            river_magnitude_field(str): Name of the river magnitude field in the stream network shapefile.
+            safe_mode(Optional[bool]): If True, it will kill the simulation early before over taxing your computer. If you are confident your computer can handle it, set it to False.
+            
+        Here is an example of how to use this:
+        
+        .. code:: python
+        
+            import os
+            from RAPIDpy.gis.taudem import TauDEM
+            
+            td = TauDEM()
+            
+            output_directory = '/path/to/output/files'
+            td.extractLargestSubNetwork(network_file=os.path.join(output_directory,"stream_reach_file.shp"),                                         
+                                        out_subset_network_file=os.path.join(output_directory,"stream_reach_file_subset.shp"),
+                                        river_id_field="LINKNO",
+                                        next_down_id_field="DSLINKNO",
+                                        river_magnitude_field="Magnitude",
+                                        )
         """
         network_shapefile = ogr.Open(network_file)
         network_layer = network_shapefile.GetLayer()
@@ -219,7 +285,33 @@ class TauDEM(object):
                                    watershed_network_river_id_field,
                                    out_watershed_subset_file):
         """
-        Extract catchment by using subset network file
+        Extract catchment by using subset network file. Use this after using either :func:`~RAPIDpy.gis.taudem.TauDEM.extractSubNetwork()`
+        or :func:`~RAPIDpy.gis.taudem.TauDEM.extractLargestSubNetwork()`.
+        
+        Parameters:
+            network_file(str): Path to the stream network shapefile.
+            out_subset_network_file(str): Path to the output subset stream network shapefile.
+            river_id_field(str): Name of the river ID field in the stream network shapefile.
+            next_down_id_field(str): Name if the field with the river ID of the next downstream river segment in the stream network shapefile.
+            river_magnitude_field(str): Name of the river magnitude field in the stream network shapefile.
+            safe_mode(Optional[bool]): If True, it will kill the simulation early before over taxing your computer. If you are confident your computer can handle it, set it to False.
+            
+        Here is an example of how to use this:
+        
+        .. code:: python
+        
+            import os
+            from RAPIDpy.gis.taudem import TauDEM
+            
+            td = TauDEM()
+            
+            output_directory = '/path/to/output/files'
+            td.extractSubsetFromWatershed(subset_network_file=os.path.join(output_directory,"stream_reach_file_subset.shp"),
+                                          subset_network_river_id_field="LINKNO",
+                                          watershed_file=os.path.join(output_directory,"watershed_shapefile.shp"),
+                                          watershed_network_river_id_field="LINKNO",
+                                          out_watershed_subset_file=os.path.join(output_directory,"watershed_shapefile_subset.shp"))       
+                                        
         """
         subset_network_shapefile = ogr.Open(subset_network_file)
         subset_network_layer = subset_network_shapefile.GetLayer()
@@ -342,7 +434,25 @@ class TauDEM(object):
         
     def addLengthMeters(self, stream_network):
         """
-        Adds length field in meters to network
+        Adds length field in meters to network (The added field name will be 'LENGTH_M'). 
+        
+        .. note:: This may be needed for generating the kfac file depending on the units of your raster. See: :doc:`gis_tools`.       
+
+        Parameters:
+            stream_network(str): Path to stream network file.
+        
+        Here is an example of how to use this:
+        
+        .. code:: python
+        
+            import os
+            from RAPIDpy.gis.taudem import TauDEM
+            
+            td = TauDEM()
+                        
+            output_directory = '/path/to/output/files'
+            td.addLengthMeters(os.path.join(output_directory,"stream_reach_file.shp"))
+
         """
         network_shapefile = ogr.Open(stream_network, 1)
         network_layer = network_shapefile.GetLayer()
@@ -618,8 +728,41 @@ class TauDEM(object):
                            threshold=1000, 
                            delineate=False):
         """
-        This function will run all of the processes to generate a stream network
-        from an elevation dem
+        This function will run all of the TauDEM processes to generate 
+        a stream network from an elevation raster.
+        
+        .. note:: For information about the stream reach and watershed process:
+                  http://hydrology.usu.edu/taudem/taudem5/help53/StreamReachAndWatershed.html
+
+        .. note:: For information about the *threshold* parameter, see:
+                  http://hydrology.usu.edu/taudem/taudem5/help53/StreamDefinitionByThreshold.html
+
+        Parameters:
+            output_directory(str): Path to output generated files to.
+            raw_elevation_dem(Optional[str]): Path to original elevation DEM file. Required if *pit_filled_elevation_grid* is not used.
+            pit_filled_elevation_grid(Optional[str]): Path to pit filled elevation DEM file. Required if *raw_elevation_dem* is not used.
+            flow_dir_grid_d8(Optional[str]): Path to flow direction grid generated using TauDEM's D8 method.
+            contributing_area_grid_d8(Optional[str]): Path to contributing area grid generated using TauDEM's D8 method.
+            flow_dir_grid_dinf(Optional[str]): Path to flow direction grid generated using TauDEM's D-Infinity method (EXPERIMENTAL).
+            contributing_area_grid_dinf(Optional[str]): Path to contributing area grid generated using TauDEM's D-Infinity method (EXPERIMENTAL).
+            use_dinf(Optional[bool]): Use the D-Infinity method to get stream definition (EXPERIMENTAL).
+            threshold(Optional[int]): The stream threshold or maximum number of upstream grid cells. See above note. 
+            delineate(Optional[bool]): If True, this will use the delineate option for theis method using TauDEM. Default is False.
+        
+        Here is an example of how to use this:
+        
+        .. code:: python
+        
+            from RAPIDpy.gis.taudem import TauDEM
+            
+            td = TauDEM("/path/to/scripts/TauDEM")
+                        
+            elevation_dem = '/path/to/dem.tif'
+            output_directory = '/path/to/output/files'
+            td.demToStreamNetwork(output_directory,
+                                  elevation_dem, 
+                                  threshold=1000)
+
         """
 
         time_start = datetime.utcnow()

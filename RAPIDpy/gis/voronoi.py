@@ -32,13 +32,16 @@ def _get_voronoi_centroid_array(lsm_lat_array, lsm_lon_array, extent):
         lsm_lon_list = lsm_lon_array
 
     ptList = []
-
-    if lsm_lat_array.ndim == 2 and lsm_lon_array.ndim == 2:
+    if (lsm_lat_array.ndim == 2) and (lsm_lon_array.ndim == 2):
         # generate point list with 2D lat lon lists
         if extent:
             #exctract subset within extent
             lsm_dx = np.max(np.absolute(np.diff(lsm_lon_array)))
             lsm_dy = np.max(np.absolute(np.diff(lsm_lat_array, axis=0)))
+            
+            #remove values with NaN
+            lsm_lat_array = np.ma.filled(lsm_lat_array, fill_value=-9999)
+            lsm_lon_array = np.ma.filled(lsm_lon_array, fill_value=-9999)
             
             lsm_lat_indices_from_lat, lsm_lon_indices_from_lat = np.where((lsm_lat_array >= (YMin - 2*lsm_dy)) & (lsm_lat_array <= (YMax + 2*lsm_dy)))
             lsm_lat_indices_from_lon, lsm_lon_indices_from_lon = np.where((lsm_lon_array >= (XMin - 2*lsm_dx)) & (lsm_lon_array <= (XMax + 2*lsm_dx)))
@@ -48,12 +51,13 @@ def _get_voronoi_centroid_array(lsm_lat_array, lsm_lon_array, extent):
 
             lsm_lat_list = lsm_lat_array[lsm_lat_indices,:][:,lsm_lon_indices]
             lsm_lon_list = lsm_lon_array[lsm_lat_indices,:][:,lsm_lon_indices]
-
+            
         # Create a list of geographic coordinate pairs
         for i in range(len(lsm_lat_indices)):
             for j in range(len(lsm_lon_indices)):
                 ptList.append([lsm_lon_list[i][j], lsm_lat_list[i][j]])
-    if lsm_lat_array.ndim == 1 and lsm_lon_array.ndim == 1:
+                
+    elif lsm_lat_array.ndim == 1 and lsm_lon_array.ndim == 1:
         #generate point list with 1D lat lon lists
         if extent:
             Ybuffer = 2 * abs(lsm_lat_array[0]-lsm_lat_array[1])
@@ -68,6 +72,9 @@ def _get_voronoi_centroid_array(lsm_lat_array, lsm_lon_array, extent):
                 ptList.append([ptX, ptY])
     else:
         raise IndexError("Lat/Lon lists have invalid dimensions. Only 1D or 2D arrays allowed ...")
+
+    if len(ptList) <=0:
+        raise IndexError("The watershed is outside of the bounds of the land surface model grid ...")
 
     return np.array(ptList) # set-up for input to Delaunay    
 

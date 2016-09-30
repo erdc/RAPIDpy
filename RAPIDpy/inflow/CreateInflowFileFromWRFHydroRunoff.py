@@ -11,15 +11,9 @@
 import os
 import netCDF4 as NET
 import numpy as NUM
+from past.builtins import xrange
 
 from .CreateInflowFileFromGriddedRunoff import CreateInflowFileFromGriddedRunoff
-
-#in Python 3 xrange is now range
-try:
-    xrange
-except NameError:
-    xrange = range
-    pass
 
 class CreateInflowFileFromWRFHydroRunoff(CreateInflowFileFromGriddedRunoff):
     def __init__(self, lat_dim="south_north",
@@ -58,8 +52,6 @@ class CreateInflowFileFromWRFHydroRunoff(CreateInflowFileFromGriddedRunoff):
 
     def execute(self, nc_file_list, index_list, in_weight_table, 
                 out_nc, grid_type, mp_lock):
-        """The source code of the tool."""
-
         """The source code of the tool."""
         if not os.path.exists(out_nc):
             print("ERROR: Outfile has not been created. You need to run: generateOutputInflowFile function ...")

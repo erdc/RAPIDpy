@@ -8,14 +8,9 @@
 ##
 
 import os
+from past.builtins import xrange
 import re
 
-#in Python 3 xrange is now range
-try:
-    xrange
-except NameError:
-    xrange = range
-    pass
 #----------------------------------------------------------------------------------------
 # HELPER FUNCTIONS
 #----------------------------------------------------------------------------------------

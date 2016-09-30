@@ -9,6 +9,8 @@
 
 from glob import glob
 from nose.tools import ok_
+from numpy.testing import assert_almost_equal
+from numpy import array
 import os
 from osgeo import ogr
 
@@ -328,7 +330,8 @@ def test_extract_sub_network_taudem():
                                   watershed_file=os.path.join(GIS_INPUT_DATA_PATH, 'u-k', 'CatchmentSubset.shp'),
                                   watershed_network_river_id_field="DrainLnID",
                                   out_watershed_subset_file=subset_watershed_file)
-                                                         
+                                  
+                                  
     #Test results
     subset_network_shapefile = ogr.Open(subset_network_file)
     subset_network_layer = subset_network_shapefile.GetLayer()
@@ -375,7 +378,55 @@ def test_extract_sub_network_taudem():
     remove_files(*glob(os.path.join(OUTPUT_DATA_PATH,"DrainageLineSubset2.*")))
     remove_files(*glob(os.path.join(OUTPUT_DATA_PATH,"CatchmentSubset2.*")))
 
+def test_add_length_to_network_taudem():
+    """
+    Checks adding length to network
+    """
+    print("TEST 9: TEST ADD LENGTH TO NETWORK")
+    td = TauDEM()
+    
+    subset_network_file = os.path.join(OUTPUT_DATA_PATH, "DrainageLineSubset2.shp")
+    #to extract a specific network
+    td.extractSubNetwork(network_file=os.path.join(GIS_INPUT_DATA_PATH, 'u-k', "DrainageLineSubset.shp"),
+                         out_subset_network_file=subset_network_file,
+                         outlet_ids=[42911], #list of outlet ids
+                         river_id_field="HydroID",
+                         next_down_id_field="NextDownID",
+                         river_magnitude_field="HydroID",
+                         safe_mode=False,
+                         )
+    
+    #add length m field
+    td.addLengthMeters(subset_network_file)                                 
+                                                         
+    #Test results
+    subset_network_shapefile = ogr.Open(subset_network_file)
+    subset_network_layer = subset_network_shapefile.GetLayer()
+
+    #make sure all fields are there
+    subset_network_layer_defn = subset_network_layer.GetLayerDefn()
+    num_network_fields = subset_network_layer_defn.GetFieldCount()
+
+    network_field_names = ['arcid','from_node','to_node','HydroID','GridID','NextDownID', 'SLength'
+                           ,'Avg_Slope','LENGTHKM','Shape_Leng','Musk_x','watershed','subbasin', 'LENGTH_M']
+    ok_(num_network_fields==len(network_field_names))    
+
+    for i in range(num_network_fields):
+        ok_(subset_network_layer_defn.GetFieldDefn(i).GetNameRef() in network_field_names)
+
+
+    #make sure values are OK
+    length_m_list = array([194.440898134, 601.443392962, 1306.53179652, 1501.27444279,  
+                           3437.46584922, 5579.56507836, 6347.04650903])
+    generated_list = []
+    for network_feature in subset_network_layer:
+        generated_list.append(network_feature.GetField('LENGTH_M'))
+        
+    assert_almost_equal(length_m_list, array(sorted(generated_list)), decimal=2)
+    
+    #cleanup
+    remove_files(*glob(os.path.join(OUTPUT_DATA_PATH,"DrainageLineSubset2.*")))
+
 if __name__ == '__main__':
-    #import nose
-    #nose.main()
-    test_extract_sub_network_taudem()
+    import nose
+    nose.main()

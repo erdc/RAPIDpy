@@ -351,6 +351,120 @@ def test_generate_gldas2_inflow():
     rmtree(os.path.join(OUTPUT_DATA_PATH, "input"))
     rmtree(os.path.join(OUTPUT_DATA_PATH, "output"))
     
+def test_generate_lis_inflow():
+    """
+    Checks generating inflow file from LIS LSM
+    """
+    print("TEST 5: TEST GENERATE INFLOW FILE FROM LIS DATA")
+    rapid_output_path = os.path.join(OUTPUT_DATA_PATH, "output", "u-k")
+    #Create testing environment
+    try:
+        os.mkdir(RAPID_DATA_PATH)
+    except OSError:
+        pass
+    try:
+        os.mkdir(os.path.join(OUTPUT_DATA_PATH, "output"))
+    except OSError:
+        pass
+    
+    try:
+        copytree(os.path.join(COMPARE_DATA_PATH, "gis","u-k"),
+                 os.path.join(RAPID_DATA_PATH, "u-k"))    
+    except OSError:
+        pass
+    
+    #run main process    
+    run_lsm_rapid_process(
+        rapid_executable_location=RAPID_EXE_PATH,
+        cygwin_bin_location=CYGWIN_BIN_PATH,
+        rapid_io_files_location=OUTPUT_DATA_PATH,
+        lsm_data_location=os.path.join(LSM_INPUT_DATA_PATH, 'lis'), 
+        simulation_start_datetime=datetime(1980, 1, 1),
+        simulation_end_datetime=datetime(2014, 1, 31),
+        generate_rapid_namelist_file=False,
+        run_rapid_simulation=False,
+        use_all_processors=True,
+    )
+    
+    #CHECK OUTPUT
+    m3_file_name = "m3_riv_bas_nasa_lis_3hr_20110121to20110121.nc"
+    generated_m3_file = os.path.join(rapid_output_path, m3_file_name)
+    generated_m3_file_solution = os.path.join(INFLOW_COMPARE_DATA_PATH, m3_file_name)
+    #check other info in netcdf file
+    d1 = Dataset(generated_m3_file)
+    d2 = Dataset(generated_m3_file_solution)
+    assert_almost_equal(d1.variables['m3_riv'][:], d2.variables['m3_riv'][:], decimal=5)
+    if 'rivid' in d2.variables.keys():
+        ok_((d1.variables['rivid'][:] == d2.variables['rivid'][:]).all())
+    if 'lat' in d2.variables.keys():
+        ok_((d1.variables['lat'][:] == d2.variables['lat'][:]).all())
+    if 'lon' in d2.variables.keys():
+        ok_((d1.variables['lon'][:] == d2.variables['lon'][:]).all())
+    d1.close()
+    d2.close()
+
+    #cleanup
+    rmtree(os.path.join(OUTPUT_DATA_PATH, "input"))
+    rmtree(os.path.join(OUTPUT_DATA_PATH, "output"))
+
+def test_generate_joules_inflow():
+    """
+    Checks generating inflow file from Joules LSM
+    """
+    print("TEST 5: TEST GENERATE INFLOW FILE FROM Joules DATA")
+    rapid_output_path = os.path.join(OUTPUT_DATA_PATH, "output", "u-k")
+    #Create testing environment
+    try:
+        os.mkdir(RAPID_DATA_PATH)
+    except OSError:
+        pass
+    try:
+        os.mkdir(os.path.join(OUTPUT_DATA_PATH, "output"))
+    except OSError:
+        pass
+    
+    try:
+        copytree(os.path.join(COMPARE_DATA_PATH, "gis","u-k"),
+                 os.path.join(RAPID_DATA_PATH, "u-k"))    
+    except OSError:
+        pass
+    
+    #run main process    
+    run_lsm_rapid_process(
+        rapid_executable_location=RAPID_EXE_PATH,
+        cygwin_bin_location=CYGWIN_BIN_PATH,
+        rapid_io_files_location=OUTPUT_DATA_PATH,
+        lsm_data_location=os.path.join(LSM_INPUT_DATA_PATH, 'joules'), 
+        simulation_start_datetime=datetime(1980, 1, 1),
+        simulation_end_datetime=datetime(2014, 1, 31),
+        file_datetime_re_pattern = r'\d{8}_\d{2}',
+        file_datetime_pattern = "%Y%m%d_%H",      
+        generate_rapid_namelist_file=False,
+        run_rapid_simulation=False,
+        use_all_processors=True,
+    )
+    
+    #CHECK OUTPUT
+    m3_file_name = "m3_riv_bas_met_office_joules_3hr_20080803to20080803.nc"
+    generated_m3_file = os.path.join(rapid_output_path, m3_file_name)
+    generated_m3_file_solution = os.path.join(INFLOW_COMPARE_DATA_PATH, m3_file_name)
+    #check other info in netcdf file
+    d1 = Dataset(generated_m3_file)
+    d2 = Dataset(generated_m3_file_solution)
+    assert_almost_equal(d1.variables['m3_riv'][:], d2.variables['m3_riv'][:], decimal=5)
+    if 'rivid' in d2.variables.keys():
+        ok_((d1.variables['rivid'][:] == d2.variables['rivid'][:]).all())
+    if 'lat' in d2.variables.keys():
+        ok_((d1.variables['lat'][:] == d2.variables['lat'][:]).all())
+    if 'lon' in d2.variables.keys():
+        ok_((d1.variables['lon'][:] == d2.variables['lon'][:]).all())
+    d1.close()
+    d2.close()
+
+    #cleanup
+    rmtree(os.path.join(OUTPUT_DATA_PATH, "input"))
+    rmtree(os.path.join(OUTPUT_DATA_PATH, "output"))
+
 if __name__ == '__main__':
     import nose
     nose.main()

@@ -368,9 +368,12 @@ def test_extract_sub_network_taudem():
     subset_network_layer_defn = subset_network_layer.GetLayerDefn()
     num_network_fields = subset_network_layer_defn.GetFieldCount()
 
-    network_field_names = ['arcid','from_node','to_node','HydroID','GridID','NextDownID',
-                           'SLength','Avg_Slope','LENGTHKM','Shape_Leng','Musk_x','watershed','subbasin']
+    network_field_names = ['arcid','from_node','to_node','HydroID','GridID',
+                           'NextDownID','SLength','Avg_Slope','LENGTHKM',
+                           'Shape_Leng','Musk_x','watershed','subbasin']
+                           
     ok_(num_network_fields==len(network_field_names))    
+    
     for i in range(num_network_fields):
         ok_(subset_network_layer_defn.GetFieldDefn(i).GetNameRef() in network_field_names)
     
@@ -407,8 +410,10 @@ def test_add_length_to_network_taudem():
     subset_network_layer_defn = subset_network_layer.GetLayerDefn()
     num_network_fields = subset_network_layer_defn.GetFieldCount()
 
-    network_field_names = ['arcid','from_node','to_node','HydroID','GridID','NextDownID', 'SLength'
-                           ,'Avg_Slope','LENGTHKM','Shape_Leng','Musk_x','watershed','subbasin', 'LENGTH_M']
+    network_field_names = ['arcid','from_node','to_node','HydroID','GridID',
+                           'NextDownID', 'SLength', 'Avg_Slope','LENGTHKM',
+                           'Shape_Leng','Musk_x','watershed','subbasin', 'LENGTH_M']
+                           
     ok_(num_network_fields==len(network_field_names))    
 
     for i in range(num_network_fields):

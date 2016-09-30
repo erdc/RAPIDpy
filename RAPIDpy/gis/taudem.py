@@ -55,7 +55,7 @@ class TauDEM(object):
         """
         Initializer
         """             
-        if use_all_processors or num_processors > cpu_count:
+        if use_all_processors or num_processors > cpu_count():
             num_processors = cpu_count()
 
         self.taudem_exe_path = taudem_exe_path

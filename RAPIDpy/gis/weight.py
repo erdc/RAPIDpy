@@ -229,19 +229,18 @@ def CreateWeightTableECMWF(in_ecmwf_nc,
         area_id(Optional[str]): The name of the field with the area of each catchment stored in meters squared. Default is it calculate the area.
         file_geodatabase(Optional[str]): Path to the file geodatabase. If you use this option, in_drainage_line is the name of the stream network feature class. (WARNING: Not always stable with GDAL.)
     
-    Example::
+    Example:
+    
+    .. code:: python
     
         from RAPIDpy.gis.weight import CreateWeightTableECMWF
-        #------------------------------------------------------------------------------
-        #main process
-        #------------------------------------------------------------------------------
-        if __name__ == "__main__":
-            CreateWeightTableECMWF(in_ecmwf_nc='/path/to/runoff_ecmwf_grid.nc'
-                                   in_catchment_shapefile='/path/to/catchment.shp',
-                                   river_id='LINKNO',
-                                   in_connectivity_file='/path/to/rapid_connect.csv',
-                                   out_weight_table='/path/to/ecmwf_weight.csv',
-                                   )    
+
+        CreateWeightTableECMWF(in_ecmwf_nc='/path/to/runoff_ecmwf_grid.nc'
+                               in_catchment_shapefile='/path/to/catchment.shp',
+                               river_id='LINKNO',
+                               in_connectivity_file='/path/to/rapid_connect.csv',
+                               out_weight_table='/path/to/ecmwf_weight.csv',
+                               )    
     """
     #extract ECMWF GRID
     data_ecmwf_nc = Dataset(in_ecmwf_nc)
@@ -286,21 +285,20 @@ def CreateWeightTableLDAS(in_ldas_nc,
         area_id(Optional[str]): The name of the field with the area of each catchment stored in meters squared. Default is it calculate the area.
         file_geodatabase(Optional[str]): Path to the file geodatabase. If you use this option, in_drainage_line is the name of the stream network feature class. (WARNING: Not always stable with GDAL.)
     
-    Example::
+    Example:
+    
+    .. code:: python
     
         from RAPIDpy.gis.weight import CreateWeightTableLDAS
-        #------------------------------------------------------------------------------
-        #main process
-        #------------------------------------------------------------------------------
-        if __name__ == "__main__":
-            CreateWeightTableLDAS(in_ecmwf_nc='/path/to/runoff_grid.nc'
-                                  in_nc_lon_var="lon_110",
-                                  in_nc_lat_var="lat_110",
-                                  in_catchment_shapefile='/path/to/catchment.shp',
-                                  river_id='LINKNO',
-                                  in_connectivity_file='/path/to/rapid_connect.csv',
-                                  out_weight_table='/path/to/ldas_weight.csv',
-                                  )    
+
+        CreateWeightTableLDAS(in_ecmwf_nc='/path/to/runoff_grid.nc'
+                              in_nc_lon_var="lon_110",
+                              in_nc_lat_var="lat_110",
+                              in_catchment_shapefile='/path/to/catchment.shp',
+                              river_id='LINKNO',
+                              in_connectivity_file='/path/to/rapid_connect.csv',
+                              out_weight_table='/path/to/ldas_weight.csv',
+                              )    
     """
     #extract ECMWF GRID
     data_ldas_nc = Dataset(in_ldas_nc)

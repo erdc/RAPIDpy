@@ -55,7 +55,9 @@ class RAPID(object):
                               ZS_dtM=24*3600 #input time step 
                              )
                              
-    Windows with Cygwin Example::
+    Windows with Cygwin Example:
+    
+    .. code:: python
 
         from RAPIDpy import RAPID
         
@@ -278,8 +280,10 @@ class RAPID(object):
         Parameters:
             **kwargs(Optional[str]): Keyword arguments matching the input parameters in the RAPID namelist.
 
-        Example::
+        Example:
         
+        .. code:: python
+
             from RAPIDpy import RAPID
             
             rapid_manager = RAPID(
@@ -310,7 +314,9 @@ class RAPID(object):
 
         .. warning:: You need to make sure you set *rapid_connect_file* and *riv_bas_id_file* before running this function.
 
-        Example::
+        Example:
+        
+        .. code:: python
         
             from RAPIDpy import RAPID
             
@@ -349,7 +355,9 @@ class RAPID(object):
         .. warning:: You need to set the m3 file (Vlat_file) and the 
                      time step (ZS_TauR) before runnning this function.
         
-        Example::
+        Example:
+        
+        .. code:: python
         
             from RAPIDpy import RAPID
             
@@ -478,7 +486,10 @@ class RAPID(object):
             comid_lat_lon_z_file(Optional[str]): Path to the *comid_lat_lon_z.csv* file. If none given, spatial information will be skipped.
             project_name(Optional[str]): Name of project to add to the RAPID output file.
 
-        Example::
+        Example:
+        
+        .. code:: python
+
         
             from RAPIDpy import RAPID
 
@@ -554,8 +565,10 @@ class RAPID(object):
             rapid_manager.update_simulation_runtime()
             rapid_manager.run(rapid_namelist_file='../rapid-io/input/rapid_namelist')
                                  
-        Windows with Cygwin Example::
+        Windows with Cygwin Example:
     
+        .. code:: python
+        
             from RAPIDpy import RAPID
             from os import path
             
@@ -682,7 +695,9 @@ class RAPID(object):
             qinit_file(str): Path to output qinit_file.
             time_index(Optional[int]): Index of simulation to generate initial flow file. Default is the end.
 
-        Example::
+        Example:
+        
+        .. code:: python
         
             from RAPIDpy import RAPID
             
@@ -875,7 +890,9 @@ class RAPID(object):
                                                             out_stream_id_file=join(main_path,"streamid_2000_2014.csv"))
                                                             
         
-        Complex Example::
+        Complex Example:
+        
+        .. code:: python
         
             import datetime
             from os.path import join

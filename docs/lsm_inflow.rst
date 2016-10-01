@@ -12,7 +12,7 @@ Step 1: Retrieve Land Surface Model Runoff Output
 
 Download the data into a local directory.
 
-- http://apps.ecmwf.int/datasets/data
+- http://apps.ecmwf.int/datasets
 - http://ldas.gsfc.nasa.gov/index.php
 
 

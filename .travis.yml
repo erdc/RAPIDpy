@@ -14,7 +14,7 @@
 #*******************************************************************************
 #System specifications for Travis CI
 #*******************************************************************************
-language: python
+language: cpp
 python:
   - "2.7"
   - "3.5"
@@ -22,6 +22,7 @@ os:
   - linux
   - osx
 matrix:
+  fast_finish: true
   allow_failures:
     - os: osx
 notifications:

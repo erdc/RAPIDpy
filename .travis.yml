@@ -18,6 +18,12 @@ language: python
 python:
   - "2.7"
   - "3.5"
+os:
+  - linux
+  - osx
+matrix:
+  allow_failures:
+    - os: osx
 notifications:
   email: false
 
@@ -25,13 +31,17 @@ notifications:
 #Before installing RAPIDpy
 #*******************************************************************************
 before_install:
-- sudo apt-get update -qq
-- sudo apt-get install -y g++ gfortran
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get update -qq ; fi
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -y g++ gfortran ; fi
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update ; fi
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install gcc gfortran ; fi
 
 #-------------------------------------------------------------------------------
 #Add miniconda - from https://gist.github.com/dan-blanchard/7045057
 #-----------------------------------------------------------------------------
-- wget http://repo.continuum.io/miniconda/Miniconda${TRAVIS_PYTHON_VERSION:0:1}-latest-Linux-x86_64.sh -O miniconda.sh
+
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then wget http://repo.continuum.io/miniconda/Miniconda${TRAVIS_PYTHON_VERSION:0:1}-latest-Linux-x86_64.sh -O miniconda.sh ; fi
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then curl -o miniconda.sh https://repo.continuum.io/miniconda/Miniconda${TRAVIS_PYTHON_VERSION:0:1}-latest-MacOSX-x86_64.sh ; fi
 - chmod +x miniconda.sh
 - ./miniconda.sh -b -p $HOME/miniconda
 - export PATH=$HOME/miniconda/bin:$PATH
@@ -60,27 +70,12 @@ before_install:
 - export INSTALLZ_DIR=$PWD
 
 #-------------------------------------------------------------------------------
-#Installing netCDF 3.6.3
+#Installing RAPID Prereqs
 #-------------------------------------------------------------------------------
-- cd $INSTALLZ_DIR
-- wget "ftp://ftp.unidata.ucar.edu/pub/netcdf/netcdf-3.6.3.tar.gz"
-- mkdir netcdf-3.6.3-install
-- tar -xf netcdf-3.6.3.tar.gz
-- cd netcdf-3.6.3
-- ./configure --prefix=$INSTALLZ_DIR/netcdf-3.6.3-install
-- make check
-- make install
-
-#-------------------------------------------------------------------------------
-#Installing PETSc 3.6.2
-#-------------------------------------------------------------------------------
-- cd $INSTALLZ_DIR
-- wget "http://ftp.mcs.anl.gov/pub/petsc/release-snapshots/petsc-3.6.2.tar.gz" 
-- tar -xf petsc-3.6.2.tar.gz
-- cd petsc-3.6.2
-- python2 './configure' 'PETSC_DIR='$PWD 'PETSC_ARCH=linux-gcc-c' '--download-fblaslapack=1' '--download-mpich=1' '--with-cc=gcc' '--with-cxx=g++' '--with-fc=gfortran' '--with-clanguage=cxx' '--with-debugging=0'
-- make PETSC_DIR=$PWD PETSC_ARCH=linux-gcc-c all
-- make PETSC_DIR=$PWD PETSC_ARCH=linux-gcc-c test
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then wget https://raw.githubusercontent.com/snowman2/rapid/master/rapid_install_prereqs.sh ; fi
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then curl -o rapid_install_prereqs.sh https://raw.githubusercontent.com/snowman2/rapid/master/rapid_install_prereqs.sh ; fi
+- chmod +x rapid_install_prereqs.sh
+- ./rapid_install_prereqs.sh -i=$INSTALLZ_DIR
 
 #-------------------------------------------------------------------------------
 #Exporting environment variables 

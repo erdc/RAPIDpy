@@ -47,7 +47,7 @@ Step 1.1: Look at Stream Network in WMS to find Link & Node
 Step 1.2: Connect RAPID river ID to GSSHA Link & Node and Generate IHG
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. automethod:: RAPIDpy.dataset.RAPIDDataset.write_flows_to_gssha_time_series_ihg(path_to_output_file,point_list,date_search_start=None,date_search_end=None,daily=False,mode="mean")
+.. automethod:: RAPIDpy.dataset.RAPIDDataset.write_flows_to_gssha_time_series_ihg
     :noindex:
 
 
@@ -56,7 +56,7 @@ Method 2: Generate XYS File
 
 Step 2.1: Generate XYS File
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-.. automethod:: RAPIDpy.dataset.RAPIDDataset.write_flows_to_gssha_time_series_xys(path_to_output_file,series_name,series_id,reach_index=None,reach_id=None,date_search_start=None,date_search_end=None,daily=False,mode="mean")
+.. automethod:: RAPIDpy.dataset.RAPIDDataset.write_flows_to_gssha_time_series_xys
     :noindex:
 
 Step 2.2: Add XYS File in WMS

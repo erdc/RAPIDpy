@@ -188,7 +188,52 @@ def assimilation_eff(assimilated, simulated, observed):
 def find_goodness_of_fit(rapid_qout_file, reach_id_file, observed_file,
                          out_analysis_file, daily=False, steps_per_group=1):
     """
-        Finds the goodness of fit comparing observed and simulated flows
+    Finds the goodness of fit comparing observed streamflow in a rapid Qout file
+    with simulated flows in a csv file.
+    
+    Args:
+        rapid_qout_file(str): Path to the RAPID Qout file.
+        reach_id_file(str): Path to file with river reach ID's associate with the RAPID Qout file. It is in the format of the RAPID observed flows reach ID file.
+        observed_file(str): Path to input csv with with observed flows corresponding to the RAPID Qout. It is in the format of the RAPID observed flows file.
+        out_analysis_file(str): Path to the analysis output csv file.
+        daily(Optional[bool]): If True and the file is CF-Compliant, it will compare the *observed_file* with daily average flow from Qout. Default is False. 
+        steps_per_group(Optional[int]): Number of time steps per day in the file. This is for Qout files that are not CF-Compliant. Default is 1.    
+
+    Example with CF-Compliant RAPID Qout file:
+    
+    .. code:: python
+    
+        import os
+        from RAPIDpy.postprocess import find_goodness_of_fit
+    
+        INPUT_DATA_PATH = '/path/to/data'
+        reach_id_file = os.path.join(INPUT_DATA_PATH, 'obs_reach_id.csv') 
+        observed_file = os.path.join(INPUT_DATA_PATH, 'obs_flow.csv') 
+    
+        cf_input_qout_file = os.path.join(COMPARE_DATA_PATH, 'Qout_nasa_lis_3hr_20020830_CF.nc')
+        cf_out_analysis_file = os.path.join(OUTPUT_DATA_PATH, 'cf_goodness_of_fit_results-daily.csv') 
+        find_goodness_of_fit(cf_input_qout_file, reach_id_file, observed_file,
+                             cf_out_analysis_file, daily=True)
+    
+    Example with original RAPID Qout file:
+    
+    .. code:: python
+    
+        import os
+        from RAPIDpy.postprocess import find_goodness_of_fit
+    
+        INPUT_DATA_PATH = '/path/to/data'
+        reach_id_file = os.path.join(INPUT_DATA_PATH, 'obs_reach_id.csv') 
+        observed_file = os.path.join(INPUT_DATA_PATH, 'obs_flow.csv') 
+
+        original_input_qout_file = os.path.join(COMPARE_DATA_PATH, 'Qout_nasa_lis_3hr_20020830_original.nc')
+        original_out_analysis_file = os.path.join(OUTPUT_DATA_PATH, 'original_goodness_of_fit_results-daily.csv') 
+        find_goodness_of_fit(rapid_qout_file=original_input_qout_file, 
+                             reach_id_file=reach_id_file, 
+                             observed_file=observed_file,
+                             out_analysis_file=original_out_analysis_file, 
+                             steps_per_group=8) #for raw rapid output (8 is produces daily flows for 3-hr timesteps)
+    
     """
     reach_id_list = np.array([row[0] for row in csv_to_list(reach_id_file)])
    
@@ -236,14 +281,27 @@ def find_goodness_of_fit(rapid_qout_file, reach_id_file, observed_file,
 
 def find_goodness_of_fit_csv(observed_simulated_file):
     """
-        Finds the goodness of fit comparing observed and simulated flows
-        In file:
-        observed_flow, simulated flow
-        
-        Ex.
-        
+    Finds the goodness of fit comparing observed and simulated flows
+    In the file, the first column is the observed flows and the 
+    second column is the simulated flows.
+    
+    Example::
+    
         33.5, 77.2
         34.7, 73.0
+        
+    Args:
+        observed_simulated_file(str): Path to the csv file with the observed and simulated flows.
+
+
+    Example:
+    
+    .. code:: python
+    
+        from RAPIDpy.postprocess import find_goodness_of_fit_csv
+    
+        find_goodness_of_fit_csv('/united_kingdom-thames/flows_kingston_gage_noah.csv')
+    
     """
     flow_table = csv_to_list(observed_simulated_file)
     

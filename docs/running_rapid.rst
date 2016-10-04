@@ -19,27 +19,27 @@ Step 1: Initialize the RAPID manager class.
 Step 2 (optional): Add/update additional namelist parameters later
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. automethod:: RAPIDpy.rapid.RAPID.update_parameters(**kwargs)
+.. automethod:: RAPIDpy.rapid.RAPID.update_parameters
 
 Step 3 (optional): Update reach number data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. automethod:: RAPIDpy.rapid.RAPID.update_reach_number_data()
+.. automethod:: RAPIDpy.rapid.RAPID.update_reach_number_data
 
 Step 4 (optional): Update simulation runtime data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. automethod:: RAPIDpy.rapid.RAPID.update_simulation_runtime()
+.. automethod:: RAPIDpy.rapid.RAPID.update_simulation_runtime
 
 Step 5: Run RAPID
 ~~~~~~~~~~~~~~~~~
 
-.. automethod:: RAPIDpy.rapid.RAPID.run(rapid_namelist_file="")
+.. automethod:: RAPIDpy.rapid.RAPID.run
 
 Step 6 (optional): Convert RAPID output to be CF Compliant
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. automethod:: RAPIDpy.rapid.RAPID.make_output_CF_compliant(simulation_start_datetime, comid_lat_lon_z_file="", project_name="Normal RAPID project")
+.. automethod:: RAPIDpy.rapid.RAPID.make_output_CF_compliant
 
 
 Full API Description

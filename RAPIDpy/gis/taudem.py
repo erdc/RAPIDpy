@@ -32,13 +32,15 @@ except ImportError:
 #------------------------------------------------------------------------------
 class TauDEM(object):
     """
-    TauDEM process manager
+    TauDEM process manager.
     
     Attributes:
         taudem_exe_path(Optional[str]): Path to TauDEM executable. This is requred to use TauDEM functionality.
         num_processors(Optional[int]): Number of proessors to use with TauDEM. It only works if *use_all_processors*=False.
         use_all_processors(Optional[bool]): If True, the TauDEM processes will use all avaialble processors.
         mpiexec_path(Optional[str]): Path to mpiexec command. Default is "mpiexec".
+    
+    Initialization Example:
     
     .. code:: python
 

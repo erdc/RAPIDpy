@@ -995,7 +995,7 @@ class RAPIDDataset(object):
         
         .. note:: See: http://www.gsshawiki.com/Surface_Water_Routing:Introducing_Dischage/Constituent_Hydrographs
         
-        .. note:: GSSHA prosect card is CHAN_POINT_INPUT
+        .. note:: GSSHA project card is CHAN_POINT_INPUT
         
         Parameters:
             path_to_output_file(str): Path to the output xys file.

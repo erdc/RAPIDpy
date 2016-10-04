@@ -42,7 +42,7 @@ Step 1.1: Look at Stream Network in WMS to find Link & Node
     - Select *Map Data* in top left box
     - In the center box, make sure *Stream Link Numbers* is checked under the Arcs subsection.
 
-3. Determin the Link ID by looking on model.
+3. Determine the Link ID by looking on model.
 
 Step 1.2: Connect RAPID river ID to GSSHA Link & Node and Generate IHG
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

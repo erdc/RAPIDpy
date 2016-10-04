@@ -3,8 +3,8 @@
 ##  merge.py
 ##  RAPIDpy
 ##
-##  Created by Alan D Snow & Tim Whitaker, 2015.
-##  Copyright © 2015 Alan D Snow & Tim Whitaker. All rights reserved.
+##  Created by Tim Whitaker, 2015.
+##  Modified by Alan D Snow, 2015-2016
 ##
 
 """Copies data from RAPID netCDF output to a CF-compliant netCDF file.
@@ -75,17 +75,50 @@ except NameError:
 
 class ConvertRAPIDOutputToCF(object):
     """
-    Class to convert RAPID output to be CF compliant        
+    Class to convert RAPID output to be CF compliant. You can also use this to 
+    combine consecutive RAPID output files into one file.
+
+    Attributes:
+        rapid_output_file(str or list): Path to a single RAPID Qout file or a list of RAPID Qout files.
+        start_datetime(datetime): Datetime object with the time of the start of the simulation.
+        time_step(int or list): Time step of simulation in seconds if single Qout file or a list of time steps corresponding to each Qout file in the *rapid_output_file*.
+        qinit_file(Optional[str]): Path to the Qinit file for the simulation. If used, it will use the values in the file for the flow at simulation time zero.
+        comid_lat_lon_z_file(Optional[str]): Path to comid_lat_lon_z file. If included, the spatial information will be added to the output NetCDF file.
+        rapid_connect_file(Optional[str]): Path to RAPID connect file. This is required if *qinit_file* is added.
+        project_name(Optional[str]): Name of your project in the output file. Default is "Default RAPID Project".
+        output_id_dim_name(Optional[str]): Name of the output river ID dimension name. Default is 'rivid'.
+        output_flow_var_name(Optional[str]): Name of streamflow variable in output file, typically 'Qout' or 'm3_riv'. Default is 'Qout'.
+        print_debug(Optional[bool]): If True, the debug output will be printed to the console. Default is False.       
+
+    .. warning:: This code replaces the first file with the combined output and
+                 deletes the second file. BACK UP YOUR FILES!!!!
+    
+    Example:
+    
+    .. code:: python
+    
+        import datetime
+        from RAPIDpy.postprocess import ConvertRAPIDOutputToCF
+        
+        file1 = "/path/to/Qout_1980to1981.nc"
+        file2 = "/path/to/Qout_1981to1982.nc"
+        
+        cv = ConvertRAPIDOutputToCF(rapid_output_file=[file1, file2],
+                                    start_datetime=datetime.datetime(2005,1,1),
+                                    time_step=[3*3600, 3*3600],
+                                    project_name="NLDAS(VIC)-RAPID historical flows by US Army ERDC",
+                                    )
+        cv.convert()
     """
-    def __init__(self, rapid_output_file, #location of timeseries output file(s)
-                       start_datetime, #time of the start of the simulation time
-                       time_step, #time step(s) of simulation in seconds
-                       qinit_file="", #RAPID qinit file
-                       comid_lat_lon_z_file="", #path to comid_lat_lon_z file
-                       rapid_connect_file="", #path to RAPID connect file
-                       project_name="Default RAPID Project", #name of your project
-                       output_id_dim_name='rivid', #name of ID dimension in output file, typically COMID or FEATUREID
-                       output_flow_var_name='Qout', #name of streamflow variable in output file, typically Qout or m3_riv
+    def __init__(self, rapid_output_file, 
+                       start_datetime,
+                       time_step,
+                       qinit_file="",
+                       comid_lat_lon_z_file="",
+                       rapid_connect_file="",
+                       project_name="Default RAPID Project",
+                       output_id_dim_name='rivid',
+                       output_flow_var_name='Qout',
                        print_debug=False
                        ):
 

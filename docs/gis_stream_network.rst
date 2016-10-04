@@ -47,7 +47,6 @@ Generate network from DEM
 
 Add Length in meters attribute
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. code:: python
 
 .. automethod:: RAPIDpy.gis.taudem.TauDEM.addLengthMeters(stream_network)
 

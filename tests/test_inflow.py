@@ -153,6 +153,43 @@ class TestRAPIDInflow(unittest.TestCase):
         #additional cleanup
         remove_files(generated_qinit_file)
     
+    def test_generate_erai_t511_inflow_manual(self):
+        """
+        Checks generating inflow file from ERA Interim t511 LSM manually
+        """
+        print("TEST 1.1: TEST GENERATE INFLOW FILE FROM ERA Interim t511 DATA MANUALLY")
+        
+        rapid_input_path, rapid_output_path = self._setup_manual("x-x")
+
+        lsm_file_list =  sorted(glob(os.path.join(self.LSM_INPUT_DATA_PATH, 'erai3', '*.nc')))                 
+        mp_lock = multiprocessing.Manager().Lock()
+    
+        inf_tool = CreateInflowFileFromERAInterimRunoff()
+    
+        m3_file_name = "m3_riv_bas_erai_t511_3hr_20030121to20030122.nc"
+        generated_m3_file = os.path.join(rapid_output_path, m3_file_name)
+    
+        inf_tool.generateOutputInflowFile(out_nc=generated_m3_file,
+                                          start_datetime_utc=datetime(2003,1,21),
+                                          number_of_timesteps=len(lsm_file_list)*8,
+                                          simulation_time_step_seconds=3*3600,
+                                          in_rapid_connect_file=os.path.join(rapid_input_path, 'rapid_connect.csv'),
+                                          in_rivid_lat_lon_z_file=os.path.join(rapid_input_path, 'comid_lat_lon_z.csv'),
+                                          land_surface_model_description="RAPID Inflow from ERA Interim (T511 Grid) 3 Hourly Runoff",
+                                          modeling_institution="US Army Engineer Research and Development Center"
+                                          )
+                                          
+        inf_tool.execute(nc_file_list=lsm_file_list, 
+                         index_list=list(xrange(len(lsm_file_list))), 
+                         in_weight_table=os.path.join(rapid_input_path, 'weight_era_t511.csv'), 
+                         out_nc=generated_m3_file, 
+                         grid_type='t511', 
+                         mp_lock=mp_lock)
+                          
+        #CHECK OUTPUT
+        generated_m3_file_solution = os.path.join(self.INFLOW_COMPARE_DATA_PATH, m3_file_name)
+        self._compare_m3(generated_m3_file,generated_m3_file_solution)
+
     def test_generate_nldas2_inflow(self):
         """
         Checks generating inflow file from NLDAS V2 LSM

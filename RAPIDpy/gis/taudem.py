@@ -35,7 +35,7 @@ class TauDEM(object):
     TauDEM process manager.
     
     Attributes:
-        taudem_exe_path(Optional[str]): Path to TauDEM executable. This is requred to use TauDEM functionality.
+        taudem_exe_path(Optional[str]): Path to TauDEM directory containing executables. This is requred to use TauDEM functionality.
         num_processors(Optional[int]): Number of proessors to use with TauDEM. It only works if *use_all_processors*=False.
         use_all_processors(Optional[bool]): If True, the TauDEM processes will use all avaialble processors.
         mpiexec_path(Optional[str]): Path to mpiexec command. Default is "mpiexec".
@@ -619,11 +619,12 @@ class TauDEM(object):
         print("PROCESS: D8ContributingArea")
         if flow_dir_grid:
             self.flow_dir_grid = flow_dir_grid
-
+            
+        self.contributing_area_grid = contributing_area_grid
         # Construct the taudem command line.
         cmd = [os.path.join(self.taudem_exe_path, 'aread8'),
                '-p', self.flow_dir_grid, 
-               '-ad8', contributing_area_grid,
+               '-ad8', self.contributing_area_grid,
                ]
                
         if outlet_shapefile:
@@ -715,6 +716,8 @@ class TauDEM(object):
 
         #create projection file
         self._add_prj_file(self.pit_filled_elevation_grid,
+                           out_stream_order_grid)
+        self._add_prj_file(self.pit_filled_elevation_grid,
                            out_stream_reach_file)
         self._add_prj_file(self.pit_filled_elevation_grid,
                            out_watershed_grid)
@@ -794,8 +797,8 @@ class TauDEM(object):
         if use_dinf:
             print("USING DINF METHOD TO GET STREAM DEFINITION ...")
             if not flow_dir_grid_dinf:
-                flow_dir_grid_dinf = os.path.join(output_directory, 'flow_dir_grid_inf.tif')
-                slope_grid_dinf = os.path.join(output_directory, 'slope_grid_inf.tif')
+                flow_dir_grid_dinf = os.path.join(output_directory, 'flow_dir_grid_dinf.tif')
+                slope_grid_dinf = os.path.join(output_directory, 'slope_grid_dinf.tif')
                 self.dinfFlowDirection(flow_dir_grid_dinf,
                                        slope_grid_dinf)
             if not contributing_area_grid_dinf:
@@ -828,5 +831,4 @@ class TauDEM(object):
         #convert watersed grid to shapefile
         out_watershed_shapefile = os.path.join(output_directory, 'watershed_shapefile.shp')                          
         self.rasterToPolygon(out_watershed_grid, out_watershed_shapefile)
-        
         print("Total time to complete: {0}".format(datetime.utcnow()-time_start))

@@ -1124,7 +1124,7 @@ class RAPIDDataset(object):
                     qout_num_dimensions = len(daily_qout_2d_array.shape)
                     time_array = self.get_time_array()
                     for idx, time_idx in enumerate(daily_time_index_array):
-                        date_str = time.strftime("%Y %m %d %H %M %S", time.gmtime(time_array[time_idx]))
+                        date_str = time.strftime("%Y %m %d %H %M", time.gmtime(time_array[time_idx]))
                         if qout_num_dimensions > 1:
                             qout_str = " ".join(["{0:.5f}".format(daily_qout) for daily_qout in daily_qout_2d_array[:, idx]])
                         else:
@@ -1142,7 +1142,7 @@ class RAPIDDataset(object):
                     
                     time_array = self.get_time_array(time_index_array=time_index_range)
                     for index in xrange(num_time_steps):
-                        date_str = time.strftime("%Y %m %d %H %M %S", time.gmtime(time_array[index]))
+                        date_str = time.strftime("%Y %m %d %H %M", time.gmtime(time_array[index]))
                         if qout_num_dimensions > 1:
                             qout_str = " ".join(["{0:.5f}".format(daily_qout) for daily_qout in qout_2d_array[:, index]])
                         else:

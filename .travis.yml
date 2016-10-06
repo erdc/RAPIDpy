@@ -70,7 +70,6 @@ before_install:
 #restart environment to get variables set
 #- export GDAL_DATA=$HOME/miniconda/share/gdal
 - source deactivate rapid
-- source activate rapid
 
 #-------------------------------------------------------------------------------
 #Creating directory for installation of libraries used by RAPID
@@ -124,6 +123,7 @@ before_install:
 #Installing RAPIDpy
 #*******************************************************************************
 install:
+- source activate rapid
 - cd $TRAVIS_BUILD_DIR
 - python setup.py install
 #*******************************************************************************

@@ -16,7 +16,7 @@ from osgeo import ogr
 
 #local import
 from RAPIDpy.gis.weight import CreateWeightTableECMWF, CreateWeightTableLDAS
-from RAPIDpy.gis.workflow import CreateAllStaticECMWFRAPIDFiles
+from RAPIDpy.gis.workflow import CreateAllStaticECMWFRAPIDFiles, CreateAllStaticRAPIDFiles
 from RAPIDpy.gis.network import CreateNetworkConnectivityNHDPlus
 from RAPIDpy.gis.taudem import TauDEM
 from RAPIDpy.helper_functions import (compare_csv_decimal_files,
@@ -305,11 +305,53 @@ def test_gen_weight_table_joules():
 
     remove_files(generated_weight_table_file)
 
+#==============================================================================
+# def test_gen_weight_table_wrf():
+#     """
+#     Checks generating weight table for WRF grid
+#     """
+#     print("TEST 9: TEST GENERATE WEIGTH TABLE FOR WRF GRIDS")
+#     generated_weight_table_file = os.path.join(OUTPUT_DATA_PATH, 
+#                                                "weight_wrf.csv")
+#     #rapid_connect
+#     rapid_connect_file = os.path.join(COMPARE_DATA_PATH, "m-s",
+#                                       "rapid_connect.csv")
+# 
+# #==============================================================================
+# #     drainage_line = os.path.join(GIS_INPUT_DATA_PATH, 'm-s', 'flowline_subset.shp')
+# #     CreateAllStaticRAPIDFiles(in_drainage_line=drainage_line,
+# #                               river_id="COMID",
+# #                               length_id="LENGTHKM",
+# #                               slope_id="SLOPE",
+# #                               next_down_id="NextDownID",
+# #                               rapid_output_folder=os.path.join(GIS_INPUT_DATA_PATH, 'm-s')
+# #                               )
+# #==============================================================================
+# 
+# 
+#     lsm_grid = os.path.join(LSM_INPUT_DATA_PATH, "wrf", "diffro_d02_20080601010000.nc")
+#     CreateWeightTableLDAS(in_ldas_nc=lsm_grid,
+#                           in_nc_lon_var="XLONG",
+#                           in_nc_lat_var="XLAT", 
+#                           in_catchment_shapefile=os.path.join(GIS_INPUT_DATA_PATH, 'm-s', 'catchment_subset.shp'), 
+#                           river_id="FEATUREID", 
+#                           in_connectivity_file=rapid_connect_file, 
+#                           out_weight_table=generated_weight_table_file)
+#                                                          
+#     generated_weight_table_file_solution = os.path.join(COMPARE_DATA_PATH, "m-s",
+#                                                         "weight_wrf.csv")
+#     ok_(compare_csv_decimal_files(generated_weight_table_file, 
+#                                   generated_weight_table_file_solution))
+# 
+#     remove_files(generated_weight_table_file)
+#==============================================================================
+
+
 def test_extract_sub_network_taudem():
     """
     Checks extracting sub network from larger network
     """
-    print("TEST 9: TEST EXTRACTING SUB NETWORK FROM LARGER NETWORK")
+    print("TEST 10: TEST EXTRACTING SUB NETWORK FROM LARGER NETWORK")
     td = TauDEM()
     
     subset_network_file = os.path.join(OUTPUT_DATA_PATH, "DrainageLineSubset2.shp")
@@ -385,7 +427,7 @@ def test_add_length_to_network_taudem():
     """
     Checks adding length to network
     """
-    print("TEST 9: TEST ADD LENGTH TO NETWORK")
+    print("TEST 11: TEST ADD LENGTH TO NETWORK")
     td = TauDEM()
     
     subset_network_file = os.path.join(OUTPUT_DATA_PATH, "DrainageLineSubset2.shp")
@@ -431,6 +473,94 @@ def test_add_length_to_network_taudem():
     
     #cleanup
     remove_files(*glob(os.path.join(OUTPUT_DATA_PATH,"DrainageLineSubset2.*")))
+    
+def test_generate_network_taudem():
+    """
+    Checks generate TauDEM network
+    """
+    print("TEST 12: TEST GENERATE TauDEM NETWORK")
+    TAUDEM_EXE_PATH = os.path.join(MAIN_TESTS_FOLDER,
+                                   "..", "..", "TauDEM")
+    td = TauDEM(TAUDEM_EXE_PATH, use_all_processors=True)
+    
+    elevation_dem = os.path.join(GIS_INPUT_DATA_PATH, 'jamaica_dem.tif')
+
+    td.demToStreamNetwork(OUTPUT_DATA_PATH,
+                          elevation_dem,
+                          threshold=1000)
+                          
+    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'pit_filled_elevation_grid.tif')))
+    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'pit_filled_elevation_grid.prj')))
+    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'flow_dir_grid_d8.tif')))
+    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'flow_dir_grid_d8.prj')))
+    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'contributing_area_grid_d8.tif')))
+    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'contributing_area_grid_d8.prj')))
+    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'slope_grid_d8.tif')))
+    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'slope_grid_d8.prj')))
+    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'stream_raster_grid.tif')))
+    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'stream_raster_grid.prj')))
+    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'stream_order_grid.tif')))
+    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'stream_order_grid.prj')))
+    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'network_connectivity_tree.txt')))
+    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'network_coordinates.txt')))
+#    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'stream_reach_file.shp')))
+#    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'stream_reach_file.shx')))
+#    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'stream_reach_file.dbf')))
+#    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'stream_reach_file.prj')))
+    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'watershed_grid.tif')))
+    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'watershed_grid.prj')))
+#    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'watershed_shapefile.shp')))
+#    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'watershed_shapefile.shx')))
+#    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'watershed_shapefile.dbf')))
+#    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'watershed_shapefile.prj')))
+    #cleanup
+    remove_files(*[f for f in glob(os.path.join(OUTPUT_DATA_PATH,"*")) if not f.endswith(".gitignore")])
+    
+def test_generate_network_taudem_dinf():
+    """
+    Checks generate TauDEM network dinf
+    """
+    print("TEST 13: TEST GENERATE TauDEM NETWORK DINF")
+    TAUDEM_EXE_PATH = os.path.join(MAIN_TESTS_FOLDER,
+                                   "..", "..", "TauDEM")
+    td = TauDEM(TAUDEM_EXE_PATH)
+    
+    elevation_dem = os.path.join(GIS_INPUT_DATA_PATH, 'jamaica_dem.tif')
+
+    td.demToStreamNetwork(OUTPUT_DATA_PATH,
+                          pit_filled_elevation_grid=elevation_dem,
+                          threshold=1000,
+                          use_dinf=True)
+    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'flow_dir_grid_d8.tif')))
+    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'flow_dir_grid_d8.prj')))
+    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'flow_dir_grid_dinf.tif')))
+    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'flow_dir_grid_dinf.prj')))
+    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'contributing_area_grid_d8.tif')))
+    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'contributing_area_grid_d8.prj')))
+    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'contributing_area_grid_dinf.tif')))
+    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'contributing_area_grid_dinf.prj')))
+    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'slope_grid_d8.tif')))
+    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'slope_grid_d8.prj')))
+    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'slope_grid_dinf.tif')))
+    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'slope_grid_dinf.prj')))
+    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'stream_raster_grid.tif')))
+    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'stream_raster_grid.prj')))
+    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'stream_order_grid.tif')))
+    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'stream_order_grid.prj')))
+    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'network_connectivity_tree.txt')))
+    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'network_coordinates.txt')))
+#    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'stream_reach_file.shp')))
+#    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'stream_reach_file.shx')))
+#    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'stream_reach_file.dbf')))
+#    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'stream_reach_file.prj')))
+    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'watershed_grid.tif')))
+    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'watershed_grid.prj')))
+#    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'watershed_shapefile.shp')))
+#    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'watershed_shapefile.shx')))
+#    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'watershed_shapefile.dbf')))
+#    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'watershed_shapefile.prj')))
+    #cleanup
+    remove_files(*[f for f in glob(os.path.join(OUTPUT_DATA_PATH,"*")) if not f.endswith(".gitignore")])
 
 if __name__ == '__main__':
     import nose

@@ -12,8 +12,6 @@ The source code for RAPID is located at https://github.com/c-h-david/rapid/. Oth
 
 [![Build Status](https://travis-ci.org/erdc-cm/RAPIDpy.svg?branch=master)](https://travis-ci.org/erdc-cm/RAPIDpy)
 
-[![Coverage Status](https://coveralls.io/repos/github/erdc-cm/RAPIDpy/badge.svg?branch=master)](https://coveralls.io/github/erdc-cm/RAPIDpy?branch=master)
-
 [![Docs](https://readthedocs.org/projects/rapidpy/badge/?version=latest)](http://rapidpy.readthedocs.io/en/latest)
 
 Documentation can be found at: http://rapidpy.readthedocs.io/en/latest

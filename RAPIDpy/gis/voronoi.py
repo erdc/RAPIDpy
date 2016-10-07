@@ -22,14 +22,10 @@ def _get_voronoi_centroid_array(lsm_lat_array, lsm_lon_array, extent):
     This function generates a voronoi centroid point
     list from arrays of latitude and longitude
     """
-    if extent:
-        YMin = extent[2]
-        YMax = extent[3]
-        XMin = extent[0]
-        XMax = extent[1]
-    else:
-        lsm_lat_list = lsm_lat_array
-        lsm_lon_list = lsm_lon_array
+    YMin = extent[2]
+    YMax = extent[3]
+    XMin = extent[0]
+    XMax = extent[1]
 
     ptList = []
     if (lsm_lat_array.ndim == 2) and (lsm_lon_array.ndim == 2):
@@ -51,7 +47,6 @@ def _get_voronoi_centroid_array(lsm_lat_array, lsm_lon_array, extent):
 
             lsm_lat_list = lsm_lat_array[lsm_lat_indices,:][:,lsm_lon_indices]
             lsm_lon_list = lsm_lon_array[lsm_lat_indices,:][:,lsm_lon_indices]
-            
         # Create a list of geographic coordinate pairs
         for i in range(len(lsm_lat_indices)):
             for j in range(len(lsm_lon_indices)):
@@ -174,8 +169,8 @@ def pointsToVoronoiGridShapefile(lat, lon, vor_shp_path, extent=None):
             ring.AddPoint(loopLon,loopLat)
             poly.AddGeometry(ring)
             feat = ogr.Feature(layerDefn)
-            feat.SetField('GRID_LON', voronoi_centroid[0])
-            feat.SetField('GRID_LAT', voronoi_centroid[1])
+            feat.SetField('GRID_LON', float(voronoi_centroid[0]))
+            feat.SetField('GRID_LAT', float(voronoi_centroid[1]))
             feat.SetGeometry(poly)  
             layer.CreateFeature(feat)
             feat = poly = ring = None

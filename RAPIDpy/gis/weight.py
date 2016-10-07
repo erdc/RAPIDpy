@@ -53,11 +53,11 @@ def _get_lat_lon_indices(lsm_lat_array, lsm_lon_array, lat, lon):
     """    
     if lsm_lat_array.ndim == 2 and lsm_lon_array.ndim == 2:
         lsm_lat_indices_from_lat, lsm_lon_indices_from_lat = np.where((lsm_lat_array == lat))
-        lsm_lat_indices_from_lon, lsm_lon_indices_from_lon = np.where((lsm_lon_array >= lon))
+        lsm_lat_indices_from_lon, lsm_lon_indices_from_lon = np.where((lsm_lon_array == lon))
 
         index_lsm_grid_lat = np.intersect1d(lsm_lat_indices_from_lat, lsm_lat_indices_from_lon)[0]
         index_lsm_grid_lon = np.intersect1d(lsm_lon_indices_from_lat, lsm_lon_indices_from_lon)[0]
-
+        
     elif lsm_lat_array.ndim == 1 and lsm_lon_array.ndim == 1:
         index_lsm_grid_lon = np.where(lsm_lon_array == lon)[0][0]
         index_lsm_grid_lat = np.where(lsm_lat_array == lat)[0][0]
@@ -82,6 +82,11 @@ def RTreeCreateWeightTable(lsm_grid_lat, lsm_grid_lon,
     Create Weight Table for Land Surface Model Grids
     """
     time_start_all = datetime.utcnow()    
+
+    if lsm_grid_lat.ndim == 3 and lsm_grid_lon.ndim == 3:
+        #assume first dimension is time
+        lsm_grid_lat = lsm_grid_lat[0]
+        lsm_grid_lon = lsm_grid_lon[0]
     
     print("Generating LSM Grid Thiessen Array ...")
     if file_geodatabase:
@@ -106,10 +111,10 @@ def RTreeCreateWeightTable(lsm_grid_lat, lsm_grid_lon,
     lsm_grid_feature_list = pointsToVoronoiGridArray(lsm_grid_lat, lsm_grid_lon, extent)
     
     ##COMMENTED LINES FOR TESTING
-    ##import os
-    ##from .voronoi import pointsToVoronoiGridShapefile
-    ##vor_shp_path = os.path.join(os.path.dirname(in_catchment_shapefile), "test_grid.shp")
-    ##pointsToVoronoiGridShapefile(lsm_grid_lat, lsm_grid_lon, vor_shp_path, extent)
+#    import os
+#    from .voronoi import pointsToVoronoiGridShapefile
+#    vor_shp_path = os.path.join(os.path.dirname(in_catchment_shapefile), "test_grid.shp")
+#    pointsToVoronoiGridShapefile(lsm_grid_lat, lsm_grid_lon, vor_shp_path, extent)
     
     time_end_lsm_grid_thiessen = datetime.utcnow()
     print(time_end_lsm_grid_thiessen - time_start_all)
@@ -159,7 +164,6 @@ def RTreeCreateWeightTable(lsm_grid_lat, lsm_grid_lon,
             
         for rapid_connect_rivid in rapid_connect_rivid_list:
             intersect_grid_info_list = []
-            
             try:
                 catchment_pos = np.where(catchment_rivid_list==rapid_connect_rivid)[0][0]
             except IndexError:
@@ -172,7 +176,8 @@ def RTreeCreateWeightTable(lsm_grid_lat, lsm_grid_lon,
             #make sure coordinates are geographic
             if proj_transform:
                 feat_geom.Transform(proj_transform)
-            catchment_polygon = shapely_loads(feat_geom.ExportToWkb())                
+            catchment_polygon = shapely_loads(feat_geom.ExportToWkb())
+
             for sub_lsm_grid_pos in rtree_idx.intersection(catchment_polygon.bounds):
                 if catchment_polygon.intersects(lsm_grid_feature_list[sub_lsm_grid_pos]['polygon']):
                     intersect_poly = catchment_polygon.intersection(lsm_grid_feature_list[sub_lsm_grid_pos]['polygon'])
@@ -181,7 +186,7 @@ def RTreeCreateWeightTable(lsm_grid_lat, lsm_grid_lon,
                         poly_area = get_poly_area_geo(intersect_poly)
                     else:
                         poly_area = float(catchment_polygon.GetFeature(area_id))*intersect_poly.area/catchment_polygon.area
-                        
+
                     index_lsm_grid_lat, index_lsm_grid_lon = _get_lat_lon_indices(lsm_grid_lat, lsm_grid_lon, 
                                                                                   lsm_grid_feature_list[sub_lsm_grid_pos]['lat'], 
                                                                                   lsm_grid_feature_list[sub_lsm_grid_pos]['lon'])
@@ -191,6 +196,7 @@ def RTreeCreateWeightTable(lsm_grid_lat, lsm_grid_lon,
                                                      'lsm_grid_lon': lsm_grid_feature_list[sub_lsm_grid_pos]['lon'],
                                                      'index_lsm_grid_lon': index_lsm_grid_lon,
                                                      'index_lsm_grid_lat': index_lsm_grid_lat})
+
             npoints = len(intersect_grid_info_list)
             for intersect_grid_info in intersect_grid_info_list:
                 connectwriter.writerow([intersect_grid_info['rivid'],
@@ -272,7 +278,7 @@ def CreateWeightTableLDAS(in_ldas_nc,
                           file_geodatabase=None):
                                       
     """
-    Create Weight Table for NLDAS, GLDAS grids as well as for 2D WRF, Joules, or LIS Grids
+    Create Weight Table for NLDAS, GLDAS grids as well as for 2D Joules, or LIS Grids
 
     Args:
         in_ldas_nc(str): Path to the land surface model NetCDF grid.

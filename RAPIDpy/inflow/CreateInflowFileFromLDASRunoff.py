@@ -25,7 +25,6 @@ class CreateInflowFileFromLDASRunoff(CreateInflowFileFromGriddedRunoff):
                        snowmelt_runoff_var=""
                        ):
         """Define the attributes to look for"""
-        self.header_wt = ['rivid', 'area_sqm', 'lon_index', 'lat_index', 'npoints']
         self.dims_oi = [lon_dim, lat_dim]
         self.vars_oi = [lon_var, lat_var, surface_runoff_var, subsurface_runoff_var]
         
@@ -41,6 +40,8 @@ class CreateInflowFileFromLDASRunoff(CreateInflowFileFromGriddedRunoff):
                               "Incorrect number of columns in the weight table",
                               "No or incorrect header in the weight table",
                               "Incorrect sequence of rows in the weight table"]
+                              
+        super(CreateInflowFileFromLDASRunoff, self).__init__()
 
 
     def dataValidation(self, in_nc):

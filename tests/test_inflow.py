@@ -20,8 +20,10 @@ import unittest
 
 #local import
 from RAPIDpy.inflow import run_lsm_rapid_process
-from RAPIDpy.inflow.CreateInflowFileFromLDASRunoff import CreateInflowFileFromLDASRunoff
 from RAPIDpy.inflow.CreateInflowFileFromERAInterimRunoff import CreateInflowFileFromERAInterimRunoff
+from RAPIDpy.inflow.CreateInflowFileFromLDASRunoff import CreateInflowFileFromLDASRunoff
+from RAPIDpy.inflow.CreateInflowFileFromWRFHydroRunoff import CreateInflowFileFromWRFHydroRunoff
+
 from RAPIDpy.helper_functions import (compare_csv_decimal_files,
                                       remove_files)
 #GLOBAL VARIABLES
@@ -631,7 +633,69 @@ class TestRAPIDInflow(unittest.TestCase):
         generated_m3_file_solution = os.path.join(self.INFLOW_COMPARE_DATA_PATH, m3_file_name)
         self._compare_m3(generated_m3_file,generated_m3_file_solution)
 
+    def test_generate_wrf_inflow(self):
+        """
+        Checks generating inflow file from WRF LSM
+        """
+        print("TEST 9: TEST GENERATE INFLOW FILE FROM WRF DATA")
+        rapid_input_path, rapid_output_path = self._setup_automated("m-s")
+
+        #run main process
+        self._run_automatic('wrf')
+        
+        #CHECK OUTPUT    
+        #m3_riv
+        m3_file_name = "m3_riv_bas_wrf_wrf_1hr_20080601to20080601.nc"
+        generated_m3_file = os.path.join(rapid_output_path, m3_file_name)
+        generated_m3_file_solution = os.path.join(self.INFLOW_COMPARE_DATA_PATH, m3_file_name)
+        
+        self._compare_m3(generated_m3_file,generated_m3_file_solution)
+
+    def test_generate_wrf_inflow2(self):
+         """
+         Checks generating inflow file from WRF LSM manually
+         """
+         print("TEST 9.1: TEST GENERATE INFLOW FILE FROM WRF DATA MANUALLY")
+         
+         rapid_input_path, rapid_output_path = self._setup_manual("m-s")
+ 
+         lsm_file_list =  sorted(glob(os.path.join(self.LSM_INPUT_DATA_PATH, 'wrf', '*.nc')))                 
+         mp_lock = multiprocessing.Manager().Lock()
+     
+         inf_tool = CreateInflowFileFromWRFHydroRunoff(lat_dim="south_north", 
+                                                       lon_dim="west_east", 
+                                                       lat_var="XLAT", 
+                                                       lon_var="XLONG", 
+                                                       surface_runoff_var="SFROFF",
+                                                       subsurface_runoff_var="UDROFF",
+                                                       time_step_seconds=3*3600)
+     
+         m3_file_name = "m3_riv_bas_wrf_wrf_1hr_20080601to20080601.nc"
+         generated_m3_file = os.path.join(rapid_output_path, m3_file_name)
+     
+         inf_tool.generateOutputInflowFile(out_nc=generated_m3_file,
+                                           start_datetime_utc=datetime(2008,6,1),
+                                           number_of_timesteps=len(lsm_file_list),
+                                           simulation_time_step_seconds=3*3600,
+                                           in_rapid_connect_file=os.path.join(rapid_input_path, 'rapid_connect.csv'),
+                                           in_rivid_lat_lon_z_file=os.path.join(rapid_input_path, 'comid_lat_lon_z.csv'),
+                                           land_surface_model_description="RAPID Inflow from WRF Hourly Runoff",
+                                           modeling_institution="US Army Engineer Research and Development Center"
+                                           )
+                                           
+         inf_tool.execute(nc_file_list=lsm_file_list, 
+                          index_list=list(xrange(len(lsm_file_list))), 
+                          in_weight_table=os.path.join(rapid_input_path, 'weight_wrf.csv'), 
+                          out_nc=generated_m3_file, 
+                          grid_type='wrf', 
+                          mp_lock=mp_lock)
+                           
+         #CHECK OUTPUT
+         generated_m3_file_solution = os.path.join(self.INFLOW_COMPARE_DATA_PATH, m3_file_name)
+         self._compare_m3(generated_m3_file,generated_m3_file_solution)
+         
     def _compare_m3(self, generated_m3_file, generated_m3_file_solution):
+        
         #check other info in netcdf file
         d1 = Dataset(generated_m3_file)
         d2 = Dataset(generated_m3_file_solution)
@@ -650,4 +714,4 @@ class TestRAPIDInflow(unittest.TestCase):
         rmtree(os.path.join(self.OUTPUT_DATA_PATH, "output"))
 
 if __name__ == '__main__':
-    unittest.main(verbosity=2)
+    unittest.main()

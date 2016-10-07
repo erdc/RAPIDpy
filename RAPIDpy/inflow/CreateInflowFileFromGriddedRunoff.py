@@ -21,14 +21,12 @@ from ..helper_functions import csv_to_list, get_rivid_list_from_file, open_csv
 class CreateInflowFileFromGriddedRunoff(object):
     def __init__(self):
         """Define the tool (tool name is the name of the class)."""
-        self.header_wt = ['rivid', 'area_sqm', 'lon_index', 'lat_index',
-                          'npoints']
+        self.header_wt = ['rivid', 'area_sqm', 'lon_index', 'lat_index', 'npoints']
 
     def readInWeightTable(self, in_weight_table):
         """
         Read in weight table
         """
-        
         print("Reading the weight table...")
         self.dict_list = {self.header_wt[0]:[], self.header_wt[1]:[], self.header_wt[2]:[],
                           self.header_wt[3]:[], self.header_wt[4]:[]}

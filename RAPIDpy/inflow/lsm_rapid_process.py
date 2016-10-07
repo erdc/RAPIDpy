@@ -535,7 +535,8 @@ def run_lsm_rapid_process(rapid_executable_location,
             if "WRF" in title:
                 description = "WRF-Hydro Hourly Runoff"
                 weight_file_name = r'weight_wrf\.csv'
-                grid_type = 'wrf_hydro'
+                model_name = 'wrf'
+                grid_type = 'wrf'
 
                 if file_datetime_pattern is None or file_datetime_re_pattern is None:
                     file_datetime_re_pattern = r'\d{10}'

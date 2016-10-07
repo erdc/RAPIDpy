@@ -80,6 +80,7 @@ class TauDEM(object):
         process = Popen(cmd, stdout=PIPE, stderr=PIPE, shell=False)
         out, err = process.communicate()
         if out:
+            out = str(out)
             print("OUTPUT:")
             for line in out.split('\n'):
                 print(line)
@@ -380,6 +381,7 @@ class TauDEM(object):
         process = Popen(cmd, stdout=PIPE, stderr=PIPE, shell=False)
         out, err = process.communicate()
         if out:
+            out = str(out)
             print("OUTPUT:")
             for line in out.split('\n'):
                 print(line)

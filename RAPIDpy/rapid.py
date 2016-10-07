@@ -7,6 +7,7 @@
 ##  Copyright © 2015 Alan D Snow. All rights reserved.
 ##
 
+from calendar import isleap
 from csv import writer as csvwriter
 import datetime
 from dateutil.parser import parse
@@ -18,6 +19,7 @@ import os
 #from pytz import utc
 from requests import get
 from subprocess import Popen, PIPE
+from time import gmtime
 
 #local
 from .dataset import RAPIDDataset
@@ -786,6 +788,10 @@ class RAPID(object):
             log("Missing rapid_connect file. Please set before running this function ...",
                 "ERROR")
         
+        day_of_year = datetime_start_initialization.timetuple().tm_yday
+        min_day = day_of_year - 3
+        max_day = day_of_year + 3
+
         with RAPIDDataset(self.Qout_file) as qout_hist_nc:
             if not qout_hist_nc.is_time_variable_valid():
                 log("File must be CF 1.6 compliant with valid time variable ...",
@@ -796,20 +802,18 @@ class RAPID(object):
             
             log("Determining dates with streamflows of interest ...",
                 "INFO")
-
-            datetime_min = datetime_start_initialization - datetime.timedelta(3)
-            datetime_max = datetime_start_initialization + datetime.timedelta(3)
             
             time_indices = []
             for idx, t in enumerate(qout_hist_nc.get_time_array()):
-                var_time = datetime.datetime.utcfromtimestamp(t)
+                var_time = gmtime(t)
+                compare_yday = var_time.tm_yday
+                #move day back one past because of leap year adds 
+                #a day after feb 29 (day 60)
+                if isleap(var_time.tm_year) and compare_yday > 60:
+                    compare_yday -= 1
                 #check if date within range of season
-                if var_time.month >= datetime_min.month and var_time.month <= datetime_max.month:
-                    if var_time.month > datetime_min.month:
-                        if var_time.day < datetime_max.day:
-                            time_indices.append(idx)
-                    elif var_time.day >= datetime_min.day and var_time.day < datetime_max.day:
-                        time_indices.append(idx)
+                if compare_yday >= min_day and compare_yday < max_day:
+                    time_indices.append(idx)
 
             if not time_indices:
                 log("No time steps found within range ...",
@@ -817,6 +821,7 @@ class RAPID(object):
             
             log("Extracting data ...",
                 "INFO")
+                
             streamflow_array = qout_hist_nc.get_qout(time_index_array=time_indices)
 
             log("Reordering data...",

@@ -131,6 +131,7 @@ def run_lsm_rapid_process(rapid_executable_location,
         mpiexec_command(Optional[str]): This is the command to execute RAPID. Default is "mpiexec".
         cygwin_bin_location(Optional[str]): If using Windows, this is the path to the Cygwin bin location. Default is "".
         modeling_institution(Optional[str]): This is the institution performing the modeling and is in the output files. Default is "US Army Engineer Research and Development Center".    
+        convert_one_hour_to_three(Optional[bool]): If the time step is expected to be 1-hr it will convert to 3. Set to False if the LIS, NLDAS, or Joules grid time step is greater than 1-hr.
     
     Example of regular run:
     

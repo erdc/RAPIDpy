@@ -16,8 +16,9 @@ from osgeo import ogr
 
 #local import
 from RAPIDpy.gis.weight import CreateWeightTableECMWF, CreateWeightTableLDAS
-from RAPIDpy.gis.workflow import CreateAllStaticECMWFRAPIDFiles, CreateAllStaticRAPIDFiles
+from RAPIDpy.gis.workflow import CreateAllStaticECMWFRAPIDFiles
 from RAPIDpy.gis.network import CreateNetworkConnectivityNHDPlus
+from RAPIDpy.gis.muskingum import CreateMuskingumKfacFile
 from RAPIDpy.gis.taudem import TauDEM
 from RAPIDpy.helper_functions import (compare_csv_decimal_files,
                                       remove_files)
@@ -561,6 +562,61 @@ def test_generate_network_taudem_dinf():
     ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'watershed_shapefile.prj')))
     #cleanup
     remove_files(*[f for f in glob(os.path.join(OUTPUT_DATA_PATH,"*")) if not f.endswith(".gitignore")])
+    
+def test_gen_muskingum_kfac2():
+    """
+    Checks generating Muskingum Kfac option 2
+    """
+    print("TEST 14: TEST GENERATE MUSKINGUM KFAC OPTION 2")
+    generated_kfac_file = os.path.join(OUTPUT_DATA_PATH, 
+                                       "kfac2.csv")
+    #rapid_connect
+    rapid_connect_file = os.path.join(COMPARE_DATA_PATH, "x-x",
+                                      "rapid_connect.csv")
+    CreateMuskingumKfacFile(in_drainage_line=os.path.join(GIS_INPUT_DATA_PATH, 'flowline.shp'),
+                            river_id="COMID",
+                            length_id="LENGTHKM",
+                            slope_id="Slope",
+                            celerity=1000.0/3600.0,
+                            formula_type=2,
+                            in_connectivity_file=rapid_connect_file,
+                            out_kfac_file=generated_kfac_file)
+                            
+    #CHECK OUTPUT   
+    #kfac
+    generated_kfac_file_solution = os.path.join(COMPARE_DATA_PATH, "x-x",
+                                                "kfac2.csv")
+    ok_(compare_csv_decimal_files(generated_kfac_file, 
+                                  generated_kfac_file_solution))
+                                  
+    remove_files(generated_kfac_file)
+
+def test_gen_muskingum_kfac1():
+    """
+    Checks generating Muskingum Kfac option 1
+    """
+    print("TEST 14: TEST GENERATE MUSKINGUM KFAC OPTION 1")
+    generated_kfac_file = os.path.join(OUTPUT_DATA_PATH, 
+                                       "kfac1.csv")
+    #rapid_connect
+    rapid_connect_file = os.path.join(COMPARE_DATA_PATH, "x-x",
+                                      "rapid_connect.csv")
+    CreateMuskingumKfacFile(in_drainage_line=os.path.join(GIS_INPUT_DATA_PATH, 'flowline.shp'),
+                            river_id="COMID",
+                            length_id="LENGTHKM",
+                            slope_id="Slope",
+                            celerity=1000.0/3600.0,
+                            formula_type=1,
+                            in_connectivity_file=rapid_connect_file,
+                            out_kfac_file=generated_kfac_file)
+                            
+    #CHECK OUTPUT   
+    #kfac
+    generated_kfac_file_solution = os.path.join(COMPARE_DATA_PATH, "x-x",
+                                                "kfac1.csv")
+    ok_(compare_csv_decimal_files(generated_kfac_file, 
+                                  generated_kfac_file_solution))
+    remove_files(generated_kfac_file)
 
 if __name__ == '__main__':
     import nose

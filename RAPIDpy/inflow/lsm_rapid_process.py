@@ -105,10 +105,11 @@ def run_lsm_rapid_process(rapid_executable_location,
                           num_processors=1,
                           mpiexec_command="mpiexec",
                           cygwin_bin_location="",
-                          modeling_institution="US Army Engineer Research and Development Center"
+                          modeling_institution="US Army Engineer Research and Development Center",
+                          convert_one_hour_to_three=True,
                           ):
     """
-    This is the main process to generate inflow for RAPID and to run RAPID
+    This is the main process to generate inflow for RAPID and to run RAPID.
     
     Args:
         rapid_executable_location(str): Path to the RAPID executable.
@@ -131,7 +132,9 @@ def run_lsm_rapid_process(rapid_executable_location,
         cygwin_bin_location(Optional[str]): If using Windows, this is the path to the Cygwin bin location. Default is "".
         modeling_institution(Optional[str]): This is the institution performing the modeling and is in the output files. Default is "US Army Engineer Research and Development Center".    
     
-    Example::
+    Example of regular run:
+    
+    .. code:: python
     
         from datetime import datetime
         from RAPIDpy.inflow import run_lsm_rapid_process
@@ -148,6 +151,28 @@ def run_lsm_rapid_process(rapid_executable_location,
                 generate_initialization_file=True, 
             )
     
+    Example of run with FLDAS:
+    
+    .. note:: http://disc.sci.gsfc.nasa.gov/uui/datasets?keywords=FLDAS
+    
+    .. code:: python
+    
+        from datetime import datetime
+        from RAPIDpy.inflow import run_lsm_rapid_process
+        #------------------------------------------------------------------------------
+        #main process
+        #------------------------------------------------------------------------------
+        if __name__ == "__main__":
+            run_lsm_rapid_process(
+                rapid_executable_location='/home/alan/rapid/src/rapid',
+                rapid_io_files_location='/home/alan/rapid-io',
+                lsm_data_location='/home/alan/lsm_data',
+                simulation_start_datetime=datetime(1980, 1, 1),
+                simulation_end_datetime=datetime.utcnow(),
+                file_datetime_re_pattern = r'\d{8}',
+                file_datetime_pattern = "%Y%m%d",
+                convert_one_hour_to_three=False
+            )
     """
     time_begin_all = datetime.utcnow()
 
@@ -220,6 +245,9 @@ def run_lsm_rapid_process(rapid_executable_location,
         elif 'south_north' in dim_list:
             #WRF Hydro
             latitude_dim = 'south_north'
+        elif 'Y' in dim_list:
+            #FLDAS
+            latitude_dim = 'Y'
         
         longitude_dim = "lon"
         if 'longitude' in dim_list:
@@ -236,6 +264,9 @@ def run_lsm_rapid_process(rapid_executable_location,
         elif 'west_east' in dim_list:
             #WRF Hydro
             longitude_dim = 'west_east'
+        elif 'X' in dim_list:
+            #FLDAS
+            longitude_dim = 'X'
 
         lat_dim_size = len(lsm_example_file.dimensions[latitude_dim])
         lon_dim_size = len(lsm_example_file.dimensions[longitude_dim])
@@ -253,7 +284,11 @@ def run_lsm_rapid_process(rapid_executable_location,
         elif 'north_south' in var_list:
             latitude_var = 'north_south'
         elif 'XLAT' in var_list:
+            #WRF
             latitude_var = 'XLAT'
+        elif 'Y' in var_list:
+            #FLDAS
+            latitude_var = 'Y'
     
         longitude_var="lon"
         if 'longitude' in var_list:
@@ -265,7 +300,11 @@ def run_lsm_rapid_process(rapid_executable_location,
         elif 'east_west' in var_list:
             longitude_var = 'east_west'
         elif 'XLONG' in var_list:
+            #WRF
             longitude_var = 'XLONG'
+        elif 'X' in var_list:
+            #FLDAS
+            longitude_var = 'X'
 
         surface_runoff_var=""
         subsurface_runoff_var=""
@@ -289,6 +328,12 @@ def run_lsm_rapid_process(rapid_executable_location,
 #            elif var == "Qsm_acc":
 #                #GLDAS v2
 #                snowmelt_runoff_var = var
+            elif var == "Qs_tavg":
+                #FLDAS
+                surface_runoff_var = var
+            elif var == "Qsb_tavg":
+                #FLDAS
+                subsurface_runoff_var = var
             elif var == "Qs_inst":
                 #LIS
                 surface_runoff_var = var
@@ -407,12 +452,15 @@ def run_lsm_rapid_process(rapid_executable_location,
                 
             else:
                 print("Runoff file identified as LIS GRID")
-                #this is the LIS model
+                #this is the LIS model (can be FLDAS)
+                #THIS CASE CAN ALSO BE FOR FLDAS, however you will need to add
+                #the file_datetime_pattern && file_datetime_re_pattern for it to
+                #work if it is not 3-hourly time step.
                 weight_file_name = r'weight_lis\.csv'
                 grid_type = 'lis'
                 description = "NASA GSFC LIS hourly runoff"
                 model_name = "nasa"
-
+                
                 if file_datetime_pattern is None or file_datetime_re_pattern is None:
                     file_datetime_re_pattern = r'\d{10}'
                     file_datetime_pattern = "%Y%m%d%H"      
@@ -571,7 +619,7 @@ def run_lsm_rapid_process(rapid_executable_location,
 
         #VALIDATING INPUT IF DIVIDING BY 3
         time_step_multiply_factor = 1
-        if grid_type == 'nldas' or grid_type == 'lis' or grid_type == 'joules':
+        if (grid_type == 'nldas' or grid_type == 'lis' or grid_type == 'joules') and convert_one_hour_to_three:
             num_extra_files = file_size_time*len(lsm_file_list) % 3
             if num_extra_files != 0:
                 print("WARNING: Number of files needs to be divisible by 3. Remainder is {0}".format(num_extra_files))
@@ -647,7 +695,7 @@ def run_lsm_rapid_process(rapid_executable_location,
                                                        modeling_institution=modeling_institution
                                                        )
             job_combinations = []
-            if grid_type == 'nldas' or grid_type == 'lis' or grid_type == 'joules':
+            if (grid_type == 'nldas' or grid_type == 'lis' or grid_type == 'joules') and convert_one_hour_to_three:
                 print("Grouping {0} in threes".format(grid_type))
                 lsm_file_list = [lsm_file_list[nldas_index:nldas_index+3] for nldas_index in range(0, len(lsm_file_list), 3)\
                                  if len(lsm_file_list[nldas_index:nldas_index+3])==3]

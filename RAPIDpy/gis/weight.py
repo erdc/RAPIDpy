@@ -297,7 +297,7 @@ def CreateWeightTableLDAS(in_ldas_nc,
     
         from RAPIDpy.gis.weight import CreateWeightTableLDAS
 
-        CreateWeightTableLDAS(in_ecmwf_nc='/path/to/runoff_grid.nc'
+        CreateWeightTableLDAS(in_ldas_nc='/path/to/runoff_grid.nc'
                               in_nc_lon_var="lon_110",
                               in_nc_lat_var="lat_110",
                               in_catchment_shapefile='/path/to/catchment.shp',

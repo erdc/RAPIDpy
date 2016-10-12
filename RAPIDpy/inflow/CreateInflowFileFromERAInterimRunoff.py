@@ -141,7 +141,7 @@ class CreateInflowFileFromERAInterimRunoff(CreateInflowFileFromGriddedRunoff):
 
             # compute new indices based on the data_subset_all
             if not index_new:
-                for r in xrange(self.count-1):
+                for r in xrange(self.count):
                     ind_lat_orig = lat_ind_all[r]
                     ind_lon_orig = lon_ind_all[r]
                     index_new.append((ind_lat_orig - min_lat_ind_all)*len_lon_subset_all + (ind_lon_orig - min_lon_ind_all))

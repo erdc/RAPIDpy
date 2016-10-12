@@ -12,11 +12,10 @@ from datetime import datetime
 import netCDF4 as NET
 import numpy as np
 import os
-from past.builtins import xrange
 from pytz import utc
 
 #local
-from ..helper_functions import csv_to_list, get_rivid_list_from_file, open_csv
+from ..helper_functions import open_csv
 
 class CreateInflowFileFromGriddedRunoff(object):
     def __init__(self):
@@ -28,26 +27,25 @@ class CreateInflowFileFromGriddedRunoff(object):
         Read in weight table
         """
         print("Reading the weight table...")
-        self.dict_list = {self.header_wt[0]:[], self.header_wt[1]:[], self.header_wt[2]:[],
-                          self.header_wt[3]:[], self.header_wt[4]:[]}
-                     
         with open_csv(in_weight_table, "r") as csvfile:
             reader = csv.reader(csvfile)
-            self.count = 0
-            for row in reader:
-                if self.count == 0:
-                    #check number of columns in the weight table
-                    if len(row) < len(self.header_wt):
-                        raise Exception(self.errorMessages[4])
-                    #check header
-                    if row[1:len(self.header_wt)] != self.header_wt[1:]:
-                        raise Exception(self.errorMessages[5])
-                    self.count += 1
-                else:
-                    for i in xrange(len(self.header_wt)):
-                       self.dict_list[self.header_wt[i]].append(row[i])
-                    self.count += 1
+            header_row = next(reader)
+            #check number of columns in the weight table
+            if len(header_row) < len(self.header_wt):
+                raise Exception(self.errorMessages[4])
+            #check header
+            if header_row[1:len(self.header_wt)] != self.header_wt[1:]:
+                raise Exception(self.errorMessages[5])
 
+        self.dict_list = np.loadtxt(in_weight_table, 
+                                    delimiter=",", 
+                                    usecols=(0,1,2,3,4),
+                                    skiprows=1,
+                                    dtype={'names': (self.header_wt[0], self.header_wt[1], self.header_wt[2], self.header_wt[3], self.header_wt[4]),
+                                           'formats': ('i8', 'f8', 'i8', 'i8', 'i8')},
+                                    )
+                                    
+        self.count = self.dict_list.shape[0]
         self.size_streamID = len(np.unique(np.array(self.dict_list[self.header_wt[0]], dtype=np.int32)))
         
     def _write_lat_lon(self, data_out_nc, rivid_lat_lon_z_file):
@@ -58,9 +56,15 @@ class CreateInflowFileFromGriddedRunoff(object):
         #only add if user adds
         if rivid_lat_lon_z_file and os.path.exists(rivid_lat_lon_z_file):
             #get list of COMIDS
-            lookup_table = csv_to_list(rivid_lat_lon_z_file)[1:]
-            lookup_comids = np.array([int(float(row[0])) for row in lookup_table], dtype=np.int32)
-        
+            lookup_table = np.loadtxt(rivid_lat_lon_z_file, 
+                                      delimiter=",", 
+                                      usecols=(0,1,2),
+                                      skiprows=1,
+                                      dtype={'names': ('rivid', 'lat', 'lon'),
+                                             'formats': ('i8', 'f8', 'f8'),
+                                            },
+                                      )
+                                        
             # Get relevant arrays while we update them
             nc_rivids = data_out_nc.variables['rivid'][:]
             lats = data_out_nc.variables['lat'][:]
@@ -74,18 +78,18 @@ class CreateInflowFileFromGriddedRunoff(object):
             # Process each row in the lookup table
             for nc_index, nc_rivid in enumerate(nc_rivids):
                 try:
-                    lookup_index = np.where(lookup_comids == nc_rivid)[0][0]
+                    lookup_index = np.where(lookup_table['rivid'] == nc_rivid)[0][0]
                 except Exception:
                     raise Exception('rivid {0} misssing in comid_lat_lon_z file'.format(nc_rivid))
         
-                lat = float(lookup_table[lookup_index][1])
+                lat = float(lookup_table['lat'][lookup_index])
                 lats[nc_index] = lat
                 if (lat_min) is None or lat < lat_min:
                     lat_min = lat
                 if (lat_max) is None or lat > lat_max:
                     lat_max = lat
         
-                lon = float(lookup_table[lookup_index][2])
+                lon = float(lookup_table['lon'][lookup_index])
                 lons[nc_index] = lon
                 if (lon_min) is None or lon < lon_min:
                     lon_min = lon
@@ -126,7 +130,10 @@ class CreateInflowFileFromGriddedRunoff(object):
         # Create output inflow netcdf data
         print("Generating inflow file ...")
         data_out_nc = NET.Dataset(out_nc, "w", format="NETCDF3_CLASSIC")
-        rivid_list = get_rivid_list_from_file(in_rapid_connect_file)
+        rivid_list = np.loadtxt(in_rapid_connect_file, 
+                                delimiter=",", 
+                                usecols=(0,), 
+                                dtype=int)
         #create dimensions
         data_out_nc.createDimension('time', number_of_timesteps)
         data_out_nc.createDimension('rivid', len(rivid_list))

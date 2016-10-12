@@ -64,17 +64,6 @@ def csv_to_list(csv_file, delimiter=','):
             reader = csv.reader(csv_con, delimiter=delimiter)
         return list(reader)
 
-def get_rivid_list_from_file(in_rapid_connect):
-    """
-    Gets the first row of rivids in rapid connect file or riv_bas_id file
-    """
-    rapid_connect_rivid_list = []
-    with open_csv(in_rapid_connect) as csvfile:
-        reader = csv.reader(csvfile, delimiter=",")
-        for row in reader:
-            rapid_connect_rivid_list.append(row[0])
-    return np_array(rapid_connect_rivid_list, dtype=int)
-
 def compare_csv_decimal_files(file1, file2, header=True):
     """
     This function compares two csv files

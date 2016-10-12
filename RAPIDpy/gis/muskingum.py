@@ -101,7 +101,9 @@ def CreateMuskingumKfacFile(in_drainage_line,
     elif length_units != "km":
         raise Exception("ERROR: Invalid length units supplied. Supported units are m and km.")
         
-    connectivity_table = csv_to_list(in_connectivity_file)
+    connectivity_table = np.loadtxt(in_connectivity_file, 
+                                    delimiter=",", 
+                                    dtype=int)
     
     length_slope_array = []
     kfac2_array = []

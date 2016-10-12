@@ -10,7 +10,6 @@
 from csv import writer as csvwriter
 import numpy as np
 
-from ..helper_functions import csv_to_list
 from ..dataset import RAPIDDataset
 
 #------------------------------------------------------------------------------
@@ -165,21 +164,6 @@ def KGE(s,o):
     kge = 1- np.sqrt( (cc-1)**2 + (alpha-1)**2 + (beta-1)**2 )
     return kge, cc, alpha, beta
 
-def assimilation_eff(assimilated, simulated, observed):
-    """
-        Assimilation efficiency (Aubert et al., 2003)
-        Input:
-        assimilated: assimilated flow
-        simulated: simulated flow
-        observed: observed flow
-        Output:
-        Eff
-        """
-    s,o = filter_nan(simulated, observed)
-    a,o = filter_nan(assimilated, observed)
-    
-    Eff = 100*(1 - np.sum((a-o)**2)/np.sum((s-o)**2))
-    return Eff
 ## END FUNCTIONS FROM http://pydoc.net/Python/ambhas/0.4.0/ambhas.errlib/
 
 #------------------------------------------------------------------------------
@@ -235,13 +219,13 @@ def find_goodness_of_fit(rapid_qout_file, reach_id_file, observed_file,
                              steps_per_group=8) #for raw rapid output (8 is produces daily flows for 3-hr timesteps)
     
     """
-    reach_id_list = np.array([row[0] for row in csv_to_list(reach_id_file)])
+    reach_id_list = np.loadtxt(reach_id_file, delimiter=",", usecols=(0,), dtype=np.int32)
    
     data_nc = RAPIDDataset(rapid_qout_file)
     nc_reach_id_list = data_nc.get_river_id_array()
     
     #analyze and write
-    observed_table = np.array(csv_to_list(observed_file), np.float32)
+    observed_table = np.loadtxt(observed_file, delimiter=",")
     with open(out_analysis_file, 'w') as outcsv:
         writer = csvwriter(outcsv)
         writer.writerow(["reach_id",
@@ -303,16 +287,10 @@ def find_goodness_of_fit_csv(observed_simulated_file):
         find_goodness_of_fit_csv('/united_kingdom-thames/flows_kingston_gage_noah.csv')
     
     """
-    flow_table = csv_to_list(observed_simulated_file)
+    observed_simulated_table = np.loadtxt(observed_simulated_file, delimiter=",", usecols=(0,1))
     
-    observed_array = []
-    simulated_array = []
-    for row in flow_table:
-        observed_array.append(float(row[0]))
-        simulated_array.append(float(row[1]))
-    
-    simulated_array,observed_array = filter_nan(np.array(simulated_array),
-                                                np.array(observed_array))
+    simulated_array,observed_array = filter_nan(observed_simulated_table[:,0],
+                                                observed_simulated_table[:,1])
 
     # print error indices
     print("Percent Bias: {0}".format(pc_bias(simulated_array,observed_array)))

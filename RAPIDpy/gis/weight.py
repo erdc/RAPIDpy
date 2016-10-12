@@ -25,7 +25,7 @@ except Exception:
 
 #local
 from .voronoi import pointsToVoronoiGridArray
-from ..helper_functions import get_rivid_list_from_file, open_csv
+from ..helper_functions import open_csv
 
 gdal.UseExceptions()
 
@@ -135,8 +135,10 @@ def RTreeCreateWeightTable(lsm_grid_lat, lsm_grid_lon,
         catchment_rivid_list[feature_idx] = catchment_feature.GetField(river_id)
         
     print("Reading in RAPID connect file ...")
-    rapid_connect_rivid_list = get_rivid_list_from_file(in_rapid_connect)
-
+    rapid_connect_rivid_list = np.loadtxt(in_rapid_connect, 
+                                          delimiter=",", 
+                                          usecols=(0,),
+                                          dtype=int)
     print("Find LSM grid cells that intersect with each catchment")
     print("and write out weight table ...")
     

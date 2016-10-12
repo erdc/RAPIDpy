@@ -160,7 +160,7 @@ class CreateInflowFileFromLDASRunoff(CreateInflowFileFromGriddedRunoff):
                  
                 if not index_new:
                     # compute new indices based on the data_subset_surface
-                    for r in range(0,self.count-1):
+                    for r in range(0,self.count):
                         ind_lat_orig = lat_ind_all[r]
                         ind_lon_orig = lon_ind_all[r]
                         index_new.append((ind_lat_orig - min_lat_ind_all)*len_lon_subset + (ind_lon_orig - min_lon_ind_all))

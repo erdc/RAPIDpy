@@ -11,6 +11,7 @@
 from csv import reader as csv_reader
 from csv import writer as csv_writer
 import numpy as np
+from past.builtins import xrange
 
 try:
     from osgeo import gdal, ogr
@@ -22,13 +23,6 @@ gdal.UseExceptions()
    
 #local
 from ..helper_functions import csv_to_list, open_csv
-
-#in Python 3 xrange is now range
-try:
-    xrange
-except NameError:
-    xrange = range
-    pass
 
 def CreateMuskingumKfacFile(in_drainage_line,
                             river_id,

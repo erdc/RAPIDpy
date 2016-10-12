@@ -10,6 +10,7 @@
 
 from csv import writer as csv_writer
 import numpy as np
+from past.builtins import xrange
 
 try:
     from osgeo import gdal, ogr
@@ -21,13 +22,6 @@ gdal.UseExceptions()
 
 #local
 from ..helper_functions import open_csv
-
-#in Python 3 xrange is now range
-try:
-    xrange
-except NameError:
-    xrange = range
-    pass
 
 def StreamIDNextDownIDToConnectivity(stream_id_array,
                                      next_down_id_array,

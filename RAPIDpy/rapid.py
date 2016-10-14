@@ -23,7 +23,7 @@ from time import gmtime
 
 #local
 from .dataset import RAPIDDataset
-from .helper_functions import log, open_csv
+from .helper_functions import csv_to_list, log, open_csv
 from .postprocess import ConvertRAPIDOutputToCF
 
 #------------------------------------------------------------------------------
@@ -343,12 +343,12 @@ class RAPID(object):
         #get rapid connect info
         rapid_connect_table = np.loadtxt(self.rapid_connect_file, delimiter=",", dtype=int)
 
-        self.IS_riv_tot = rapid_connect_table.shape[0]
-        self.IS_max_up = rapid_connect_table[:,2].max()
+        self.IS_riv_tot = int(rapid_connect_table.shape[0])
+        self.IS_max_up = int(rapid_connect_table[:,2].max())
     
         #get riv_bas_id info
         riv_bas_id_table = np.loadtxt(self.riv_bas_id_file, delimiter=",", usecols=(0,), dtype=int)
-        self.IS_riv_bas = riv_bas_id_table.size
+        self.IS_riv_bas = int(riv_bas_id_table.size)
     
     def update_simulation_runtime(self):
         """
@@ -933,12 +933,9 @@ class RAPID(object):
         """
         log("Generating avg streamflow file and stream id file required for calibration ...",
             "INFO")
-        reach_id_gage_id_list = np.loadtxt(reach_id_gage_id_file, 
-                                           delimiter=",", 
-                                           usecols=(0,1),
-                                           skiprows=1,
-                                           dtype={'names': ('reach_id', 'station_id'),
-                                                  'formats': ('i8', 'object')})
+        log("Generating avg streamflow file and stream id file required for calibration ...",
+            "INFO")
+        reach_id_gage_id_list = csv_to_list(reach_id_gage_id_file)
 # USGS not returning tzinfo anymore, so removed tzinfo operations
 #       if start_datetime.tzinfo is None or start_datetime.tzinfo.utcoffset(start_datetime) is None:
 #            start_datetime = start_datetime.replace(tzinfo=utc)
@@ -950,16 +947,20 @@ class RAPID(object):
         #add extra day as it includes the start date (e.g. 7-5 is 2 days, but have data for 5,6,7, so +1)
         num_days_needed = (end_datetime-start_datetime).days + 1
 
-        #make sure station ID's are correct as sometimes the initial zero is removed
-        for station_index, station_id in enumerate(reach_id_gage_id_list['station_id']):
-            if len(station_id) == 7:
-                reach_id_gage_id_list['station_id'][station_index] = '0' + station_id
+        gage_id_list = []
+        for row in reach_id_gage_id_list[1:]:
+            station_id = row[1]
+            if len(row[1]) == 7:
+                station_id = '0' + row[1]
+            gage_id_list.append(station_id)
         
+        num_gage_id_list = np.array(gage_id_list, dtype=np.int32)
         log("Querying Server for Data ..." ,
             "INFO")
+    
         query_params = {
                         'format': 'json',
-                        'sites': ",".join(reach_id_gage_id_list['station_id']),
+                        'sites': ",".join(gage_id_list),
 # USGS not returning tzinfo anymore, so removed tzinfo operations 
 #                        'startDT': start_datetime.astimezone(tzoffset(None, -18000)).strftime("%Y-%m-%d"),
 #                        'endDT': end_datetime.astimezone(tzoffset(None, -18000)).strftime("%Y-%m-%d"),
@@ -997,7 +998,7 @@ class RAPID(object):
     
                     try:
                         #get where streamids assocated with USGS sation id is
-                        riverid_index = np.where(reach_id_gage_id_list['station_id']==usgs_station_id)[0][0]
+                        streamid_index = np.where(num_gage_id_list==int(float(usgs_station_id)))[0][0]+1
                     except Exception:
                         log("USGS Station {0} not found in list ...".format(usgs_station_id),
                             "WARNING")
@@ -1005,9 +1006,9 @@ class RAPID(object):
                         
                     if len(gage_data) == num_days_needed:
                         gage_data_matrix.append(gage_data)
-                        valid_comid_list.append(reach_id_gage_id_list['reach_id'][riverid_index])
+                        valid_comid_list.append(reach_id_gage_id_list[streamid_index][0])
                     else:
-                        log("StreamID {0} USGS Station {1} MISSING {2} DATA VALUES".format(reach_id_gage_id_list['reach_id'][riverid_index],
+                        log("StreamID {0} USGS Station {1} MISSING {2} DATA VALUES".format(reach_id_gage_id_list[streamid_index][0],
                                                                                            usgs_station_id,
                                                                                            num_days_needed-len(gage_data)),
                             "WARNING")

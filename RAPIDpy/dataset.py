@@ -906,7 +906,6 @@ class RAPIDDataset(object):
             path_to_rapid_qout = '/path/to/Qout.nc'
 
             with RAPIDDataset(path_to_rapid_qout) as qout_nc:
-                #for 
                 qout_nc.write_flows_to_gssha_time_series_xys('/timeseries/Qout_3624735.xys',
                                                              series_name="RAPID_TO_GSSHA_{0}".format(river_id),
                                                              series_id=34,

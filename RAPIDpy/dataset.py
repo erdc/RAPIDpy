@@ -252,12 +252,15 @@ class RAPIDDataset(object):
             with RAPIDDataset(path_to_rapid_qout) as qout_nc:
                 #CF-Compliant version
                 if qout_nc.is_time_variable_valid():
+                    #retrieve integer timestamp array
                     time_array = qout_nc.get_time_array()
                     
                     #or, to get datetime array
                     time_datetime = qout_nc.get_time_array(return_datetime=True)
+                    
                 #Original version
                 else:
+                    #retrieve integer timestamp array
                     time_array = qout_nc.get_time_array(datetime_simulation_start=datetime(1980, 1, 1),
                                                         simulation_time_step_seconds=3*3600)
                                                         
@@ -783,9 +786,12 @@ class RAPIDDataset(object):
                                            river_id=river_id,
                                            )
                                       
-                river_index = qout_nc.get_river_index(river_id)
                 
                 #if file is CF compliant, you can write out daily average
+
+                #NOTE: Getting the river index is not necessary
+                #this is just an example of how to use this                                      
+                river_index = qout_nc.get_river_index(river_id)
                 qout_nc.write_flows_to_csv('/timeseries/Qout_daily.csv',
                                            river_index=river_index,
                                            daily=True,
@@ -824,7 +830,7 @@ class RAPIDDataset(object):
             with RAPIDDataset(path_to_rapid_qout) as qout_nc:
                 #if file is CF compliant, you can filter by date
                 qout_nc.write_flows_to_csv('/timeseries/Qout_daily_date_filter.csv',
-                                           river_index=river_index,
+                                           river_id=river_id,
                                            daily=True,
                                            date_search_start=datetime(2002, 8, 31),
                                            date_search_end=datetime(2002, 9, 15),

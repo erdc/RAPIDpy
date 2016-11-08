@@ -64,7 +64,7 @@ before_install:
 #-----------------------------------------------------------------------------
 # Install required python packages
 #-----------------------------------------------------------------------------
-- conda install --yes nose numpy scipy netCDF4 gdal shapely pyproj
+- conda install --yes nose numpy pandas scipy netCDF4 gdal shapely pyproj
 - conda install --yes -c conda-forge rtree
 - pip install coveralls nose-cov
 #restart environment to get variables set

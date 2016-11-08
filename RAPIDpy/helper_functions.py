@@ -110,20 +110,15 @@ def compare_csv_timeseries_files(file1, file2, header=True):
         csv2 = csv.reader(fh2)
         files_equal = True
         if header:
-            files_equal = (next(csv1) == next(csv2)) #header
+            assert next(csv1) == next(csv2) #header
         while files_equal:
             try:
-                try:
-                    row1 = next(csv1)
-                    row2 = next(csv2)
-                    files_equal = row1[0] == row2[0] #check dates
-                    assert_almost_equal(np_array(row1[1:], dtype=np_float32),
-                                        np_array(row2[1:], dtype=np_float32),
-                                        decimal=2)
-                except AssertionError:
-                    files_equal = False
-                    break
-                    pass
+                row1 = next(csv1)
+                row2 = next(csv2)
+                assert row1[0] == row2[0] #check dates
+                assert_almost_equal(np_array(row1[1:], dtype=np_float32),
+                                    np_array(row2[1:], dtype=np_float32),
+                                    decimal=2)
             except StopIteration:
                 break
                 pass

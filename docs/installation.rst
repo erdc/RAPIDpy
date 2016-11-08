@@ -120,7 +120,7 @@ Install Python packages with all dependencies
     $ conda update --yes conda python
     $ conda create --name rapid python=2
     $ source activate rapid
-    $ conda install --yes nose numpy scipy netCDF4 gdal shapely pyproj
+    $ conda install --yes nose numpy pandas scipy netCDF4 gdal shapely pyproj
     $ conda install --yes -c conda-forge rtree
     $ source deactivate rapid
     $ source activate rapid
@@ -148,7 +148,7 @@ Open CMD terminal:
     > conda update --yes conda python
     > conda create --name rapid python=2
     > activate rapid
-    > conda install --yes nose numpy scipy netCDF4 gdal pyproj pytz python-dateutil
+    > conda install --yes nose numpy pandas scipy netCDF4 gdal pyproj pytz python-dateutil
     > conda install --yes -c conda-forge rtree
     > conda install --yes -c scitools shapely
     > deactivate 

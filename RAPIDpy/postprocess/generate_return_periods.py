@@ -40,9 +40,10 @@ def generate_single_return_period(args):
         return_2_array = np.zeros(len(rivid_index_list))
         
         for iter_idx, rivid_index in enumerate(rivid_index_list):
-            filtered_flow_data = qout_nc_file.get_daily_qout_index(rivid_index,
-                                                                   steps_per_group=step,
-                                                                   mode="max")
+            filtered_flow_data = qout_nc_file.get_qout_index(rivid_index,
+                                                             pd_filter="{0}D".format(step),
+                                                             filter_mode="max")
+                                                             
             sorted_flow_data = np.sort(filtered_flow_data)[:num_years:-1]
             max_flow = sorted_flow_data[0]
             if max_flow < 0.01:

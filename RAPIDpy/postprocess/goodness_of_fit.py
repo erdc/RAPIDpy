@@ -181,7 +181,6 @@ def find_goodness_of_fit(rapid_qout_file, reach_id_file, observed_file,
         observed_file(str): Path to input csv with with observed flows corresponding to the RAPID Qout. It is in the format of the RAPID observed flows file.
         out_analysis_file(str): Path to the analysis output csv file.
         daily(Optional[bool]): If True and the file is CF-Compliant, it will compare the *observed_file* with daily average flow from Qout. Default is False. 
-        steps_per_group(Optional[int]): Number of time steps per day in the file. This is for Qout files that are not CF-Compliant. Default is 1.    
 
     Example with CF-Compliant RAPID Qout file:
     
@@ -199,30 +198,10 @@ def find_goodness_of_fit(rapid_qout_file, reach_id_file, observed_file,
         find_goodness_of_fit(cf_input_qout_file, reach_id_file, observed_file,
                              cf_out_analysis_file, daily=True)
     
-    Example with original RAPID Qout file:
-    
-    .. code:: python
-    
-        import os
-        from RAPIDpy.postprocess import find_goodness_of_fit
-    
-        INPUT_DATA_PATH = '/path/to/data'
-        reach_id_file = os.path.join(INPUT_DATA_PATH, 'obs_reach_id.csv') 
-        observed_file = os.path.join(INPUT_DATA_PATH, 'obs_flow.csv') 
-
-        original_input_qout_file = os.path.join(COMPARE_DATA_PATH, 'Qout_nasa_lis_3hr_20020830_original.nc')
-        original_out_analysis_file = os.path.join(OUTPUT_DATA_PATH, 'original_goodness_of_fit_results-daily.csv') 
-        find_goodness_of_fit(rapid_qout_file=original_input_qout_file, 
-                             reach_id_file=reach_id_file, 
-                             observed_file=observed_file,
-                             out_analysis_file=original_out_analysis_file, 
-                             steps_per_group=8) #for raw rapid output (8 is produces daily flows for 3-hr timesteps)
-    
     """
     reach_id_list = np.loadtxt(reach_id_file, delimiter=",", usecols=(0,), dtype=np.int32)
    
     data_nc = RAPIDDataset(rapid_qout_file)
-    nc_reach_id_list = data_nc.get_river_id_array()
     
     #analyze and write
     observed_table = np.loadtxt(observed_file, delimiter=",")
@@ -241,12 +220,8 @@ def find_goodness_of_fit(rapid_qout_file, reach_id_file, observed_file,
                          "KGE"])
      
         for index, reach_id in enumerate(reach_id_list):
-            reach_index = np.where(nc_reach_id_list == int(reach_id))[0][0]
             observed_array = observed_table[:, index]
-            if daily or steps_per_group>1:
-                simulated_array = data_nc.get_daily_qout_index(reach_index, steps_per_group=steps_per_group)
-            else:
-                simulated_array = data_nc.get_qout(reach_index)
+            simulated_array = data_nc.get_qout(reach_id, daily=daily)
             #make sure they are the same length
             simulated_array = simulated_array[:len(observed_array)]
             observed_array = observed_array[:len(simulated_array)]

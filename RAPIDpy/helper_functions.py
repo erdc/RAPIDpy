@@ -64,7 +64,7 @@ def csv_to_list(csv_file, delimiter=','):
             reader = csv.reader(csv_con, delimiter=delimiter)
         return list(reader)
 
-def compare_csv_decimal_files(file1, file2, header=True):
+def compare_csv_decimal_files(file1, file2, header=True, timeseries=False):
     """
     This function compares two csv files
     """
@@ -77,52 +77,32 @@ def compare_csv_decimal_files(file1, file2, header=True):
          open_csv(file2) as fh2:
         csv1 = csv.reader(fh1)
         csv2 = csv.reader(fh2)
-        files_equal = True
+        
         if header:
-            files_equal = (next(csv1) == next(csv2)) #header
-        while files_equal:
+            assert next(csv1) == next(csv2) #header
+            
+        while True:
             try:
-                try:
-                    assert_almost_equal(np_array(next(csv1), dtype=np_float32),
-                                        np_array(next(csv2), dtype=np_float32),
-                                        decimal=2)
-                except AssertionError:
-                    files_equal = False
-                    break
-                    pass
+                row1 = next(csv1)
+                row2 = next(csv2)
+                compare_start_index = 0
+                if timeseries:
+                    assert row1[0] == row2[0] #check dates
+                    compare_start_index=1
+                    
+                assert_almost_equal(np_array(row1[compare_start_index:], dtype=np_float32),
+                                    np_array(row2[compare_start_index:], dtype=np_float32),
+                                    decimal=2)
             except StopIteration:
                 break
                 pass
-    return files_equal
+    return True
     
 def compare_csv_timeseries_files(file1, file2, header=True):
     """
     This function compares two csv files
     """
-    #CHECK NUM LINES
-    with open_csv(file1) as fh1, \
-         open_csv(file2) as fh2:
-         assert sum(1 for line1 in fh1) == sum(1 for line2 in fh2)
-
-    with open_csv(file1) as fh1, \
-         open_csv(file2) as fh2:
-        csv1 = csv.reader(fh1)
-        csv2 = csv.reader(fh2)
-        files_equal = True
-        if header:
-            assert next(csv1) == next(csv2) #header
-        while files_equal:
-            try:
-                row1 = next(csv1)
-                row2 = next(csv2)
-                assert row1[0] == row2[0] #check dates
-                assert_almost_equal(np_array(row1[1:], dtype=np_float32),
-                                    np_array(row2[1:], dtype=np_float32),
-                                    decimal=2)
-            except StopIteration:
-                break
-                pass
-    return files_equal
+    return compare_csv_decimal_files(file1, file2, header, True)
 
 def remove_files(*args):
     """

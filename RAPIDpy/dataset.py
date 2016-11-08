@@ -12,9 +12,9 @@ import datetime
 from netCDF4 import Dataset, num2date
 import numpy as np
 from numpy.ma import masked
+import pandas as pd
 from past.builtins import xrange
 from pytz import utc
-import time
 
 from .helper_functions import log, open_csv
     
@@ -101,7 +101,10 @@ class RAPIDDataset(object):
         river_id_dimension(Optional[str]): Name of the river ID dimension. Default is to search through a standard list.
         river_id_variable(Optional[str]): Name of the river ID variable. Default is to search through a standard list.
         streamflow_variable(Optional[str]): Name of the streamflow varaible. Default is to search through a standard list.
-
+        datetime_simulation_start(Optional[datetime]): This is a datetime object with the date of the simulation start time.
+        simulation_time_step_seconds(Optional[integer]): This is the time step of the simulation output in seconds.
+        out_tzinfo(Optional[tzinfo]): Time zone to output data as. The dates will be converted from UTC to the time zone input. Default is UTC.
+        
     Example::
     
         from RAPIDpy import RAPIDDataset
@@ -115,7 +118,10 @@ class RAPIDDataset(object):
     def __init__(self, filename, 
                  river_id_dimension="", 
                  river_id_variable="", 
-                 streamflow_variable=""):
+                 streamflow_variable="",
+                 datetime_simulation_start=None,
+                 simulation_time_step_seconds=None,
+                 out_tzinfo=None):
         """
         Initialize the class with variables given by the user
         """
@@ -184,6 +190,10 @@ class RAPIDDataset(object):
                 print('WARNING: Could not find river ID variable in {0}.'.format(variable_keys))
         elif river_id_variable not in variable_keys:
             print('WARNING: Could not find river ID variable: {0}.'.format(river_id_variable))
+        
+        self.out_tzinfo = out_tzinfo
+        self.datetime_simulation_start = datetime_simulation_start
+        self.simulation_time_step_seconds = simulation_time_step_seconds
 
     def __enter__(self):
         return self
@@ -193,6 +203,13 @@ class RAPIDDataset(object):
 
     def close(self):
         self.qout_nc.close()
+        
+    def _is_legacy_time_valid(self):
+        """
+        This determines whether or not legacy time is set correctly
+        """
+        return self.datetime_simulation_start is not None and \
+               self.simulation_time_step_seconds is not None
 
     def is_time_variable_valid(self):
         """
@@ -222,7 +239,7 @@ class RAPIDDataset(object):
                             time_var_valid = True
                     except ValueError:
                         pass
-    
+            
         return time_var_valid
     
     def get_time_array(self, 
@@ -235,41 +252,54 @@ class RAPIDDataset(object):
         However, the old version requires the user to know when the simulation began and the time step of the output.
         
         Parameters:
-            datetime_simulation_start(Optional[datetime]): This is a datetime object with the date of the simulation start time.
-            simulation_time_step_seconds(Optional[integer]): This is the time step of the simulation output in seconds.
             return_datetime(Optional[boolean]): If true, it converts the data to a list of datetime objects. Default is False.
             time_index_array(Optional[list or np.array]): This is used to extract the datetime vales. This can be from the *get_time_index_range* function.
             
         Returns:
             list: An array of integers representing seconds since Jan 1, 1970 UTC or datetime objects if return_datetime is set to True.
         
-        This example demonstrates how to retrieve or generate a time array to go
-        along with your RAPID streamflow series::
+        These examples demonstrates how to retrieve or generate a time array to go
+        along with your RAPID streamflow series.
+        
+        CF-Compliant Qout File Example:
+        
+        .. code:: python
         
             from RAPIDpy import RAPIDDataset
     
             path_to_rapid_qout = '/path/to/Qout.nc'
             with RAPIDDataset(path_to_rapid_qout) as qout_nc:
-                #CF-Compliant version
-                if qout_nc.is_time_variable_valid():
-                    #retrieve integer timestamp array
-                    time_array = qout_nc.get_time_array()
+                #retrieve integer timestamp array
+                time_array = qout_nc.get_time_array()
+                
+                #or, to get datetime array
+                time_datetime = qout_nc.get_time_array(return_datetime=True)
                     
-                    #or, to get datetime array
-                    time_datetime = qout_nc.get_time_array(return_datetime=True)
                     
-                #Original version
-                else:
-                    #retrieve integer timestamp array
-                    time_array = qout_nc.get_time_array(datetime_simulation_start=datetime(1980, 1, 1),
-                                                        simulation_time_step_seconds=3*3600)
-                                                        
-                    #or, to get datetime array
-                    time_datetime = qout_nc.get_time_array(datetime_simulation_start=datetime(1980, 1, 1),
-                                                           simulation_time_step_seconds=3*3600,
-                                                           return_datetime=True)
+        Legacy Qout File Example:
+        
+        .. code:: python
+        
+            from RAPIDpy import RAPIDDataset
+    
+            path_to_rapid_qout = '/path/to/Qout.nc'
+            with RAPIDDataset(path_to_rapid_qout,
+                              datetime_simulation_start=datetime_simulation_start,
+                              simulation_time_step_seconds=simulation_time_step_seconds) as qout_nc:
+                    
+                #retrieve integer timestamp array
+                time_array = qout_nc.get_time_array()
+                
+                #or, to get datetime array
+                time_datetime = qout_nc.get_time_array(return_datetime=True)
                     
         """
+        #Original Qout file
+        if datetime_simulation_start is not None:
+            self.datetime_simulation_start = datetime_simulation_start
+        if simulation_time_step_seconds is not None:
+            self.simulation_time_step_seconds = simulation_time_step_seconds
+            
         time_array = []
 
         epoch = datetime.datetime(1970,1,1, tzinfo=utc)
@@ -282,11 +312,11 @@ class RAPIDDataset(object):
                 time_units = self.qout_nc.variables['time'].units
             
         #Original Qout file
-        elif datetime_simulation_start is not None and simulation_time_step_seconds is not None:
-            initial_time_seconds = (datetime_simulation_start.replace(tzinfo=utc)-
-                                    epoch).total_seconds()+simulation_time_step_seconds
-            final_time_seconds = initial_time_seconds + self.size_time*simulation_time_step_seconds
-            time_array = np.arange(initial_time_seconds, final_time_seconds, simulation_time_step_seconds)
+        elif self._is_legacy_time_valid():
+            initial_time_seconds = (self.datetime_simulation_start.replace(tzinfo=utc)-
+                                    epoch).total_seconds()+self.simulation_time_step_seconds
+            final_time_seconds = initial_time_seconds + self.size_time*self.simulation_time_step_seconds
+            time_array = np.arange(initial_time_seconds, final_time_seconds, self.simulation_time_step_seconds)
         else:
             raise Exception("ERROR: This file does not contain the time variable."
                             " To get time array, add datetime_simulation_start"
@@ -296,11 +326,17 @@ class RAPIDDataset(object):
             time_array = time_array[time_index_array]
 
         if return_datetime:
-            return num2date(time_array, time_units)
-        
+            time_array = num2date(time_array, time_units)
+            
+            if self.out_tzinfo is not None:
+                for i in xrange(len(time_array)):
+                    #convert time to output timezone
+                    time_array[i] = utc.localize(time_array[i]).astimezone(self.out_tzinfo).replace(tzinfo=None)
+
         return time_array
 
-    def get_time_index_range(self, date_search_start=None,
+    def get_time_index_range(self, 
+                             date_search_start=None,
                              date_search_end=None,
                              time_index_start=None,
                              time_index_end=None,
@@ -318,27 +354,38 @@ class RAPIDDataset(object):
         Returns:
             index_array: This is an array used to extract a subset of data.
         
-        Example::
+        CF-Compliant Qout File Example:
+        
+        .. code:: python
         
             from RAPIDpy import RAPIDDataset
     
             path_to_rapid_qout = '/path/to/Qout.nc'
             with RAPIDDataset(path_to_rapid_qout) as qout_nc:
-                #CF-Compliant version
-                if qout_nc.is_time_variable_valid():
-                    time_index_range = qout_nc.get_time_index_range(date_search_start=datetime(1980, 1, 1),
-                                                                    date_search_end=datetime(1980, 12, 11))
-                #Original version
-                else:
-                    time_index_range = qout_nc.get_time_index_range(time_index_start=22,
-                                                                    time_index_end=40)
+                time_index_range = qout_nc.get_time_index_range(date_search_start=datetime(1980, 1, 1),
+                                                                date_search_end=datetime(1980, 12, 11))
                     
+                    
+        Legacy Qout File Example:
+        
+        .. code:: python
+        
+            from RAPIDpy import RAPIDDataset
+    
+            path_to_rapid_qout = '/path/to/Qout.nc'
+            with RAPIDDataset(path_to_rapid_qout,
+                              datetime_simulation_start=datetime_simulation_start,
+                              simulation_time_step_seconds=simulation_time_step_seconds) as qout_nc:
+
+                time_index_range = qout_nc.get_time_index_range(date_search_start=datetime(1980, 1, 1),
+                                                                date_search_end=datetime(1980, 12, 11))
         """
         #get the range of time based on datetime range
         time_range = None
-        if self.is_time_variable_valid() and (date_search_start is not None or date_search_end is not None):
+        if (self.is_time_variable_valid() or self._is_legacy_time_valid()) \
+            and (date_search_start is not None or date_search_end is not None):
             print("Determining time range ({0} to {1})...".format(date_search_start, date_search_end))
-            time_array = self.qout_nc.variables['time'][:]
+            time_array = self.get_time_array()
             if date_search_start is not None:
                 seconds_start = (date_search_start-datetime.datetime(1970,1,1)).total_seconds()
                 time_range = np.where(time_array>=seconds_start)[0]
@@ -360,33 +407,12 @@ class RAPIDDataset(object):
 
         #get only one time step
         elif time_index is not None:
-            time_range = time_index
+            time_range = [time_index]
         #return all
         else:
             time_range = range(self.size_time)
         
         return time_range
-
-    def get_daily_time_index_array(self, time_index_range=None):
-        """
-        Returns an array of the first index of each day in the time array
-        """
-        idx = 0
-        if time_index_range is None:
-            datetime_array = self.get_time_array(return_datetime=True)
-        else:
-            idx = time_index_range[0]
-            datetime_array = self.get_time_array(time_index_array=time_index_range,
-                                                 return_datetime=True)
-       
-        current_day = datetime_array[0]
-        daily_time_index_array = [idx]
-        for var_time in datetime_array:
-            if current_day.day != var_time.day:
-                 daily_time_index_array.append(idx)
-            current_day = var_time
-            idx += 1
-        return daily_time_index_array
 
     def get_river_id_array(self):
         """
@@ -464,7 +490,10 @@ class RAPIDDataset(object):
                  time_index_start=None,
                  time_index_end=None,
                  time_index=None,
-                 time_index_array=None):
+                 time_index_array=None,
+                 daily=False,
+                 pd_filter=None,
+                 daily_mode="mean"):
         """
         This method extracts streamflow data by a single river ID or by a river ID array. 
         It has options to extract by date or by date index.
@@ -477,6 +506,9 @@ class RAPIDDataset(object):
             time_index_end(Optional[int]): This is the index of the end of the time array subset. Useful for the old file version.
             time_index(Optional[int]): This is the index of time to return in the case that your code only wants one index. Used internally.
             time_index_array(Optional[list or np.array]): This is used to extract the vales only for particular dates. This can be from the *get_time_index_range* function.
+            daily(Optional[bool]): If true, this will convert qout to daily average.
+            pd_filter(Optional[str]): This is a valid pandas resample frequency filter.
+            filter_mode(Optional[str]): You can get the daily average "mean" or the maximum "max". Default is "mean".
             
         Returns:
             numpy.array: This is a 1D or 2D array or a single value depending on your input search. 
@@ -499,24 +531,15 @@ class RAPIDDataset(object):
             path_to_rapid_qout = '/path/to/Qout.nc'
             river_id = 500
             with RAPIDDataset(path_to_rapid_qout) as qout_nc:
-
-                #CF-Compliant version
-                if qout_nc.is_time_variable_valid():
-                    streamflow_array = qout_nc.get_qout(river_id,
-                                                        date_search_start=datetime(1985,1,1),
-                                                        date_search_end=datetime(1985,2,4))
-                #Original version
-                else:
-                    streamflow_array = qout_nc.get_qout(river_id,
-                                                        time_index_start=20,
-                                                        time_index_end=25)
+                streamflow_array = qout_nc.get_qout(river_id,
+                                                    date_search_start=datetime(1985,1,1),
+                                                    date_search_end=datetime(1985,2,4))
                     
         """
         #get indices of where the streamflow data is
         riverid_index_list_subset = None
         if river_id_array is not None:
-            if hasattr(river_id_array, "__len__") \
-            and not isinstance(river_id_array, str):
+            if not hasattr(river_id_array, "__len__"):
                 river_id_array = [river_id_array]
             riverid_index_list_subset = self.get_subset_riverid_index_list(river_id_array)[0]
 
@@ -526,7 +549,10 @@ class RAPIDDataset(object):
                                    time_index_start,
                                    time_index_end,
                                    time_index,
-                                   time_index_array)
+                                   time_index_array,
+                                   daily,
+                                   pd_filter,
+                                   daily_mode)
                        
 
 
@@ -536,16 +562,20 @@ class RAPIDDataset(object):
                        time_index_start=None,
                        time_index_end=None,
                        time_index=None,
-                       time_index_array=None):
+                       time_index_array=None,
+                       daily=False,
+                       pd_filter=None,
+                       filter_mode="mean"):
         """
         This method extracts streamflow data by river index
         It allows for extracting single or multiple river streamflow arrays
         It has options to extract by date or by date index
         """
         if river_index_array is not None:
-            if isinstance(river_index_array, list) or type(river_index_array).__module__ == np.array:
+            if hasattr(river_index_array, "__len__"):
                 if len(river_index_array) == 1:
                     river_index_array = river_index_array[0]
+                    
         if time_index_array is None:
             time_index_array = self.get_time_index_range(date_search_start,
                                                          date_search_end,
@@ -576,179 +606,26 @@ class RAPIDDataset(object):
                 streamflow_array = qout_variable[:]
         else:
             raise Exception( "Invalid RAPID Qout file dimensions ...")
-        return streamflow_array
-
-    def get_daily_qout_index(self, 
-                             river_index_array, 
-                             daily_time_index_array=None, 
-                             steps_per_group=1, 
-                             mode="mean"):
-        """
-        Gets the daily time series from RAPID output from river ID index.
+            
+        if daily:
+            pd_filter = "D"
         
-        Parameters:
-            river_index_array(list or int): A single river index or an array of river indices.
-            daily_time_index_array(Optional[list of time indices]): This is a list of indices from the get_daily_time_index_array function.
-            steps_per_group(Optional[int]): This is how many time steps per day. This is for the old version of RAPID Qout.
-            mode(Optional[str]): You can get the daily average "mean" or the maximum "max".
-            
-        Returns:
-            numpy.array: This is a 1D or 2D array or a single value depending on your input search. 
-        
-        This example demonstrates how to get daily streamflow averages as an
-        array::
-
-        Example::
-        
-            from RAPIDpy import RAPIDDataset
-    
-            path_to_rapid_qout = '/path/to/Qout.nc'
-            river_id = 500
-            with RAPIDDataset(path_to_rapid_qout) as qout_nc:
-                river_index = qout_nc.get_river_index(river_id)
-
-                #CF-Compliant version
-                if qout_nc.is_time_variable_valid():
-                    streamflow_array = qout_nc.get_daily_qout_index(river_index)
-                #Original version
-                else:
-                    streamflow_array = qout_nc.get_daily_qout_index(river_index,
-                                                                    steps_per_group=8, #average 8 timesteps together for 1 day
-                                                                    )
-        """
-        axis = None
-        if mode=="mean":
-            calc = np.mean
-        elif mode=="max":
-    	    calc = np.amax
-        else:
-    	    raise Exception("Invalid calc mode ...")
-
-        if self.is_time_variable_valid() and steps_per_group<=1:
-            qout_arr = self.get_qout_index(river_index_array)
-            qout_arr_dim_size = len(qout_arr.shape)
-            
-            if not daily_time_index_array:
-                daily_time_index_array = self.get_daily_time_index_array()
-            
-            last_possible_index = daily_time_index_array[-1]
-            #IF NOT END OF ALL TIME, MAKE SURE ENTIRE DAY IS CAPTURED
-            if last_possible_index < self.size_time-1:
-                remaining_time_index_array = self.get_daily_time_index_array(range(last_possible_index, self.size_time))
-                if len(remaining_time_index_array) > 1:
-                    last_possible_index = remaining_time_index_array[1]
-                else:
-                    last_possible_index = -1
-                
-            len_daily_time_array = len(daily_time_index_array)
-            
-            
-            if qout_arr_dim_size > 1:
-                daily_qout = np.zeros((qout_arr.shape[0], len_daily_time_array))
+        if pd_filter is not None:
+            time_array = self.get_time_array(return_datetime=True,time_index_array=time_index_array)
+            df = pd.DataFrame(streamflow_array.T, index=time_array).resample(pd_filter)
+            if filter_mode == "mean":
+                df = df.mean()
+            elif filter_mode == "max":
+                df = df.max()
             else:
-                daily_qout = np.zeros(len_daily_time_array)
+                raise Exception("Invalid filter_mode ...")
                 
-            for idx in xrange(len_daily_time_array):
-                time_index_start = daily_time_index_array[idx]
-                if idx+1 < len_daily_time_array:
-                    next_time_index = daily_time_index_array[idx+1]
-                    if qout_arr_dim_size > 1:
-                        daily_qout[:,idx] = calc(qout_arr[:,time_index_start:next_time_index], axis=1)
-                    else:
-                        daily_qout[idx] = calc(qout_arr[time_index_start:next_time_index])
-                elif idx+1 == len_daily_time_array:
-                    if time_index_start < self.size_time - 1:
-                        if qout_arr_dim_size > 1:
-                            daily_qout[:,idx] =  calc(qout_arr[:,time_index_start:last_possible_index], axis=1)
-                        else:
-                            daily_qout[idx] =  calc(qout_arr[time_index_start:last_possible_index])
-                    else:
-                        if qout_arr_dim_size > 1:
-                            daily_qout[:,idx] =  qout_arr[:,time_index_start]
-                        else:
-                            daily_qout[idx] =  qout_arr[time_index_start]
-            return daily_qout
+            streamflow_array = df.as_matrix().T
             
-        elif steps_per_group > 1:
-            flow_data = self.get_qout_index(river_index_array)
-            qout_arr_dim_size = len(flow_data.shape)
-            axis = None
-            if qout_arr_dim_size > 1:
-                axis = 1
-            daily_qout = []
-            for step_index in xrange(0, len(flow_data), steps_per_group):
-                if qout_arr_dim_size > 1:
-                    flows_slice = flow_data[:,step_index:step_index + steps_per_group]
-                else:
-                    flows_slice = flow_data[step_index:step_index + steps_per_group]
-                daily_qout.append(calc(flows_slice, axis=axis))
-            return np.array(daily_qout, np.float32)
-        else:
-            raise Exception("Must have steps_per_group set to a value greater than one "
-                            "due to non CF-Compliant Qout file ...")
+            if streamflow_array.ndim>0 and streamflow_array.shape[0] == 1:
+                streamflow_array = streamflow_array[0]
 
-    def get_daily_qout(self, 
-                       river_id, 
-                       daily_time_index_array=None,
-                       steps_per_group=1, 
-                       mode="mean"):
-        """
-        Retrieves the daily qout for a river ID from RAPID time series
-        
-        Parameters:
-            river_index_array(list or int): A single river index or an array of river indices.
-            daily_time_index_array(Optional[list of time indices]): This is a list of indices from the get_daily_time_index_array function.
-            steps_per_group(Optional[int]): This is how many time steps per day. This is for the old version of RAPID Qout.
-            mode(Optional[str]): You can get the daily average "mean" or the maximum "max". Defauls is "mean".
-            
-        Returns:
-            numpy.array: This is a 1D or 2D array or a single value depending on your input search. 
-        
-        This example demonstrates how to get daily streamflow averages as an
-        array::
-        
-            from RAPIDpy import RAPIDDataset
-    
-            path_to_rapid_qout = '/path/to/Qout.nc'
-            river_id = 500
-            with RAPIDDataset(path_to_rapid_qout) as qout_nc:
-                #CF-Compliant version
-                if qout_nc.is_time_variable_valid():
-                    streamflow_array = qout_nc.get_daily_qout(river_id)
-                #Original version
-                else:
-                    #average 8 timesteps together for 1 day
-                    streamflow_array = qout_nc.get_daily_qout(river_id,
-                                                              steps_per_group=8, 
-                                                              )
-    
-        """
-        self.get_daily_qout_index(self.get_river_index(river_id),
-                                  daily_time_index_array,
-                                  steps_per_group, mode)
-
-    def get_seasonal_monthly_average(self,river_id_array,
-                                     month):
-        """
-        This function loops through a CF compliant rapid streamflow
-        file to produce estimates for current streamflow based on
-        the seasonal average over the data within the historical streamflow
-        file.
-        """
-        if not self.is_time_variable_valid():
-            raise Exception("ERROR: File must be CF 1.6 compliant with time dimension ...")
-
-        time_indices = []
-        for idx, var_time in enumerate(self.get_time_array(return_datetime=True)):
-            if var_time.month == month:
-                time_indices.append(idx)
-
-        if not time_indices:
-            raise Exception("ERROR: No time steps found within range ...")
-        
-        print("Extracting data ...")
-        return np.mean(self.get_qout(river_id_array, time_index_array=time_indices), axis=1)
-
+        return streamflow_array
 
     def write_flows_to_csv(self, path_to_output_file,
                            river_index=None, 
@@ -843,26 +720,25 @@ class RAPIDDataset(object):
             raise Exception("ERROR: Need reach id or reach index ...")
 
         #analyze and write
-        if self.is_time_variable_valid():
+        if self.is_time_variable_valid() or self._is_legacy_time_valid():
             time_index_range = self.get_time_index_range(date_search_start=date_search_start,
                                                          date_search_end=date_search_end)
-            with open_csv(path_to_output_file, 'w') as outcsv:
-                writer = csv_writer(outcsv)
-                if daily:
-                    daily_time_index_array = self.get_daily_time_index_array(time_index_range)
-                    daily_qout = self.get_daily_qout_index(river_index, daily_time_index_array, mode=mode)
-                    time_array = self.get_time_array()
-                    for idx, time_idx in enumerate(daily_time_index_array):
-                        current_day = time.gmtime(time_array[time_idx])
-                        #write last average
-                        writer.writerow([time.strftime("%Y/%m/%d", current_day), "{0:.5f}".format(daily_qout[idx])])
+                                                         
+            qout_arr = self.get_qout_index(river_index, time_index_array=time_index_range)
+            time_array = self.get_time_array(time_index_array=time_index_range, return_datetime=True)
+            
+            df = pd.DataFrame(qout_arr.T, index=time_array)
+
+            if daily:
+                df = df.resample('D')
+                if mode == "mean":
+                    df = df.mean()
+                elif mode == "max":
+                    df = df.max()
                 else:
-                    qout_arr = self.get_qout_index(river_index, time_index_array=time_index_range)
-                    time_array = self.get_time_array(time_index_array=time_index_range)
-                    with open(path_to_output_file, 'w') as outcsv:
-                        for index in xrange(len(qout_arr)):
-                            var_time = time.gmtime(time_array[index])
-                            writer.writerow([time.strftime("%Y/%m/%d %H:00", var_time), "{0:.5f}".format(qout_arr[index])])
+                    raise Exception("Invalid mode ...")
+                
+            df.to_csv(path_to_output_file, header=False)
 
         else:
             print("Valid time variable not found. Printing values only ...")
@@ -966,25 +842,22 @@ class RAPIDDataset(object):
             raise Exception("ERROR: Need reach id or reach index ...")
 
         #analyze and write
-        if self.is_time_variable_valid():
+        if self.is_time_variable_valid() or self._is_legacy_time_valid():
             time_index_range = self.get_time_index_range(date_search_start=date_search_start,
                                                          date_search_end=date_search_end)
+                                                         
+            qout_arr = self.get_qout_index(river_index, time_index_array=time_index_range)
+            time_array = self.get_time_array(time_index_array=time_index_range, return_datetime=True)
+            
+            df = pd.DataFrame(qout_arr.T, index=time_array)
+            if daily:
+                df = df.resample('D').mean()
+
             with open_csv(path_to_output_file, 'w') as out_ts:
-                if daily:
-                    daily_time_index_array = self.get_daily_time_index_array(time_index_range)
-                    daily_qout = self.get_daily_qout_index(river_index, daily_time_index_array, mode=mode)
-                    out_ts.write("XYS {0} {1} \"{2}\"\r\n".format(series_id, len(daily_qout), series_name))
-                    time_array = self.get_time_array()
-                    for idx, time_idx in enumerate(daily_time_index_array):
-                        date_str = time.strftime("%m/%d/%Y %I:%M:%S %p", time.gmtime(time_array[time_idx]))
-                        out_ts.write("\"{0}\" {1:.5f}\n".format(date_str, daily_qout[idx]))
-                else:
-                    qout_arr = self.get_qout_index(river_index, time_index_array=time_index_range)
-                    out_ts.write("XYS {0} {1} \"{2}\"\r\n".format(series_id, len(qout_arr), series_name))
-                    time_array = self.get_time_array(time_index_array=time_index_range)
-                    for index in xrange(len(qout_arr)):
-                        date_str = time.strftime("%m/%d/%Y %I:%M:%S %p", time.gmtime(time_array[index]))
-                        out_ts.write("\"{0}\" {1:.5f}\n".format(date_str, qout_arr[index]))
+                out_ts.write("XYS {0} {1} \"{2}\"\r\n".format(series_id, len(df.index), series_name))
+                for index, pd_row in df.iterrows():
+                    date_str = index.strftime("%m/%d/%Y %I:%M:%S %p")
+                    out_ts.write("\"{0}\" {1:.5f}\n".format(date_str, pd_row[0]))
         else:
             raise IndexError("Valid time variable not found. Valid time variable required in Qout file to proceed ...")
 
@@ -1007,6 +880,7 @@ class RAPIDDataset(object):
             connection_list_file(list): CSV file with link_id, node_id, baseflow, and rapid_rivid header and rows with data.
             date_search_start(Optional[datetime]): This is a datetime object with the date of the minimum date for starting.
             date_search_end(Optional[datetime]): This is a datetime object with the date of the maximum date for ending.
+            out_tzinfo(Optional[tzinfo]): Timezone object with output time zone for GSSHA. Default is the native RAPID output timezone (UTC).
             daily(Optional[boolean]): If True and the file is CF-Compliant, write out daily flows.
             mode(Optional[str]): You can get the daily average "mean" or the maximum "max". Defauls is "mean".
 
@@ -1070,7 +944,7 @@ class RAPIDDataset(object):
                                                              )        
         """
         #analyze and write
-        if self.is_time_variable_valid():
+        if self.is_time_variable_valid() or self._is_legacy_time_valid():
             time_index_range = self.get_time_index_range(date_search_start=date_search_start,
                                                          date_search_end=date_search_end)
             with open_csv(path_to_output_file, 'w') as out_ts:
@@ -1104,37 +978,19 @@ class RAPIDDataset(object):
                 #INPUT 2002 01 02 00 00 15.480830 12.765090 0.000000
                 #INPUT 2002 01 03 00 00 16.078910 12.765090 0.000000
                 # ...
+                qout_2d_array = self.get_qout_index(river_idx_list, time_index_array=time_index_range)
+                time_array = self.get_time_array(time_index_array=time_index_range, return_datetime=True)
+                
+                df = pd.DataFrame(qout_2d_array.T, index=time_array)
+
                 if daily:
-                    daily_time_index_array = self.get_daily_time_index_array(time_index_range)
-                    out_ts.write("NRPDS {0}\n".format(len(daily_time_index_array)))
-                    daily_qout_2d_array = self.get_daily_qout_index(river_idx_list, daily_time_index_array, mode=mode)
-                    qout_num_dimensions = len(daily_qout_2d_array.shape)
-                    time_array = self.get_time_array()
-                    for idx, time_idx in enumerate(daily_time_index_array):
-                        date_str = time.strftime("%Y %m %d %H %M", time.gmtime(time_array[time_idx]))
-                        if qout_num_dimensions > 1:
-                            qout_str = " ".join(["{0:.5f}".format(daily_qout) for daily_qout in daily_qout_2d_array[:, idx]])
-                        else:
-                            qout_str = "{0:.5f}".format(daily_qout_2d_array[idx])
-                            
-                        out_ts.write("INPUT {0} {1}\n".format(date_str, qout_str))
-                else:
-                    qout_2d_array = self.get_qout_index(river_idx_list, time_index_array=time_index_range)
-                    qout_num_dimensions = len(qout_2d_array.shape)
-                    num_time_steps = qout_2d_array.shape[0]
-                    if qout_num_dimensions > 1:
-                        num_time_steps = qout_2d_array.shape[1]
-                    
-                    out_ts.write("NRPDS {0}\n".format(num_time_steps))
-                    
-                    time_array = self.get_time_array(time_index_array=time_index_range)
-                    for index in xrange(num_time_steps):
-                        date_str = time.strftime("%Y %m %d %H %M", time.gmtime(time_array[index]))
-                        if qout_num_dimensions > 1:
-                            qout_str = " ".join(["{0:.5f}".format(daily_qout) for daily_qout in qout_2d_array[:, index]])
-                        else:
-                            qout_str = "{0:.5f}".format(qout_2d_array[index])
-                        
-                        out_ts.write("INPUT {0} {1}\n".format(date_str, qout_str))
+                    df = df.resample('D').mean()
+
+                out_ts.write("NRPDS {0}\n".format(len(df.index)))
+                
+                for index, pd_row in df.iterrows():
+                    date_str = index.strftime("%Y %m %d %H %M")
+                    qout_str = " ".join(["{0:.5f}".format(pd_row[column]) for column in df])
+                    out_ts.write("INPUT {0} {1}\n".format(date_str, qout_str))
         else:
             raise IndexError("Valid time variable not found. Valid time variable required in Qout file to proceed ...")

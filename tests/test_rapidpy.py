@@ -12,6 +12,7 @@ from filecmp import cmp as fcmp
 from netCDF4 import Dataset
 from nose.tools import ok_
 import os
+from pytz import timezone
 from shutil import copy
 
 
@@ -521,7 +522,7 @@ def test_extract_timeseries():
                                    mode='max')
 
     cf_timeseries_daily_date_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_timeseries_daily_date.csv')    
-    ok_(compare_csv_timeseries_files(cf_timeseries_daily_date_file, cf_timeseries_daily_date_file_solution, header=True))
+    ok_(compare_csv_timeseries_files(cf_timeseries_daily_date_file, cf_timeseries_daily_date_file_solution, header=False))
     
     #if file is CF compliant, check write out timeseries and filter by date
     cf_timeseries_date_file = os.path.join(OUTPUT_DATA_PATH, 'cf_timeseries_date.csv')
@@ -650,7 +651,7 @@ def test_extract_timeseries_to_gssha_xys():
                                                      daily=True)
 
     cf_timeseries_daily_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_timeseries_daily.xys')    
-    ok_(compare_csv_timeseries_files(cf_timeseries_daily_file, cf_timeseries_daily_file_solution, header=True))
+    ok_(compare_csv_timeseries_files(cf_timeseries_daily_file, cf_timeseries_daily_file_solution))
     
     #if file is CF compliant, check write out timeseries
     cf_timeseries_file = os.path.join(OUTPUT_DATA_PATH, 'cf_timeseries.xys')
@@ -661,7 +662,7 @@ def test_extract_timeseries_to_gssha_xys():
                                                      river_index=20)
 
     cf_timeseries_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_timeseries.xys')    
-    ok_(compare_csv_timeseries_files(cf_timeseries_file, cf_timeseries_file_solution, header=False))
+    ok_(compare_csv_timeseries_files(cf_timeseries_file, cf_timeseries_file_solution, header=True))
 
     #if file is CF compliant, you can write out daily average, filter by date, and use max mode
     cf_timeseries_daily_date_file = os.path.join(OUTPUT_DATA_PATH, 'cf_timeseries_daily_date.xys')
@@ -677,7 +678,7 @@ def test_extract_timeseries_to_gssha_xys():
                                                      mode='max')
 
     cf_timeseries_daily_date_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_timeseries_daily_date.xys')    
-    ok_(compare_csv_timeseries_files(cf_timeseries_daily_date_file, cf_timeseries_daily_date_file_solution, header=True))
+    ok_(compare_csv_timeseries_files(cf_timeseries_daily_date_file, cf_timeseries_daily_date_file_solution))
     
     #if file is CF compliant, check write out timeseries and filter by date
     cf_timeseries_date_file = os.path.join(OUTPUT_DATA_PATH, 'cf_timeseries_date.xys')
@@ -690,7 +691,7 @@ def test_extract_timeseries_to_gssha_xys():
                                                      river_id=75224)
 
     cf_timeseries_date_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_timeseries_date.xys')    
-    ok_(compare_csv_timeseries_files(cf_timeseries_date_file, cf_timeseries_date_file_solution, header=False))
+    ok_(compare_csv_timeseries_files(cf_timeseries_date_file, cf_timeseries_date_file_solution))
 
     remove_files(cf_timeseries_file,
                  cf_qout_file,
@@ -720,7 +721,7 @@ def test_extract_timeseries_to_gssha_ihg():
                                                      daily=True)
 
     cf_timeseries_daily_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_timeseries_daily.ihg')    
-    ok_(compare_csv_timeseries_files(cf_timeseries_daily_file, cf_timeseries_daily_file_solution, header=True))
+    ok_(compare_csv_timeseries_files(cf_timeseries_daily_file, cf_timeseries_daily_file_solution, header=False))
     
     #if file is CF compliant, check write out timeseries
     connection_list_file = os.path.join(INPUT_DATA_PATH, 'rapid_gssha_connect_file1.csv')
@@ -746,7 +747,7 @@ def test_extract_timeseries_to_gssha_ihg():
                                                      mode='max')
 
     cf_timeseries_daily_date_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_timeseries_daily_date.ihg')    
-    ok_(compare_csv_timeseries_files(cf_timeseries_daily_date_file, cf_timeseries_daily_date_file_solution, header=True))
+    ok_(compare_csv_timeseries_files(cf_timeseries_daily_date_file, cf_timeseries_daily_date_file_solution, header=False))
     
     #if file is CF compliant, check write out timeseries and filter by date
     connection_list_file = os.path.join(INPUT_DATA_PATH, 'rapid_gssha_connect_file3.csv')
@@ -759,6 +760,77 @@ def test_extract_timeseries_to_gssha_ihg():
                                                      )
 
     cf_timeseries_date_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_timeseries_date.ihg')    
+    ok_(compare_csv_timeseries_files(cf_timeseries_date_file, cf_timeseries_date_file_solution, header=False))
+
+    remove_files(cf_timeseries_file,
+                 cf_qout_file,
+                 cf_timeseries_daily_file,
+                 cf_timeseries_daily_date_file,
+                 cf_timeseries_date_file,
+                 )
+
+def test_extract_timeseries_to_gssha_ihg_tzinfo():
+    """
+    This tests extracting a timeseries from RAPID Qout file to GSHHA ihg file
+    with different time zone output
+    """
+    print("TEST 17: TEST EXTRACT TIMESERIES FROM Qout file to GSSHA ihg file tzinfo")
+    
+    CENTRAL_TZ = timezone('US/Central')
+    
+    cf_input_qout_file = os.path.join(COMPARE_DATA_PATH, 'Qout_nasa_lis_3hr_20020830_CF.nc')
+    cf_qout_file = os.path.join(OUTPUT_DATA_PATH, 'Qout_nasa_lis_3hr_20020830_CF.nc')
+    copy(cf_input_qout_file, cf_qout_file)
+
+
+    #if file is CF compliant, you can write out daily average
+    connection_list_file = os.path.join(INPUT_DATA_PATH, 'rapid_gssha_connect_file3.csv')
+    cf_timeseries_daily_file = os.path.join(OUTPUT_DATA_PATH, 'cf_timeseries_daily_tz.ihg')
+
+    with RAPIDDataset(cf_qout_file, out_tzinfo=CENTRAL_TZ) as qout_nc:
+        qout_nc.write_flows_to_gssha_time_series_ihg(cf_timeseries_daily_file,
+                                                     connection_list_file=connection_list_file,
+                                                     daily=True)
+
+    cf_timeseries_daily_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_timeseries_daily_tz.ihg')    
+    ok_(compare_csv_timeseries_files(cf_timeseries_daily_file, cf_timeseries_daily_file_solution, header=False))
+    
+    #if file is CF compliant, check write out timeseries
+    connection_list_file = os.path.join(INPUT_DATA_PATH, 'rapid_gssha_connect_file1.csv')
+    cf_timeseries_file = os.path.join(OUTPUT_DATA_PATH, 'cf_timeseries_tz.ihg')
+    with RAPIDDataset(cf_qout_file, out_tzinfo=CENTRAL_TZ) as qout_nc:
+        qout_nc.write_flows_to_gssha_time_series_ihg(cf_timeseries_file,
+                                                     connection_list_file=connection_list_file,
+                                                     )
+
+    cf_timeseries_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_timeseries_tz.ihg')    
+    ok_(compare_csv_timeseries_files(cf_timeseries_file, cf_timeseries_file_solution, header=False))
+
+    #if file is CF compliant, you can write out daily average, filter by date, and use max mode
+    connection_list_file = os.path.join(INPUT_DATA_PATH, 'rapid_gssha_connect_file1.csv')
+    cf_timeseries_daily_date_file = os.path.join(OUTPUT_DATA_PATH, 'cf_timeseries_daily_date_tz.ihg')
+
+    with RAPIDDataset(cf_qout_file, out_tzinfo=CENTRAL_TZ) as qout_nc:
+        qout_nc.write_flows_to_gssha_time_series_ihg(cf_timeseries_daily_date_file,
+                                                     connection_list_file=connection_list_file,
+                                                     date_search_start=datetime(2002, 8, 31),
+                                                     date_search_end=datetime(2002, 8, 31, 23, 59, 59),
+                                                     daily=True,
+                                                     mode='max')
+
+    cf_timeseries_daily_date_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_timeseries_daily_date_tz.ihg')    
+    ok_(compare_csv_timeseries_files(cf_timeseries_daily_date_file, cf_timeseries_daily_date_file_solution, header=False))
+    
+    #if file is CF compliant, check write out timeseries and filter by date
+    connection_list_file = os.path.join(INPUT_DATA_PATH, 'rapid_gssha_connect_file3.csv')
+    cf_timeseries_date_file = os.path.join(OUTPUT_DATA_PATH, 'cf_timeseries_date_tz.ihg')
+    with RAPIDDataset(cf_qout_file, out_tzinfo=CENTRAL_TZ) as qout_nc:
+        qout_nc.write_flows_to_gssha_time_series_ihg(cf_timeseries_date_file,
+                                                     connection_list_file=connection_list_file,
+                                                     date_search_start=datetime(2002, 8, 31),
+                                                     )
+
+    cf_timeseries_date_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_timeseries_date_tz.ihg')    
     ok_(compare_csv_timeseries_files(cf_timeseries_date_file, cf_timeseries_date_file_solution, header=False))
 
     remove_files(cf_timeseries_file,

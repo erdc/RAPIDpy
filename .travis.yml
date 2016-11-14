@@ -10,23 +10,20 @@
 #Authors:
 #Alan D. Snow, 2016, based on initial .yml file by Cedric H. David
 
-
 #*******************************************************************************
 #System specifications for Travis CI
 #*******************************************************************************
-language: python
-python:
-  - "2.7"
-  - "3.5"
-#CURRENTLY PYTHON NOT SUPPORTED ON OSX
-#COMMENTED PORTION FOR WHEN THAT HAPPENS
-#os:
-#  - linux
-#  - osx
-#matrix:
-#  fast_finish: true
-#  allow_failures:
-#    - os: osx
+language: c
+os:
+  - linux
+  - osx
+env:
+  - TRAVIS_PYTHON_VERSION="2.7"
+  - TRAVIS_PYTHON_VERSION="3.5"
+matrix:
+  fast_finish: true
+  allow_failures:
+    - os: osx
 notifications:
   email: false
 
@@ -67,8 +64,6 @@ before_install:
 - conda install --yes nose numpy pandas scipy netCDF4 gdal shapely pyproj
 - conda install --yes -c conda-forge rtree
 - pip install coveralls nose-cov
-#restart environment to get variables set
-#- export GDAL_DATA=$HOME/miniconda/share/gdal
 - source deactivate rapid
 
 #-------------------------------------------------------------------------------

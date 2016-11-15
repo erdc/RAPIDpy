@@ -1,0 +1,65 @@
+# Based on: https://github.com/rmcgibbo/python-appveyor-conda-example/blob/master/appveyor.yml
+# And on: https://github.com/ulmo-dev/ulmo/blob/master/appveyor.yml
+# and on: https://github.com/DynamicDevices/mono/blob/master/appveyor.yml
+environment:
+  global:
+    CYG_ROOT: C:/cygwin
+    CYG_MIRROR: http://cygwin.mirror.constant.com
+    CYG_CACHE: C:/cygwin/var/cache/setup  
+    MINICONDA_VERSION: "latest"
+    # SDK v7.0 MSVC Express 2008's SetEnv.cmd script will fail if the
+    # /E:ON and /V:ON options are not enabled in the batch script intepreter
+    # See: http://stackoverflow.com/a/13751649/163740
+    CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\continuous-integration\\appveyor\\run_with_env.cmd"
+    PYTHON_ARCH: "64" # needs to be set for CMD_IN_ENV to succeed. If a mix
+                      # of 32 bit and 64 bit builds are needed, move this
+                      # to the matrix section.
+
+  matrix:
+    - PYTHON: "C:\\Python27_64"
+      PYTHON_VERSION: "2.7"
+      
+    - PYTHON: "C:\\Python34_64"
+      PYTHON_VERSION: "3.4"
+      
+install:
+  # this installs the appropriate Miniconda (Py2/Py3),
+  # as well as pip and conda-build
+  - powershell .\\continuous-integration\\appveyor\\install.ps1
+  - 'SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%'
+  #create environment in conda
+  - 'conda update --yes conda python'
+  - 'conda create --yes --name rapid python=%PYTHON_VERSION%'
+  - 'activate rapid'
+  # Install required python packages
+  - 'conda install --yes nose numpy pandas scipy netCDF4 gdal shapely pyproj'
+  - 'conda install --yes -c conda-forge rtree'
+  - 'pip install coveralls nose-cov'
+  - 'deactivate rapid'
+  #install cygwin
+  - '%CYG_ROOT%\setup-x86.exe -qnNdO -R "%CYG_ROOT%" -s "%CYG_MIRROR%" -l "%CYG_CACHE%" -P dos2unix -P gcc-core -P gcc-g++ -P gcc-gfortran -P gdb -P git -P make -P time -P wget > NUL'
+  #Creating directory for installation of libraries used by RAPID
+  - 'cd %APPVEYOR_BUILD_FOLDER%'
+  - 'SET INSTALLZ_DIR=%APPVEYOR_BUILD_FOLDER%\..\installz' 
+  - 'mkdir %INSTALLZ_DIR%'
+  - 'cd %INSTALLZ_DIR%'
+  #Installing RAPID Prereqs
+  - 'appveyor DownloadFile "https://raw.githubusercontent.com/snowman2/rapid/master/rapid_install_prereqs.sh"'
+  - '%CYG_ROOT%/bin/bash -lc "cd $INSTALLZ_DIR; exec 0</dev/null; chmod +x rapid_install_prereqs.sh"'
+  - '%CYG_ROOT%/bin/bash -lc "cd $INSTALLZ_DIR; exec 0</dev/null; ./rapid_install_prereqs.sh -i=$INSTALLZ_DIR"'
+  #Installing RAPID
+  - '%CYG_ROOT%/bin/bash -lc "cd $APPVEYOR_BUILD_FOLDER\..; exec 0</dev/null; git clone https://github.com/c-h-david/rapid.git; source ./rapid_specify_varpath.sh; cd rapid/src; make rapid"'
+  #TODO: INSTALL GDAL
+  #Installing TauDEM
+  - '%CYG_ROOT%/bin/bash -lc "cd $APPVEYOR_BUILD_FOLDER\..; exec 0</dev/null; git clone  https://github.com/dtarb/TauDEM.git; cd TauDEM/src; make"'
+  #Installing RAPIDpy
+  - 'activate rapid'
+  - 'cd %APPVEYOR_BUILD_FOLDER%'
+  - 'python setup.py install'
+   
+build: false
+
+test_script:
+  - "%CMD_IN_ENV% nosetests --with-cov --cov-report term-missing --cov RAPIDpy"
+on_success:
+- 'coveralls'

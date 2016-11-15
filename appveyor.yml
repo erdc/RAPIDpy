@@ -44,7 +44,7 @@ install:
   - '%CYG_ROOT%/bin/bash -lc "cd $INSTALLZ_DIR; exec 0</dev/null; chmod +x rapid_install_prereqs.sh"'
   - '%CYG_ROOT%/bin/bash -lc "cd $INSTALLZ_DIR; exec 0</dev/null; ./rapid_install_prereqs.sh -i=$INSTALLZ_DIR"'
   #Installing RAPID
-  - '%CYG_ROOT%/bin/bash -lc "cd $APPVEYOR_BUILD_FOLDER\..; exec 0</dev/null; git clone https://github.com/c-h-david/rapid.git; cd rapid; source ./rapid_specify_varpath.sh; cd src; make rapid"'
+  - '%CYG_ROOT%/bin/bash -lc "cd $APPVEYOR_BUILD_FOLDER\..; exec 0</dev/null; git clone https://github.com/c-h-david/rapid.git; cd rapid; source ./rapid_specify_varpath.sh $INSTALLZ_DIR; cd src; make rapid"'
   #TODO: INSTALL GDAL
   #Installing TauDEM
   - '%CYG_ROOT%/bin/bash -lc "cd $APPVEYOR_BUILD_FOLDER\..; exec 0</dev/null; git clone  https://github.com/dtarb/TauDEM.git; cd TauDEM/src; make"'

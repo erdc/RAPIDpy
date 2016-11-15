@@ -20,8 +20,9 @@ install:
   - "conda create --name rapid python=%PYTHON_VERSION%"
   - activate rapid
   # Install required python packages
-  - conda install nose numpy pandas scipy netCDF4 gdal shapely pyproj
+  - conda install nose numpy pandas scipy netCDF4 gdal pyproj pytz python-dateutil
   - conda install -c conda-forge rtree
+  - conda install -c scitools shapely
   - pip install coveralls nose-cov
   - deactivate rapid
   #install cygwin

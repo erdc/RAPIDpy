@@ -86,8 +86,9 @@ before_install:
 #-------------------------------------------------------------------------------
 - cd $TRAVIS_BUILD_DIR/..
 - git clone https://github.com/c-h-david/rapid.git
+- cd rapid
 - source ./rapid_specify_varpath.sh
-- cd rapid/src
+- cd src 
 - make rapid
 
 #-------------------------------------------------------------------------------

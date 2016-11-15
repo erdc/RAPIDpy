@@ -6,14 +6,14 @@ environment:
     # SDK v7.0 MSVC Express 2008's SetEnv.cmd script will fail if the
     # /E:ON and /V:ON options are not enabled in the batch script intepreter
     # See: http://stackoverflow.com/a/13751649/163740
+    MINICONDA_VERSION: "latest"
     CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\.continuous-integration\\appveyor\\windows_sdk.cmd"
     PYTHON_ARCH: "64" # needs to be set for CMD_IN_ENV to succeed. If a mix
                       # of 32 bit and 64 bit builds are needed, move this
                       # to the matrix section.
-    MINICONDA_VERSION: "latest"
-    CYG_ROOT: C:/cygwin
-    CYG_MIRROR: http://cygwin.mirror.constant.com
-    CYG_CACHE: C:/cygwin/var/cache/setup  
+    CYG_ROOT: "C:/cygwin"
+    CYG_MIRROR: "http://cygwin.mirror.constant.com"
+    CYG_CACHE: "C:/cygwin/var/cache/setup"  
 
   matrix:
     - PYTHON: "C:\\Python27_64"

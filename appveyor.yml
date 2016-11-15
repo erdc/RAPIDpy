@@ -3,17 +3,17 @@
 # and on: https://github.com/DynamicDevices/mono/blob/master/appveyor.yml
 environment:
   global:
-    CYG_ROOT: C:/cygwin
-    CYG_MIRROR: http://cygwin.mirror.constant.com
-    CYG_CACHE: C:/cygwin/var/cache/setup  
-    MINICONDA_VERSION: "latest"
     # SDK v7.0 MSVC Express 2008's SetEnv.cmd script will fail if the
     # /E:ON and /V:ON options are not enabled in the batch script intepreter
     # See: http://stackoverflow.com/a/13751649/163740
-    CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\continuous-integration\\appveyor\\run_with_env.cmd"
+    CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\.continuous-integration\\appveyor\\windows_sdk.cmd"
     PYTHON_ARCH: "64" # needs to be set for CMD_IN_ENV to succeed. If a mix
                       # of 32 bit and 64 bit builds are needed, move this
                       # to the matrix section.
+    MINICONDA_VERSION: "latest"
+    CYG_ROOT: C:/cygwin
+    CYG_MIRROR: http://cygwin.mirror.constant.com
+    CYG_CACHE: C:/cygwin/var/cache/setup  
 
   matrix:
     - PYTHON: "C:\\Python27_64"
@@ -25,7 +25,7 @@ environment:
 install:
   # this installs the appropriate Miniconda (Py2/Py3),
   # as well as pip and conda-build
-  -  "powershell .continuous-integration/appveyor/install-miniconda.ps1"
+  - "powershell .continuous-integration/appveyor/install-miniconda.ps1"
   - 'SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%'
   #create environment in conda
   - 'conda update --yes conda python'
@@ -48,7 +48,7 @@ install:
   - '%CYG_ROOT%/bin/bash -lc "cd $INSTALLZ_DIR; exec 0</dev/null; chmod +x rapid_install_prereqs.sh"'
   - '%CYG_ROOT%/bin/bash -lc "cd $INSTALLZ_DIR; exec 0</dev/null; ./rapid_install_prereqs.sh -i=$INSTALLZ_DIR"'
   #Installing RAPID
-  - '%CYG_ROOT%/bin/bash -lc "cd $APPVEYOR_BUILD_FOLDER\..; exec 0</dev/null; git clone https://github.com/c-h-david/rapid.git; source ./rapid_specify_varpath.sh; cd rapid/src; make rapid"'
+  - '%CYG_ROOT%/bin/bash -lc "cd $APPVEYOR_BUILD_FOLDER\..; exec 0</dev/null; git clone https://github.com/c-h-david/rapid.git; cd rapid; source ./rapid_specify_varpath.sh; cd src; make rapid"'
   #TODO: INSTALL GDAL
   #Installing TauDEM
   - '%CYG_ROOT%/bin/bash -lc "cd $APPVEYOR_BUILD_FOLDER\..; exec 0</dev/null; git clone  https://github.com/dtarb/TauDEM.git; cd TauDEM/src; make"'
@@ -62,4 +62,4 @@ build: false
 test_script:
   - "%CMD_IN_ENV% nosetests --with-cov --cov-report term-missing --cov RAPIDpy"
 on_success:
-- 'coveralls'
+ - 'coveralls'

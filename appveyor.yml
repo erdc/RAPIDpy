@@ -25,7 +25,7 @@ environment:
 install:
   # this installs the appropriate Miniconda (Py2/Py3),
   # as well as pip and conda-build
-  - powershell .\\continuous-integration\\appveyor\\install.ps1
+  -  "powershell .continuous-integration/appveyor/install-miniconda.ps1"
   - 'SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%'
   #create environment in conda
   - 'conda update --yes conda python'

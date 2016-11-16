@@ -18,6 +18,7 @@ import os
 #USGS not returning tzinfo, so this is no longer needed
 #from pytz import utc
 from requests import get
+from shutil import copy
 from subprocess import Popen, PIPE
 from time import gmtime
 
@@ -422,7 +423,7 @@ class RAPID(object):
                             new_file.write("%s = \'%s\'\n" % (attr, value))
             new_file.write("/\n")
         
-    def update_namelist_file(self, rapid_namelist_file):
+    def update_namelist_file(self, rapid_namelist_file, new_namelist_file=None):
         """
         Update existing namelist file with new parameters
 
@@ -430,42 +431,45 @@ class RAPID(object):
             rapid_namelist_file(str): Path of namelist file to use in the simulation. 
                                       It will be updated with any parameters added to
                                       the RAPID manager.
+            new_namelist_file(Optional[str]): Path to output the updated namelist file.
         """
         if os.path.exists(rapid_namelist_file) and rapid_namelist_file:
             log("Adding missing inputs from RAPID input file ...",
                 "INFO")
-            old_file = open(rapid_namelist_file, 'r')
-            for line in old_file:
-                line = line.strip()
-                if not line[:1].isalpha() or not line:
-                    continue
-                line_split = line.split("=")
-                attr = line_split[0].strip()
-                value = None
-                if len(line_split)>1:
-                    value = line_split[1].strip().replace("'", "").replace('"', "")
-                    #convert integers to integers
-                    try:
-                        value = int(value)
-                    except Exception:
-                        pass
-                    #remove dots from beginning & end of value
-                    if attr.startswith('BS'):
-                        value = value.replace(".", "") 
-                elif attr in self._no_value_attr_list:
-                    value = True
-                #add attribute if exists
-                if attr in dir(self) \
-                    and not attr.startswith('_'):
-                    #set attribute if not set already
-                    if not getattr(self, attr):
-                        setattr(self, attr, value)
-                else:
-                    log("Invalid argument {0}. Skipping ...".format(attr),
-                        "INFO")
-            old_file.close()
-            
-            self.generate_namelist_file(rapid_namelist_file)
+            with open(rapid_namelist_file, 'r') as old_file:
+                for line in old_file:
+                    line = line.strip()
+                    if not line[:1].isalpha() or not line:
+                        continue
+                    line_split = line.split("=")
+                    attr = line_split[0].strip()
+                    value = None
+                    if len(line_split)>1:
+                        value = line_split[1].strip().replace("'", "").replace('"', "")
+                        #convert integers to integers
+                        try:
+                            value = int(value)
+                        except Exception:
+                            pass
+                        #remove dots from beginning & end of value
+                        if attr.startswith('BS'):
+                            value = value.replace(".", "") 
+                    elif attr in self._no_value_attr_list:
+                        value = True
+                    #add attribute if exists
+                    if attr in dir(self) \
+                        and not attr.startswith('_'):
+                        #set attribute if not set already
+                        if not getattr(self, attr):
+                            setattr(self, attr, value)
+                    else:
+                        log("Invalid argument {0}. Skipping ...".format(attr),
+                            "INFO")
+
+            if new_namelist_file is None:
+                new_namelist_file = rapid_namelist_file
+                
+            self.generate_namelist_file(new_namelist_file)
         else:
             log("RAPID namelist file to update not found.",
                 "ERROR")
@@ -604,17 +608,16 @@ class RAPID(object):
                 "ERROR")
 
         time_start = datetime.datetime.utcnow()
+        temp_rapid_namelist_file = os.path.join(os.getcwd(), "rapid_namelist")
     
         if not rapid_namelist_file or not os.path.exists(rapid_namelist_file):
             #generate input file if it does not exist
-            if not rapid_namelist_file:
-                rapid_namelist_file = os.path.join(os.getcwd(), "rapid_namelist")
-            self.generate_namelist_file(rapid_namelist_file)
+            self.generate_namelist_file(temp_rapid_namelist_file)
         else:
             #update existing file
-            self.update_namelist_file(rapid_namelist_file)
+            self.update_namelist_file(rapid_namelist_file, temp_rapid_namelist_file)
 
-        local_rapid_executable_location = os.path.join(os.path.dirname(rapid_namelist_file), "rapid_exe_symlink")
+        local_rapid_executable_location = os.path.join(os.path.dirname(temp_rapid_namelist_file), "rapid_exe_symlink")
 
         def rapid_cleanup(*args):
             """
@@ -679,14 +682,14 @@ class RAPID(object):
                         stdout=PIPE, stderr=PIPE, shell=False)
         out, err = process.communicate()
         if err:
-            rapid_cleanup(temp_link_to_rapid, rapid_namelist_file, run_rapid_script)
+            rapid_cleanup(temp_link_to_rapid, temp_rapid_namelist_file, run_rapid_script)
             raise Exception(err)
         else:
             log('RAPID output:',
                 "INFO")
             for line in out.split(b'\n'):
                 print(line)
-        rapid_cleanup(temp_link_to_rapid, rapid_namelist_file, run_rapid_script)
+        rapid_cleanup(temp_link_to_rapid, temp_rapid_namelist_file, run_rapid_script)
         log("Time to run RAPID: %s" % (datetime.datetime.utcnow()-time_start),
             "INFO")
 

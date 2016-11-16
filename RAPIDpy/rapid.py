@@ -555,7 +555,7 @@ class RAPID(object):
         
             from RAPIDpy import RAPID
             
-            rapid_manager = RAPID(rapid_executable_location='~/work/rapid/run/rapid'
+            rapid_manager = RAPID(rapid_executable_location='~/work/rapid/src/rapid'
                                   use_all_processors=True,
                                  )
 
@@ -570,7 +570,26 @@ class RAPID(object):
             rapid_manager.update_reach_number_data()
             rapid_manager.update_simulation_runtime()
             rapid_manager.run(rapid_namelist_file='../rapid-io/input/rapid_namelist')
-                                 
+                       
+        Linux Reservoir Forcing Flows Example:
+        
+        .. code:: python
+        
+            from RAPIDpy import RAPID
+
+            rapid_manager = RAPID(rapid_executable_location='~/work/rapid/src/rapid',
+                                  num_processors=4,
+                                  IS_for_tot=4,
+                                  IS_for_use=4,
+                                  for_tot_id_file='../rapid-io/input/dam_id.csv',
+                                  for_use_id_file='../rapid-io/input/dam_id.csv',
+                                  Qfor_file='../rapid-io/input/qout_dams.csv',
+                                  ZS_dtF=86400,
+                                  BS_opt_for=True,
+                                  )
+            
+            rapid_manager.run(rapid_namelist_file='../rapid-io/input/rapid_namelist_regular_run')
+            
         Windows with Cygwin Example:
     
         .. code:: python

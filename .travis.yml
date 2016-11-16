@@ -10,23 +10,20 @@
 #Authors:
 #Alan D. Snow, 2016, based on initial .yml file by Cedric H. David
 
-
 #*******************************************************************************
 #System specifications for Travis CI
 #*******************************************************************************
-language: python
-python:
-  - "2.7"
-  - "3.5"
-#CURRENTLY PYTHON NOT SUPPORTED ON OSX
-#COMMENTED PORTION FOR WHEN THAT HAPPENS
-#os:
-#  - linux
-#  - osx
-#matrix:
-#  fast_finish: true
-#  allow_failures:
-#    - os: osx
+language: c
+os:
+  - linux
+  - osx
+env:
+  - TRAVIS_PYTHON_VERSION="2.7"
+  - TRAVIS_PYTHON_VERSION="3.5"
+matrix:
+  fast_finish: true
+  allow_failures:
+    - os: osx
 notifications:
   email: false
 
@@ -40,7 +37,7 @@ before_install:
   fi
 - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then 
     brew update;
-    brew install gcc gfortran; 
+    brew install gcc gdal; 
   fi
 
 #-------------------------------------------------------------------------------
@@ -64,57 +61,40 @@ before_install:
 #-----------------------------------------------------------------------------
 # Install required python packages
 #-----------------------------------------------------------------------------
-- conda install --yes nose numpy scipy netCDF4 gdal shapely pyproj
+- conda install --yes nose numpy pandas scipy netCDF4 gdal shapely pyproj
 - conda install --yes -c conda-forge rtree
-- pip install coveralls
-#restart environment to get variables set
-#- export GDAL_DATA=$HOME/miniconda/share/gdal
+- pip install coveralls nose-cov
 - source deactivate rapid
 
 #-------------------------------------------------------------------------------
 #Creating directory for installation of libraries used by RAPID
 #-------------------------------------------------------------------------------
-- cd $TRAVIS_BUILD_DIR
-- mkdir ../installz
-- cd ../installz
-- export INSTALLZ_DIR=$PWD
+- export INSTALLZ_DIR=$TRAVIS_BUILD_DIR/installz
+- mkdir $INSTALLZ_DIR
 
 #-------------------------------------------------------------------------------
 #Installing RAPID Prereqs
 #-------------------------------------------------------------------------------
+- cd $INSTALLZ_DIR
 - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then wget https://raw.githubusercontent.com/snowman2/rapid/master/rapid_install_prereqs.sh ; fi
 - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then curl -o rapid_install_prereqs.sh https://raw.githubusercontent.com/snowman2/rapid/master/rapid_install_prereqs.sh ; fi
 - chmod +x rapid_install_prereqs.sh
 - ./rapid_install_prereqs.sh -i=$INSTALLZ_DIR
 
 #-------------------------------------------------------------------------------
-#Exporting environment variables 
-#-------------------------------------------------------------------------------
-- export TACC_NETCDF_LIB=$INSTALLZ_DIR/netcdf-3.6.3-install/lib
-- export TACC_NETCDF_INC=$INSTALLZ_DIR/netcdf-3.6.3-install/include
-- export PETSC_DIR=$INSTALLZ_DIR/petsc-3.6.2
-- export PETSC_ARCH='linux-gcc-c'
-
-#-------------------------------------------------------------------------------
-#Exporting directories with library-related executables to $PATH
-#-------------------------------------------------------------------------------
-- export PATH=$PATH:/$PETSC_DIR/$PETSC_ARCH/bin
-- export PATH=$PATH:$INSTALLZ_DIR/netcdf-3.6.3-install/bin
-
-#-------------------------------------------------------------------------------
 #Installing RAPID
 #-------------------------------------------------------------------------------
-- cd $TRAVIS_BUILD_DIR
-- cd ..
+- cd $TRAVIS_BUILD_DIR/..
 - git clone https://github.com/c-h-david/rapid.git
-- cd rapid/src
+- cd rapid
+- source ./rapid_specify_varpath.sh $INSTALLZ_DIR
+- cd src 
 - make rapid
 
 #-------------------------------------------------------------------------------
 #Installing TauDEM
 #-------------------------------------------------------------------------------
-- cd $TRAVIS_BUILD_DIR
-- cd ..
+- cd $TRAVIS_BUILD_DIR/..
 - git clone https://github.com/dtarb/TauDEM.git
 - cd TauDEM/src
 - make
@@ -131,7 +111,7 @@ install:
 #*******************************************************************************
 - cd $TRAVIS_BUILD_DIR/tests
 script: 
-- nosetests --with-coverage --cover-package=RAPIDpy
+- nosetests --with-cov --cov-report term-missing --cov RAPIDpy
 ##ADD Coveralls stats for code coverage
 after_success:
-  - coveralls
+- coveralls

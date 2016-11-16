@@ -16,12 +16,17 @@ import numpy as np
 from ..dataset import RAPIDDataset
 from ..utilities import partition
 
-def generate_single_return_period(qout_file, return_period_file,
-                                  rivid_index_list, step, num_years,
-                                  mp_lock):
+def generate_single_return_period(args):
     """
     This function calculates a single return period for a single reach
     """
+    qout_file=args[0]
+    return_period_file=args[1]
+    rivid_index_list=args[2]
+    step=args[3]
+    num_years=args[4]
+    mp_lock=args[5]
+    
     with RAPIDDataset(qout_file) as qout_nc_file: 
         #get index of return period data
         rp_index_20 = int((num_years + 1)/20.0)
@@ -35,9 +40,10 @@ def generate_single_return_period(qout_file, return_period_file,
         return_2_array = np.zeros(len(rivid_index_list))
         
         for iter_idx, rivid_index in enumerate(rivid_index_list):
-            filtered_flow_data = qout_nc_file.get_daily_qout_index(rivid_index,
-                                                                   steps_per_group=step,
-                                                                   mode="max")
+            filtered_flow_data = qout_nc_file.get_qout_index(rivid_index,
+                                                             pd_filter="{0}D".format(step),
+                                                             filter_mode="max")
+                                                             
             sorted_flow_data = np.sort(filtered_flow_data)[:num_years:-1]
             max_flow = sorted_flow_data[0]
             if max_flow < 0.01:
@@ -56,17 +62,6 @@ def generate_single_return_period(qout_file, return_period_file,
         return_period_nc.variables['return_period_2'][rivid_index_list] = return_2_array
         return_period_nc.close()
         mp_lock.release()
-
-def generate_single_return_period_mp_worker(args):
-    """
-    Multiprocess worker function for generate_single_return_period
-    """
-    generate_single_return_period(qout_file=args[0], 
-                                  return_period_file=args[1], 
-                                  rivid_index_list=args[2], 
-                                  step=args[3], 
-                                  num_years=args[4], 
-                                  mp_lock=args[5])
 
 def generate_return_periods(qout_file, return_period_file, num_cpus=multiprocessing.cpu_count(), storm_duration_days=7):
     """
@@ -133,7 +128,7 @@ def generate_return_periods(qout_file, return_period_file, num_cpus=multiprocess
     job_combinations = []
     partition_list, partition_index_list = partition(river_id_list, num_cpus*2)
     for sub_partition_index_list in partition_index_list:
-        if sub_partition_index_list:
+        if len(sub_partition_index_list) > 0:
             job_combinations.append((qout_file,
                                      return_period_file,
                                      sub_partition_index_list, 
@@ -143,8 +138,7 @@ def generate_return_periods(qout_file, return_period_file, num_cpus=multiprocess
                                      ))
 
     pool = multiprocessing.Pool(num_cpus)
-    pool.map(generate_single_return_period_mp_worker,
+    pool.map(generate_single_return_period,
              job_combinations)
     pool.close()
     pool.join()
-

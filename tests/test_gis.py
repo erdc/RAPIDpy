@@ -18,7 +18,7 @@ from osgeo import ogr
 from RAPIDpy.gis.weight import CreateWeightTableECMWF, CreateWeightTableLDAS
 from RAPIDpy.gis.workflow import CreateAllStaticECMWFRAPIDFiles
 from RAPIDpy.gis.network import CreateNetworkConnectivityNHDPlus
-from RAPIDpy.gis.muskingum import CreateMuskingumKfacFile
+from RAPIDpy.gis.muskingum import CreateMuskingumKfacFile, CreateMuskingumXFileFromDranageLine
 from RAPIDpy.gis.taudem import TauDEM
 from RAPIDpy.helper_functions import (compare_csv_decimal_files,
                                       remove_files)
@@ -617,6 +617,25 @@ def test_gen_muskingum_kfac1():
     ok_(compare_csv_decimal_files(generated_kfac_file, 
                                   generated_kfac_file_solution))
     remove_files(generated_kfac_file)
+
+def test_gen_muskingum_x_drainage():
+    """
+    Checks generating Muskingum X from draiange line
+    """
+    print("TEST 15: TEST GENERATE MUSKINGUM X FROM DRAINAGE LINE")
+    generated_x_file = os.path.join(OUTPUT_DATA_PATH, 
+                                    "x_drain.csv")
+                                    
+    CreateMuskingumXFileFromDranageLine(in_drainage_line=os.path.join(GIS_INPUT_DATA_PATH, 'u-k', "DrainageLineSubset.shp"),
+                                        x_id="Musk_x",
+                                        out_x_file=generated_x_file)
+                            
+    #CHECK OUTPUT   
+    generated_x_file_solution = os.path.join(COMPARE_DATA_PATH, "u-k",
+                                             "x_drain.csv")
+    ok_(compare_csv_decimal_files(generated_x_file, 
+                                  generated_x_file_solution))
+    remove_files(generated_x_file)
 
 if __name__ == '__main__':
     import nose

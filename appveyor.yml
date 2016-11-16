@@ -26,7 +26,7 @@ install:
   - pip install coveralls nose-cov
   - deactivate rapid
   #install cygwin
-  - '%CYG_ROOT%\setup-x86.exe -qnNdO -R "%CYG_ROOT%" -s "%CYG_MIRROR%" -l "%CYG_CACHE%" -P dos2unix -P gcc-core -P gcc-g++ -P gcc-gfortran -P gdb -P git -P make -P time -P wget > NUL'
+  - '%CYG_ROOT%\setup-x86.exe -qnNdO -R "%CYG_ROOT%" -s "%CYG_MIRROR%" -l "%CYG_CACHE%" -P dos2unix -P gcc-core -P gcc-g++ -P gcc-gfortran -P gdb -P git -P make -P time -P wget -P gdal -P libgdal-devel -P openmpi > NUL'
   #Creating directory for installation of libraries used by RAPID
   - 'cd %APPVEYOR_BUILD_FOLDER%'
   - 'SET INSTALLZ_DIR=%APPVEYOR_BUILD_FOLDER%\..\installz' 
@@ -49,6 +49,6 @@ install:
 build: false
 
 test_script:
-  - "%CMD_IN_ENV% nosetests --with-cov --cov-report term-missing --cov RAPIDpy"
+  - "nosetests --with-cov --cov-report term-missing --cov RAPIDpy"
 on_success:
  - 'coveralls'

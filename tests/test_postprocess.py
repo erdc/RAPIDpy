@@ -43,7 +43,7 @@ class TestRAPIDInflow(unittest.TestCase):
                                 return_period_file=generated_return_periods_file
                                 )
                                 
-        compare_return_periods_file = os.path.join(self.OUTPUT_DATA_PATH, return_periods_file_name)
+        compare_return_periods_file = os.path.join(self.COMPARE_DATA_PATH, return_periods_file_name)
         
         #check other info in netcdf file
         d1 = Dataset(generated_return_periods_file)
@@ -105,7 +105,7 @@ class TestRAPIDInflow(unittest.TestCase):
         rapid_manager.generate_seasonal_intitialization(qinit_file=generated_seasonal_init_file,
                                                         datetime_start_initialization=datetime(1984,1,1))
         
-        compare_seasonal_init_file = os.path.join(self.OUTPUT_DATA_PATH, generated_seasonal_init_file)
+        compare_seasonal_init_file = os.path.join(self.COMPARE_DATA_PATH, generated_seasonal_init_file)
         
         compare_csv_decimal_files(generated_seasonal_init_file,compare_seasonal_init_file)
         

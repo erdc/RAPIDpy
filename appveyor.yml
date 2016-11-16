@@ -1,0 +1,54 @@
+#FROM: http://tjelvarolsson.com/blog/how-to-continuously-test-your-python-code-on-windows-using-appveyor/
+# and on: https://github.com/DynamicDevices/mono/blob/master/appveyor.yml
+environment:
+  global:
+    CYG_ROOT: "C:/cygwin"
+    CYG_MIRROR: "http://cygwin.mirror.constant.com"
+    CYG_CACHE: "C:/cygwin/var/cache/setup"  
+
+  matrix:
+    - PYTHON_VERSION: "2.7"
+      MINICONDA: "C:\\Miniconda-x64"
+    - PYTHON_VERSION: "3.5"
+      MINICONDA: "C:\\Miniconda3-x64"
+
+install:
+  - 'SET PATH=%MINICONDA%;%MINICONDA%\\Scripts;%PATH%'
+  #create environment in conda
+  - conda config --set always_yes yes
+  - conda update -q conda python
+  - "conda create --name rapid python=%PYTHON_VERSION%"
+  - activate rapid
+  # Install required python packages
+  - conda install nose numpy pandas scipy netCDF4 gdal pyproj pytz python-dateutil
+  - conda install -c conda-forge rtree
+  - conda install -c scitools shapely
+  - pip install coveralls nose-cov
+  - deactivate rapid
+  #install cygwin
+  - '%CYG_ROOT%\setup-x86.exe -qnNdO -R "%CYG_ROOT%" -s "%CYG_MIRROR%" -l "%CYG_CACHE%" -P dos2unix -P gcc-core -P gcc-g++ -P gcc-gfortran -P gdb -P git -P make -P time -P wget -P gdal -P libgdal-devel -P openmpi > NUL'
+  #Creating directory for installation of libraries used by RAPID
+  - 'cd %APPVEYOR_BUILD_FOLDER%'
+  - 'SET INSTALLZ_DIR=%APPVEYOR_BUILD_FOLDER%\..\installz' 
+  - 'mkdir %INSTALLZ_DIR%'
+  - 'cd %INSTALLZ_DIR%'
+  #Installing RAPID Prereqs
+  - 'appveyor DownloadFile "https://raw.githubusercontent.com/snowman2/rapid/master/rapid_install_prereqs.sh"'
+  - '%CYG_ROOT%/bin/bash -lc "cd $INSTALLZ_DIR; exec 0</dev/null; chmod +x rapid_install_prereqs.sh"'
+  - '%CYG_ROOT%/bin/bash -lc "cd $INSTALLZ_DIR; exec 0</dev/null; ./rapid_install_prereqs.sh -i=$(cygpath "$INSTALLZ_DIR") -b"'
+  #Installing RAPID
+  - '%CYG_ROOT%/bin/bash -lc "cd $APPVEYOR_BUILD_FOLDER\..; exec 0</dev/null; git clone https://github.com/c-h-david/rapid.git; cd rapid; source ./rapid_specify_varpath.sh $(cygpath "$INSTALLZ_DIR")"; cd src; make rapid"'
+  #TODO: INSTALL GDAL
+  #Installing TauDEM
+  - '%CYG_ROOT%/bin/bash -lc "cd $APPVEYOR_BUILD_FOLDER\..; exec 0</dev/null; git clone  https://github.com/dtarb/TauDEM.git; cd TauDEM/src; make"'
+  #Installing RAPIDpy
+  - activate rapid
+  - 'cd %APPVEYOR_BUILD_FOLDER%'
+  - python setup.py install
+   
+build: false
+
+test_script:
+  - "nosetests --with-cov --cov-report term-missing --cov RAPIDpy"
+on_success:
+ - 'coveralls'

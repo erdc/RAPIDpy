@@ -18,7 +18,6 @@ import os
 #USGS not returning tzinfo, so this is no longer needed
 #from pytz import utc
 from requests import get
-from shutil import copy
 from subprocess import Popen, PIPE
 from time import gmtime
 
@@ -149,7 +148,7 @@ class RAPID(object):
         #*******************************************************************************
         self.IS_riv_tot = 0 #number of river reaches in rapid connect file
         self.rapid_connect_file = '' #path to rapid_connect file
-        self.IS_max_up = 2 #maximum number of ustream segments
+        self.IS_max_up = 0 #maximum number of ustream segments
         self.Vlat_file = '' #path to runoff file
         
         #*******************************************************************************

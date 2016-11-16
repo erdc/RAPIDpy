@@ -35,7 +35,7 @@ install:
   #Installing RAPID Prereqs
   - 'appveyor DownloadFile "https://raw.githubusercontent.com/snowman2/rapid/master/rapid_install_prereqs.sh"'
   - '%CYG_ROOT%/bin/bash -lc "cd $INSTALLZ_DIR; exec 0</dev/null; chmod +x rapid_install_prereqs.sh"'
-  - '%CYG_ROOT%/bin/bash -lc "cd $INSTALLZ_DIR; exec 0</dev/null; ./rapid_install_prereqs.sh -i=$(cygpath "$INSTALLZ_DIR")"'
+  - '%CYG_ROOT%/bin/bash -lc "cd $INSTALLZ_DIR; exec 0</dev/null; ./rapid_install_prereqs.sh -i=$(cygpath "$INSTALLZ_DIR") -b"'
   #Installing RAPID
   - '%CYG_ROOT%/bin/bash -lc "cd $APPVEYOR_BUILD_FOLDER\..; exec 0</dev/null; git clone https://github.com/c-h-david/rapid.git; cd rapid; source ./rapid_specify_varpath.sh $(cygpath "$INSTALLZ_DIR")"; cd src; make rapid"'
   #TODO: INSTALL GDAL

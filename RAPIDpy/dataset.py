@@ -387,11 +387,17 @@ class RAPIDDataset(object):
             print("Determining time range ({0} to {1})...".format(date_search_start, date_search_end))
             time_array = self.get_time_array()
             if date_search_start is not None:
-                seconds_start = (date_search_start-datetime.datetime(1970,1,1)).total_seconds()
+                date_search_start_utc = date_search_start
+                if self.out_tzinfo is not None:
+                    date_search_start_utc = self.out_tzinfo.localize(date_search_start).astimezone(utc).replace(tzinfo=None)
+                seconds_start = (date_search_start_utc-datetime.datetime(1970,1,1)).total_seconds()
                 time_range = np.where(time_array>=seconds_start)[0]
             
             if date_search_end is not None:
-                seconds_end = (date_search_end-datetime.datetime(1970,1,1)).total_seconds()
+                date_search_end_utc = date_search_end
+                if self.out_tzinfo is not None:
+                    date_search_end_utc = self.out_tzinfo.localize(date_search_end).astimezone(utc).replace(tzinfo=None)
+                seconds_end = (date_search_end_utc-datetime.datetime(1970,1,1)).total_seconds()
                 if time_range is not None:
                     time_range = np.intersect1d(time_range, np.where(time_array<=seconds_end)[0])
                 else:

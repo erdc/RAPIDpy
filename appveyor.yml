@@ -2,7 +2,7 @@
 # and on: https://github.com/DynamicDevices/mono/blob/master/appveyor.yml
 environment:
   global:
-    CYG_ROOT: "C:/cygwin"
+    CYG_ROOT: "C:/cygwin64"
     CYG_MIRROR: "http://cygwin.mirror.constant.com"
     CYG_CACHE: "C:/cygwin/var/cache/setup"  
 
@@ -26,21 +26,20 @@ install:
   - pip install coveralls nose-cov
   - deactivate rapid
   #install cygwin
-  #- '%CYG_ROOT%\setup-x86.exe -qnNdO -R "%CYG_ROOT%" -s "%CYG_MIRROR%" -l "%CYG_CACHE%" -P dos2unix -P gcc-core -P gcc-g++ -P gcc-gfortran -P gdb -P git -P make -P time -P wget -P gdal -P libgdal-devel -P openmpi > NUL'
+  - '%CYG_ROOT%\setup-x86_64.exe -qnNdO -R "%CYG_ROOT%" -s "%CYG_MIRROR%" -l "%CYG_CACHE%" -P gcc-core,gcc-g++,gcc-gfortran,gdb,git,make,time,wget,gdal,libgdal-devel,openmpi > NULL'
   #Creating directory for installation of libraries used by RAPID
-  #- 'cd %APPVEYOR_BUILD_FOLDER%'
-  #- 'SET INSTALLZ_DIR=%APPVEYOR_BUILD_FOLDER%\..\installz' 
-  #- 'mkdir %INSTALLZ_DIR%'
-  #- 'cd %INSTALLZ_DIR%'
+  - 'cd %APPVEYOR_BUILD_FOLDER%'
+  - 'SET INSTALLZ_DIR=%APPVEYOR_BUILD_FOLDER%\..\installz' 
+  - 'mkdir %INSTALLZ_DIR%'
+  - 'cd %INSTALLZ_DIR%'
   #Installing RAPID Prereqs
-  #- 'appveyor DownloadFile "https://raw.githubusercontent.com/snowman2/rapid/master/rapid_install_prereqs.sh"'
-  #- '%CYG_ROOT%/bin/bash -lc "cd $INSTALLZ_DIR; exec 0</dev/null; chmod +x rapid_install_prereqs.sh"'
-  #- '%CYG_ROOT%/bin/bash -lc "cd $INSTALLZ_DIR; exec 0</dev/null; ./rapid_install_prereqs.sh -i=$(cygpath "$INSTALLZ_DIR") -b"'
+  - 'appveyor DownloadFile "https://raw.githubusercontent.com/snowman2/rapid/master/rapid_install_prereqs.sh"'
+  - '%CYG_ROOT%/bin/bash -lc "cd $INSTALLZ_DIR; chmod +x rapid_install_prereqs.sh"'
+  - '%CYG_ROOT%/bin/bash -lc "cd $INSTALLZ_DIR; ./rapid_install_prereqs.sh -i=$(cygpath "$INSTALLZ_DIR") -b"'
   #Installing RAPID
-  #- '%CYG_ROOT%/bin/bash -lc "cd $APPVEYOR_BUILD_FOLDER\..; exec 0</dev/null; git clone https://github.com/c-h-david/rapid.git; cd rapid; source ./rapid_specify_varpath.sh $(cygpath "$INSTALLZ_DIR")"; cd src; make rapid"'
-  #TODO: INSTALL GDAL
+  - '%CYG_ROOT%/bin/bash -lc "cd $APPVEYOR_BUILD_FOLDER\..; git clone https://github.com/c-h-david/rapid.git; cd rapid; source ./rapid_specify_varpath.sh $(cygpath "$INSTALLZ_DIR")"; cd src; make rapid"'
   #Installing TauDEM
-  #- '%CYG_ROOT%/bin/bash -lc "cd $APPVEYOR_BUILD_FOLDER\..; exec 0</dev/null; git clone  https://github.com/dtarb/TauDEM.git; cd TauDEM/src; make"'
+  - '%CYG_ROOT%/bin/bash -lc "cd $APPVEYOR_BUILD_FOLDER\..; git clone  https://github.com/dtarb/TauDEM.git; cd TauDEM/src; make"'
   #Installing RAPIDpy
   - activate rapid
   - 'cd %APPVEYOR_BUILD_FOLDER%'

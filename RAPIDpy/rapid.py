@@ -294,7 +294,7 @@ class RAPID(object):
                                  
             rapid_manager.update_parameters(rapid_connect_file='../rapid-io/input/rapid_connect.csv',
                                             Vlat_file='../rapid-io/input/m3_riv.nc',
-                                            riv_bas_id_file='../rapid-io/input/riv_bas_id.csv,
+                                            riv_bas_id_file='../rapid-io/input/riv_bas_id.csv',
                                             k_file='../rapid-io/input/k.csv',
                                             x_file='../rapid-io/input/x.csv',
                                             Qout_file='../rapid-io/output/Qout.nc',
@@ -325,7 +325,7 @@ class RAPID(object):
             rapid_manager = RAPID(
                                   #ADD PARAMETERS
                                   rapid_connect_file='../rapid-io/input/rapid_connect.csv',
-                                  riv_bas_id_file='../rapid-io/input/riv_bas_id.csv,
+                                  riv_bas_id_file='../rapid-io/input/riv_bas_id.csv',
                                  )
                                  
             rapid_manager.update_reach_number_data()
@@ -507,7 +507,7 @@ class RAPID(object):
                                   ZS_dtM=24*3600
                                   rapid_connect_file='../rapid-io/input/rapid_connect.csv',
                                   Vlat_file='../rapid-io/input/m3_riv.nc',
-                                  riv_bas_id_file='../rapid-io/input/riv_bas_id.csv,
+                                  riv_bas_id_file='../rapid-io/input/riv_bas_id.csv',
                                   k_file='../rapid-io/input/k.csv',
                                   x_file='../rapid-io/input/x.csv',
                                   Qout_file='../rapid-io/output/Qout.nc',
@@ -561,7 +561,7 @@ class RAPID(object):
 
             rapid_manager.update_parameters(rapid_connect_file='../rapid-io/input/rapid_connect.csv',
                                             Vlat_file='../rapid-io/input/m3_riv.nc',
-                                            riv_bas_id_file='../rapid-io/input/riv_bas_id.csv,
+                                            riv_bas_id_file='../rapid-io/input/riv_bas_id.csv',
                                             k_file='../rapid-io/input/k.csv',
                                             x_file='../rapid-io/input/x.csv',
                                             Qout_file='../rapid-io/output/Qout.nc',
@@ -936,7 +936,7 @@ class RAPID(object):
 
             rapid_manager.update_parameters(rapid_connect_file='../rapid-io/input/rapid_connect.csv',
                                             Vlat_file='../rapid-io/input/m3_riv.nc',
-                                            riv_bas_id_file='../rapid-io/input/riv_bas_id.csv,
+                                            riv_bas_id_file='../rapid-io/input/riv_bas_id.csv',
                                             k_file='../rapid-io/input/k.csv',
                                             x_file='../rapid-io/input/x.csv',
                                             Qout_file='../rapid-io/output/Qout.nc',

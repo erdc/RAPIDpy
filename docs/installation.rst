@@ -53,28 +53,18 @@ Bash:
     $ chmod u+x rapid_install_prereqs.sh
     $ ./rapid_install_prereqs.sh
 
-2. Append this to the ~/.bashrc or ~/.bash_profile::
-
-    INSTALLZ_DIR=$HOME/installz
-    #-------------------------------------------------------------------------------
-    #Exporting environment variables
-    #-------------------------------------------------------------------------------
-    export TACC_NETCDF_LIB=$INSTALLZ_DIR/netcdf-3.6.3-install/lib
-    export TACC_NETCDF_INC=$INSTALLZ_DIR/netcdf-3.6.3-install/include
-    export PETSC_DIR=$INSTALLZ_DIR/petsc-3.6.2
-    export PETSC_ARCH='linux-gcc-c'
-    
-    #-------------------------------------------------------------------------------
-    #Exporting directories with library-related executables to $PATH
-    #-------------------------------------------------------------------------------
-    export PATH=$PATH:$PETSC_DIR/$PETSC_ARCH/bin
-    export PATH=$PATH:$INSTALLZ_DIR/netcdf-3.6.3-install/bin
-
-3. Restart Terminal
-
-4. Clone RAPID repository and make::
+2. Clone RAPID repository::
 
     $ git clone https://github.com/c-h-david/rapid.git
+
+3. Append *source rapid_specify_varpath.sh* to the ~/.bashrc or ~/.bash_profile::
+
+    source /path/to/cloned/rapid/rapid_specify_varpath.sh   
+
+4. Restart Terminal
+
+5. Build RAPID::
+
     $ cd rapid/src
     $ make rapid 
 

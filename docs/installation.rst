@@ -12,14 +12,14 @@ Ubuntu:
 
 ::
 
-    $ sudo apt-get install gfortran g++ openmpi-bin
+    $ sudo apt-get install gfortran g++
 
 RedHat/CentOS:
 ^^^^^^^^^^^^^^
 
 ::
 
-    $ sudo yum install gcc-c++ gcc-gfortran openmpi
+    $ sudo yum install gcc-c++ gcc-gfortran
 
 Windows with Cygwin:
 ^^^^^^^^^^^^^^^^^^^^
@@ -27,15 +27,12 @@ Windows with Cygwin:
 Downloaded Cygwin (64-bit) (https://www.cygwin.com/) with these
 dependencies:
 
-- dos2unix 
 - gcc-core 
 - gcc-fortran 
 - gcc-g++ 
 - gdb 
 - git
 - make 
-- netcdf 
-- openmpi 
 - time 
 - wget
 

@@ -17,10 +17,10 @@ from sys import getrecursionlimit, setrecursionlimit
 from past.builtins import xrange
 
 try:
-    from osgeo import gdal, ogr, osr
     from pyproj import Geod
     from shapely.wkb import loads as shapely_loads
     from shapely.ops import cascaded_union
+    from osgeo import gdal, ogr, osr
 except ImportError:
     print("WARNING: Several GIS functions will not work. " \
           "You need to install the gdal, pyproj, and shapely " \

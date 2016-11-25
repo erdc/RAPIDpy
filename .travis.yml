@@ -96,7 +96,7 @@ before_install:
 #-------------------------------------------------------------------------------
 - cd $TRAVIS_BUILD_DIR/..
 - git clone https://github.com/dtarb/TauDEM.git
-- cd TauDEM; 
+- cd TauDEM
 - git checkout master
 - cd src
 - make

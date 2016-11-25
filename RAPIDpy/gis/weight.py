@@ -15,11 +15,11 @@ from netCDF4 import Dataset
 import numpy as np
 
 try:
-    from osgeo import gdal, ogr, osr
     from pyproj import Proj, transform
     from shapely.wkb import loads as shapely_loads
     from shapely.ops import transform as shapely_transform
     import rtree #http://toblerity.org/rtree/install.html
+    from osgeo import gdal, ogr, osr
 except Exception:
     raise Exception("You need the gdal, pyproj, shapely, and rtree python package to run these tools ...")
 

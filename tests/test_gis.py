@@ -279,11 +279,38 @@ def test_gen_weight_table_lis():
 
     remove_files(generated_weight_table_file)
 
+def test_gen_weight_table_lis_no_intersect():
+    """
+    Checks generating weight table for LIS grid with no intersect
+    """
+    print("TEST 8: TEST GENERATE WEIGTH TABLE FOR LIS GRIDS WITH NO INTERSECT")
+    generated_weight_table_file = os.path.join(OUTPUT_DATA_PATH, 
+                                               "weight_lis_no_intersect.csv")
+    #rapid_connect
+    rapid_connect_file = os.path.join(GIS_INPUT_DATA_PATH, "uk-no_intersect",
+                                      "rapid_connect_45390.csv")
+
+    lsm_grid = os.path.join(LSM_INPUT_DATA_PATH, "lis", "LIS_HIST_201101210000.d01.nc")
+    CreateWeightTableLDAS(in_ldas_nc=lsm_grid,
+                          in_nc_lon_var="lon",
+                          in_nc_lat_var="lat", 
+                          in_catchment_shapefile=os.path.join(GIS_INPUT_DATA_PATH, 'uk-no_intersect', 'Catchment_thames_drainID45390.shp'), 
+                          river_id="DrainLnID", 
+                          in_connectivity_file=rapid_connect_file, 
+                          out_weight_table=generated_weight_table_file)
+                                                         
+    generated_weight_table_file_solution = os.path.join(COMPARE_DATA_PATH, "uk-no_intersect",
+                                                        "weight_lis_no_intersect.csv")
+    ok_(compare_csv_decimal_files(generated_weight_table_file, 
+                                  generated_weight_table_file_solution))
+
+    remove_files(generated_weight_table_file)
+
 def test_gen_weight_table_joules():
     """
     Checks generating weight table for Joules grid
     """
-    print("TEST 8: TEST GENERATE WEIGTH TABLE FOR Joules GRIDS")
+    print("TEST 9: TEST GENERATE WEIGTH TABLE FOR Joules GRIDS")
     generated_weight_table_file = os.path.join(OUTPUT_DATA_PATH, 
                                                "weight_joules.csv")
     #rapid_connect

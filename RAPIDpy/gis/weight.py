@@ -200,6 +200,10 @@ def RTreeCreateWeightTable(lsm_grid_lat, lsm_grid_lon,
                                                      'index_lsm_grid_lat': index_lsm_grid_lat})
 
             npoints = len(intersect_grid_info_list)
+            #If no intersection found, add dummy row
+            if(npoints <=0):
+                connectwriter.writerow([rapid_connect_rivid] + dummy_row_end)
+                
             for intersect_grid_info in intersect_grid_info_list:
                 connectwriter.writerow([intersect_grid_info['rivid'],
                                         intersect_grid_info['area'],

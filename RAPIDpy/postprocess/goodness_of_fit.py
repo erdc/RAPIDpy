@@ -199,12 +199,12 @@ def find_goodness_of_fit(rapid_qout_file, reach_id_file, observed_file,
                              cf_out_analysis_file, daily=True)
     
     """
-    reach_id_list = np.loadtxt(reach_id_file, delimiter=",", usecols=(0,), dtype=np.int32)
+    reach_id_list = np.loadtxt(reach_id_file, delimiter=",", usecols=(0,), ndmin=1, dtype=np.int32)
    
     data_nc = RAPIDDataset(rapid_qout_file)
     
     #analyze and write
-    observed_table = np.loadtxt(observed_file, delimiter=",")
+    observed_table = np.loadtxt(observed_file, ndmin=2, delimiter=",")
     with open(out_analysis_file, 'w') as outcsv:
         writer = csvwriter(outcsv)
         writer.writerow(["reach_id",

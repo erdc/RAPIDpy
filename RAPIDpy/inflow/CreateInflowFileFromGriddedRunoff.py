@@ -131,7 +131,8 @@ class CreateInflowFileFromGriddedRunoff(object):
         print("Generating inflow file ...")
         data_out_nc = NET.Dataset(out_nc, "w", format="NETCDF3_CLASSIC")
         rivid_list = np.loadtxt(in_rapid_connect_file, 
-                                delimiter=",", 
+                                delimiter=",",
+                                ndmin=1, 
                                 usecols=(0,), 
                                 dtype=int)
         #create dimensions

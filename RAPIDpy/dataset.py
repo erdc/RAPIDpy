@@ -960,13 +960,11 @@ class RAPIDDataset(object):
                 #POINT 1 603 0.0
                 #POINT 1 605 0.0
                 
-                connection_list = np.loadtxt(connection_list_file, skiprows=1, delimiter=',', usecols=(0,1,2,3),
+                connection_list = np.loadtxt(connection_list_file, skiprows=1, ndmin=1, delimiter=',', usecols=(0,1,2,3),
                                              dtype={'names': ('link_id', 'node_id', 'baseflow', 'rapid_rivid'),
                                                     'formats': ('i8', 'i8', 'f4', 'i8')},
                                             )
                 out_ts.write("NUMPT {0}\n".format(connection_list.size))
-                if(connection_list.size == 1):
-                    connection_list = [connection_list]
                 
                 river_idx_list = []
                 for connection in connection_list:

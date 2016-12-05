@@ -39,7 +39,7 @@ def pc_bias(s,o):
         pc_bias: percent bias
         """
     #s,o = filter_nan(s,o)
-    return 100.0*sum(s-o)/sum(o)
+    return 100.0*np.sum(s-o)/np.sum(o)
 
 def apb(s,o):
     """
@@ -51,7 +51,7 @@ def apb(s,o):
         apb_bias: absolute percent bias
         """
     #s,o = filter_nan(s,o)
-    return 100.0*sum(abs(s-o))/sum(o)
+    return 100.0*np.sum(np.abs(s-o))/np.sum(o)
 
 def rmse(s,o):
     """
@@ -75,7 +75,7 @@ def mae(s,o):
         maes: mean absolute error
         """
     #s,o = filter_nan(s,o)
-    return np.mean(abs(s-o))
+    return np.mean(np.abs(s-o))
 
 def bias(s,o):
     """
@@ -99,7 +99,7 @@ def NS(s,o):
         ns: Nash Sutcliffe efficient coefficient
         """
     #s,o = filter_nan(s,o)
-    return 1 - sum((s-o)**2)/sum((o-np.mean(o))**2)
+    return 1 - np.sum((s-o)**2)/np.sum((o-np.mean(o))**2)
 
 def L(s,o, N=5):
     """
@@ -111,7 +111,7 @@ def L(s,o, N=5):
         L: likelihood
         """
     #s,o = filter_nan(s,o)
-    return np.exp(-N*sum((s-o)**2)/sum((o-np.mean(o))**2))
+    return np.exp(-N*np.sum((s-o)**2)/np.sum((o-np.mean(o))**2))
 
 def correlation(s,o):
     """

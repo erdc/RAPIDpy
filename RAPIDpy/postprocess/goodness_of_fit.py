@@ -204,7 +204,7 @@ def find_goodness_of_fit(rapid_qout_file, reach_id_file, observed_file,
     data_nc = RAPIDDataset(rapid_qout_file)
     
     #analyze and write
-    observed_table = np.loadtxt(observed_file, ndmin=2, delimiter=",")
+    observed_table = np.loadtxt(observed_file, ndmin=2, delimiter=",", usecols=tuple(range(reach_id_list.size)))
     with open(out_analysis_file, 'w') as outcsv:
         writer = csvwriter(outcsv)
         writer.writerow(["reach_id",

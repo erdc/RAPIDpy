@@ -341,13 +341,13 @@ class RAPID(object):
                 "ERROR")
 
         #get rapid connect info
-        rapid_connect_table = np.loadtxt(self.rapid_connect_file, delimiter=",", dtype=int)
+        rapid_connect_table = np.loadtxt(self.rapid_connect_file, ndmin=1, delimiter=",", dtype=int)
 
         self.IS_riv_tot = int(rapid_connect_table.shape[0])
         self.IS_max_up = int(rapid_connect_table[:,2].max())
     
         #get riv_bas_id info
-        riv_bas_id_table = np.loadtxt(self.riv_bas_id_file, delimiter=",", usecols=(0,), dtype=int)
+        riv_bas_id_table = np.loadtxt(self.riv_bas_id_file, ndmin=1, delimiter=",", usecols=(0,), dtype=int)
         self.IS_riv_bas = int(riv_bas_id_table.size)
     
     def update_simulation_runtime(self):
@@ -752,7 +752,7 @@ class RAPID(object):
             log("Reordering data ...",
                 "INFO")
 
-            stream_id_array = np.loadtxt(self.rapid_connect_file, delimiter=",", usecols=(0,), dtype=int)
+            stream_id_array = np.loadtxt(self.rapid_connect_file, ndmin=1, delimiter=",", usecols=(0,), dtype=int)
             init_flows_array = np.zeros(stream_id_array.size)
             for riv_bas_index, riv_bas_id in enumerate(qout_nc.get_river_id_array()):
                 try:
@@ -848,7 +848,7 @@ class RAPID(object):
 
             log("Reordering data...",
                 "INFO")
-            stream_id_array = np.loadtxt(self.rapid_connect_file, delimiter=",", usecols=(0,), dtype=int)
+            stream_id_array = np.loadtxt(self.rapid_connect_file, ndmin=1, delimiter=",", usecols=(0,), dtype=int)
             init_flows_array = np.zeros(stream_id_array.size)
             for riv_bas_index, riv_bas_id in enumerate(qout_hist_nc.get_river_id_array()):
                 try:

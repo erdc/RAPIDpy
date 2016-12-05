@@ -580,6 +580,16 @@ def test_goodness_of_fit():
 
     ok_(compare_csv_decimal_files(new_out_analysis_file, raw_goodness_of_fit_file_solution))
 
+    reach_id_file = os.path.join(INPUT_DATA_PATH, 'obs_reach_id_1.csv') 
+    observed_file = os.path.join(INPUT_DATA_PATH, 'obs_flow_1.csv') 
+    #using CF-compliant file single input
+    cf_out_analysis_file_1 = os.path.join(OUTPUT_DATA_PATH, 'cf_goodness_of_fit_results_1-daily.csv') 
+    find_goodness_of_fit(cf_input_qout_file, reach_id_file, observed_file,
+                         cf_out_analysis_file_1, daily=True)
+
+    cf_goodness_of_fit_file_solution_1 = os.path.join(COMPARE_DATA_PATH, 'cf_goodness_of_fit_analysis_1.csv') 
+    ok_(compare_csv_decimal_files(cf_out_analysis_file_1, cf_goodness_of_fit_file_solution_1))
+
     remove_files(cf_out_analysis_file,
                  original_out_analysis_file,
                  new_out_analysis_file)

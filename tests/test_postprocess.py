@@ -60,7 +60,7 @@ class TestRAPIDInflow(unittest.TestCase):
             ok_((d1.variables['lon'][:] == d2.variables['lon'][:]).all())
         d1.close()
         d2.close()
-        
+
     def test_generate_seasonal_averages(self):
         """
         Checks generating seasonal average data from RAPID Qout
@@ -79,6 +79,8 @@ class TestRAPIDInflow(unittest.TestCase):
         d2 = Dataset(compare_seasonal_averages_file)
         assert_almost_equal(d1.variables['average_flow'][:], d2.variables['average_flow'][:], decimal=5)
         assert_almost_equal(d1.variables['std_dev_flow'][:], d2.variables['std_dev_flow'][:], decimal=5)
+        assert_almost_equal(d1.variables['max_flow'][:], d2.variables['max_flow'][:], decimal=5)
+        assert_almost_equal(d1.variables['min_flow'][:], d2.variables['min_flow'][:], decimal=5)
         if 'rivid' in d2.variables.keys():
             ok_((d1.variables['rivid'][:] == d2.variables['rivid'][:]).all())
         if 'lat' in d2.variables.keys():
@@ -88,7 +90,7 @@ class TestRAPIDInflow(unittest.TestCase):
         d1.close()
         d2.close()
         
-        
+
     def test_generate_seasonal_qinit(self):
         """
         Checks generating seasonal qinit from rapid Qout

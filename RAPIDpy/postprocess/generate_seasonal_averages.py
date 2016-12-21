@@ -47,11 +47,15 @@ def generate_single_seasonal_average(args):
 
     avg_streamflow_array = np.mean(streamflow_array, axis=1)
     std_streamflow_array = np.std(streamflow_array, axis=1)
+    max_streamflow_array = np.amax(streamflow_array, axis=1)
+    min_streamflow_array = np.min(streamflow_array, axis=1)
 
     mp_lock.acquire()
     seasonal_avg_nc = Dataset(seasonal_average_file, 'a')
     seasonal_avg_nc.variables['average_flow'][:, day_of_year-1] = avg_streamflow_array
     seasonal_avg_nc.variables['std_dev_flow'][:, day_of_year-1] = std_streamflow_array
+    seasonal_avg_nc.variables['max_flow'][:, day_of_year-1] = max_streamflow_array
+    seasonal_avg_nc.variables['min_flow'][:, day_of_year-1] = min_streamflow_array
     seasonal_avg_nc.close()
     mp_lock.release()
 
@@ -80,6 +84,14 @@ def generate_seasonal_averages(qout_file, seasonal_average_file,
         
         std_dev_flow_var = seasonal_avg_nc.createVariable('std_dev_flow', 'f8', ('rivid','day_of_year'))
         std_dev_flow_var.long_name = 'seasonal std. dev. streamflow'
+        std_dev_flow_var.units = 'm3/s'
+
+        std_dev_flow_var = seasonal_avg_nc.createVariable('max_flow', 'f8', ('rivid','day_of_year'))
+        std_dev_flow_var.long_name = 'seasonal max streamflow'
+        std_dev_flow_var.units = 'm3/s'
+
+        std_dev_flow_var = seasonal_avg_nc.createVariable('min_flow', 'f8', ('rivid','day_of_year'))
+        std_dev_flow_var.long_name = 'seasonal min streamflow'
         std_dev_flow_var.units = 'm3/s'
 
         lat_var = seasonal_avg_nc.createVariable('lat', 'f8', ('rivid',),

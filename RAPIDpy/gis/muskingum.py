@@ -33,6 +33,7 @@ def CreateMuskingumKfacFile(in_drainage_line,
                             in_connectivity_file,
                             out_kfac_file,
                             length_units="km",
+                            slope_percentage=False,
                             file_geodatabase=None):
     """
     Creates the Kfac file for calibration.
@@ -54,7 +55,8 @@ def CreateMuskingumKfacFile(in_drainage_line,
         formula_type(int): An integer representing the formula type to use when calculating kfac. 
         in_connectivity_file(str): The path to the RAPID connectivity file.
         out_kfac_file(str): The path to the output kfac file.
-        length_units(str): The units for the length_id field. Supported types are "m" for meters and "km" for kilometers.
+        length_units(Optional[str]): The units for the length_id field. Supported types are "m" for meters and "km" for kilometers.
+        slope_percentage(Optional[bool]): If True, it assumes the slope given is in percentage and will divide by 100. Default is False.
         file_geodatabase(Optional[str]): Path to the file geodatabase. If you use this option, in_drainage_line is the name of the stream network feature class. (WARNING: Not always stable with GDAL.)
     
     Example::
@@ -96,8 +98,11 @@ def CreateMuskingumKfacFile(in_drainage_line,
         if slope is not None:
             slope_list[feature_idx] = slope
 
+    if slope_percentage:
+        slope_list /= 100.0
+
     if length_units == "m":
-        length_list = length_list/1000.0
+        length_list /= 1000.0
     elif length_units != "km":
         raise Exception("ERROR: Invalid length units supplied. Supported units are m and km.")
         

@@ -592,7 +592,8 @@ def test_goodness_of_fit():
 
     remove_files(cf_out_analysis_file,
                  original_out_analysis_file,
-                 new_out_analysis_file)
+                 new_out_analysis_file,
+                 cf_out_analysis_file_1)
     
 def test_cf_merge():
     """

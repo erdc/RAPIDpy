@@ -1,22 +1,24 @@
 # -*- coding: utf-8 -*-
-##
-##  goodnessOfFit.py
-##  RAPIDpy
-##
-##  Created by Alan D Snow 2015.
-##  Copyright © 2015 Alan D Snow. All rights reserved.
-##
+#
+#  goodnessOfFit.py
+#  RAPIDpy
+#
+#  Created by Alan D Snow 2015.
+#  License: BSD 3-Clause
+#
 
+from __future__ import print_function
 from csv import writer as csvwriter
 import numpy as np
 
 from ..dataset import RAPIDDataset
 
-#------------------------------------------------------------------------------
-#statistic functions
-#------------------------------------------------------------------------------
-## FUNCTIONS FROM http://pydoc.net/Python/ambhas/0.4.0/ambhas.errlib/
-def filter_nan(s,o):
+
+# ------------------------------------------------------------------------------
+# statistic functions
+# ------------------------------------------------------------------------------
+# FUNCTIONS FROM http://pydoc.net/Python/ambhas/0.4.0/ambhas.errlib/
+def filter_nan(s, o):
     """
         this functions removed the data  from simulated and observed data
         whereever the observed data contains nan
@@ -29,7 +31,8 @@ def filter_nan(s,o):
     data = data[~np.isnan(data).any(1)]
     return data[:,0],data[:,1]
 
-def pc_bias(s,o):
+
+def pc_bias(s, o):
     """
         Percent Bias
         input:
@@ -38,10 +41,11 @@ def pc_bias(s,o):
         output:
         pc_bias: percent bias
         """
-    #s,o = filter_nan(s,o)
+    # s,o = filter_nan(s,o)
     return 100.0*np.sum(s-o)/np.sum(o)
 
-def apb(s,o):
+
+def apb(s, o):
     """
         Absolute Percent Bias
         input:
@@ -50,10 +54,11 @@ def apb(s,o):
         output:
         apb_bias: absolute percent bias
         """
-    #s,o = filter_nan(s,o)
+    # s,o = filter_nan(s,o)
     return 100.0*np.sum(np.abs(s-o))/np.sum(o)
 
-def rmse(s,o):
+
+def rmse(s, o):
     """
         Root Mean Squared Error
         input:
@@ -62,10 +67,10 @@ def rmse(s,o):
         output:
         rmses: root mean squared error
         """
-    #s,o = filter_nan(s,o)
+    # s,o = filter_nan(s,o)
     return np.sqrt(np.mean((s-o)**2))
 
-def mae(s,o):
+def mae(s, o):
     """
         Mean Absolute Error
         input:
@@ -74,10 +79,11 @@ def mae(s,o):
         output:
         maes: mean absolute error
         """
-    #s,o = filter_nan(s,o)
+    # s,o = filter_nan(s,o)
     return np.mean(np.abs(s-o))
 
-def bias(s,o):
+
+def bias(s, o):
     """
         Bias
         input:
@@ -86,10 +92,11 @@ def bias(s,o):
         output:
         bias: bias
         """
-    #s,o = filter_nan(s,o)
+    # s,o = filter_nan(s,o)
     return np.mean(s-o)
 
-def NS(s,o):
+
+def NS(s, o):
     """
         Nash Sutcliffe efficiency coefficient
         input:
@@ -98,10 +105,11 @@ def NS(s,o):
         output:
         ns: Nash Sutcliffe efficient coefficient
         """
-    #s,o = filter_nan(s,o)
+    # s,o = filter_nan(s,o)
     return 1 - np.sum((s-o)**2)/np.sum((o-np.mean(o))**2)
 
-def L(s,o, N=5):
+
+def L(s, o, N=5):
     """
         Likelihood
         input:
@@ -110,10 +118,11 @@ def L(s,o, N=5):
         output:
         L: likelihood
         """
-    #s,o = filter_nan(s,o)
+    # s,o = filter_nan(s,o)
     return np.exp(-N*np.sum((s-o)**2)/np.sum((o-np.mean(o))**2))
 
-def correlation(s,o):
+
+def correlation(s, o):
     """
         correlation coefficient
         input:
@@ -122,7 +131,7 @@ def correlation(s,o):
         output:
         correlation: correlation coefficient
         """
-    #s,o = filter_nan(s,o)
+    # s,o = filter_nan(s,o)
     if s.size == 0:
         corr = np.NaN
     else:
@@ -131,7 +140,7 @@ def correlation(s,o):
     return corr
 
 
-def index_agreement(s,o):
+def index_agreement(s, o):
     """
         index of agreement
         input:
@@ -140,12 +149,12 @@ def index_agreement(s,o):
         output:
         ia: index of agreement
         """
-    #s,o = filter_nan(s,o)
+    # s,o = filter_nan(s,o)
     ia = 1 -(np.sum((o-s)**2))/(np.sum((np.abs(s-np.mean(o))+np.abs(o-np.mean(o)))**2))
     return ia
 
 
-def KGE(s,o):
+def KGE(s, o):
     """
         Kling-Gupta Efficiency
         input:
@@ -157,18 +166,19 @@ def KGE(s,o):
         alpha: ratio of the standard deviation
         beta: ratio of the mean
         """
-    #s,o = filter_nan(s,o)
+    # s,o = filter_nan(s,o)
     cc = correlation(s,o)
     alpha = np.std(s)/np.std(o)
     beta = np.sum(s)/np.sum(o)
     kge = 1- np.sqrt( (cc-1)**2 + (alpha-1)**2 + (beta-1)**2 )
     return kge, cc, alpha, beta
 
-## END FUNCTIONS FROM http://pydoc.net/Python/ambhas/0.4.0/ambhas.errlib/
+# END FUNCTIONS FROM http://pydoc.net/Python/ambhas/0.4.0/ambhas.errlib/
 
-#------------------------------------------------------------------------------
-#Time Series comparison functions
-#------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------
+# Time Series comparison functions
+# ------------------------------------------------------------------------------
 def find_goodness_of_fit(rapid_qout_file, reach_id_file, observed_file,
                          out_analysis_file, daily=False, steps_per_group=1):
     """
@@ -203,7 +213,7 @@ def find_goodness_of_fit(rapid_qout_file, reach_id_file, observed_file,
    
     data_nc = RAPIDDataset(rapid_qout_file)
     
-    #analyze and write
+    # analyze and write
     observed_table = np.loadtxt(observed_file, ndmin=2, delimiter=",", usecols=tuple(range(reach_id_list.size)))
     with open(out_analysis_file, 'w') as outcsv:
         writer = csvwriter(outcsv)
@@ -222,23 +232,24 @@ def find_goodness_of_fit(rapid_qout_file, reach_id_file, observed_file,
         for index, reach_id in enumerate(reach_id_list):
             observed_array = observed_table[:, index]
             simulated_array = data_nc.get_qout(reach_id, daily=daily)
-            #make sure they are the same length
+            # make sure they are the same length
             simulated_array = simulated_array[:len(observed_array)]
             observed_array = observed_array[:len(simulated_array)]
             simulated_array,observed_array = filter_nan(simulated_array,observed_array)
             writer.writerow([reach_id,
-                             pc_bias(simulated_array,observed_array),
-                             apb(simulated_array,observed_array),
-                             rmse(simulated_array,observed_array),
-                             mae(simulated_array,observed_array),
-                             bias(simulated_array,observed_array),
-                             NS(simulated_array,observed_array),
-                             L(simulated_array,observed_array),
-                             correlation(simulated_array,observed_array),
-                             index_agreement(simulated_array,observed_array),
-                             KGE(simulated_array,observed_array)[0]])
+                             pc_bias(simulated_array, observed_array),
+                             apb(simulated_array, observed_array),
+                             rmse(simulated_array, observed_array),
+                             mae(simulated_array, observed_array),
+                             bias(simulated_array, observed_array),
+                             NS(simulated_array, observed_array),
+                             L(simulated_array, observed_array),
+                             correlation(simulated_array, observed_array),
+                             index_agreement(simulated_array, observed_array),
+                             KGE(simulated_array, observed_array)[0]])
 
-def find_goodness_of_fit_csv(observed_simulated_file):
+
+def find_goodness_of_fit_csv(observed_simulated_file, out_file=None):
     """
     Finds the goodness of fit comparing observed and simulated flows
     In the file, the first column is the observed flows and the 
@@ -251,7 +262,7 @@ def find_goodness_of_fit_csv(observed_simulated_file):
         
     Args:
         observed_simulated_file(str): Path to the csv file with the observed and simulated flows.
-
+        out_file(Optional[str]): Path to output file. If not provided, it will print to console.
 
     Example:
     
@@ -262,19 +273,19 @@ def find_goodness_of_fit_csv(observed_simulated_file):
         find_goodness_of_fit_csv('/united_kingdom-thames/flows_kingston_gage_noah.csv')
     
     """
-    observed_simulated_table = np.loadtxt(observed_simulated_file, delimiter=",", usecols=(0,1))
-    
-    simulated_array,observed_array = filter_nan(observed_simulated_table[:,0],
-                                                observed_simulated_table[:,1])
+    observed_simulated_table = np.loadtxt(observed_simulated_file, ndmin=2, delimiter=",", usecols=(0,1))
+
+    observed_array, simulated_array = filter_nan(observed_simulated_table[:, 0],
+                                                 observed_simulated_table[:, 1])
 
     # print error indices
-    print("Percent Bias: {0}".format(pc_bias(simulated_array,observed_array)))
-    print("Absolute Percent Bias: {0}".format(apb(simulated_array,observed_array)))
-    print("Root Mean Squared Error: {0}".format(rmse(simulated_array,observed_array)))
-    print("Mean Absolute Error: {0}".format(mae(simulated_array,observed_array)))
-    print("Bias: {0}".format(bias(simulated_array,observed_array)))
-    print("Nash Sutcliffe efficiency coefficient: {0}".format(NS(simulated_array,observed_array)))
-    print("Likelihood: {0}".format(L(simulated_array,observed_array)))
-    print("correlation coefficient: {0}".format(correlation(simulated_array,observed_array)))
-    print("index of agreement: {0}".format(index_agreement(simulated_array,observed_array)))
-    print("Kling-Gupta Efficiency: {0}".format(KGE(simulated_array,observed_array)[0]))
+    print("Percent Bias: {0}".format(pc_bias(simulated_array, observed_array)), file=out_file)
+    print("Absolute Percent Bias: {0}".format(apb(simulated_array, observed_array)), file=out_file)
+    print("Root Mean Squared Error: {0}".format(rmse(simulated_array, observed_array)), file=out_file)
+    print("Mean Absolute Error: {0}".format(mae(simulated_array, observed_array)), file=out_file)
+    print("Bias: {0}".format(bias(simulated_array, observed_array)), file=out_file)
+    print("Nash Sutcliffe efficiency coefficient: {0}".format(NS(simulated_array, observed_array)), file=out_file)
+    print("Likelihood: {0}".format(L(simulated_array, observed_array)), file=out_file)
+    print("correlation coefficient: {0}".format(correlation(simulated_array, observed_array)), file=out_file)
+    print("index of agreement: {0}".format(index_agreement(simulated_array, observed_array)), file=out_file)
+    print("Kling-Gupta Efficiency: {0}".format(KGE(simulated_array, observed_array)[0]), file=out_file)

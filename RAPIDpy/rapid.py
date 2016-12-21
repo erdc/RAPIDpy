@@ -341,7 +341,7 @@ class RAPID(object):
                 "ERROR")
 
         #get rapid connect info
-        rapid_connect_table = np.loadtxt(self.rapid_connect_file, ndmin=1, delimiter=",", dtype=int)
+        rapid_connect_table = np.loadtxt(self.rapid_connect_file, ndmin=2, delimiter=",", dtype=int)
 
         self.IS_riv_tot = int(rapid_connect_table.shape[0])
         self.IS_max_up = int(rapid_connect_table[:,2].max())

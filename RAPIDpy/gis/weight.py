@@ -138,6 +138,7 @@ def RTreeCreateWeightTable(lsm_grid_lat, lsm_grid_lon,
     rapid_connect_rivid_list = np.loadtxt(in_rapid_connect, 
                                           delimiter=",", 
                                           usecols=(0,),
+                                          ndmin=1,
                                           dtype=int)
     print("Find LSM grid cells that intersect with each catchment")
     print("and write out weight table ...")

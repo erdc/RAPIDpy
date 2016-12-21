@@ -129,7 +129,7 @@ def CreateMuskingumKfacFile(in_drainage_line,
             
             streamIDindex = river_id_list==streamID
             # find the length
-            stream_length = length_list[streamIDindex]*1000
+            stream_length = length_list[streamIDindex]*1000.0
 
             if formula_type >= 2:
                 # find the slope
@@ -153,7 +153,7 @@ def CreateMuskingumKfacFile(in_drainage_line,
                     except IndexError:
                         pass
                         
-                    stream_slope = (next_down_slope+next_up_slope)/2
+                    stream_slope = (next_down_slope+next_up_slope)/2.0
                     if stream_slope <=0:
                         #if still no slope, set to 0.001
                         stream_slope = 0.001

@@ -279,8 +279,12 @@ def find_goodness_of_fit_csv(observed_simulated_file, out_file=None):
                                                  observed_simulated_table[:, 1])
 
     # print error indices
-    with open(out_file, 'w') as print_file:
-        print("\n".join([
+    if out_file:
+        print_file = open(out_file, 'w')
+    else:
+        print_file = None
+        
+    print("\n".join([
                "Percent Bias: {0}".format(pc_bias(simulated_array, observed_array)),
                "Absolute Percent Bias: {0}".format(apb(simulated_array, observed_array)),
                "Root Mean Squared Error: {0}".format(rmse(simulated_array, observed_array)),
@@ -292,4 +296,7 @@ def find_goodness_of_fit_csv(observed_simulated_file, out_file=None):
                "index of agreement: {0}".format(index_agreement(simulated_array, observed_array)),
                "Kling-Gupta Efficiency: {0}".format(KGE(simulated_array, observed_array)[0]),
                ]), 
-               file=print_file)
+          file=print_file)
+          
+    if print_file:
+        print_file.close()

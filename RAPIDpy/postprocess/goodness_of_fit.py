@@ -280,15 +280,16 @@ def find_goodness_of_fit_csv(observed_simulated_file, out_file=None):
 
     # print error indices
     with open(out_file, 'w') as print_file:
-        print(("Percent Bias: {0}".format(pc_bias(simulated_array, observed_array))
-               "Absolute Percent Bias: {0}".format(apb(simulated_array, observed_array))
-               "Root Mean Squared Error: {0}".format(rmse(simulated_array, observed_array))
-               "Mean Absolute Error: {0}".format(mae(simulated_array, observed_array))
-               "Bias: {0}".format(bias(simulated_array, observed_array))
-               "Nash Sutcliffe efficiency coefficient: {0}".format(NS(simulated_array, observed_array))
-               "Likelihood: {0}".format(L(simulated_array, observed_array))
-               "correlation coefficient: {0}".format(correlation(simulated_array, observed_array))
-               "index of agreement: {0}".format(index_agreement(simulated_array, observed_array))
-               "Kling-Gupta Efficiency: {0}".format(KGE(simulated_array, observed_array)[0])
-               ), 
+        print("\n".join([
+               "Percent Bias: {0}".format(pc_bias(simulated_array, observed_array)),
+               "Absolute Percent Bias: {0}".format(apb(simulated_array, observed_array)),
+               "Root Mean Squared Error: {0}".format(rmse(simulated_array, observed_array)),
+               "Mean Absolute Error: {0}".format(mae(simulated_array, observed_array)),
+               "Bias: {0}".format(bias(simulated_array, observed_array)),
+               "Nash Sutcliffe efficiency coefficient: {0}".format(NS(simulated_array, observed_array)),
+               "Likelihood: {0}".format(L(simulated_array, observed_array)),
+               "correlation coefficient: {0}".format(correlation(simulated_array, observed_array)),
+               "index of agreement: {0}".format(index_agreement(simulated_array, observed_array)),
+               "Kling-Gupta Efficiency: {0}".format(KGE(simulated_array, observed_array)[0]),
+               ]), 
                file=print_file)

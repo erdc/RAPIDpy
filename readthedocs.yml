@@ -1,5 +1,5 @@
 conda:
-    file: rtd_conda_env_py2.yml
+    file: conda-env.yml
 python:
     version: 2
     setup_py_install: true

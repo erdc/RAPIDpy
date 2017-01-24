@@ -1,0 +1,29 @@
+# conda-env.yml
+# Configuration file for creating a Conda Environment with dependencies needed for RAPIDpy.
+# Create the environment by running the following command (after installing Miniconda):
+# os: linux
+#   $ conda env create -f  conda-env.yml
+
+name: rapid
+channels:
+- conda-forge
+- defaults
+dependencies:
+- python=2
+- mock
+- nose
+- numpy
+- pandas
+- scipy
+- netCDF4
+- gdal
+- shapely
+- pyproj
+- python-dateutil
+- rtree
+- sphinx
+- pip:
+  - future
+  - requests
+  - six
+  - sphinxcontrib-napoleon

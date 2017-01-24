@@ -33,11 +33,11 @@ notifications:
 before_install:
 - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
     sudo apt-get update -qq; 
-    sudo apt-get install -y g++ gfortran;
+    sudo apt-get install -y g++ gfortran libgdal-dev;
   fi
 - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then 
     brew update;
-    brew install gcc;
+    brew install gcc gdal; 
   fi
 
 #-------------------------------------------------------------------------------
@@ -61,7 +61,8 @@ before_install:
 #-----------------------------------------------------------------------------
 # Install required python packages
 #-----------------------------------------------------------------------------
-- conda install --yes -c conda-forge gcc nose numpy pandas scipy netCDF4 gdal shapely pyproj rtree
+- conda install --yes nose numpy pandas scipy netCDF4 gdal shapely pyproj
+- conda install --yes -c conda-forge rtree
 - pip install coveralls nose-cov
 - source deactivate rapid
 
@@ -94,8 +95,6 @@ before_install:
 #Installing TauDEM
 #-------------------------------------------------------------------------------
 - cd $TRAVIS_BUILD_DIR/..
-# use conda's gcc for build
-- source activate rapid
 - git clone https://github.com/dtarb/TauDEM.git
 - cd TauDEM
 - git checkout master
@@ -106,6 +105,7 @@ before_install:
 #Installing RAPIDpy
 #*******************************************************************************
 install:
+- source activate rapid
 - cd $TRAVIS_BUILD_DIR
 - python setup.py install
 #*******************************************************************************

@@ -33,30 +33,30 @@ except ImportError:
 class TauDEM(object):
     """
     TauDEM process manager.
-    
+
     Attributes:
         taudem_exe_path(Optional[str]): Path to TauDEM directory containing executables. This is requred to use TauDEM functionality.
-        num_processors(Optional[int]): Number of proessors to use with TauDEM. It only works if *use_all_processors*=False.
+        num_processors(Optional[int]): Number of proessors to use with TauDEM. It only works if use_all_processors=False.
         use_all_processors(Optional[bool]): If True, the TauDEM processes will use all avaialble processors.
-        mpiexec_path(Optional[str]): Path to mpiexec command. Default is "mpiexec".
-    
+        mpiexec_path(Optional[str]): Path to mpiexec command. Default is 'mpiexec'.
+
     Initialization Example:
-    
+
     .. code:: python
 
         from RAPIDpy.gis.taudem import TauDEM
-        
+
         td = TauDEM("/path/to/scripts/TauDEM", use_all_processors=True)
 
     """
     def __init__(self,
-                 taudem_exe_path="", 
+                 taudem_exe_path="",
                  num_processors=1,
                  use_all_processors=False,
                  mpiexec_path="mpiexec"):
         """
         Initializer
-        """             
+        """
         if use_all_processors or num_processors > cpu_count():
             num_processors = cpu_count()
 
@@ -70,7 +70,7 @@ class TauDEM(object):
         """
             # Get and describe the first argument
         #
-    
+
         print("Number of Processes: {0}".format(self.num_processors))
         time_start = datetime.utcnow()
 
@@ -88,7 +88,7 @@ class TauDEM(object):
             print(err)
             #raise Exception(err)
         print("Time to complete: {0}".format(datetime.utcnow()-time_start))
-            
+
     def _add_prj_file(self, original_gis_file,
                       new_gis_file):
         """
@@ -104,11 +104,11 @@ class TauDEM(object):
         else:
             dataset = gdal.Open(original_gis_file)
             spatial_ref_str = dataset.GetProjection()
-            
+
         with open(out_prj_file, 'w') as prj_file:
             prj_file.write(spatial_ref_str)
-    
-    def extractSubNetwork(self, 
+
+    def extractSubNetwork(self,
                           network_file,
                           out_subset_network_file,
                           outlet_ids,
@@ -128,16 +128,16 @@ class TauDEM(object):
             next_down_id_field(str): Name if the field with the river ID of the next downstream river segment in the stream network shapefile.
             river_magnitude_field(str): Name of the river magnitude field in the stream network shapefile.
             safe_mode(Optional[bool]): If True, it will kill the simulation early before over taxing your computer. If you are confident your computer can handle it, set it to False.
-            
+
         Here is an example of how to use this:
-        
+
         .. code:: python
-        
+
             import os
             from RAPIDpy.gis.taudem import TauDEM
-            
+
             td = TauDEM()
-            
+
             output_directory = '/path/to/output/files'
             td.extractSubNetwork(network_file=os.path.join(output_directory,"stream_reach_file.shp"),
                                  out_subset_network_file=os.path.join(output_directory,"stream_reach_file_subset.shp"),
@@ -146,7 +146,7 @@ class TauDEM(object):
                                  next_down_id_field="DSLINKNO",
                                  river_magnitude_field="Magnitude",
                                  )
-        
+
         """
         network_shapefile = ogr.Open(network_file)
         network_layer = network_shapefile.GetLayer()
@@ -157,7 +157,7 @@ class TauDEM(object):
         for feature_idx, drainage_line_feature in enumerate(network_layer):
             rivid_list[feature_idx] = drainage_line_feature.GetField(river_id_field)
             next_down_rivid_list[feature_idx] = drainage_line_feature.GetField(next_down_id_field)
-        
+
         def getSubNetworkIDList(outlet_river_id,
                                 rivid_list,
                                 next_down_rivid_list):
@@ -174,10 +174,10 @@ class TauDEM(object):
             except IndexError:
                 pass
             return sub_network_index_list
-            
+
         original_recursion_limit = getrecursionlimit()
         try:
-            main_sub_network_index_list = []    
+            main_sub_network_index_list = []
             for outlet_id in outlet_ids:
                 outlet_index = np.where(rivid_list==outlet_id)[0][0]
                 outlet_feature = network_layer.GetFeature(outlet_index)
@@ -197,7 +197,7 @@ class TauDEM(object):
         except Exception:
             setrecursionlimit(original_recursion_limit)
             raise
-            
+
         setrecursionlimit(original_recursion_limit)
 
         #Write out subset to new shapefile
@@ -205,31 +205,31 @@ class TauDEM(object):
         # Remove output shapefile if it already exists
         if os.path.exists(out_subset_network_file):
             shp_drv.DeleteDataSource(out_subset_network_file)
-            
+
         network_subset_shp = shp_drv.CreateDataSource(out_subset_network_file)
-        network_subset_layer = network_subset_shp.CreateLayer('', network_layer.GetSpatialRef(), 
+        network_subset_layer = network_subset_shp.CreateLayer('', network_layer.GetSpatialRef(),
                                                               ogr.wkbLineString)
         # Add input Layer Fields to the output Layer if it is the one we want
         for i in xrange(network_layer_defn.GetFieldCount()):
             network_subset_layer.CreateField(network_layer_defn.GetFieldDefn(i))
         network_subset_layer_defn = network_subset_layer.GetLayerDefn()
 
-        for feature_index in main_sub_network_index_list:      
+        for feature_index in main_sub_network_index_list:
             subset_feature = network_layer.GetFeature(feature_index)
             #add to list
             new_feat = ogr.Feature(network_subset_layer_defn)
-    
+
             # Add field values from input Layer
             for i in xrange(network_layer_defn.GetFieldCount()):
                 new_feat.SetField(network_subset_layer_defn.GetFieldDefn(i).GetNameRef(),
                                   subset_feature.GetField(i))
-    
+
             # Set geometry as centroid
             geom = subset_feature.GetGeometryRef()
             new_feat.SetGeometry(geom.Clone())
             # Add new feature to output Layer
             network_subset_layer.CreateFeature(new_feat)
-            
+
     def extractLargestSubNetwork(self,
                                  network_file,
                                  out_subset_network_file,
@@ -239,7 +239,7 @@ class TauDEM(object):
                                  safe_mode=True):
         """
         Extracts the larges sub network from the watershed based on the magnitude parameter.
-        
+
         Parameters:
             network_file(str): Path to the stream network shapefile.
             out_subset_network_file(str): Path to the output subset stream network shapefile.
@@ -247,18 +247,18 @@ class TauDEM(object):
             next_down_id_field(str): Name if the field with the river ID of the next downstream river segment in the stream network shapefile.
             river_magnitude_field(str): Name of the river magnitude field in the stream network shapefile.
             safe_mode(Optional[bool]): If True, it will kill the simulation early before over taxing your computer. If you are confident your computer can handle it, set it to False.
-            
+
         Here is an example of how to use this:
-        
+
         .. code:: python
-        
+
             import os
             from RAPIDpy.gis.taudem import TauDEM
-            
+
             td = TauDEM()
-            
+
             output_directory = '/path/to/output/files'
-            td.extractLargestSubNetwork(network_file=os.path.join(output_directory,"stream_reach_file.shp"),                                         
+            td.extractLargestSubNetwork(network_file=os.path.join(output_directory,"stream_reach_file.shp"),
                                         out_subset_network_file=os.path.join(output_directory,"stream_reach_file_subset.shp"),
                                         river_id_field="LINKNO",
                                         next_down_id_field="DSLINKNO",
@@ -271,7 +271,7 @@ class TauDEM(object):
         riv_magnuitude_list = np.zeros(number_of_features, dtype=np.int32)
         for feature_idx, drainage_line_feature in enumerate(network_layer):
             riv_magnuitude_list[feature_idx] = drainage_line_feature.GetField(river_magnitude_field)
-        
+
         max_magnitude_feature = network_layer.GetFeature(np.argmax(riv_magnuitude_list))
         self.extractSubNetwork(network_file,
                                out_subset_network_file,
@@ -280,7 +280,7 @@ class TauDEM(object):
                                next_down_id_field,
                                river_magnitude_field,
                                safe_mode)
-                               
+
     def extractSubsetFromWatershed(self,
                                    subset_network_file,
                                    subset_network_river_id_field,
@@ -290,7 +290,7 @@ class TauDEM(object):
         """
         Extract catchment by using subset network file. Use this after using either :func:`~RAPIDpy.gis.taudem.TauDEM.extractSubNetwork()`
         or :func:`~RAPIDpy.gis.taudem.TauDEM.extractLargestSubNetwork()`.
-        
+
         Parameters:
             network_file(str): Path to the stream network shapefile.
             out_subset_network_file(str): Path to the output subset stream network shapefile.
@@ -298,23 +298,23 @@ class TauDEM(object):
             next_down_id_field(str): Name if the field with the river ID of the next downstream river segment in the stream network shapefile.
             river_magnitude_field(str): Name of the river magnitude field in the stream network shapefile.
             safe_mode(Optional[bool]): If True, it will kill the simulation early before over taxing your computer. If you are confident your computer can handle it, set it to False.
-            
+
         Here is an example of how to use this:
-        
+
         .. code:: python
-        
+
             import os
             from RAPIDpy.gis.taudem import TauDEM
-            
+
             td = TauDEM()
-            
+
             output_directory = '/path/to/output/files'
             td.extractSubsetFromWatershed(subset_network_file=os.path.join(output_directory,"stream_reach_file_subset.shp"),
                                           subset_network_river_id_field="LINKNO",
                                           watershed_file=os.path.join(output_directory,"watershed_shapefile.shp"),
                                           watershed_network_river_id_field="LINKNO",
-                                          out_watershed_subset_file=os.path.join(output_directory,"watershed_shapefile_subset.shp"))       
-                                        
+                                          out_watershed_subset_file=os.path.join(output_directory,"watershed_shapefile_subset.shp"))
+
         """
         subset_network_shapefile = ogr.Open(subset_network_file)
         subset_network_layer = subset_network_shapefile.GetLayer()
@@ -333,9 +333,9 @@ class TauDEM(object):
         # Remove output shapefile if it already exists
         if os.path.exists(out_watershed_subset_file):
             shp_drv.DeleteDataSource(out_watershed_subset_file)
-            
+
         subset_watershed_shapefile = shp_drv.CreateDataSource(out_watershed_subset_file)
-        subset_watershed_layer = subset_watershed_shapefile.CreateLayer('', ogr_watershed_shapefile_lyr.GetSpatialRef(), 
+        subset_watershed_layer = subset_watershed_shapefile.CreateLayer('', ogr_watershed_shapefile_lyr.GetSpatialRef(),
                                                                         ogr.wkbPolygon)
         # Add input Layer Fields to the output Layer if it is the one we want
         for i in xrange(ogr_watershed_shapefile_lyr_defn.GetFieldCount()):
@@ -349,22 +349,22 @@ class TauDEM(object):
                 print("{0} {1} not found ...".format(subset_network_river_id_field,
                                                      drainage_line_feature.GetField(subset_network_river_id_field)))
                 continue
-                
+
             subset_feature = ogr_watershed_shapefile_lyr.GetFeature(watershed_feature_index)
             #add to list
             new_feat = ogr.Feature(subset_watershed_layer_defn)
-    
+
             # Add field values from input Layer
             for i in xrange(ogr_watershed_shapefile_lyr_defn.GetFieldCount()):
                 new_feat.SetField(subset_watershed_layer_defn.GetFieldDefn(i).GetNameRef(),
                                   subset_feature.GetField(i))
-    
+
             # Set geometry as centroid
             geom = subset_feature.GetGeometryRef()
             new_feat.SetGeometry(geom.Clone())
             # Add new feature to output Layer
             subset_watershed_layer.CreateFeature(new_feat)
-        
+
     def rasterToPolygon(self, raster_file, polygon_file):
         """
         Converts raster to polygon and then dissolves it
@@ -373,7 +373,7 @@ class TauDEM(object):
         time_start = datetime.utcnow()
         temp_polygon_file = "{0}_temp.shp".format(os.path.splitext(os.path.basename(polygon_file))[0])
         cmd = ["gdal_polygonize.py", raster_file,
-               "-f", "ESRI Shapefile", temp_polygon_file,  
+               "-f", "ESRI Shapefile", temp_polygon_file,
                os.path.splitext(os.path.basename(temp_polygon_file))[0],
                "LINKNO"]
 
@@ -388,7 +388,7 @@ class TauDEM(object):
             print(err)
             #raise Exception(err)
         print("Time to convert to polygon: {0}".format(datetime.utcnow()-time_start))
-        
+
         print("Dissolving ...")
         time_start_dissolve = datetime.utcnow()
         ogr_polygin_shapefile = ogr.Open(temp_polygon_file)
@@ -397,15 +397,15 @@ class TauDEM(object):
         polygon_rivid_list = np.zeros(number_of_features, dtype=np.int32)
         for feature_idx, catchment_feature in enumerate(ogr_polygon_shapefile_lyr):
             polygon_rivid_list[feature_idx] = catchment_feature.GetField('LINKNO')
-        
-        
+
+
         shp_drv = ogr.GetDriverByName('ESRI Shapefile')
         # Remove output shapefile if it already exists
         if os.path.exists(polygon_file):
             shp_drv.DeleteDataSource(polygon_file)
-            
+
         dissolve_shapefile = shp_drv.CreateDataSource(polygon_file)
-        dissolve_layer = dissolve_shapefile.CreateLayer('', ogr_polygon_shapefile_lyr.GetSpatialRef(), 
+        dissolve_layer = dissolve_shapefile.CreateLayer('', ogr_polygon_shapefile_lyr.GetSpatialRef(),
                                                         ogr.wkbPolygon)
         dissolve_layer.CreateField(ogr.FieldDefn('LINKNO', ogr.OFTInteger))
         dissolve_layer_defn = dissolve_layer.GetLayerDefn()
@@ -426,7 +426,7 @@ class TauDEM(object):
                 for feature_index in feature_indices:
                     feature = ogr_polygon_shapefile_lyr.GetFeature(feature_index)
                     feat_geom = feature.GetGeometryRef()
-                    dissolve_poly_list.append(shapely_loads(feat_geom.ExportToWkb()))                
+                    dissolve_poly_list.append(shapely_loads(feat_geom.ExportToWkb()))
                 dissolve_polygon = cascaded_union(dissolve_poly_list)
                 new_feat.SetGeometry(ogr.CreateGeometryFromWkb(dissolve_polygon.wkb))
             dissolve_layer.CreateFeature(new_feat)
@@ -434,25 +434,25 @@ class TauDEM(object):
         shp_drv.DeleteDataSource(temp_polygon_file)
         print("Time to dissolve: {0}".format(datetime.utcnow()-time_start_dissolve))
         print("Total time to convert: {0}".format(datetime.utcnow()-time_start))
-        
+
     def addLengthMeters(self, stream_network):
         """
-        Adds length field in meters to network (The added field name will be 'LENGTH_M'). 
-        
-        .. note:: This may be needed for generating the kfac file depending on the units of your raster. See: :doc:`gis_tools`.       
+        Adds length field in meters to network (The added field name will be 'LENGTH_M').
+
+        .. note:: This may be needed for generating the kfac file depending on the units of your raster. See: :doc:`gis_tools`.
 
         Parameters:
             stream_network(str): Path to stream network file.
-        
+
         Here is an example of how to use this:
-        
+
         .. code:: python
-        
+
             import os
             from RAPIDpy.gis.taudem import TauDEM
-            
+
             td = TauDEM()
-                        
+
             output_directory = '/path/to/output/files'
             td.addLengthMeters(os.path.join(output_directory,"stream_reach_file.shp"))
 
@@ -460,7 +460,7 @@ class TauDEM(object):
         network_shapefile = ogr.Open(stream_network, 1)
         network_layer = network_shapefile.GetLayer()
         network_layer_defn = network_layer.GetLayerDefn()
-        
+
         #make sure projection EPSG:4326
         network_layer_proj = network_layer.GetSpatialRef()
         geographic_proj = osr.SpatialReference()
@@ -476,7 +476,7 @@ class TauDEM(object):
             if field_name == 'LENGTH_M':
                 create_field=False
                 break
-            
+
         if create_field:
             network_layer.CreateField(ogr.FieldDefn('LENGTH_M', ogr.OFTReal))
 
@@ -486,14 +486,14 @@ class TauDEM(object):
             #make sure coordinates are geographic
             if proj_transform:
                 feat_geom.Transform(proj_transform)
-                
+
             line = shapely_loads(feat_geom.ExportToWkb())
             lon_list, lat_list = line.xy
             az1, az2, dist = geo_manager.inv(lon_list[:-1], lat_list[:-1], lon_list[1:], lat_list[1:])
             network_feature.SetField('LENGTH_M', sum(dist))
             network_layer.SetFeature(network_feature)
 
-    def pitRemove(self, 
+    def pitRemove(self,
                   elevation_grid,
                   pit_filled_elevation_grid,
                   input_depression_mask_grid=None,
@@ -504,42 +504,42 @@ class TauDEM(object):
         """
         print("PROCESS: PitRemove")
         self.pit_filled_elevation_grid = pit_filled_elevation_grid
-             
+
         # Construct the taudem command line.
         cmd = [os.path.join(self.taudem_exe_path, 'pitremove'),
-               '-z', elevation_grid, 
+               '-z', elevation_grid,
                '-fel', self.pit_filled_elevation_grid,
                ]
-    
+
         if input_depression_mask_grid:
             cmd += ['-depmask', input_depression_mask_grid]
         if consider4way:
             cmd += ['-4way']
-        
+
         self._run_mpi_cmd(cmd)
 
         #create projection file
         self._add_prj_file(elevation_grid,
                            self.pit_filled_elevation_grid)
-        
-    def dinfFlowDirection(self, 
+
+    def dinfFlowDirection(self,
                           flow_dir_grid,
                           slope_grid,
                           pit_filled_elevation_grid=None):
         """
         Calculates flow direction with Dinf method
-        """                     
+        """
         print("PROCESS: DinfFlowDirection")
         if pit_filled_elevation_grid:
             self.pit_filled_elevation_grid = pit_filled_elevation_grid
-            
+
         # Construct the taudem command line.
         cmd = [os.path.join(self.taudem_exe_path, 'dinfflowdir'),
-               '-fel', self.pit_filled_elevation_grid, 
-               '-ang', flow_dir_grid, 
+               '-fel', self.pit_filled_elevation_grid,
+               '-ang', flow_dir_grid,
                '-slp', slope_grid,
                ]
-    
+
         self._run_mpi_cmd(cmd)
 
         #create projection files
@@ -548,26 +548,26 @@ class TauDEM(object):
         self._add_prj_file(self.pit_filled_elevation_grid,
                            slope_grid)
 
-    def d8FlowDirection(self, 
+    def d8FlowDirection(self,
                         flow_dir_grid,
                         slope_grid,
                         pit_filled_elevation_grid=None):
         """
         Calculates flow direction with D8 method
-        """                     
+        """
         print("PROCESS: D8FlowDirection")
         if pit_filled_elevation_grid:
             self.pit_filled_elevation_grid = pit_filled_elevation_grid
-    
+
         self.flow_dir_grid = flow_dir_grid
-        
+
         # Construct the taudem command line.
         cmd = [os.path.join(self.taudem_exe_path, 'd8flowdir'),
-               '-fel', self.pit_filled_elevation_grid, 
-               '-p', self.flow_dir_grid, 
+               '-fel', self.pit_filled_elevation_grid,
+               '-p', self.flow_dir_grid,
                '-sd8', slope_grid,
                ]
-    
+
         self._run_mpi_cmd(cmd)
 
         #create projection files
@@ -575,8 +575,8 @@ class TauDEM(object):
                            self.flow_dir_grid)
         self._add_prj_file(self.pit_filled_elevation_grid,
                            slope_grid)
-        
-    def dinfContributingArea(self, 
+
+    def dinfContributingArea(self,
                              contributing_area_grid,
                              flow_dir_grid,
                              outlet_shapefile=None,
@@ -585,29 +585,29 @@ class TauDEM(object):
                              ):
         """
         Calculates contributing area with Dinf method
-        """                     
+        """
         print("PROCESS: DinfContributingArea")
 
         # Construct the taudem command line.
         cmd = [os.path.join(self.taudem_exe_path, 'areadinf'),
-               '-ang', flow_dir_grid, 
+               '-ang', flow_dir_grid,
                '-sca', contributing_area_grid,
                ]
-               
+
         if outlet_shapefile:
             cmd += ['-o', outlet_shapefile]
         if weight_grid:
             cmd += ['-wg', weight_grid]
         if not edge_contamination:
-            cmd = cmd + ['-nc']    
-    
+            cmd = cmd + ['-nc']
+
         self._run_mpi_cmd(cmd)
 
         #create projection file
         self._add_prj_file(flow_dir_grid,
                            contributing_area_grid)
-                           
-    def d8ContributingArea(self, 
+
+    def d8ContributingArea(self,
                            contributing_area_grid,
                            outlet_shapefile=None,
                            weight_grid=None,
@@ -615,32 +615,32 @@ class TauDEM(object):
                            flow_dir_grid=None):
         """
         Calculates contributing area with D8 method
-        """                     
+        """
         print("PROCESS: D8ContributingArea")
         if flow_dir_grid:
             self.flow_dir_grid = flow_dir_grid
-            
+
         self.contributing_area_grid = contributing_area_grid
         # Construct the taudem command line.
         cmd = [os.path.join(self.taudem_exe_path, 'aread8'),
-               '-p', self.flow_dir_grid, 
+               '-p', self.flow_dir_grid,
                '-ad8', self.contributing_area_grid,
                ]
-               
+
         if outlet_shapefile:
             cmd += ['-o', outlet_shapefile]
         if weight_grid:
             cmd += ['-wg', weight_grid]
         if not edge_contamination:
-            cmd = cmd + ['-nc']    
-    
+            cmd = cmd + ['-nc']
+
         self._run_mpi_cmd(cmd)
 
         #create projection file
         self._add_prj_file(self.flow_dir_grid,
                            self.contributing_area_grid)
 
-    def streamDefByThreshold(self, 
+    def streamDefByThreshold(self,
                              stream_raster_grid,
                              threshold,
                              contributing_area_grid,
@@ -651,24 +651,24 @@ class TauDEM(object):
         """
         print("PROCESS: StreamDefByThreshold")
         self.stream_raster_grid = stream_raster_grid
-        
+
         # Construct the taudem command line.
         cmd = [os.path.join(self.taudem_exe_path, 'threshold'),
-               '-ssa', contributing_area_grid, 
+               '-ssa', contributing_area_grid,
                '-src', self.stream_raster_grid,
                '-thresh', str(threshold),
                ]
 
         if mask_grid:
             cmd += ['-mask', mask_grid]
-            
+
         self._run_mpi_cmd(cmd)
-        
+
         #create projection file
         self._add_prj_file(contributing_area_grid,
                            self.stream_raster_grid)
-                           
-    def streamReachAndWatershed(self, 
+
+    def streamReachAndWatershed(self,
                                 delineate,
                                 out_stream_order_grid,
                                 out_network_connectivity_tree,
@@ -693,10 +693,10 @@ class TauDEM(object):
             self.contributing_area_grid = contributing_area_grid
         if stream_raster_grid:
             self.stream_raster_grid = stream_raster_grid
-            
+
         # Construct the taudem command line.
         cmd = [os.path.join(self.taudem_exe_path, 'streamnet'),
-               '-fel', self.pit_filled_elevation_grid, 
+               '-fel', self.pit_filled_elevation_grid,
                '-p', self.flow_dir_grid,
                '-ad8', self.contributing_area_grid,
                '-src', self.stream_raster_grid,
@@ -706,12 +706,12 @@ class TauDEM(object):
                '-net', out_stream_reach_file,
                '-w', out_watershed_grid,
                ]
-               
+
         if outlet_shapefile:
             cmd += ['-o', outlet_shapefile]
         if delineate:
             cmd += ['-sw']
-            
+
         self._run_mpi_cmd(cmd)
 
         #create projection file
@@ -721,22 +721,22 @@ class TauDEM(object):
                            out_stream_reach_file)
         self._add_prj_file(self.pit_filled_elevation_grid,
                            out_watershed_grid)
-                           
-    def demToStreamNetwork(self, 
+
+    def demToStreamNetwork(self,
                            output_directory,
-                           raw_elevation_dem="", 
+                           raw_elevation_dem="",
                            pit_filled_elevation_grid="",
                            flow_dir_grid_d8="",
                            contributing_area_grid_d8="",
                            flow_dir_grid_dinf="",
                            contributing_area_grid_dinf="",
                            use_dinf=False,
-                           threshold=1000, 
+                           threshold=1000,
                            delineate=False):
         """
-        This function will run all of the TauDEM processes to generate 
+        This function will run all of the TauDEM processes to generate
         a stream network from an elevation raster.
-        
+
         .. note:: For information about the stream reach and watershed process:
                   http://hydrology.usu.edu/taudem/taudem5/help53/StreamReachAndWatershed.html
 
@@ -752,34 +752,34 @@ class TauDEM(object):
             flow_dir_grid_dinf(Optional[str]): Path to flow direction grid generated using TauDEM's D-Infinity method (EXPERIMENTAL).
             contributing_area_grid_dinf(Optional[str]): Path to contributing area grid generated using TauDEM's D-Infinity method (EXPERIMENTAL).
             use_dinf(Optional[bool]): Use the D-Infinity method to get stream definition (EXPERIMENTAL).
-            threshold(Optional[int]): The stream threshold or maximum number of upstream grid cells. See above note. 
+            threshold(Optional[int]): The stream threshold or maximum number of upstream grid cells. See above note.
             delineate(Optional[bool]): If True, this will use the delineate option for theis method using TauDEM. Default is False.
-        
+
         Here is an example of how to use this:
-        
+
         .. code:: python
-        
+
             from RAPIDpy.gis.taudem import TauDEM
-            
+
             td = TauDEM("/path/to/scripts/TauDEM")
-                        
+
             elevation_dem = '/path/to/dem.tif'
             output_directory = '/path/to/output/files'
             td.demToStreamNetwork(output_directory,
-                                  elevation_dem, 
+                                  elevation_dem,
                                   threshold=1000)
 
         """
 
         time_start = datetime.utcnow()
-        
+
         #FILL PITS IF NEEDED
         self.pit_filled_elevation_grid = pit_filled_elevation_grid
         if not pit_filled_elevation_grid:
             pit_filled_elevation_grid = os.path.join(output_directory, 'pit_filled_elevation_grid.tif')
             self.pitRemove(raw_elevation_dem,
                            pit_filled_elevation_grid)
-        
+
         #GENERATE D8 RASTERS
         self.flow_dir_grid = flow_dir_grid_d8
         if not flow_dir_grid_d8:
@@ -805,13 +805,13 @@ class TauDEM(object):
                 contributing_area_grid_dinf = os.path.join(output_directory, 'contributing_area_grid_dinf.tif')
                 self.dinfContributingArea(contributing_area_grid_dinf,
                                           flow_dir_grid_dinf)
-    
+
             self.streamDefByThreshold(stream_raster_grid,
                                       threshold,
                                       contributing_area_grid_dinf)
         else:
             print("USING D8 METHOD TO GET STREAM DEFINITION ...")
-            self.streamDefByThreshold(stream_raster_grid, 
+            self.streamDefByThreshold(stream_raster_grid,
                                       threshold,
                                       contributing_area_grid_d8)
 
@@ -827,8 +827,8 @@ class TauDEM(object):
                                      out_network_coordinates,
                                      out_stream_reach_file,
                                      out_watershed_grid)
-                                     
+
         #convert watersed grid to shapefile
-        out_watershed_shapefile = os.path.join(output_directory, 'watershed_shapefile.shp')                          
+        out_watershed_shapefile = os.path.join(output_directory, 'watershed_shapefile.shp')
         self.rasterToPolygon(out_watershed_grid, out_watershed_shapefile)
         print("Total time to complete: {0}".format(datetime.utcnow()-time_start))

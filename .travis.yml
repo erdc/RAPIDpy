@@ -3,9 +3,9 @@
 #*******************************************************************************
 
 #Purpose:
-#Travis CI is a hosted continuous integration service, that is, it allows 
-#running code directly from a repository and checking that the code acts as 
-#expected. The purpose of the .travis.yml file is to give instructions to Travis 
+#Travis CI is a hosted continuous integration service, that is, it allows
+#running code directly from a repository and checking that the code acts as
+#expected. The purpose of the .travis.yml file is to give instructions to Travis
 #CI on how to do the work.
 #Authors:
 #Alan D. Snow, 2016, based on initial .yml file by Cedric H. David
@@ -32,22 +32,22 @@ notifications:
 #*******************************************************************************
 before_install:
 - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-    sudo apt-get update -qq; 
-    sudo apt-get install -y g++ gfortran libgdal-dev;
+    sudo apt-get update -qq;
+    sudo apt-get install -y g++ gfortran;
   fi
-- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then 
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
     brew update;
-    brew install gcc gdal; 
+    brew install gcc;
   fi
 
 #-------------------------------------------------------------------------------
 #Add miniconda - from https://gist.github.com/dan-blanchard/7045057
 #-----------------------------------------------------------------------------
 
-- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then 
-    wget http://repo.continuum.io/miniconda/Miniconda${TRAVIS_PYTHON_VERSION:0:1}-latest-Linux-x86_64.sh -O miniconda.sh; 
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+    wget http://repo.continuum.io/miniconda/Miniconda${TRAVIS_PYTHON_VERSION:0:1}-latest-Linux-x86_64.sh -O miniconda.sh;
   fi
-- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then 
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
     curl -o miniconda.sh https://repo.continuum.io/miniconda/Miniconda${TRAVIS_PYTHON_VERSION:0:1}-latest-MacOSX-x86_64.sh;
   fi
 - chmod +x miniconda.sh
@@ -61,8 +61,7 @@ before_install:
 #-----------------------------------------------------------------------------
 # Install required python packages
 #-----------------------------------------------------------------------------
-- conda install --yes nose numpy pandas scipy netCDF4 gdal shapely pyproj
-- conda install --yes -c conda-forge rtree
+- conda install --yes -c conda-forge nose numpy pandas scipy netCDF4 gdal shapely pyproj rtree
 - pip install coveralls nose-cov
 - source deactivate rapid
 
@@ -88,7 +87,7 @@ before_install:
 - git clone https://github.com/c-h-david/rapid.git
 - cd rapid
 - source ./rapid_specify_varpath.sh $INSTALLZ_DIR
-- cd src 
+- cd src
 - make rapid
 
 #-------------------------------------------------------------------------------
@@ -96,23 +95,24 @@ before_install:
 #-------------------------------------------------------------------------------
 - cd $TRAVIS_BUILD_DIR/..
 - git clone https://github.com/dtarb/TauDEM.git
-- cd TauDEM
-- git checkout master
-- cd src
+- cd TauDEM/src
+- rm makefile
+# use conda gdal for build
+- source activate rapid
+- cmake .
 - make
 
 #*******************************************************************************
 #Installing RAPIDpy
 #*******************************************************************************
 install:
-- source activate rapid
 - cd $TRAVIS_BUILD_DIR
 - python setup.py install
 #*******************************************************************************
 #Testing RAPIDpy
 #*******************************************************************************
 - cd $TRAVIS_BUILD_DIR/tests
-script: 
+script:
 - nosetests --with-cov --cov-report term-missing --cov RAPIDpy
 ##ADD Coveralls stats for code coverage
 after_success:

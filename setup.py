@@ -14,7 +14,6 @@ setup(
     author='Alan Dee Snow',
     author_email='alan.d.snow@usace.army.mil',
     url='https://github.com/erdc-cm/RAPIDpy',
-    download_url='https://github.com/erdc-cm/RAPIDpy/archive/2.4.0.tar.gz',
     license='BSD 3-Clause',
     packages=find_packages(),
     package_data={'': ['gis/lsm_grids/*.nc']},

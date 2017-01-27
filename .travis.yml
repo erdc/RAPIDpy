@@ -61,7 +61,7 @@ before_install:
 #-----------------------------------------------------------------------------
 # Install required python packages
 #-----------------------------------------------------------------------------
-- conda install --yes -c conda-forge nose numpy pandas scipy netCDF4 gdal shapely pyproj rtree
+- conda install --yes -c conda-forge cmake nose numpy pandas scipy netCDF4 gdal shapely pyproj rtree
 - pip install coveralls nose-cov
 - source deactivate rapid
 

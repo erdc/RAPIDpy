@@ -27,13 +27,13 @@ Windows with Cygwin:
 Downloaded Cygwin (64-bit) (https://www.cygwin.com/) with these
 dependencies:
 
-- gcc-core 
-- gcc-fortran 
-- gcc-g++ 
-- gdb 
+- gcc-core
+- gcc-fortran
+- gcc-g++
+- gdb
 - git
-- make 
-- time 
+- make
+- time
 - wget
 
 Installation Steps:
@@ -47,187 +47,49 @@ Manual:
 Bash:
 ^^^^^
 
-1. Install Prereqs::
-    
-    $ wget https://raw.githubusercontent.com/snowman2/rapid/master/rapid_install_prereqs.sh
-    $ chmod u+x rapid_install_prereqs.sh
-    $ ./rapid_install_prereqs.sh
-
-2. Clone RAPID repository::
+1. Clone RAPID repository::
 
     $ git clone https://github.com/c-h-david/rapid.git
 
+2. Install Prereqs::
+
+    $ cd rapid
+    $ chmod u+x rapid_install_prereqs.sh
+    $ ./rapid_install_prereqs.sh
+
 3. Append *source rapid_specify_varpath.sh* to the ~/.bashrc or ~/.bash_profile::
 
-    source /path/to/cloned/rapid/rapid_specify_varpath.sh   
+    source /path/to/cloned/rapid/rapid_specify_varpath.sh
 
 4. Restart Terminal
 
 5. Build RAPID::
 
     $ cd rapid/src
-    $ make rapid 
+    $ make rapid
 
-Step 2: Install Python Packages
--------------------------------
-
-Method 1: Use Anaconda
-~~~~~~~~~~~~~~~~~~~~~~
-
-Linux/Mac
-^^^^^^^^^
-
-See: https://github.com/erdc-cm/RAPIDpy/blob/master/.travis.yml
-
-Download Miniconda
-''''''''''''''''''
-
-Linux
-     
-
-::
-
-    $ wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
-
-Mac
-   
-
-::
-
-    $ curl -o miniconda.sh https://repo.continuum.io/miniconda/Miniconda2-latest-MacOSX-x86_64.sh
-
-Install Python packages with all dependencies
-'''''''''''''''''''''''''''''''''''''''''''''
-
-::
-
-    $ chmod +x miniconda.sh
-    $ ./miniconda.sh -b
-    $ export PATH=$HOME/miniconda2/bin:$PATH
-    $ conda update --yes conda python
-    $ conda create --name rapid python=2
-    $ source activate rapid
-    $ conda install --yes nose numpy pandas scipy netCDF4 gdal shapely pyproj
-    $ conda install --yes -c conda-forge rtree
-    $ source deactivate rapid
-    $ source activate rapid
-
-Windows
-^^^^^^^
-
-Download & Install Miniconda
-''''''''''''''''''''''''''''
-
--  Go to: http://conda.pydata.org/miniconda.html
--  Download and run Windows Python 2 version installer
--  Install at
-   C:\\Users\\YOUR_USERNAME\\Miniconda2
-   or wherever you want
--  Make default python and export to path
-
-Install all dependencies
-''''''''''''''''''''''''
-
-Open CMD terminal:
-
-::
-
-    > conda update --yes conda python
-    > conda create --name rapid python=2
-    > activate rapid
-    > conda install --yes nose numpy pandas scipy netCDF4 gdal pyproj pytz python-dateutil
-    > conda install --yes -c conda-forge rtree
-    > conda install --yes -c scitools shapely
-    > deactivate 
-    > activate rapid
-
-Method 2: Manual install
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-2a: Install netCDF4
-^^^^^^^^^^^^^^^^^^^
-
-On Ubuntu:
-''''''''''
-
-::
-
-    $ sudo apt-get install python-dev zlib1g-dev libhdf5-serial-dev libnetcdf-dev
-
-On Redhat/CentOS 7:
-'''''''''''''''''''
-
-::
-
-    $ sudo yum install netcdf4-python python-devel hdf5-devel netcdf-devel
-
-If you are on RHEL 7 and having troubles, add the epel repo:
-
-::
-
-    $ wget https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
-    $ sudo rpm -Uvh epel-release-7*.rpm
-
-If you are on CentOS 7 and having troubles, add the epel repo:
-
-::
-
-    $ sudo yum install epel-release
-
-Then install packages listed above.
-
-On OSX:
-'''''''
-
-::
-
-    $ brew install homebrew/science/netcdf
-
-2b: (Optional) Install GIS Dependencies
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-If you want to use the GIS preprocessing tools, this section helps you
-install the dependencies.
-
-Install GDAL/GEOS/SCIPY:
-''''''''''''''''''''''''
-
-Ubuntu:
-       
-
-::
-
-    $ sudo apt-get install gdal-bin libproj-dev libgeos-dev python-scipy
-
-RedHat/CentOS:
-              
-
-::
-
-    $ sudo yum install gdal proj-devel geos scipy
-
-Install Rtree:
-''''''''''''''
-
-See: http://toblerity.org/rtree/install.html
-
-Install spatial python libraries
-''''''''''''''''''''''''''''''''
-
-::
-
-    # pip install shapely pyproj gdal rtree
-
-Step 3: Install RAPIDpy
+Step 2: Install RAPIDpy
 -----------------------
 
-To get the latest stable version:
+Due to the dependencies required, we recommend using Anaconda or Miniconda.
+They can be downloaded from https://www.continuum.io/downloads
+or from https://conda.io/miniconda.html.
+
+
+After installing Anaconda or Miniconda:
 
 ::
 
-    $ pip install RAPIDpy
+    $ conda install -c conda-forge rapidpy
 
-To install the latest version:
+
+Developer Installation
+~~~~~~~~~~~~~~~~~~~~~~
+
+This is how you get the most up-to-date version of the code.
+
+See: https://github.com/erdc-cm/RAPIDpy/blob/master/.travis.yml for a more detailed
+list of installation steps.
 
 .. note:: If you don't have git, you can download the code from https://github.com/erdc-cm/RAPIDpy
 
@@ -244,11 +106,3 @@ To develop on the latest version:
     $ git clone https://github.com/erdc-cm/RAPIDpy.git
     $ cd RAPIDpy
     $ python setup.py develop
-
-Note: If installing on system, use:
-
-::
-
-    $ sudo su
-    # (install command here)
-    # exit

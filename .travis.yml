@@ -61,24 +61,16 @@ before_install:
 #-----------------------------------------------------------------------------
 # Install required python packages
 #-----------------------------------------------------------------------------
-- conda install --yes -c conda-forge cmake nose numpy pandas scipy netCDF4 gdal shapely pyproj rtree
+- conda config --add channels conda-forge
+- conda install --yes cmake gdal future netcdf4 nose numpy pandas pyproj pytz requests rtree scipy shapely
 - pip install coveralls nose-cov
 - source deactivate rapid
 
 #-------------------------------------------------------------------------------
-#Creating directory for installation of libraries used by RAPID
+#Creating directory for installation of libraries used by RAPID & RAPIDpy
 #-------------------------------------------------------------------------------
 - export INSTALLZ_DIR=$TRAVIS_BUILD_DIR/installz
 - mkdir $INSTALLZ_DIR
-
-#-------------------------------------------------------------------------------
-#Installing RAPID Prereqs
-#-------------------------------------------------------------------------------
-- cd $INSTALLZ_DIR
-- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then wget https://raw.githubusercontent.com/snowman2/rapid/master/rapid_install_prereqs.sh ; fi
-- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then curl -o rapid_install_prereqs.sh https://raw.githubusercontent.com/snowman2/rapid/master/rapid_install_prereqs.sh ; fi
-- chmod +x rapid_install_prereqs.sh
-- ./rapid_install_prereqs.sh -i=$INSTALLZ_DIR
 
 #-------------------------------------------------------------------------------
 #Installing RAPID
@@ -86,7 +78,11 @@ before_install:
 - cd $TRAVIS_BUILD_DIR/..
 - git clone https://github.com/c-h-david/rapid.git
 - cd rapid
+# Installing RAPID Prereqs
+- chmod +x rapid_install_prereqs.sh
+- ./rapid_install_prereqs.sh -i=$INSTALLZ_DIR
 - source ./rapid_specify_varpath.sh $INSTALLZ_DIR
+# Building RAPID
 - cd src
 - make rapid
 

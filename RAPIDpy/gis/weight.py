@@ -18,6 +18,7 @@ try:
     from pyproj import Proj, transform
     from shapely.wkb import loads as shapely_loads
     from shapely.ops import transform as shapely_transform
+    from shapely.geos import TopologicalError
     import rtree #http://toblerity.org/rtree/install.html
     from osgeo import gdal, ogr, osr
 except Exception:
@@ -182,13 +183,26 @@ def RTreeCreateWeightTable(lsm_grid_lat, lsm_grid_lon,
             catchment_polygon = shapely_loads(feat_geom.ExportToWkb())
 
             for sub_lsm_grid_pos in rtree_idx.intersection(catchment_polygon.bounds):
-                if catchment_polygon.intersects(lsm_grid_feature_list[sub_lsm_grid_pos]['polygon']):
-                    intersect_poly = catchment_polygon.intersection(lsm_grid_feature_list[sub_lsm_grid_pos]['polygon'])
+                lsm_grid_polygon = lsm_grid_feature_list[sub_lsm_grid_pos]['polygon']
+                if catchment_polygon.intersects(lsm_grid_polygon):
+                    try:
+                        intersect_poly = catchment_polygon.intersection(lsm_grid_polygon)
+                    except TopologicalError:
+                        print('INFO: The catchment polygon with id {0} was invalid. Attempting to self clean...'.format(rapid_connect_rivid))
+                        original_area = catchment_polygon.area
+                        catchment_polygon = catchment_polygon.buffer(0)
+                        area_ratio = original_area/catchment_polygon.area
+                        msg_level = "INFO"
+                        if round(area_ratio, 5) != 1:
+                            msg_level = "WARNING"
+                        print('{0}: The cleaned catchment polygon area differs from the'
+                              ' original area by {1}%.'.format(msg_level, area_ratio))
+                        intersect_poly = catchment_polygon.intersection(lsm_grid_polygon)
                     if not area_id:
                         #attempt to calculate AREA
                         poly_area = get_poly_area_geo(intersect_poly)
                     else:
-                        poly_area = float(catchment_polygon.GetFeature(area_id))*intersect_poly.area/catchment_polygon.area
+                        poly_area = float(get_catchment_feature.GetField(area_id))*intersect_poly.area/catchment_polygon.area
 
                     index_lsm_grid_lat, index_lsm_grid_lon = _get_lat_lon_indices(lsm_grid_lat, lsm_grid_lon, 
                                                                                   lsm_grid_feature_list[sub_lsm_grid_pos]['lat'], 

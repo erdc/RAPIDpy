@@ -192,11 +192,12 @@ def RTreeCreateWeightTable(lsm_grid_lat, lsm_grid_lon,
                         original_area = catchment_polygon.area
                         catchment_polygon = catchment_polygon.buffer(0)
                         area_ratio = original_area/catchment_polygon.area
+                        print('AREA_RATIO', area_ratio)
                         msg_level = "INFO"
                         if round(area_ratio, 5) != 1:
                             msg_level = "WARNING"
                         print('{0}: The cleaned catchment polygon area differs from the'
-                              ' original area by {1}%.'.format(msg_level, area_ratio))
+                              ' original area by {1}%.'.format(msg_level, abs(area_ratio - 1)))
                         intersect_poly = catchment_polygon.intersection(lsm_grid_polygon)
                     if not area_id:
                         #attempt to calculate AREA

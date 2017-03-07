@@ -667,7 +667,7 @@ def test_gen_muskingum_x_drainage():
 
 def test_weight_table_with_invalid_polygon():
     """
-    Checks generating weight table for GLDAS V2 grid
+    Checks generating weight table with invalid polygon
     """
     print("TEST 16: TEST GENERATE WEIGHT TABLE WITH INVALID POLYGON")
     generated_weight_table_file = os.path.join(OUTPUT_DATA_PATH,
@@ -695,7 +695,7 @@ def test_weight_table_with_invalid_polygon():
 
 def test_weight_table_with_area_id():
     """
-    Checks generating weight table for GLDAS V2 grid
+    Checks generating weight table with area id
     """
     print("TEST 17: TEST GENERATE WEIGHT TABLE WITH INVALID POLYGON")
     generated_weight_table_file = os.path.join(OUTPUT_DATA_PATH,

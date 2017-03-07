@@ -154,7 +154,7 @@ def test_gen_weight_table_era20cm():
     """
     Checks generating weight table for ERA 20CM grid
     """
-    print("TEST 3: TEST GENERATE WEIGTH TABLE FOR ERA 20CM GRIDS")
+    print("TEST 3: TEST GENERATE WEIGHT TABLE FOR ERA 20CM GRIDS")
     generated_weight_table_file = os.path.join(OUTPUT_DATA_PATH,
                                                "weight_era_t159.csv")
     #rapid_connect
@@ -179,7 +179,7 @@ def test_gen_weight_table_era_t255():
     """
     Checks generating weight table for ERA T255 grid
     """
-    print("TEST 4: TEST GENERATE WEIGTH TABLE FOR ERA T255 GRIDS")
+    print("TEST 4: TEST GENERATE WEIGHT TABLE FOR ERA T255 GRIDS")
     generated_weight_table_file = os.path.join(OUTPUT_DATA_PATH,
                                                "weight_era_t255.csv")
     #rapid_connect
@@ -204,7 +204,7 @@ def test_gen_weight_table_era_t511_24hr():
     """
     Checks generating weight table for ERA T511 24hr grid
     """
-    print("TEST 5: TEST GENERATE WEIGTH TABLE FOR ERA T511 24hr GRIDS")
+    print("TEST 5: TEST GENERATE WEIGHT TABLE FOR ERA T511 24hr GRIDS")
     generated_weight_table_file = os.path.join(OUTPUT_DATA_PATH,
                                                "weight_era_t511.csv")
     #rapid_connect
@@ -229,7 +229,7 @@ def test_gen_weight_table_gldas2():
     """
     Checks generating weight table for GLDAS V2 grid
     """
-    print("TEST 6: TEST GENERATE WEIGTH TABLE FOR GLDAS V2 GRIDS")
+    print("TEST 6: TEST GENERATE WEIGHT TABLE FOR GLDAS V2 GRIDS")
     generated_weight_table_file = os.path.join(OUTPUT_DATA_PATH,
                                                "weight_gldas2.csv")
     #rapid_connect
@@ -256,7 +256,7 @@ def test_gen_weight_table_lis():
     """
     Checks generating weight table for LIS grid
     """
-    print("TEST 7: TEST GENERATE WEIGTH TABLE FOR LIS GRIDS")
+    print("TEST 7: TEST GENERATE WEIGHT TABLE FOR LIS GRIDS")
     generated_weight_table_file = os.path.join(OUTPUT_DATA_PATH,
                                                "weight_lis.csv")
     #rapid_connect
@@ -283,7 +283,7 @@ def test_gen_weight_table_lis_no_intersect():
     """
     Checks generating weight table for LIS grid with no intersect
     """
-    print("TEST 8: TEST GENERATE WEIGTH TABLE FOR LIS GRIDS WITH NO INTERSECT")
+    print("TEST 8: TEST GENERATE WEIGHT TABLE FOR LIS GRIDS WITH NO INTERSECT")
     generated_weight_table_file = os.path.join(OUTPUT_DATA_PATH,
                                                "weight_lis_no_intersect.csv")
     #rapid_connect
@@ -310,7 +310,7 @@ def test_gen_weight_table_joules():
     """
     Checks generating weight table for Joules grid
     """
-    print("TEST 9: TEST GENERATE WEIGTH TABLE FOR Joules GRIDS")
+    print("TEST 9: TEST GENERATE WEIGHT TABLE FOR Joules GRIDS")
     generated_weight_table_file = os.path.join(OUTPUT_DATA_PATH,
                                                "weight_joules.csv")
     #rapid_connect
@@ -338,7 +338,7 @@ def test_gen_weight_table_joules():
 #     """
 #     Checks generating weight table for WRF grid
 #     """
-#     print("TEST 9: TEST GENERATE WEIGTH TABLE FOR WRF GRIDS")
+#     print("TEST 9: TEST GENERATE WEIGHT TABLE FOR WRF GRIDS")
 #     generated_weight_table_file = os.path.join(OUTPUT_DATA_PATH,
 #                                                "weight_wrf.csv")
 #     #rapid_connect
@@ -663,6 +663,63 @@ def test_gen_muskingum_x_drainage():
     ok_(compare_csv_decimal_files(generated_x_file,
                                   generated_x_file_solution))
     remove_files(generated_x_file)
+
+
+def test_weight_table_with_invalid_polygon():
+    """
+    Checks generating weight table for GLDAS V2 grid
+    """
+    print("TEST 16: TEST GENERATE WEIGHT TABLE WITH INVALID POLYGON")
+    generated_weight_table_file = os.path.join(OUTPUT_DATA_PATH,
+                                               "weight_polygons.csv")
+    # rapid_connect
+    rapid_connect_file = os.path.join(COMPARE_DATA_PATH, "x-x",
+                                      "rapid_connect.csv")
+
+    lsm_grid = os.path.join(LSM_INPUT_DATA_PATH, "gldas2", "GLDAS_NOAH025_3H.A20101231.0000.020.nc4")
+    CreateWeightTableLDAS(in_ldas_nc=lsm_grid,
+                          in_nc_lon_var="lon",
+                          in_nc_lat_var="lat",
+                          in_catchment_shapefile=os.path.join(GIS_INPUT_DATA_PATH, 'test_catchments.shp'),
+                          river_id="DrainLnID",
+                          in_connectivity_file=rapid_connect_file,
+                          out_weight_table=generated_weight_table_file)
+
+    generated_weight_table_file_solution = os.path.join(COMPARE_DATA_PATH, "x-x",
+                                                        "weight_polygons.csv")
+    ok_(compare_csv_decimal_files(generated_weight_table_file,
+                                  generated_weight_table_file_solution))
+
+    remove_files(generated_weight_table_file)
+
+
+def test_weight_table_with_area_id():
+    """
+    Checks generating weight table for GLDAS V2 grid
+    """
+    print("TEST 17: TEST GENERATE WEIGHT TABLE WITH INVALID POLYGON")
+    generated_weight_table_file = os.path.join(OUTPUT_DATA_PATH,
+                                               "weight_area.csv")
+    # rapid_connect
+    rapid_connect_file = os.path.join(COMPARE_DATA_PATH, "x-x",
+                                      "rapid_connect.csv")
+
+    lsm_grid = os.path.join(LSM_INPUT_DATA_PATH, "gldas2", "GLDAS_NOAH025_3H.A20101231.0000.020.nc4")
+    CreateWeightTableLDAS(in_ldas_nc=lsm_grid,
+                          in_nc_lon_var="lon",
+                          in_nc_lat_var="lat",
+                          in_catchment_shapefile=os.path.join(GIS_INPUT_DATA_PATH, 'test_catchments.shp'),
+                          river_id="DrainLnID",
+                          area_id="Shape_Area",
+                          in_connectivity_file=rapid_connect_file,
+                          out_weight_table=generated_weight_table_file)
+
+    generated_weight_table_file_solution = os.path.join(COMPARE_DATA_PATH, "x-x",
+                                                        "weight_area.csv")
+    ok_(compare_csv_decimal_files(generated_weight_table_file,
+                                  generated_weight_table_file_solution))
+
+    remove_files(generated_weight_table_file)
 
 if __name__ == '__main__':
     import nose

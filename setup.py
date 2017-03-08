@@ -6,8 +6,7 @@ setup(
     description='Python interface for RAPID (rapid-hub.org)',
     long_description='RAPIDpy is a python interface for RAPID that assists '
                      'to prepare inputs, runs the RAPID program, and provides '
-                     'post-processing utilities '
-                     '(http://rapidpy.readthedocs.io).
+                     'post-processing utilities (http://rapidpy.readthedocs.io).'
                      'More information about installation and the input '
                      'parameters for RAPID can be found at http://rapid-hub.org.'
                      ' The source code for RAPID is located at '

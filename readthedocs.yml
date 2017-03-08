@@ -2,4 +2,6 @@ conda:
     file: conda-env.yml
 python:
     version: 2
-    setup_py_install: true
+    pip_install: true
+    extra_requirements:
+        - docs

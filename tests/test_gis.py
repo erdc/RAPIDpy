@@ -8,7 +8,6 @@
 ##
 
 from glob import glob
-from nose.tools import ok_
 from numpy.testing import assert_almost_equal
 from numpy import array
 import os
@@ -55,7 +54,7 @@ def test_gen_static_rapid_input():
                                                   "comid_lat_lon_z.csv")
     generated_comid_lat_lon_z_file_solution = os.path.join(COMPARE_DATA_PATH, "x-x",
                                                            "comid_lat_lon_z.csv")
-    ok_(compare_csv_decimal_files(generated_comid_lat_lon_z_file,
+    assert (compare_csv_decimal_files(generated_comid_lat_lon_z_file,
                                   generated_comid_lat_lon_z_file_solution))
 
     #rapid_connect
@@ -63,7 +62,7 @@ def test_gen_static_rapid_input():
                                                 "rapid_connect.csv")
     generated_rapid_connect_file_solution = os.path.join(COMPARE_DATA_PATH, "x-x",
                                                          "rapid_connect.csv")
-    ok_(compare_csv_decimal_files(generated_rapid_connect_file,
+    assert (compare_csv_decimal_files(generated_rapid_connect_file,
                                   generated_rapid_connect_file_solution))
 
     #riv_bas_id
@@ -71,7 +70,7 @@ def test_gen_static_rapid_input():
                                              "riv_bas_id.csv")
     generated_riv_bas_id_file_solution = os.path.join(COMPARE_DATA_PATH, "x-x",
                                                       "riv_bas_id.csv")
-    ok_(compare_csv_decimal_files(generated_riv_bas_id_file,
+    assert (compare_csv_decimal_files(generated_riv_bas_id_file,
                                   generated_riv_bas_id_file_solution))
 
     #kfac
@@ -79,7 +78,7 @@ def test_gen_static_rapid_input():
                                        "kfac.csv")
     generated_kfac_file_solution = os.path.join(COMPARE_DATA_PATH, "x-x",
                                                 "kfac.csv")
-    ok_(compare_csv_decimal_files(generated_kfac_file,
+    assert (compare_csv_decimal_files(generated_kfac_file,
                                   generated_kfac_file_solution))
 
     #k
@@ -87,7 +86,7 @@ def test_gen_static_rapid_input():
                                     "k.csv")
     generated_k_file_solution = os.path.join(COMPARE_DATA_PATH, "x-x",
                                              "k.csv")
-    ok_(compare_csv_decimal_files(generated_k_file,
+    assert (compare_csv_decimal_files(generated_k_file,
                                   generated_k_file_solution))
 
     #x
@@ -95,7 +94,7 @@ def test_gen_static_rapid_input():
                                     "x.csv")
     generated_x_file_solution = os.path.join(COMPARE_DATA_PATH, "x-x",
                                              "x.csv")
-    ok_(compare_csv_decimal_files(generated_x_file,
+    assert (compare_csv_decimal_files(generated_x_file,
                                   generated_x_file_solution))
 
     #weight_ecmwf_t1279
@@ -103,7 +102,7 @@ def test_gen_static_rapid_input():
                                                      "weight_ecmwf_t1279.csv")
     generated_weight_ecmwf_t1279_file_solution = os.path.join(COMPARE_DATA_PATH, "x-x",
                                                               "weight_ecmwf_t1279.csv")
-    ok_(compare_csv_decimal_files(generated_weight_ecmwf_t1279_file,
+    assert (compare_csv_decimal_files(generated_weight_ecmwf_t1279_file,
                                   generated_weight_ecmwf_t1279_file_solution))
 
     #weight_ecmwf_tco369
@@ -111,7 +110,7 @@ def test_gen_static_rapid_input():
                                                       "weight_ecmwf_tco639.csv")
     generated_weight_ecmwf_tco639_file_solution = os.path.join(COMPARE_DATA_PATH, "x-x",
                                                                "weight_ecmwf_tco639.csv")
-    ok_(compare_csv_decimal_files(generated_weight_ecmwf_tco639_file,
+    assert (compare_csv_decimal_files(generated_weight_ecmwf_tco639_file,
                                   generated_weight_ecmwf_tco639_file_solution))
 
     #weight_era_t511
@@ -119,7 +118,7 @@ def test_gen_static_rapid_input():
                                                   "weight_era_t511.csv")
     generated_weight_era_t511_file_solution = os.path.join(COMPARE_DATA_PATH, "x-x",
                                                            "weight_era_t511.csv")
-    ok_(compare_csv_decimal_files(generated_weight_era_t511_file,
+    assert (compare_csv_decimal_files(generated_weight_era_t511_file,
                                   generated_weight_era_t511_file_solution))
 
     remove_files(generated_comid_lat_lon_z_file,
@@ -145,7 +144,7 @@ def test_gen_static_nhd_connect_rapid_input():
     generated_rapid_connect_file_solution = os.path.join(COMPARE_DATA_PATH, "x-x",
                                                          "rapid_connect.csv")
 
-    ok_(compare_csv_decimal_files(generated_rapid_connect_file,
+    assert (compare_csv_decimal_files(generated_rapid_connect_file,
                                   generated_rapid_connect_file_solution))
 
     remove_files(generated_rapid_connect_file)
@@ -170,7 +169,7 @@ def test_gen_weight_table_era20cm():
 
     generated_weight_table_file_solution = os.path.join(COMPARE_DATA_PATH, "x-x",
                                                         "weight_era_t159.csv")
-    ok_(compare_csv_decimal_files(generated_weight_table_file,
+    assert (compare_csv_decimal_files(generated_weight_table_file,
                                   generated_weight_table_file_solution))
 
     remove_files(generated_weight_table_file)
@@ -195,7 +194,7 @@ def test_gen_weight_table_era_t255():
 
     generated_weight_table_file_solution = os.path.join(COMPARE_DATA_PATH, "x-x",
                                                         "weight_era_t255.csv")
-    ok_(compare_csv_decimal_files(generated_weight_table_file,
+    assert (compare_csv_decimal_files(generated_weight_table_file,
                                   generated_weight_table_file_solution))
 
     remove_files(generated_weight_table_file)
@@ -220,7 +219,7 @@ def test_gen_weight_table_era_t511_24hr():
 
     generated_weight_table_file_solution = os.path.join(COMPARE_DATA_PATH, "x-x",
                                                         "weight_era_t511.csv")
-    ok_(compare_csv_decimal_files(generated_weight_table_file,
+    assert (compare_csv_decimal_files(generated_weight_table_file,
                                   generated_weight_table_file_solution))
 
     remove_files(generated_weight_table_file)
@@ -247,7 +246,7 @@ def test_gen_weight_table_gldas2():
 
     generated_weight_table_file_solution = os.path.join(COMPARE_DATA_PATH, "x-x",
                                                         "weight_gldas2.csv")
-    ok_(compare_csv_decimal_files(generated_weight_table_file,
+    assert (compare_csv_decimal_files(generated_weight_table_file,
                                   generated_weight_table_file_solution))
 
     remove_files(generated_weight_table_file)
@@ -274,7 +273,7 @@ def test_gen_weight_table_lis():
 
     generated_weight_table_file_solution = os.path.join(COMPARE_DATA_PATH, "u-k",
                                                         "weight_lis.csv")
-    ok_(compare_csv_decimal_files(generated_weight_table_file,
+    assert (compare_csv_decimal_files(generated_weight_table_file,
                                   generated_weight_table_file_solution))
 
     remove_files(generated_weight_table_file)
@@ -301,7 +300,7 @@ def test_gen_weight_table_lis_no_intersect():
 
     generated_weight_table_file_solution = os.path.join(COMPARE_DATA_PATH, "uk-no_intersect",
                                                         "weight_lis_no_intersect.csv")
-    ok_(compare_csv_decimal_files(generated_weight_table_file,
+    assert (compare_csv_decimal_files(generated_weight_table_file,
                                   generated_weight_table_file_solution))
 
     remove_files(generated_weight_table_file)
@@ -328,7 +327,7 @@ def test_gen_weight_table_joules():
 
     generated_weight_table_file_solution = os.path.join(COMPARE_DATA_PATH, "u-k",
                                                         "weight_joules.csv")
-    ok_(compare_csv_decimal_files(generated_weight_table_file,
+    assert (compare_csv_decimal_files(generated_weight_table_file,
                                   generated_weight_table_file_solution))
 
     remove_files(generated_weight_table_file)
@@ -368,7 +367,7 @@ def test_gen_weight_table_joules():
 #
 #     generated_weight_table_file_solution = os.path.join(COMPARE_DATA_PATH, "m-s",
 #                                                         "weight_wrf.csv")
-#     ok_(compare_csv_decimal_files(generated_weight_table_file,
+#     assert (compare_csv_decimal_files(generated_weight_table_file,
 #                                   generated_weight_table_file_solution))
 #
 #     remove_files(generated_weight_table_file)
@@ -413,15 +412,15 @@ def test_extract_sub_network_taudem():
     number_of_watershed_features = ogr_watershed_shapefile_lyr.GetFeatureCount()
 
     #count number of features
-    ok_(number_of_network_features==7)
-    ok_(number_of_watershed_features==7)
+    assert (number_of_network_features==7)
+    assert (number_of_watershed_features==7)
 
     #make sure IDs correct
     network_id_list = [42911,42891,42747,42748,42892,42841,42846]
     for feature_idx, network_feature in enumerate(subset_network_layer):
-        ok_(network_feature.GetField("HydroID") in network_id_list)
+        assert (network_feature.GetField("HydroID") in network_id_list)
     for feature_idx, watershed_feature in enumerate(ogr_watershed_shapefile_lyr):
-        ok_(watershed_feature.GetField("DrainLnID") in network_id_list)
+        assert (watershed_feature.GetField("DrainLnID") in network_id_list)
 
     #make sure all fields are there
 
@@ -430,9 +429,9 @@ def test_extract_sub_network_taudem():
     num_watershed_fields = subset_watershed_layer_defn.GetFieldCount()
 
     watershed_field_names = ['Shape_Leng','Shape_Area','HydroID','GridID','DrainLnID']
-    ok_(num_watershed_fields==len(watershed_field_names))
+    assert (num_watershed_fields==len(watershed_field_names))
     for i in range(num_watershed_fields):
-        ok_(subset_watershed_layer_defn.GetFieldDefn(i).GetNameRef() in watershed_field_names)
+        assert (subset_watershed_layer_defn.GetFieldDefn(i).GetNameRef() in watershed_field_names)
 
     #TEST NETWORK
     subset_network_layer_defn = subset_network_layer.GetLayerDefn()
@@ -442,10 +441,10 @@ def test_extract_sub_network_taudem():
                            'NextDownID','SLength','Avg_Slope','LENGTHKM',
                            'Shape_Leng','Musk_x','watershed','subbasin']
 
-    ok_(num_network_fields==len(network_field_names))
+    assert (num_network_fields==len(network_field_names))
 
     for i in range(num_network_fields):
-        ok_(subset_network_layer_defn.GetFieldDefn(i).GetNameRef() in network_field_names)
+        assert (subset_network_layer_defn.GetFieldDefn(i).GetNameRef() in network_field_names)
 
     #cleanup
     remove_files(*glob(os.path.join(OUTPUT_DATA_PATH,"DrainageLineSubset2.*")))
@@ -484,10 +483,10 @@ def test_add_length_to_network_taudem():
                            'NextDownID', 'SLength', 'Avg_Slope','LENGTHKM',
                            'Shape_Leng','Musk_x','watershed','subbasin', 'LENGTH_M']
 
-    ok_(num_network_fields==len(network_field_names))
+    assert (num_network_fields==len(network_field_names))
 
     for i in range(num_network_fields):
-        ok_(subset_network_layer_defn.GetFieldDefn(i).GetNameRef() in network_field_names)
+        assert (subset_network_layer_defn.GetFieldDefn(i).GetNameRef() in network_field_names)
 
 
     #make sure values are OK
@@ -517,30 +516,30 @@ def test_generate_network_taudem():
                           elevation_dem,
                           threshold=1000)
 
-    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'pit_filled_elevation_grid.tif')))
-    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'pit_filled_elevation_grid.prj')))
-    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'flow_dir_grid_d8.tif')))
-    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'flow_dir_grid_d8.prj')))
-    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'contributing_area_grid_d8.tif')))
-    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'contributing_area_grid_d8.prj')))
-    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'slope_grid_d8.tif')))
-    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'slope_grid_d8.prj')))
-    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'stream_raster_grid.tif')))
-    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'stream_raster_grid.prj')))
-    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'stream_order_grid.tif')))
-    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'stream_order_grid.prj')))
-    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'network_connectivity_tree.txt')))
-    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'network_coordinates.txt')))
-#    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'stream_reach_file.shp')))
-#    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'stream_reach_file.shx')))
-#    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'stream_reach_file.dbf')))
-    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'stream_reach_file.prj')))
-    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'watershed_grid.tif')))
-    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'watershed_grid.prj')))
-    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'watershed_shapefile.shp')))
-    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'watershed_shapefile.shx')))
-    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'watershed_shapefile.dbf')))
-    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'watershed_shapefile.prj')))
+    assert (os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'pit_filled_elevation_grid.tif')))
+    assert (os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'pit_filled_elevation_grid.prj')))
+    assert (os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'flow_dir_grid_d8.tif')))
+    assert (os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'flow_dir_grid_d8.prj')))
+    assert (os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'contributing_area_grid_d8.tif')))
+    assert (os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'contributing_area_grid_d8.prj')))
+    assert (os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'slope_grid_d8.tif')))
+    assert (os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'slope_grid_d8.prj')))
+    assert (os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'stream_raster_grid.tif')))
+    assert (os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'stream_raster_grid.prj')))
+    assert (os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'stream_order_grid.tif')))
+    assert (os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'stream_order_grid.prj')))
+    assert (os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'network_connectivity_tree.txt')))
+    assert (os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'network_coordinates.txt')))
+#    assert (os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'stream_reach_file.shp')))
+#    assert (os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'stream_reach_file.shx')))
+#    assert (os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'stream_reach_file.dbf')))
+    assert (os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'stream_reach_file.prj')))
+    assert (os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'watershed_grid.tif')))
+    assert (os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'watershed_grid.prj')))
+    assert (os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'watershed_shapefile.shp')))
+    assert (os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'watershed_shapefile.shx')))
+    assert (os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'watershed_shapefile.dbf')))
+    assert (os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'watershed_shapefile.prj')))
     #cleanup
     remove_files(*[f for f in glob(os.path.join(OUTPUT_DATA_PATH,"*")) if not f.endswith(".gitignore")])
 
@@ -559,34 +558,34 @@ def test_generate_network_taudem_dinf():
                           pit_filled_elevation_grid=elevation_dem,
                           threshold=1000,
                           use_dinf=True)
-    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'flow_dir_grid_d8.tif')))
-    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'flow_dir_grid_d8.prj')))
-    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'flow_dir_grid_dinf.tif')))
-    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'flow_dir_grid_dinf.prj')))
-    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'contributing_area_grid_d8.tif')))
-    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'contributing_area_grid_d8.prj')))
-    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'contributing_area_grid_dinf.tif')))
-    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'contributing_area_grid_dinf.prj')))
-    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'slope_grid_d8.tif')))
-    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'slope_grid_d8.prj')))
-    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'slope_grid_dinf.tif')))
-    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'slope_grid_dinf.prj')))
-    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'stream_raster_grid.tif')))
-    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'stream_raster_grid.prj')))
-    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'stream_order_grid.tif')))
-    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'stream_order_grid.prj')))
-    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'network_connectivity_tree.txt')))
-    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'network_coordinates.txt')))
-#    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'stream_reach_file.shp')))
-#    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'stream_reach_file.shx')))
-#    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'stream_reach_file.dbf')))
-    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'stream_reach_file.prj')))
-    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'watershed_grid.tif')))
-    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'watershed_grid.prj')))
-    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'watershed_shapefile.shp')))
-    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'watershed_shapefile.shx')))
-    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'watershed_shapefile.dbf')))
-    ok_(os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'watershed_shapefile.prj')))
+    assert (os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'flow_dir_grid_d8.tif')))
+    assert (os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'flow_dir_grid_d8.prj')))
+    assert (os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'flow_dir_grid_dinf.tif')))
+    assert (os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'flow_dir_grid_dinf.prj')))
+    assert (os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'contributing_area_grid_d8.tif')))
+    assert (os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'contributing_area_grid_d8.prj')))
+    assert (os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'contributing_area_grid_dinf.tif')))
+    assert (os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'contributing_area_grid_dinf.prj')))
+    assert (os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'slope_grid_d8.tif')))
+    assert (os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'slope_grid_d8.prj')))
+    assert (os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'slope_grid_dinf.tif')))
+    assert (os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'slope_grid_dinf.prj')))
+    assert (os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'stream_raster_grid.tif')))
+    assert (os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'stream_raster_grid.prj')))
+    assert (os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'stream_order_grid.tif')))
+    assert (os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'stream_order_grid.prj')))
+    assert (os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'network_connectivity_tree.txt')))
+    assert (os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'network_coordinates.txt')))
+#    assert (os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'stream_reach_file.shp')))
+#    assert (os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'stream_reach_file.shx')))
+#    assert (os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'stream_reach_file.dbf')))
+    assert (os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'stream_reach_file.prj')))
+    assert (os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'watershed_grid.tif')))
+    assert (os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'watershed_grid.prj')))
+    assert (os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'watershed_shapefile.shp')))
+    assert (os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'watershed_shapefile.shx')))
+    assert (os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'watershed_shapefile.dbf')))
+    assert (os.path.exists(os.path.join(OUTPUT_DATA_PATH, 'watershed_shapefile.prj')))
     #cleanup
     remove_files(*[f for f in glob(os.path.join(OUTPUT_DATA_PATH,"*")) if not f.endswith(".gitignore")])
 
@@ -613,7 +612,7 @@ def test_gen_muskingum_kfac2():
     #kfac
     generated_kfac_file_solution = os.path.join(COMPARE_DATA_PATH, "x-x",
                                                 "kfac2.csv")
-    ok_(compare_csv_decimal_files(generated_kfac_file,
+    assert (compare_csv_decimal_files(generated_kfac_file,
                                   generated_kfac_file_solution))
 
     remove_files(generated_kfac_file)
@@ -641,7 +640,7 @@ def test_gen_muskingum_kfac1():
     #kfac
     generated_kfac_file_solution = os.path.join(COMPARE_DATA_PATH, "x-x",
                                                 "kfac1.csv")
-    ok_(compare_csv_decimal_files(generated_kfac_file,
+    assert (compare_csv_decimal_files(generated_kfac_file,
                                   generated_kfac_file_solution))
     remove_files(generated_kfac_file)
 
@@ -660,7 +659,7 @@ def test_gen_muskingum_x_drainage():
     #CHECK OUTPUT
     generated_x_file_solution = os.path.join(COMPARE_DATA_PATH, "u-k",
                                              "x_drain.csv")
-    ok_(compare_csv_decimal_files(generated_x_file,
+    assert (compare_csv_decimal_files(generated_x_file,
                                   generated_x_file_solution))
     remove_files(generated_x_file)
 
@@ -687,7 +686,7 @@ def test_weight_table_with_invalid_polygon():
 
     generated_weight_table_file_solution = os.path.join(COMPARE_DATA_PATH, "x-x",
                                                         "weight_polygons.csv")
-    ok_(compare_csv_decimal_files(generated_weight_table_file,
+    assert (compare_csv_decimal_files(generated_weight_table_file,
                                   generated_weight_table_file_solution))
 
     remove_files(generated_weight_table_file)
@@ -716,11 +715,7 @@ def test_weight_table_with_area_id():
 
     generated_weight_table_file_solution = os.path.join(COMPARE_DATA_PATH, "x-x",
                                                         "weight_area.csv")
-    ok_(compare_csv_decimal_files(generated_weight_table_file,
+    assert (compare_csv_decimal_files(generated_weight_table_file,
                                   generated_weight_table_file_solution))
 
     remove_files(generated_weight_table_file)
-
-if __name__ == '__main__':
-    import nose
-    nose.main()

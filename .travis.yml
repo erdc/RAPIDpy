@@ -62,8 +62,9 @@ before_install:
 # Install required python packages
 #-----------------------------------------------------------------------------
 - conda config --add channels conda-forge
-- conda install --yes cmake gdal future netcdf4 nose numpy pandas pyproj pytz requests rtree scipy shapely
-- pip install coveralls nose-cov
+- conda install --yes cmake gdal future netcdf4 numpy pandas pyproj pytz requests rtree scipy shapely
+- conda install --yes pytest-cov
+- pip install coveralls
 - source deactivate rapid
 
 #-------------------------------------------------------------------------------
@@ -109,7 +110,7 @@ install:
 #*******************************************************************************
 - cd $TRAVIS_BUILD_DIR/tests
 script:
-- nosetests --with-cov --cov-report term-missing --cov RAPIDpy
+- py.test --cov-report term-missing --cov=RAPIDpy
 ##ADD Coveralls stats for code coverage
 after_success:
 - coveralls

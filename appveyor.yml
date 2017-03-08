@@ -21,8 +21,9 @@ install:
   - activate rapid
   # Install required python packages
   - conda config --add channels conda-forge
-  - conda install --yes cmake gdal future netcdf4 nose numpy pandas pyproj pytz requests rtree scipy shapely
-  - pip install coveralls nose-cov
+  - conda install --yes cmake gdal future netcdf4 numpy pandas pyproj pytz requests rtree scipy shapely
+  - conda install --yes pytest-cov
+  - pip install coveralls
   - deactivate rapid
   #install cygwin
   - '%CYG_ROOT%\setup-x86_64.exe -qnNdO -R "%CYG_ROOT%" -s "%CYG_MIRROR%" -l "%CYG_CACHE%" -P gcc-core,gcc-g++,gcc-fortran,gdb,git,make,time,wget,gdal,libgdal-devel,openmpi > NULL'
@@ -47,6 +48,6 @@ install:
 build: false
 
 test_script:
-  - "nosetests --with-cov --cov-report term-missing --cov RAPIDpy"
+  - py.test --cov-report term-missing --cov=RAPIDpy
 on_success:
  - 'coveralls'

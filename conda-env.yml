@@ -10,8 +10,6 @@ channels:
 - defaults
 dependencies:
 - python=2
-- mock
-- nose
 - numpy
 - pandas
 - scipy
@@ -21,9 +19,7 @@ dependencies:
 - pyproj
 - python-dateutil
 - rtree
-- sphinx
 - pip:
   - future
   - requests
   - six
-  - sphinxcontrib-napoleon

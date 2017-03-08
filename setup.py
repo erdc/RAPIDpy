@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='RAPIDpy',
-    version='2.4.2',
+    version='2.4.3',
     description='Python interface for RAPID (rapid-hub.org)',
     long_description='RAPIDpy is a python interface for RAPID that assists to prepare inputs, runs the RAPID program,'
                      ' and provides post-processing utilities (https://github.com/erdc-cm/RAPIDpy). More information '
@@ -28,4 +28,16 @@ setup(
                 'Programming Language :: Python :: 3',
                 'Programming Language :: Python :: 3.5',
                 ],
+    extras_require={
+        'tests': [
+            'pytest',
+            'pytest-cov',
+        ],
+        'docs': [
+            'mock',
+            'sphinx',
+            'sphinx_rtd_theme',
+            'sphinxcontrib-napoleon',
+        ]
+      },
 )

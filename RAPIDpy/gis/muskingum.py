@@ -38,6 +38,14 @@ def CreateMuskingumKfacFile(in_drainage_line,
     """
     Creates the Kfac file for calibration.
 
+    The improved methods using slope to generate values for Kfac were proven here:
+    
+    Tavakoly, A. A., A. D. Snow, C. H. David, M. L. Follum, D. R. Maidment, 
+    and Z.-L. Yang, (2016) "Continental-Scale River Flow Modeling of the 
+    Mississippi River Basin Using High-Resolution NHDPlus Dataset", 
+    Journal of the American Water Resources Association (JAWRA) 1-22. 
+    DOI: 10.1111/1752-1688.12456
+
     Formula Type Options:
     
     1. River Length/Celerity; 

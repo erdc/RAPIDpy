@@ -25,7 +25,8 @@ def generate_single_return_period(args):
     rivid_index_list=args[2]
     step=args[3]
     num_years=args[4]
-    mp_lock=args[5]
+    method=args[5]
+    mp_lock=args[6]
     
     with RAPIDDataset(qout_file) as qout_nc_file: 
         #get index of return period data
@@ -35,6 +36,9 @@ def generate_single_return_period(args):
         
         #iterate through rivids to generate return periods
         max_flow_array = np.zeros(len(rivid_index_list))
+        if method in ('gumble', 'log_pearson', 'gev'):
+            return_100_array = np.zeros(len(rivid_index_list))
+            return_50_array = np.zeros(len(rivid_index_list))
         return_20_array = np.zeros(len(rivid_index_list))
         return_10_array = np.zeros(len(rivid_index_list))
         return_2_array = np.zeros(len(rivid_index_list))
@@ -43,27 +47,36 @@ def generate_single_return_period(args):
             filtered_flow_data = qout_nc_file.get_qout_index(rivid_index,
                                                              pd_filter="{0}D".format(step),
                                                              filter_mode="max")
-                                                             
-            sorted_flow_data = np.sort(filtered_flow_data)[:num_years:-1]
-            max_flow = sorted_flow_data[0]
-            if max_flow < 0.01:
-                print("WARNING: Return period data < 0.01 generated for rivid {0}" \
-                      .format(qout_nc_file.qout_nc.variables[qout_nc_file.river_id_dimension][rivid_index]))
-            max_flow_array[iter_idx] = max_flow
-            return_20_array[iter_idx] = sorted_flow_data[rp_index_20]
-            return_10_array[iter_idx] = sorted_flow_data[rp_index_10]
-            return_2_array[iter_idx] = sorted_flow_data[rp_index_2]
+
+            if method == 'weibull':
+
+                sorted_flow_data = np.sort(filtered_flow_data)[:num_years:-1]
+                max_flow = sorted_flow_data[0]
+                if max_flow < 0.01:
+                    print("WARNING: Return period data < 0.01 generated for rivid {0}" \
+                          .format(qout_nc_file.qout_nc.variables[qout_nc_file.river_id_dimension][rivid_index]))
+                max_flow_array[iter_idx] = max_flow
+                return_20_array[iter_idx] = sorted_flow_data[rp_index_20]
+                return_10_array[iter_idx] = sorted_flow_data[rp_index_10]
+                return_2_array[iter_idx] = sorted_flow_data[rp_index_2]
+            elif method == 'gumble'
+
+
+            elif method == 'log_pearson'
 
         mp_lock.acquire()
         return_period_nc = nc.Dataset(return_period_file, 'a')
         return_period_nc.variables['max_flow'][rivid_index_list] = max_flow_array
+        if method in ('gumble', 'log_pearson', 'gev'):
+            return_period_nc.variables['return_period_100'][rivid_index_list] = return_100_array
+            return_period_nc.variables['return_period_50'][rivid_index_list] = return_50_array
         return_period_nc.variables['return_period_20'][rivid_index_list] = return_20_array
         return_period_nc.variables['return_period_10'][rivid_index_list] = return_10_array
         return_period_nc.variables['return_period_2'][rivid_index_list] = return_2_array
         return_period_nc.close()
         mp_lock.release()
 
-def generate_return_periods(qout_file, return_period_file, num_cpus=multiprocessing.cpu_count(), storm_duration_days=7):
+def generate_return_periods(qout_file, return_period_file, num_cpus=multiprocessing.cpu_count(), storm_duration_days=7, method='weibull'):
     """
     Generate return period from RAPID Qout file
     """
@@ -82,7 +95,17 @@ def generate_return_periods(qout_file, return_period_file, num_cpus=multiprocess
         max_flow_var = return_period_nc.createVariable('max_flow', 'f8', ('rivid',))
         max_flow_var.long_name = 'maxumum streamflow'
         max_flow_var.units = 'm3/s'
-        
+
+        if method in ('gumble', 'log_pearson', 'gev'):
+
+            return_period_100_var = return_period_nc.createVariable('return_period_100', 'f8', ('rivid',))
+            return_period_100_var.long_name = '100 year return period flow'
+            return_period_100_var.units = 'm3/s'
+
+            return_period_50_var = return_period_nc.createVariable('return_period_50', 'f8', ('rivid',))
+            return_period_50_var.long_name = '50 year return period flow'
+            return_period_50_var.units = 'm3/s'
+
         return_period_20_var = return_period_nc.createVariable('return_period_20', 'f8', ('rivid',))
         return_period_20_var.long_name = '20 year return period flow'
         return_period_20_var.units = 'm3/s'
@@ -134,6 +157,7 @@ def generate_return_periods(qout_file, return_period_file, num_cpus=multiprocess
                                      sub_partition_index_list, 
                                      step,
                                      num_years,
+                                     method,
                                      mp_lock
                                      ))
 

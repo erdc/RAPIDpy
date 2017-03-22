@@ -59,10 +59,38 @@ def generate_single_return_period(args):
                 return_20_array[iter_idx] = sorted_flow_data[rp_index_20]
                 return_10_array[iter_idx] = sorted_flow_data[rp_index_10]
                 return_2_array[iter_idx] = sorted_flow_data[rp_index_2]
+
             elif method == 'gumble'
+
+                mean_flow = np.mean(filtered_flow_data)
+                stddev = np.std(filtered_flow_data)
+                if mean_flow < 0.01:
+                    print("WARNING: Return period data < 0.01 generated for rivid {0}" \
+                          .format(qout_nc_file.qout_nc.variables[qout_nc_file.river_id_dimension][rivid_index]))
+                return_100_array[iter_idx] = mean_flow + 3.14*stddev
+                return_50_array[iter_idx] = mean_flow + 2.59*stddev
+                return_20_array[iter_idx] = mean_flow + 1.87*stddev
+                return_10_array[iter_idx] = mean_flow + 1.3*stddev
+                return_2_array[iter_idx] = mean_flow - .164*stddev
+
 
 
             elif method == 'log_pearson'
+
+                log_flow = numpy.log10(filtered_flow_data)
+                mean_log_flow = np.mean(log_flow)
+                std_log_flow = np.std(log_flow)
+                log_flow_array = np.array(log_flow)
+                log_minus_mean_cubed = np.power((log_flow_array - mean_log_flow),3)
+                skew = (num_years*(np.sum(log_minus_mean)))/((num_years-1)*(num_years-2)*(std_log_flow)**3)
+                if mean_flow < 0.01:
+                    print("WARNING: Return period data < 0.01 generated for rivid {0}" \
+                          .format(qout_nc_file.qout_nc.variables[qout_nc_file.river_id_dimension][rivid_index]))
+                return_100_array[iter_idx] =
+                return_50_array[iter_idx] =
+                return_20_array[iter_idx] =
+                return_10_array[iter_idx] =
+                return_2_array[iter_idx] =
 
         mp_lock.acquire()
         return_period_nc = nc.Dataset(return_period_file, 'a')

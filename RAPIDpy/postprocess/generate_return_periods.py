@@ -81,11 +81,11 @@ def generate_single_return_period(args):
                 mean_log_flow = np.mean(log_flow)
                 std_log_flow = np.std(log_flow)
                 log_flow_array = np.array(log_flow)
-                log_minus_mean_cubed = np.power((log_flow_array - mean_log_flow),3)
-                skew = (num_years*(np.sum(log_minus_mean)))/((num_years-1)*(num_years-2)*(std_log_flow)**3)
-                if mean_flow < 0.01:
-                    print("WARNING: Return period data < 0.01 generated for rivid {0}" \
-                          .format(qout_nc_file.qout_nc.variables[qout_nc_file.river_id_dimension][rivid_index]))
+                skew = (num_years*(np.sum(np.power((log_flow_array - mean_log_flow),3))))/((num_years-1)*(num_years-2)*(std_log_flow)**3)
+                K_table_2 = [-.396, -.384, -.368, -.351, -.330, -.307, -.282, -.254, -.225, -.195, -.164, -.132, -.099, -.066, -.033, 0, .033, .066, .099, .132, .164, .195, .225, .254, .282, .307, .330, .351, .368, .384, .396]
+                K_table_10 = [1.18, 1.21, 1.238, 1.262, 1.284, 1.302, 1.318, 1.329, 1.337, 1.340, 1.340, 1.336, 1.328, 1.317, 1.301, 1.282, 1.258, 1.231, 1.2, 1.166, 1.128, 1.086, 1.041, .994, .945, .895, .844, .795, .747, .702, .660]
+                K_table_50 = [3.152, 3.114, 3.071, 3.023, 2.97, 2.912, 2.848, 2.78, 2.706, 2.626, 2.542, 2.453, 2.359, 2.261, 2.159, 2.054, 1.945, 1.834, 1.72, 1.606, 1.492, 1.379, 1.270, 1.166, 1.069, .98, .9, .83, .768, .714, .666]
+                K_table_100 = [4.051, 3.973, 3.889, 3.8, 3.705, 3.605, 3.499, 3.388, 3.271, 3.149, 3.022, 2.891, 2.755, 2.615, 2.472, 2.326, 2.178, 2.029, 1.88, 1.733, 1.588, 1.499, 1.318, 1.197, 1.087, .99, .905, .832, .769, .714, .667]
                 return_100_array[iter_idx] =
                 return_50_array[iter_idx] =
                 return_20_array[iter_idx] =

@@ -30,16 +30,23 @@ def generate_single_return_period(args):
     
     with RAPIDDataset(qout_file) as qout_nc_file: 
         #get index of return period data
-        rp_index_20 = int((num_years + 1)/20.0)
-        rp_index_10 = int((num_years + 1)/10.0)
-        rp_index_2 = int((num_years + 1)/2.0)
+        if method == 'weibull':
+            rp_index_20 = int((num_years + 1)/20.0)
+            rp_index_10 = int((num_years + 1)/10.0)
+            rp_index_2 = int((num_years + 1)/2.0)
         
         #iterate through rivids to generate return periods
         max_flow_array = np.zeros(len(rivid_index_list))
-        if method in ('gumble', 'log_pearson', 'gev'):
+        if method == 'weibull'
+            return_20_array = np.zeros(len(rivid_index_list))
+        elif method == 'gumble':
             return_100_array = np.zeros(len(rivid_index_list))
             return_50_array = np.zeros(len(rivid_index_list))
-        return_20_array = np.zeros(len(rivid_index_list))
+            return_20_array = np.zeros(len(rivid_index_list))
+        elif method == 'log_pearson':
+            return_100_array = np.zeros(len(rivid_index_list))
+            return_50_array = np.zeros(len(rivid_index_list))
+            return_25_array = np.zeros(len(rivid_index_list))
         return_10_array = np.zeros(len(rivid_index_list))
         return_2_array = np.zeros(len(rivid_index_list))
         
@@ -49,7 +56,6 @@ def generate_single_return_period(args):
                                                              filter_mode="max")
 
             if method == 'weibull':
-
                 sorted_flow_data = np.sort(filtered_flow_data)[:num_years:-1]
                 max_flow = sorted_flow_data[0]
                 if max_flow < 0.01:
@@ -61,7 +67,6 @@ def generate_single_return_period(args):
                 return_2_array[iter_idx] = sorted_flow_data[rp_index_2]
 
             elif method == 'gumble'
-
                 mean_flow = np.mean(filtered_flow_data)
                 stddev = np.std(filtered_flow_data)
                 if mean_flow < 0.01:
@@ -85,25 +90,33 @@ def generate_single_return_period(args):
                 skewvals = [-3.0, -2.8, -2.6, -2.4, -2.2, -2.0, -1.8, -1.6, -1.4, -1.2, -1.0, -0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.4, 2.6, 2.8, 3.0]
                 kfac2 = [0.396, 0.384, 0.368, 0.351, 0.33, 0.307, 0.282, 0.254, 0.225, 0.195, 0.164, 0.132, 0.099, 0.066, 0.033, 0, -0.033, -0.066, -0.099, -0.132, -0.164, -0.195, -0.225, -0.254, -0.282, -0.307, -0.33, -0.351, -0.368, -0.384, -0.396]
                 kfac10 = [0.66, 0.702, 0.747, 0.795, 0.844, 0.895, 0.945, 0.994, 1.041, 1.086, 1.128, 1.166, 1.2, 1.231, 1.258, 1.282, 1.301, 1.317, 1.328, 1.336, 1.34, 1.34, 1.337, 1.329, 1.318, 1.302, 1.284, 1.262, 1.238, 1.21, 1.18]
+                kfac25 = [.666, .712, .764, .823, .888, .959, 1.035, 1.116, 1.198, 1.282, 1.366, 1.448, 1.528, 1.606, 1.680, 1.751, 1.818, 1.880, 1.939, 1.993, 2.043, 2.087, 2.128, 2.163, 2.193, 2.219, 2.240, 2.256, 2.267, 2.275, 2.278]
                 kfac50 = [0.666, 0.714, 0.768, 0.83, 0.9, 0.98, 1.069, 1.166, 1.27, 1.379, 1.492, 1.606, 1.72, 1.834, 1.945, 2.054, 2.159, 2.261, 2.359, 2.453, 2.542, 2.626, 2.706, 2.78, 2.848, 2.912, 2.97, 3.023, 3.071, 3.114, 3.152]
                 kfac100 = [0.667, 0.714, 0.769, 0.832, 0.905, 0.99, 1.087, 1.197, 1.318, 1.499, 1.588, 1.733, 1.88, 2.029, 2.178, 2.326, 2.472, 2.615, 2.755, 2.891, 3.022, 3.149, 3.271, 3.388, 3.499, 3.605, 3.705, 3.8, 3.889, 3.973, 4.051]
                 k2 = np.interp(skew,skewvals,kfac2)
                 k10 = np.interp(skew,skewvals,kfac10)
+                k25 = np.interp(skew,skewvals,kfac25)
                 k50 = np.interp(skew,skewvals,kfac50)
                 k100 = np.interp(skew,skewvals,kfac100)
                 return_100_array[iter_idx] = np.power(10,(mean_log_flow + k100*std_log_flow))
                 return_50_array[iter_idx] = np.power(10,(mean_log_flow + k50*std_log_flow))
-                return_20_array[iter_idx] = np.power(10,(mean_log_flow + k20*std_log_flow))
+                return_25_array[iter_idx] = np.power(10,(mean_log_flow + k25*std_log_flow))
                 return_10_array[iter_idx] = np.power(10,(mean_log_flow + k10*std_log_flow))
                 return_2_array[iter_idx] = np.power(10,(mean_log_flow + k2*std_log_flow))
 
         mp_lock.acquire()
         return_period_nc = nc.Dataset(return_period_file, 'a')
         return_period_nc.variables['max_flow'][rivid_index_list] = max_flow_array
-        if method in ('gumble', 'log_pearson', 'gev'):
+        if method == 'weibull':
+            return_period_nc.variables['return_period_20'][rivid_index_list] = return_20_array
+        elif method in 'gumble':
             return_period_nc.variables['return_period_100'][rivid_index_list] = return_100_array
             return_period_nc.variables['return_period_50'][rivid_index_list] = return_50_array
-        return_period_nc.variables['return_period_20'][rivid_index_list] = return_20_array
+            return_period_nc.variables['return_period_20'][rivid_index_list] = return_20_array
+        elif method == 'log_pearson':
+            return_period_nc.variables['return_period_100'][rivid_index_list] = return_100_array
+            return_period_nc.variables['return_period_50'][rivid_index_list] = return_50_array
+            return_period_nc.variables['return_period_25'][rivid_index_list] = return_25_array
         return_period_nc.variables['return_period_10'][rivid_index_list] = return_10_array
         return_period_nc.variables['return_period_2'][rivid_index_list] = return_2_array
         return_period_nc.close()
@@ -129,7 +142,13 @@ def generate_return_periods(qout_file, return_period_file, num_cpus=multiprocess
         max_flow_var.long_name = 'maxumum streamflow'
         max_flow_var.units = 'm3/s'
 
-        if method in ('gumble', 'log_pearson', 'gev'):
+        if method == 'weibull':
+
+            return_period_20_var = return_period_nc.createVariable('return_period_20', 'f8', ('rivid',))
+            return_period_20_var.long_name = '20 year return period flow'
+            return_period_20_var.units = 'm3/s'
+
+        if method == 'gumble':
 
             return_period_100_var = return_period_nc.createVariable('return_period_100', 'f8', ('rivid',))
             return_period_100_var.long_name = '100 year return period flow'
@@ -139,9 +158,23 @@ def generate_return_periods(qout_file, return_period_file, num_cpus=multiprocess
             return_period_50_var.long_name = '50 year return period flow'
             return_period_50_var.units = 'm3/s'
 
-        return_period_20_var = return_period_nc.createVariable('return_period_20', 'f8', ('rivid',))
-        return_period_20_var.long_name = '20 year return period flow'
-        return_period_20_var.units = 'm3/s'
+            return_period_20_var = return_period_nc.createVariable('return_period_20', 'f8', ('rivid',))
+            return_period_20_var.long_name = '20 year return period flow'
+            return_period_20_var.units = 'm3/s'
+
+        if method == 'log_pearson':
+
+            return_period_100_var = return_period_nc.createVariable('return_period_100', 'f8', ('rivid',))
+            return_period_100_var.long_name = '100 year return period flow'
+            return_period_100_var.units = 'm3/s'
+
+            return_period_50_var = return_period_nc.createVariable('return_period_50', 'f8', ('rivid',))
+            return_period_50_var.long_name = '50 year return period flow'
+            return_period_50_var.units = 'm3/s'
+
+            return_period_25_var = return_period_nc.createVariable('return_period_25', 'f8', ('rivid',))
+            return_period_25_var.long_name = '25 year return period flow'
+            return_period_25_var.units = 'm3/s'
         
         return_period_10_var = return_period_nc.createVariable('return_period_10', 'f8', ('rivid',))
         return_period_10_var.long_name = '10 year return period flow'

@@ -139,7 +139,7 @@ def generate_return_periods(qout_file, return_period_file, num_cpus=multiprocess
             'unique identifier for each river reach')
 
         max_flow_var = return_period_nc.createVariable('max_flow', 'f8', ('rivid',))
-        max_flow_var.long_name = 'maxumum streamflow'
+        max_flow_var.long_name = 'maximum streamflow'
         max_flow_var.units = 'm3/s'
 
         if method == 'weibull':

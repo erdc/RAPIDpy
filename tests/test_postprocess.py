@@ -175,5 +175,5 @@ class TestRAPIDInflow(unittest.TestCase):
 
     def tearDown(self):
         #remove unused data
-        #remove_files(*[f for f in glob(os.path.join(self.OUTPUT_DATA_PATH,"*")) if not f.endswith(".gitignore")])
+        remove_files(*[f for f in glob(os.path.join(self.OUTPUT_DATA_PATH,"*")) if not f.endswith(".gitignore")])
         return

@@ -27,6 +27,20 @@ https://github.com/c-h-david/rapid.
    :target: https://coveralls.io/github/erdc-cm/RAPIDpy
 .. |License (3-Clause BSD)| image:: https://img.shields.io/badge/license-BSD%203--Clause-yellow.svg
    :target: https://github.com/erdc-cm/RAPIDpy/blob/master/LICENSE
+   
+Publications:
+=============
+
+Tavakoly, A. A., A. D. Snow, C. H. David, M. L. Follum, D. R. Maidment, and Z.-L. Yang, (2016) "Continental-Scale River Flow Modeling of the Mississippi River Basin Using High-Resolution NHDPlus Dataset", Journal of the American Water Resources Association (JAWRA) 1-22. DOI: 10.1111/1752-1688.12456
+
+Datasets:
+=========
+
+Ahmad A Tavakoly. (2017). RAPID input files corresponding to the Mississippi River Basin using the NHDPlus v2 Dataset [Data set]. Zenodo. http://doi.org/10.5281/zenodo.322886 |Mississippi Dataset DOI|
+
+.. |Mississippi Dataset DOI| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.322886.svg
+   :target: https://doi.org/10.5281/zenodo.322886
+
 
 Contents:
 

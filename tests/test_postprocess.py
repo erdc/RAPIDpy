@@ -35,7 +35,6 @@ class TestRAPIDInflow(unittest.TestCase):
         """
         Checks generating return period data from RAPID Qout
         """
-        print("TEST 1: TEST GENERATE RETURN PERIOD FROM RAPID QOUT")
         return_periods_file_name = 'return_periods_erai_t511_24hr_19800101to19861231.nc'
         generated_return_periods_file = os.path.join(self.OUTPUT_DATA_PATH, return_periods_file_name)
         generate_return_periods(qout_file=os.path.join(self.INPUT_DATA_PATH, 'Qout_erai_t511_24hr_19800101to19861231.nc'),
@@ -57,6 +56,72 @@ class TestRAPIDInflow(unittest.TestCase):
             assert (d1.variables['lat'][:] == d2.variables['lat'][:]).all()
         if 'lon' in d2.variables.keys():
             assert (d1.variables['lon'][:] == d2.variables['lon'][:]).all()
+        assert d1.return_period_method == d2.return_period_method
+        d1.close()
+        d2.close()
+
+    def test_generate_return_periods_gumble(self):
+        """
+        Checks generating return period data from RAPID Qout using Gumble method
+        """
+        return_periods_file_name = 'return_periods_gumble_erai_t511_24hr_19800101to19861231.nc'
+        generated_return_periods_file = os.path.join(self.OUTPUT_DATA_PATH, return_periods_file_name)
+        generate_return_periods(qout_file=os.path.join(self.INPUT_DATA_PATH, 'Qout_erai_t511_24hr_19800101to19861231.nc'),
+                                return_period_file=generated_return_periods_file,
+                                method='gumble'
+                                )
+
+        compare_return_periods_file = os.path.join(self.COMPARE_DATA_PATH, return_periods_file_name)
+
+        #check other info in netcdf file
+        d1 = Dataset(generated_return_periods_file)
+        d2 = Dataset(compare_return_periods_file)
+        assert_almost_equal(d1.variables['max_flow'][:], d2.variables['max_flow'][:], decimal=5)
+        assert_almost_equal(d1.variables['return_period_100'][:], d2.variables['return_period_100'][:], decimal=5)
+        assert_almost_equal(d1.variables['return_period_50'][:], d2.variables['return_period_50'][:], decimal=5)
+        assert_almost_equal(d1.variables['return_period_20'][:], d2.variables['return_period_20'][:], decimal=5)
+        assert_almost_equal(d1.variables['return_period_10'][:], d2.variables['return_period_10'][:], decimal=5)
+        assert_almost_equal(d1.variables['return_period_2'][:], d2.variables['return_period_2'][:], decimal=5)
+        if 'rivid' in d2.variables.keys():
+            assert (d1.variables['rivid'][:] == d2.variables['rivid'][:]).all()
+        if 'lat' in d2.variables.keys():
+            assert (d1.variables['lat'][:] == d2.variables['lat'][:]).all()
+        if 'lon' in d2.variables.keys():
+            assert (d1.variables['lon'][:] == d2.variables['lon'][:]).all()
+        assert d1.return_period_method == d2.return_period_method
+        d1.close()
+        d2.close()
+
+    def test_generate_return_periods_log_pearson(self):
+        """
+        Checks generating return period data from RAPID Qout using log-pearson method
+        """
+        return_periods_file_name = 'return_periods_log_pearson_erai_t511_24hr_19800101to19861231.nc'
+        generated_return_periods_file = os.path.join(self.OUTPUT_DATA_PATH, return_periods_file_name)
+        generate_return_periods(qout_file=os.path.join(self.INPUT_DATA_PATH, 'Qout_erai_t511_24hr_19800101to19861231.nc'),
+                                return_period_file=generated_return_periods_file,
+                                method='log_pearson'
+                                )
+
+        compare_return_periods_file = os.path.join(self.COMPARE_DATA_PATH, return_periods_file_name)
+
+        #check other info in netcdf file
+        d1 = Dataset(generated_return_periods_file)
+        d2 = Dataset(compare_return_periods_file)
+        assert_almost_equal(d1.variables['max_flow'][:], d2.variables['max_flow'][:], decimal=5)
+        assert_almost_equal(d1.variables['return_period_100'][:], d2.variables['return_period_100'][:], decimal=5)
+        assert_almost_equal(d1.variables['return_period_50'][:], d2.variables['return_period_50'][:], decimal=5)
+        assert_almost_equal(d1.variables['return_period_25'][:], d2.variables['return_period_25'][:], decimal=5)
+        assert_almost_equal(d1.variables['return_period_10'][:], d2.variables['return_period_10'][:], decimal=5)
+        assert_almost_equal(d1.variables['return_period_2'][:], d2.variables['return_period_2'][:], decimal=5)
+        if 'rivid' in d2.variables.keys():
+            assert (d1.variables['rivid'][:] == d2.variables['rivid'][:]).all()
+        if 'lat' in d2.variables.keys():
+            assert (d1.variables['lat'][:] == d2.variables['lat'][:]).all()
+        if 'lon' in d2.variables.keys():
+            assert (d1.variables['lon'][:] == d2.variables['lon'][:]).all()
+
+        assert d1.return_period_method == d2.return_period_method
         d1.close()
         d2.close()
 
@@ -64,7 +129,6 @@ class TestRAPIDInflow(unittest.TestCase):
         """
         Checks generating seasonal average data from RAPID Qout
         """
-        print("TEST 2: TEST GENERATE SEASONAL AVERAGE FROM RAPID QOUT")
         seasonal_averages_file_name = 'seasonal_averages_erai_t511_24hr_19800101to19861231.nc'
         generated_seasonal_averages_file = os.path.join(self.OUTPUT_DATA_PATH, seasonal_averages_file_name)
         generate_seasonal_averages(qout_file=os.path.join(self.INPUT_DATA_PATH, 'Qout_erai_t511_24hr_19800101to19861231.nc'),
@@ -94,8 +158,6 @@ class TestRAPIDInflow(unittest.TestCase):
         """
         Checks generating seasonal qinit from rapid Qout
         """
-        print("TEST 3: TEST GENERATE SEASONAL QINIT FROM RAPID QOUT")
-
         rapid_manager = RAPID(Qout_file=os.path.join(self.INPUT_DATA_PATH, 'Qout_erai_t511_24hr_19800101to19861231.nc'),
                               rapid_connect_file=os.path.join(self.COMPARE_DATA_PATH, 'gis', 'x-x', 'rapid_connect.csv')
                               )
@@ -114,3 +176,4 @@ class TestRAPIDInflow(unittest.TestCase):
     def tearDown(self):
         #remove unused data
         remove_files(*[f for f in glob(os.path.join(self.OUTPUT_DATA_PATH,"*")) if not f.endswith(".gitignore")])
+        return

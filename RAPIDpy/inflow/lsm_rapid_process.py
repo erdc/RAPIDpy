@@ -174,6 +174,29 @@ def run_lsm_rapid_process(rapid_executable_location,
                 file_datetime_pattern = "%Y%m%d",
                 convert_one_hour_to_three=False
             )
+
+    Example of run with CMIP5:
+
+    .. note:: http://gdo-dcp.ucllnl.org/downscaled_cmip_projections/techmemo/BCSD5HydrologyMemo.pdf
+
+    .. code:: python
+
+        from datetime import datetime
+        from RAPIDpy.inflow import run_lsm_rapid_process
+        #------------------------------------------------------------------------------
+        #main process
+        #------------------------------------------------------------------------------
+        if __name__ == "__main__":
+            run_lsm_rapid_process(
+                rapid_executable_location='/home/jimwlewis/rapid/src/rapid',
+                rapid_io_files_location='/data/rapid-io4',
+                lsm_data_location='/data/rapid-io4/input/cmip5-jun01',
+                simulation_start_datetime=datetime(2001, 1, 1),
+                simulation_end_datetime=datetime(2002, 12, 31),
+                generate_initialization_file=True,
+                file_datetime_pattern="%Y",
+                file_datetime_re_pattern=r'\d{4}',
+            )
     """
     time_begin_all = datetime.utcnow()
 

@@ -6,6 +6,7 @@ Code to use to prepare input data for RAPID from Land Surface Models
 
 - ECMWF's ERA Interim Data
 - NASA's GLDAS/NLDAS/LIS Data
+- CMIP5 Data (daily VIC data available from 1950 to 2099)
 
 Step 1: Retrieve Land Surface Model Runoff Output
 -------------------------------------------------
@@ -14,7 +15,7 @@ Download the data into a local directory.
 
 - http://apps.ecmwf.int/datasets
 - http://ldas.gsfc.nasa.gov/index.php
-
+- ftp://gdo-dcp.ucllnl.org/pub/dcp/archive/cmip5/hydro/BCSD_daily_VIC_nc/
 
 Step 2: Create folders for RAPID input and output
 -------------------------------------------------
@@ -56,9 +57,10 @@ Example:
     weight_gldas.csv
     weight_lis.csv
     weight_wrf.csv
+    weight_cmip5.csv
     x.csv
 
-If you have not generated these files yet, see :doc:`gis_tools` 
+If you have not generated these files yet, see :doc:`gis_tools`
 
 Step 5: Run the code
 --------------------

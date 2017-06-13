@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-##
-##  CreateInflowFileFromLDASRunoff.py
-##  RAPIDpy
-##
-##  Created by Alan D. Snow (adapted from CreateInflowFileFromECMWFRunoff.py).
-##  Copyright © 2015-2016 Alan D Snow. All rights reserved.
-##  License: BSD-3 Clause
+#
+#  CreateInflowFileFromLDASRunoff.py
+#  RAPIDpy
+#
+#  Created by Alan D. Snow (adapted from CreateInflowFileFromECMWFRunoff.py).
+#  Copyright © 2015-2016 Alan D Snow. All rights reserved.
+#  License: BSD-3 Clause
 
 import netCDF4 as NET
 import numpy as NUM
@@ -14,13 +14,13 @@ from past.builtins import xrange
 
 from .CreateInflowFileFromGriddedRunoff import CreateInflowFileFromGriddedRunoff
 
+
 class CreateInflowFileFromLDASRunoff(CreateInflowFileFromGriddedRunoff):
     def __init__(self, lat_dim,  # "g0_lat_0",
                        lon_dim,  # "g0_lon_1",
                        lat_var,  # "g0_lat_0",
                        lon_var,  # "g0_lon_1",
                        runoff_vars,  # ["Qsb_GDS0_SFC_ave1h", "Qs_GDS0_SFC_ave1h"],
-                       time_step_seconds,  # 3*3600
                        ):
         """Define the attributes to look for"""
         self.dims_oi = [lon_dim, lat_dim]
@@ -28,7 +28,6 @@ class CreateInflowFileFromLDASRunoff(CreateInflowFileFromGriddedRunoff):
         self.runoff_vars = runoff_vars
 
         self.length_time = {"Hourly": 1}
-        self.time_step_seconds = time_step_seconds
         self.errorMessages = ["Missing Variable 'time'",
                               "Incorrect dimensions in the input runoff file.",
                               "Incorrect variables in the input runoff file.",
@@ -38,7 +37,6 @@ class CreateInflowFileFromLDASRunoff(CreateInflowFileFromGriddedRunoff):
                               "Incorrect sequence of rows in the weight table"]
 
         super(CreateInflowFileFromLDASRunoff, self).__init__()
-
 
     def dataValidation(self, in_nc):
         """Check the necessary dimensions and variables in the input netcdf data"""
@@ -56,14 +54,15 @@ class CreateInflowFileFromLDASRunoff(CreateInflowFileFromGriddedRunoff):
         data_nc.close()
         return
 
-
     def execute(self, nc_file_list, index_list, in_weight_table,
-                out_nc, grid_type, mp_lock):
+                out_nc, grid_type, time_step_seconds, mp_lock):
 
         """The source code of the tool."""
         if not os.path.exists(out_nc):
-            print("ERROR: Outfile has not been created. You need to run: generateOutputInflowFile function ...")
-            raise Exception("ERROR: Outfile has not been created. You need to run: generateOutputInflowFile function ...")
+            print("ERROR: Outfile has not been created. You need to run: "
+                  "generateOutputInflowFile function ...")
+            raise Exception("ERROR: Outfile has not been created. ""
+                            "You need to run: generateOutputInflowFile function ...")
 
         if len(nc_file_list) != len(index_list):
             print("ERROR: Number of runoff files not equal to number of indices ...")
@@ -71,7 +70,7 @@ class CreateInflowFileFromLDASRunoff(CreateInflowFileFromGriddedRunoff):
 
         self.readInWeightTable(in_weight_table)
 
-        #get indices of subset of data
+        # get indices of subset of data
         lon_ind_all = [int(i) for i in self.dict_list[self.header_wt[2]]]
         lat_ind_all = [int(j) for j in self.dict_list[self.header_wt[3]]]
 
@@ -85,7 +84,7 @@ class CreateInflowFileFromLDASRunoff(CreateInflowFileFromGriddedRunoff):
         index_new = []
         conversion_factor = None
 
-        #combine inflow data
+        # combine inflow data
         for nc_file_array_index, nc_file_array in enumerate(nc_file_list):
 
             index = index_list[nc_file_array_index]
@@ -101,8 +100,6 @@ class CreateInflowFileFromLDASRunoff(CreateInflowFileFromGriddedRunoff):
                 # Validate the netcdf dataset
                 self.dataValidation(nc_file)
 
-                #self.dataIdentify(nc_file, vars_oi_index)
-
                 ''' Read the netcdf dataset'''
                 data_in_nc = NET.Dataset(nc_file)
 
@@ -115,39 +112,38 @@ class CreateInflowFileFromLDASRunoff(CreateInflowFileFromGriddedRunoff):
                     for var_name in self.runoff_vars[1:]:
                         data_subset_runoff += data_in_nc.variables[var_name][lat_slice, lon_slice]
 
-                    #get runoff dims
+                    # get runoff dims
                     len_time_subset = 1
                     len_lat_subset = data_subset_runoff.shape[0]
                     len_lon_subset = data_subset_runoff.shape[1]
 
-                    #reshape the runoff
+                    # reshape the runoff
                     data_subset_runoff = data_subset_runoff.reshape(len_lat_subset * len_lon_subset)
 
                 elif runoff_dimension_size == 3:
-                    #obtain subset of surface and subsurface runoff
+                    # obtain subset of surface and subsurface runoff
                     data_subset_runoff = data_in_nc.variables[self.runoff_vars[0]][:, lat_slice, lon_slice]
                     for var_name in self.runoff_vars[1:]:
                         data_subset_runoff += data_in_nc.variables[var_name][:, lat_slice, lon_slice]
 
-                    #get runoff dims
+                    # get runoff dims
                     len_time_subset = data_subset_runoff.shape[0]
                     len_lat_subset = data_subset_runoff.shape[1]
                     len_lon_subset = data_subset_runoff.shape[2]
-                    #reshape the runoff
+                    # reshape the runoff
                     data_subset_runoff = data_subset_runoff.reshape(len_time_subset,
                                                                     (len_lat_subset * len_lon_subset))
 
                 if conversion_factor == None:
-                    #get conversion_factor
+                    # get conversion_factor
                     conversion_factor = 0.001 #convert from kg/m^2 (i.e. mm) to m
                     if "s" in data_in_nc.variables[self.vars_oi[2]].getncattr("units"):
-                        #that means kg/m^2/s in GLDAS v1 that is 3-hr avg, so multiply
-                        #by 3 hr (ex. 3*3600). Assumed same for others (ex. 1*3600).
-                        #ftp://hydro1.sci.gsfc.nasa.gov/data/s4pa/GLDAS_V1/README.GLDAS.pdf
-                        #If combining files, need to take average of these, so divide by number of files
-                        conversion_factor *= self.time_step_seconds/len(nc_file_array)
+                        # that means kg/m^2/s in GLDAS v1 that is 3-hr avg, so multiply
+                        # by 3 hr (ex. 3*3600). Assumed same for others (ex. 1*3600).
+                        # ftp://hydro1.sci.gsfc.nasa.gov/data/s4pa/GLDAS_V1/README.GLDAS.pdf
+                        # If combining files, need to take average of these, so divide by number of files
+                        conversion_factor *= time_step_seconds/len(nc_file_array)
                 data_in_nc.close()
-
 
                 if not index_new:
                     # compute new indices based on the data_subset_surface
@@ -157,22 +153,22 @@ class CreateInflowFileFromLDASRunoff(CreateInflowFileFromGriddedRunoff):
                         index_new.append((ind_lat_orig - min_lat_ind_all)*len_lon_subset +\
                                          (ind_lon_orig - min_lon_ind_all))
 
-                #obtain a new subset of data
+                # obtain a new subset of data
                 if runoff_dimension_size == 2:
                     data_subset_new = data_subset_runoff[index_new]
                 elif runoff_dimension_size == 3:
                     data_subset_new = data_subset_runoff[:, index_new]
 
-                #FILTER DATA
+                # FILTER DATA
                 try:
-                    #set masked values to zero
+                    # set masked values to zero
                     data_subset_new = data_subset_new.filled(fill_value=0)
                 except AttributeError:
                     pass
-                #set negative values to zero
+                # set negative values to zero
                 data_subset_new[data_subset_new<0] = 0
 
-                #combine data
+                # combine data
                 if data_subset_all is None:
                     data_subset_all = data_subset_new
                 else:
@@ -196,14 +192,14 @@ class CreateInflowFileFromLDASRunoff(CreateInflowFileFromGriddedRunoff):
                     NUM.array([float(k) for k in \
                                self.dict_list[self.header_wt[1]][pointer : (pointer + npoints)]])
 
-                #assume data is incremental
+                # assume data is incremental
                 if runoff_dimension_size == 3:
                     data_goal = data_subset_all[:, pointer:(pointer + npoints)]
                 else:
                     data_goal = data_subset_all[pointer:(pointer + npoints)]
 
                 ro_stream = data_goal * area_sqm_npoints * conversion_factor
-                #filter nan
+                # filter nan
                 ro_stream[NUM.isnan(ro_stream)] = 0
 
                 if ro_stream.any():
@@ -213,7 +209,7 @@ class CreateInflowFileFromLDASRunoff(CreateInflowFileFromGriddedRunoff):
                         inflow_data[stream_index] = ro_stream.sum()
 
                 pointer += npoints
-            #only one process is allowed to write at a time to netcdf file
+            # only one process is allowed to write at a time to netcdf file
             mp_lock.acquire()
             data_out_nc = NET.Dataset(out_nc, "a", format = "NETCDF3_CLASSIC")
             if runoff_dimension_size == 3 and len_time_subset > 1:

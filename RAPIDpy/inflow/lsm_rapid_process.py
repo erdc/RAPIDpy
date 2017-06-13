@@ -110,7 +110,7 @@ def run_lsm_rapid_process(rapid_executable_location,
                           mpiexec_command="mpiexec",
                           cygwin_bin_location="",
                           modeling_institution="US Army Engineer Research and Development Center",
-                          convert_one_hour_to_three=True,
+                          convert_one_hour_to_three=False,
                           ):
     """
     This is the main process to generate inflow for RAPID and to run RAPID.

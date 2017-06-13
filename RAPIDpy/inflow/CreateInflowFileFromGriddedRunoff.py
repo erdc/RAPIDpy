@@ -17,6 +17,7 @@ from pytz import utc
 #local
 from ..helper_functions import open_csv
 
+
 class CreateInflowFileFromGriddedRunoff(object):
     def __init__(self):
         """Define the tool (tool name is the name of the class)."""
@@ -111,7 +112,6 @@ class CreateInflowFileFromGriddedRunoff(object):
                 data_out_nc.geospatial_lon_max = lon_max
         else:
             print('No comid_lat_lon_z file. Not adding values ...')
-
 
     def generateOutputInflowFile(self, 
                                  out_nc, #file generated for inflows

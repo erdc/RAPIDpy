@@ -9,17 +9,15 @@ channels:
 - conda-forge
 - defaults
 dependencies:
-- python=2
+- future
+- gdal
+- netcdf4
 - numpy
 - pandas
-- scipy
-- netcdf4
-- gdal
-- shapely
+- pangaea
+- requests
 - pyproj
 - python-dateutil
 - rtree
-- pip:
-  - future
-  - requests
-  - six
+- shapely
+- scipy

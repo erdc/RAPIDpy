@@ -98,6 +98,7 @@ def run_lsm_rapid_process(rapid_executable_location,
                           generate_rapid_namelist_file=True,
                           run_rapid_simulation=True,
                           generate_return_periods_file=False,
+                          return_period_method='weibul',
                           generate_seasonal_averages_file=False,
                           generate_seasonal_initialization_file=False,
                           generate_initialization_file=False,
@@ -123,6 +124,7 @@ def run_lsm_rapid_process(rapid_executable_location,
         generate_rapid_namelist_file(Optional[bool]): If True, this will create a RAPID namelist file for the run in your RAPID input directory. Default is True.
         run_rapid_simulation(Optional[bool]): If True, the RAPID simulation will run after generating the inflow file. Default is True.
         generate_return_periods_file(Optional[bool]): If True, the return period file will be generated in the output. Default is False.
+        return_period_method(Optional[str]): If True, the return period file will be generated in the output. Default is False.
         generate_seasonal_averages_file(Optional[bool]): If True, the season average file will be generated. Default is False.
         generate_seasonal_initialization_file(Optional[bool]): If True, an intialization based on the seasonal average for the current day of the year will be created. Default is False.
         generate_initialization_file(Optional[bool]): If True, an initialization file from the last time step of the simulation willl be created. Default is False.
@@ -765,10 +767,11 @@ def run_lsm_rapid_process(rapid_executable_location,
                                                        'return_periods_{0}'.format(out_file_ending))
                     #assume storm has 3 day length
                     storm_length_days = 3
-                    generate_return_periods(lsm_rapid_output_file,
-                                            return_periods_file,
-                                            NUM_CPUS,
-                                            storm_length_days)
+                    generate_return_periods(qout_file=lsm_rapid_output_file,
+                                            return_period_file=return_periods_file,
+                                            num_cpus=NUM_CPUS,
+                                            storm_duration_days=storm_length_days,
+                                            method=return_period_method)
                                             
                 #generate seasonal averages file   
                 if generate_seasonal_averages_file and os.path.exists(lsm_rapid_output_file) and lsm_rapid_output_file:

@@ -55,13 +55,13 @@ class CreateInflowFileFromLDASRunoff(CreateInflowFileFromGriddedRunoff):
         return
 
     def execute(self, nc_file_list, index_list, in_weight_table,
-                out_nc, grid_type, time_step_seconds, mp_lock):
+                out_nc, grid_type, mp_lock):
 
         """The source code of the tool."""
         if not os.path.exists(out_nc):
             print("ERROR: Outfile has not been created. You need to run: "
                   "generateOutputInflowFile function ...")
-            raise Exception("ERROR: Outfile has not been created. ""
+            raise Exception("ERROR: Outfile has not been created. "
                             "You need to run: generateOutputInflowFile function ...")
 
         if len(nc_file_list) != len(index_list):
@@ -142,7 +142,7 @@ class CreateInflowFileFromLDASRunoff(CreateInflowFileFromGriddedRunoff):
                         # by 3 hr (ex. 3*3600). Assumed same for others (ex. 1*3600).
                         # ftp://hydro1.sci.gsfc.nasa.gov/data/s4pa/GLDAS_V1/README.GLDAS.pdf
                         # If combining files, need to take average of these, so divide by number of files
-                        conversion_factor *= time_step_seconds/len(nc_file_array)
+                        conversion_factor *= self.simulation_time_step_seconds/len(nc_file_array)
                 data_in_nc.close()
 
                 if not index_new:

@@ -464,7 +464,7 @@ def run_lsm_rapid_process(rapid_executable_location,
                           cygwin_bin_location="",
                           modeling_institution="US Army Engineer Research and Development Center",
                           convert_one_hour_to_three=False,
-                          expected_time_step=3600,
+                          expected_time_step=None,
                           ):
     """
     This is the main process to generate inflow for RAPID and to run RAPID.
@@ -677,7 +677,7 @@ def run_lsm_rapid_process(rapid_executable_location,
                               ZS_dtM=time_step  # RAPID recommended internal time step (1 day)
                               )
 
-        # run ERA Interim processes
+        # run LSM processes
         for rapid_input_directory in rapid_input_directories:
             watershed, subbasin = get_watershed_subbasin_from_folder(rapid_input_directory)
 

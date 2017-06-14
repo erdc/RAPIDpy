@@ -81,7 +81,7 @@ class CreateInflowFileFromERAInterimRunoff(CreateInflowFileFromGriddedRunoff):
             return None
 
     def execute(self, nc_file_list, index_list, in_weight_table, 
-                out_nc, grid_type, time_step_seconds, mp_lock):
+                out_nc, grid_type, mp_lock):
                 
         """The source code of the tool."""
         if not os.path.exists(out_nc):

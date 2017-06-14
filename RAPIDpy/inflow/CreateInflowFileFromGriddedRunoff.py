@@ -31,16 +31,16 @@ class CreateInflowFileFromGriddedRunoff(object):
         with open_csv(in_weight_table, "r") as csvfile:
             reader = csv.reader(csvfile)
             header_row = next(reader)
-            #check number of columns in the weight table
+            # check number of columns in the weight table
             if len(header_row) < len(self.header_wt):
                 raise Exception(self.errorMessages[4])
-            #check header
+            # check header
             if header_row[1:len(self.header_wt)] != self.header_wt[1:]:
                 raise Exception(self.errorMessages[5])
 
         self.dict_list = np.loadtxt(in_weight_table, 
                                     delimiter=",", 
-                                    usecols=(0,1,2,3,4),
+                                    usecols=(0, 1, 2, 3, 4),
                                     skiprows=1,
                                     dtype={'names': (self.header_wt[0], self.header_wt[1], self.header_wt[2], self.header_wt[3], self.header_wt[4]),
                                            'formats': ('i8', 'f8', 'i8', 'i8', 'i8')},
@@ -126,6 +126,7 @@ class CreateInflowFileFromGriddedRunoff(object):
         """
         Generate inflow file for RAPID
         """
+        self.simulation_time_step_seconds = simulation_time_step_seconds
 
         # Create output inflow netcdf data
         print("Generating inflow file ...")

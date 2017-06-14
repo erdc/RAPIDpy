@@ -42,10 +42,9 @@ def generate_inflows_from_runoff(args):
     file_index_list = args[3]
     weight_table_file = args[4]
     grid_type = args[5]
-    time_step_seconds = args[6]
-    rapid_inflow_file = args[7]
-    RAPID_Inflow_Tool = args[8]
-    mp_lock = args[9]
+    rapid_inflow_file = args[6]
+    RAPID_Inflow_Tool = args[7]
+    mp_lock = args[8]
 
     time_start_all = datetime.utcnow()
 
@@ -69,14 +68,13 @@ def generate_inflows_from_runoff(args):
         if len(runoff_file_list) > 1:
             runoff_string += " to {0}".format(runoff_file_list[-1])
         print(runoff_string)
-        print("Converting inflow")
+        print("Converting inflow ...")
         try:
             RAPID_Inflow_Tool.execute(nc_file_list=runoff_file_list,
                                       index_list=file_index_list,
                                       in_weight_table=weight_table_file,
                                       out_nc=rapid_inflow_file,
                                       grid_type=grid_type,
-                                      time_step_seconds=time_step_seconds,
                                       mp_lock=mp_lock,
                                       )
         except Exception:
@@ -136,7 +134,7 @@ DEFAULT_LSM_INPUTS = {
 }
 
 
-def identify_lsm_grid(lsm_grid_path, expected_time_step):
+def identify_lsm_grid(lsm_grid_path):
     """
     This is used to idenfity the input LSM grid
     """
@@ -264,7 +262,7 @@ def identify_lsm_grid(lsm_grid_path, expected_time_step):
             total_runoff_var = var
 
     # IDENTIFY GRID TYPE
-    lsm_grid_info = {
+    lsm_file_data = {
         "weight_file_name": "",
         "grid_type": "",
         "model_name": "",
@@ -286,7 +284,7 @@ def identify_lsm_grid(lsm_grid_path, expected_time_step):
     runoff_vars = [surface_runoff_var, subsurface_runoff_var]
 
     if institution == "European Centre for Medium-Range Weather Forecasts" \
-            or surface_runoff_var.lower() == "ro":
+            or total_runoff_var.lower() == "ro":
         # these are the ECMWF models
         if lat_dim_size == 361 and lon_dim_size == 720:
             print("Runoff file identified as ERA Interim Low Res (T255) GRID")
@@ -307,7 +305,7 @@ def identify_lsm_grid(lsm_grid_path, expected_time_step):
             #   lon = 1024 ;
             #   lat = 512 ;
             lsm_file_data["description"] = "ERA Interim (T511 Grid)"
-            lsm_file_data["weight_file_name "]= r'weight_era_t511\.csv'
+            lsm_file_data["weight_file_name"]= r'weight_era_t511\.csv'
             lsm_file_data["model_name"] = "erai"
             lsm_file_data["grid_type"] = 't511'
         elif lat_dim_size == 161 and lon_dim_size == 320:
@@ -323,10 +321,10 @@ def identify_lsm_grid(lsm_grid_path, expected_time_step):
             lsm_file_data["grid_type"] = 't159'
         else:
             lsm_example_file.close()
-            raise Exception("Unsupported grid size.")
+            raise Exception("Unsupported ECMWF grid.")
 
-            lsm_grid_info['rapid_inflow_tool'] = \
-                CreateInflowFileFromERAInterimRunoff()
+        lsm_file_data["rapid_inflow_tool"] = \
+            CreateInflowFileFromERAInterimRunoff()
 
     elif institution == "NASA GSFC":
         if title == "GLDAS2.0 LIS land surface model output":
@@ -413,7 +411,7 @@ def identify_lsm_grid(lsm_grid_path, expected_time_step):
             lsm_file_data["model_name"] = 'wrf'
             lsm_file_data["grid_type"] = 'wrf'
 
-            lsm_grid_info['rapid_inflow_tool'] = \
+            lsm_file_data['rapid_inflow_tool'] = \
                 CreateInflowFileFromWRFHydroRunoff(
                     latitude_dim,
                     longitude_dim,
@@ -421,27 +419,25 @@ def identify_lsm_grid(lsm_grid_path, expected_time_step):
                     longitude_var,
                     surface_runoff_var,
                     subsurface_runoff_var,
-                    expected_time_step
                 )
         else:
             lsm_example_file.close()
-            raise Exception("Unsupported runoff grid.")
+            raise Exception("Unsupported LSM grid.")
 
     lsm_example_file.close()
 
     # set the inflow tool to use the LDAS tool by default
-    if lsm_grid_info['rapid_inflow_tool'] is None:
-        lsm_grid_info['rapid_inflow_tool'] = \
+    if lsm_file_data["rapid_inflow_tool"] is None:
+        lsm_file_data["rapid_inflow_tool"] = \
             CreateInflowFileFromLDASRunoff(
                 latitude_dim,
                 longitude_dim,
                 latitude_var,
                 longitude_var,
                 runoff_vars,
-                expected_time_step
             )
 
-    return lsm_grid_info
+    return lsm_file_data
 
 
 # ------------------------------------------------------------------------------
@@ -495,7 +491,7 @@ def run_lsm_rapid_process(rapid_executable_location,
         cygwin_bin_location(Optional[str]): If using Windows, this is the path to the Cygwin bin location. Default is "".
         modeling_institution(Optional[str]): This is the institution performing the modeling and is in the output files. Default is "US Army Engineer Research and Development Center".
         convert_one_hour_to_three(Optional[bool]): If the time step is expected to be 1-hr it will convert to 3. Set to False if the LIS, NLDAS, or Joules grid time step is greater than 1-hr.
-        expected_timestep(Optional[int]): The time step in seconds if only one file is specified or if no time found in files. Default is 3600 seconds.
+        expected_time_step(Optional[int]): The time step in seconds of your LSM input data if only one file is given. Required if only one file is present.
 
     Example of regular run:
 
@@ -582,6 +578,7 @@ def run_lsm_rapid_process(rapid_executable_location,
         if ensemble != None:
             ensemble_file_ending = "_{0}.nc".format(ensemble)
             ensemble_file_ending4 = "_{0}.nc4".format(ensemble)
+
         # get list of files
         lsm_file_list = []
         for subdir, dirs, files in os.walk(lsm_data_location, followlinks=True):
@@ -590,18 +587,18 @@ def run_lsm_rapid_process(rapid_executable_location,
                     lsm_file_list.append(os.path.join(subdir, lsm_file))
 
         # IDENTIFY THE GRID
-        lsm_grid_info = identify_lsm_grid(lsm_file_list[0])
+        lsm_file_data = identify_lsm_grid(lsm_file_list[0])
 
+        # load in the datetime pattern
         if file_datetime_pattern is None or file_datetime_re_pattern is None:
-            file_datetime_re_match = re.compile(DEFAULT_LSM_INPUTS[lsm_grid_info['grid_type']]['file_datetime_re_pattern'])
-            file_datetime_pattern = DEFAULT_LSM_INPUTS[lsm_grid_info['grid_type']]['file_datetime_pattern']
-        else:
-            file_datetime_re_match = re.compile(file_datetime_re_pattern)
+            file_datetime_re_pattern = DEFAULT_LSM_INPUTS[lsm_file_data['grid_type']]['file_datetime_re_pattern']
+            file_datetime_pattern = DEFAULT_LSM_INPUTS[lsm_file_data['grid_type']]['file_datetime_pattern']
+        file_re_match = re.compile(file_datetime_re_pattern)
 
+        # get subset based on time bounds
         lsm_file_list_subset = []
-
         for lsm_file in sorted(lsm_file_list):
-            match = file_datetime_re_match.search(lsm_file)
+            match = file_re_match.search(lsm_file)
             file_date = datetime.strptime(match.group(0), file_datetime_pattern)
             if file_date > simulation_end_datetime:
                 break
@@ -613,42 +610,57 @@ def run_lsm_rapid_process(rapid_executable_location,
         print("Running from {0} to {1}".format(lsm_file_list[0],
                                                lsm_file_list[-1]))
 
-        # MAKE SURE PATTERN SET
-        if file_datetime_pattern is None or file_datetime_re_pattern is None:
-            file_re_match = main_file_re_match
-            file_datetime_pattern = main_file_datetime_pattern
-        else:
-            file_re_match = re.compile(file_datetime_re_pattern)
-            file_datetime_pattern = file_datetime_pattern
-
+        # determine the start time from the existing files
         actual_simulation_start_datetime = datetime.strptime(file_re_match.search(lsm_file_list[0]).group(0),
                                                              file_datetime_pattern)
 
+        # get number of time steps in file
+        lsm_example_file = Dataset(lsm_file_list[0])
+        try:
+            time_dim = "time"
+            if "Time" in lsm_example_file.dimensions:
+                time_dim = "Time"
+            file_size_time = len(lsm_example_file.dimensions[time_dim])
+        except Exception as ex:
+            print("ERROR: {0}".format(ex))
+            print("Assuming time dimension is 1")
+            file_size_time = 1
+        lsm_example_file.close()
+        total_num_time_steps = int(file_size_time * len(lsm_file_list))
+
         # VALIDATING INPUT IF DIVIDING BY 3
         time_step_multiply_factor = 1
-        if (grid_type == 'nldas' or grid_type == 'lis' or grid_type == 'joules') and convert_one_hour_to_three:
+        if (lsm_file_data['grid_type'] in ('nldas', 'lis', 'joules')) and convert_one_hour_to_three:
             num_extra_files = file_size_time*len(lsm_file_list) % 3
             if num_extra_files != 0:
                 print("WARNING: Number of files needs to be divisible by 3. Remainder is {0}".format(num_extra_files))
                 print("This means your simulation will be truncated")
-            total_num_time_steps=int(file_size_time*len(lsm_file_list)/3)
+            total_num_time_steps /= 3
             time_step_multiply_factor = 3
 
-        time_step = int(expected_time_step)
+        # check to see if the time step matches expected
         if len(lsm_file_list) > 1:
-            time_step = int((datetime.strptime(file_re_match.search(lsm_file_list[1]).group(0), file_datetime_pattern) \
-                             - actual_simulation_start_datetime).total_seconds()*time_step_multiply_factor/float(file_size_time))
-            if time_step != int(expected_time_step):
-                print("WARNING: The time step used {0} is different than expected {1}".format(time_step,
-                                                                                              expected_time_step))
+            time_step = int((datetime.strptime(file_re_match.search(lsm_file_list[1]).group(0), file_datetime_pattern)
+                             - actual_simulation_start_datetime).total_seconds()
+                            * time_step_multiply_factor / float(file_size_time))
+            if expected_time_step is not None:
+                if time_step != int(expected_time_step):
+                    print("WARNING: The time step used {0} is different than expected {1}".format(time_step,
+                                                                                                  expected_time_step))
+        elif expected_time_step is not None:
+            time_step = int(expected_time_step)
+        else:
+            raise ValueError("Only one LSM file present. 'expected_time_step' parameter required to continue.")
 
+        # determine the end datetime
         actual_simulation_end_datetime = \
             datetime.strptime(file_re_match.search(lsm_file_list[-1]).group(0),
                               file_datetime_pattern) \
             + timedelta(seconds=file_size_time*time_step)
 
-        out_file_ending = "{0}_{1}_{2}hr_{3}to{4}{5}".format(lsm_grid_info['model_name'],
-                                                             lsm_grid_info['grid_type'],
+        # compile the file ending
+        out_file_ending = "{0}_{1}_{2}hr_{3}to{4}{5}".format(lsm_file_data['model_name'],
+                                                             lsm_file_data['grid_type'],
                                                              int(time_step/3600),
                                                              actual_simulation_start_datetime.strftime("%Y%m%d"),
                                                              actual_simulation_end_datetime.strftime("%Y%m%d"),
@@ -685,7 +697,7 @@ def run_lsm_rapid_process(rapid_executable_location,
                                                     'm3_riv_bas_{0}'.format(out_file_ending))
 
             weight_table_file = case_insensitive_file_search(master_watershed_input_directory,
-                                                             lsm_grid_info['weight_file_name'])
+                                                             lsm_file_data['weight_file_name'])
 
             try:
                 in_rivid_lat_lon_z_file = case_insensitive_file_search(master_watershed_input_directory,
@@ -695,7 +707,7 @@ def run_lsm_rapid_process(rapid_executable_location,
                 print("WARNING: comid_lat_lon_z file not found. The lat/lon will not be added ...")
                 pass
 
-            lsm_grid_info['rapid_inflow_tool'].generateOutputInflowFile(
+            lsm_file_data['rapid_inflow_tool'].generateOutputInflowFile(
                 out_nc=master_rapid_runoff_file,
                 start_datetime_utc=actual_simulation_start_datetime,
                 number_of_timesteps=total_num_time_steps,
@@ -703,13 +715,13 @@ def run_lsm_rapid_process(rapid_executable_location,
                 in_rapid_connect_file=case_insensitive_file_search(master_watershed_input_directory,
                                                                    r'rapid_connect\.csv'),
                 in_rivid_lat_lon_z_file=in_rivid_lat_lon_z_file,
-                land_surface_model_description=lsm_grid_info['description'],
+                land_surface_model_description=lsm_file_data['description'],
                 modeling_institution=modeling_institution
             )
 
             job_combinations = []
-            if (grid_type == 'nldas' or grid_type == 'lis' or grid_type == 'joules') and convert_one_hour_to_three:
-                print("Grouping {0} in threes".format(grid_type))
+            if (lsm_file_data['grid_type'] in ('nldas', 'lis', 'joules')) and convert_one_hour_to_three:
+                print("Grouping {0} in threes".format(lsm_file_data['grid_type']))
                 lsm_file_list = [lsm_file_list[nldas_index:nldas_index+3]
                                  for nldas_index in range(0, len(lsm_file_list), 3)
                                  if len(lsm_file_list[nldas_index:nldas_index+3]) == 3]
@@ -718,6 +730,7 @@ def run_lsm_rapid_process(rapid_executable_location,
                 NUM_CPUS = len(lsm_file_list)
             mp_lock = multiprocessing.Manager().Lock()
             partition_list, partition_index_list = partition(lsm_file_list, NUM_CPUS)
+
             for loop_index, cpu_grouped_file_list in enumerate(partition_list):
                 if cpu_grouped_file_list and partition_index_list[loop_index]:
                     job_combinations.append((watershed.lower(),
@@ -725,20 +738,19 @@ def run_lsm_rapid_process(rapid_executable_location,
                                              cpu_grouped_file_list,
                                              partition_index_list[loop_index],
                                              weight_table_file,
-                                             lsm_grid_info['grid_type'],
-                                             time_step,
+                                             lsm_file_data['grid_type'],
                                              master_rapid_runoff_file,
-                                             lsm_grid_info['rapid_inflow_tool'],
+                                             lsm_file_data['rapid_inflow_tool'],
                                              mp_lock))
                     # COMMENTED CODE IS FOR DEBUGGING
 #                    generate_inflows_from_runoff((watershed.lower(),
 #                                                  subbasin.lower(),
 #                                                  cpu_grouped_file_list,
 #                                                  partition_index_list[loop_index],
-#                                                  lsm_grid_info['weight_table_file'],
-#                                                  lsm_grid_info['grid_type'],
+#                                                  lsm_file_data['weight_table_file'],
+#                                                  lsm_file_data['grid_type'],
 #                                                  master_rapid_runoff_file,
-#                                                  lsm_grid_info['rapid_inflow_tool'],
+#                                                  lsm_file_data['rapid_inflow_tool'],
 #                                                  mp_lock))
             pool = multiprocessing.Pool(NUM_CPUS)
             pool.map(generate_inflows_from_runoff,
@@ -773,7 +785,7 @@ def run_lsm_rapid_process(rapid_executable_location,
                 rapid_manager.make_output_CF_compliant(
                     simulation_start_datetime=actual_simulation_start_datetime,
                     comid_lat_lon_z_file=in_rivid_lat_lon_z_file,
-                    project_name="{0} Based Historical flows by {1}".format(description,
+                    project_name="{0} Based Historical flows by {1}".format(lsm_file_data['description'],
                                                                             modeling_institution)
                 )
 

@@ -509,6 +509,22 @@ def run_lsm_rapid_process(rapid_executable_location,
                 lsm_data_location='/home/alan/era_data',
             )
 
+    Example of single input/output run:
+
+    .. code:: python
+
+        from datetime import datetime
+        from RAPIDpy.inflow import run_lsm_rapid_process
+        #------------------------------------------------------------------------------
+        #main process
+        #------------------------------------------------------------------------------
+        if __name__ == "__main__":
+            run_lsm_rapid_process(
+                rapid_executable_location='/home/alan/rapid/src/rapid',
+                rapid_input_location='/home/alan/rapid-io/input/provo_watershed',
+                rapid_output_location='/home/alan/rapid-io/output/provo_watershed',
+                lsm_data_location='/home/alan/era_data',
+            )
     Example of run with FLDAS and datetime filter:
 
     .. note:: http://disc.sci.gsfc.nasa.gov/uui/datasets?keywords=FLDAS
@@ -526,7 +542,6 @@ def run_lsm_rapid_process(rapid_executable_location,
                 rapid_io_files_location='/home/alan/rapid-io',
                 lsm_data_location='/home/alan/lsm_data',
                 simulation_start_datetime=datetime(1980, 1, 1),
-                simulation_end_datetime=datetime.utcnow(),
                 file_datetime_re_pattern = r'\d{8}',
                 file_datetime_pattern = "%Y%m%d",
             )

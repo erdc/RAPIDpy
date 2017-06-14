@@ -24,8 +24,7 @@ from .CreateInflowFileFromWRFHydroRunoff import CreateInflowFileFromWRFHydroRuno
 from ..postprocess.generate_return_periods import generate_return_periods
 from ..postprocess.generate_seasonal_averages import generate_seasonal_averages
 from ..utilities import (case_insensitive_file_search,
-                         get_valid_watershed_list,
-                         get_watershed_subbasin_from_folder,
+                         get_valid_directory_list,
                          partition)
 
 
@@ -36,15 +35,13 @@ def generate_inflows_from_runoff(args):
     """
     prepare runoff inflow file for rapid
     """
-    watershed = args[0]
-    subbasin = args[1]
-    runoff_file_list = args[2]
-    file_index_list = args[3]
-    weight_table_file = args[4]
-    grid_type = args[5]
-    rapid_inflow_file = args[6]
-    RAPID_Inflow_Tool = args[7]
-    mp_lock = args[8]
+    runoff_file_list = args[0]
+    file_index_list = args[1]
+    weight_table_file = args[2]
+    grid_type = args[3]
+    rapid_inflow_file = args[4]
+    RAPID_Inflow_Tool = args[5]
+    mp_lock = args[6]
 
     time_start_all = datetime.utcnow()
 
@@ -59,7 +56,6 @@ def generate_inflows_from_runoff(args):
         file_index_list = file_index_list
     if runoff_file_list and file_index_list:
         # prepare ECMWF file for RAPID
-        print("Runoff downscaling for: {0} {1}".format(watershed, subbasin))
         index_string = "Index: {0}".format(file_index_list[0])
         if len(file_index_list) > 1:
             index_string += " to {0}".format(file_index_list[-1])
@@ -444,9 +440,11 @@ def identify_lsm_grid(lsm_grid_path):
 # MAIN PROCESS
 # ------------------------------------------------------------------------------
 def run_lsm_rapid_process(rapid_executable_location,
-                          rapid_io_files_location,
                           lsm_data_location,
-                          simulation_start_datetime,
+                          rapid_io_files_location=None,
+                          rapid_input_location=None,
+                          rapid_output_location=None,
+                          simulation_start_datetime=None,
                           simulation_end_datetime=datetime.utcnow(),
                           file_datetime_pattern=None,
                           file_datetime_re_pattern=None,
@@ -471,9 +469,11 @@ def run_lsm_rapid_process(rapid_executable_location,
 
     Args:
         rapid_executable_location(str): Path to the RAPID executable.
-        rapid_io_files_location(str): Path to the directory containing the input and output folders for RAPID.
         lsm_data_location(str): Path to the directory containing the Land Surface Model output files.
-        simulation_start_datetime(datetime): Datetime object with date bound of earliest simulation start.
+        rapid_io_files_location(Optional[str]): Path to the directory containing the input and output folders for RAPID. This is for running multiple watersheds.
+        rapid_input_location(Optional[str]): Path to directory with RAPID simulation input data. Required if `rapid_io_files_location` is not set.
+        rapid_output_location(Optional[str]): Path to directory to put output. Required if `rapid_io_files_location` is not set.
+        simulation_start_datetime(Optional[datetime]): Datetime object with date bound of earliest simulation start.
         simulation_end_datetime(Optional[datetime]): Datetime object with date bound of latest simulation end. Defaults to datetime.utcnow().
         file_datetime_pattern(Optional[str]): Datetime pattern for files (Ex. '%Y%m%d%H'). If set, file_datetime_re_pattern is required. Various defaults used by each model.
         file_datetime_re_pattern(Optional[raw str]): Regex pattern to extract datetime (Ex. r'\d{10}'). If set, file_datetime_pattern is required. Various defaults used by each model.
@@ -507,12 +507,9 @@ def run_lsm_rapid_process(rapid_executable_location,
                 rapid_executable_location='/home/alan/rapid/src/rapid',
                 rapid_io_files_location='/home/alan/rapid-io',
                 lsm_data_location='/home/alan/era_data',
-                simulation_start_datetime=datetime(1980, 1, 1),
-                simulation_end_datetime=datetime(2014, 12, 31),
-                generate_initialization_file=True,
             )
 
-    Example of run with FLDAS:
+    Example of run with FLDAS and datetime filter:
 
     .. note:: http://disc.sci.gsfc.nasa.gov/uui/datasets?keywords=FLDAS
 
@@ -532,7 +529,6 @@ def run_lsm_rapid_process(rapid_executable_location,
                 simulation_end_datetime=datetime.utcnow(),
                 file_datetime_re_pattern = r'\d{8}',
                 file_datetime_pattern = "%Y%m%d",
-                convert_one_hour_to_three=False
             )
 
     Example of run with CMIP5:
@@ -553,7 +549,6 @@ def run_lsm_rapid_process(rapid_executable_location,
                 lsm_data_location='/data/rapid-io4/input/cmip5-jun01',
                 simulation_start_datetime=datetime(2001, 1, 1),
                 simulation_end_datetime=datetime(2002, 12, 31),
-                generate_initialization_file=True,
                 file_datetime_pattern="%Y",
                 file_datetime_re_pattern=r'\d{4}',
             )
@@ -570,7 +565,22 @@ def run_lsm_rapid_process(rapid_executable_location,
         NUM_CPUS = num_processors
 
     # get list of correclty formatted rapid input directories in rapid directory
-    rapid_input_directories = get_valid_watershed_list(os.path.join(rapid_io_files_location, 'input'))
+
+    rapid_directories = []
+    if rapid_io_files_location is not None:
+        main_rapid_input_directory = os.path.join(rapid_io_files_location, 'input')
+        for watershed_directory in get_valid_directory_list(main_rapid_input_directory):
+            watershed_input_path = os.path.join(main_rapid_input_directory,
+                                                watershed_directory)
+            watershed_output_path = os.path.join(rapid_io_files_location,
+                                                 'output',
+                                                 watershed_directory)
+            rapid_directories.append((watershed_input_path, watershed_output_path))
+    elif None not in (rapid_input_location, rapid_output_location):
+        rapid_directories = [(rapid_input_location, rapid_output_location)]
+    else:
+        raise ValueError("Need 'rapid_io_files_location' or 'rapid_input_location' "
+                         "and 'rapid_output_location' set to continue.")
 
     for ensemble in ensemble_list:
         ensemble_file_ending = ".nc"
@@ -585,6 +595,7 @@ def run_lsm_rapid_process(rapid_executable_location,
             for lsm_file in files:
                 if lsm_file.endswith(ensemble_file_ending) or lsm_file.endswith(ensemble_file_ending4):
                     lsm_file_list.append(os.path.join(subdir, lsm_file))
+        lsm_file_list = sorted(lsm_file_list)
 
         # IDENTIFY THE GRID
         lsm_file_data = identify_lsm_grid(lsm_file_list[0])
@@ -596,16 +607,18 @@ def run_lsm_rapid_process(rapid_executable_location,
         file_re_match = re.compile(file_datetime_re_pattern)
 
         # get subset based on time bounds
-        lsm_file_list_subset = []
-        for lsm_file in sorted(lsm_file_list):
-            match = file_re_match.search(lsm_file)
-            file_date = datetime.strptime(match.group(0), file_datetime_pattern)
-            if file_date > simulation_end_datetime:
-                break
-            if file_date >= simulation_start_datetime:
-                lsm_file_list_subset.append(os.path.join(subdir, lsm_file))
+        if simulation_start_datetime is not None:
+            print("Filtering files by datetime ...")
+            lsm_file_list_subset = []
+            for lsm_file in lsm_file_list:
+                match = file_re_match.search(lsm_file)
+                file_date = datetime.strptime(match.group(0), file_datetime_pattern)
+                if file_date > simulation_end_datetime:
+                    break
+                if file_date >= simulation_start_datetime:
+                    lsm_file_list_subset.append(os.path.join(subdir, lsm_file))
 
-        lsm_file_list = sorted(lsm_file_list_subset)
+            lsm_file_list = sorted(lsm_file_list_subset)
 
         print("Running from {0} to {1}".format(lsm_file_list[0],
                                                lsm_file_list[-1]))
@@ -678,15 +691,8 @@ def run_lsm_rapid_process(rapid_executable_location,
                               )
 
         # run LSM processes
-        for rapid_input_directory in rapid_input_directories:
-            watershed, subbasin = get_watershed_subbasin_from_folder(rapid_input_directory)
-
-            master_watershed_input_directory = os.path.join(rapid_io_files_location,
-                                                            'input',
-                                                            rapid_input_directory)
-            master_watershed_output_directory = os.path.join(rapid_io_files_location,
-                                                             'output',
-                                                             rapid_input_directory)
+        for master_watershed_input_directory, master_watershed_output_directory in rapid_directories:
+            print("Running from: {0}".format(master_watershed_input_directory))
             try:
                 os.makedirs(master_watershed_output_directory)
             except OSError:
@@ -707,6 +713,7 @@ def run_lsm_rapid_process(rapid_executable_location,
                 print("WARNING: comid_lat_lon_z file not found. The lat/lon will not be added ...")
                 pass
 
+            print("Writing inflow file to: {0}".format(master_rapid_runoff_file))
             lsm_file_data['rapid_inflow_tool'].generateOutputInflowFile(
                 out_nc=master_rapid_runoff_file,
                 start_datetime_utc=actual_simulation_start_datetime,
@@ -733,9 +740,7 @@ def run_lsm_rapid_process(rapid_executable_location,
 
             for loop_index, cpu_grouped_file_list in enumerate(partition_list):
                 if cpu_grouped_file_list and partition_index_list[loop_index]:
-                    job_combinations.append((watershed.lower(),
-                                             subbasin.lower(),
-                                             cpu_grouped_file_list,
+                    job_combinations.append((cpu_grouped_file_list,
                                              partition_index_list[loop_index],
                                              weight_table_file,
                                              lsm_file_data['grid_type'],
@@ -743,9 +748,7 @@ def run_lsm_rapid_process(rapid_executable_location,
                                              lsm_file_data['rapid_inflow_tool'],
                                              mp_lock))
                     # COMMENTED CODE IS FOR DEBUGGING
-#                    generate_inflows_from_runoff((watershed.lower(),
-#                                                  subbasin.lower(),
-#                                                  cpu_grouped_file_list,
+#                    generate_inflows_from_runoff((cpu_grouped_file_list,
 #                                                  partition_index_list[loop_index],
 #                                                  lsm_file_data['weight_table_file'],
 #                                                  lsm_file_data['grid_type'],

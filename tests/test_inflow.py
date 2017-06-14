@@ -86,21 +86,41 @@ class TestRAPIDInflow(unittest.TestCase):
         return rapid_input_path, rapid_output_path
 
     def _run_automatic(self, lsm_folder_name,
+                       watershed_folder,
                        file_datetime_pattern=None,
                        file_datetime_re_pattern=None,
                        convert_one_hour_to_three=False,
-                       expected_time_step=None):
+                       expected_time_step=None,
+                       single_run=False,
+                       filter_dates=True):
         """
         run for automatic method
         """
+        rapid_input_path, rapid_output_path = self._setup_automated(watershed_folder)
+        run_input_folder = None
+        run_output_folder = None
+        rapid_io_folder = self.OUTPUT_DATA_PATH
+        if single_run:
+            run_input_folder = rapid_input_path
+            run_output_folder = rapid_output_path
+            rapid_io_folder = None
+
+        start_datetime = None
+        end_datetime = None
+        if filter_dates:
+            start_datetime = datetime(1980, 1, 1)
+            end_datetime = datetime(2014, 12, 31)
+
         # run main process
         run_lsm_rapid_process(
             rapid_executable_location=self.RAPID_EXE_PATH,
             cygwin_bin_location=self.CYGWIN_BIN_PATH,
-            rapid_io_files_location=self.OUTPUT_DATA_PATH,
+            rapid_io_files_location=rapid_io_folder,
+            rapid_input_location=run_input_folder,
+            rapid_output_location=run_output_folder,
             lsm_data_location=os.path.join(self.LSM_INPUT_DATA_PATH, lsm_folder_name),
-            simulation_start_datetime=datetime(1980, 1, 1),
-            simulation_end_datetime=datetime(2014, 12, 31),
+            simulation_start_datetime=start_datetime,
+            simulation_end_datetime=end_datetime,
             generate_rapid_namelist_file=False,
             run_rapid_simulation=False,
             use_all_processors=True,
@@ -109,6 +129,7 @@ class TestRAPIDInflow(unittest.TestCase):
             convert_one_hour_to_three=convert_one_hour_to_three,
             expected_time_step=expected_time_step,
         )
+        return rapid_input_path, rapid_output_path
 
     def test_run_era_interim_inflow(self):
         """
@@ -204,9 +225,23 @@ class TestRAPIDInflow(unittest.TestCase):
         """
         Checks generating inflow file from NLDAS V2 LSM
         """
-        rapid_input_path, rapid_output_path = self._setup_automated("x-x")
+        rapid_input_path, rapid_output_path = \
+            self._run_automatic('nldas2', "x-x", convert_one_hour_to_three=True)
 
-        self._run_automatic('nldas2', convert_one_hour_to_three=True)
+        # CHECK OUTPUT
+        # m3_riv
+        m3_file_name = "m3_riv_bas_nasa_nldas_3hr_20030121to20030122.nc"
+        generated_m3_file = os.path.join(rapid_output_path, m3_file_name)
+        generated_m3_file_solution = os.path.join(self.INFLOW_COMPARE_DATA_PATH, m3_file_name)
+        self._compare_m3(generated_m3_file,generated_m3_file_solution)
+
+    def test_generate_nldas2_inflow_single(self):
+        """
+        Checks generating inflow file from NLDAS V2 LSM
+        """
+        rapid_input_path, rapid_output_path = \
+            self._run_automatic('nldas2', "x-x", convert_one_hour_to_three=True,
+                                single_run=True, filter_dates=False)
 
         # CHECK OUTPUT
         # m3_riv
@@ -326,10 +361,10 @@ class TestRAPIDInflow(unittest.TestCase):
         """
         Checks generating inflow file from ERA Interim t255 LSM
         """
-        rapid_input_path, rapid_output_path = self._setup_automated("x-x")
 
         # run main process
-        self._run_automatic('erai3t255')
+        rapid_input_path, rapid_output_path = \
+            self._run_automatic('erai3t255', "x-x")
 
         # CHECK OUTPUT
         # m3_riv
@@ -378,10 +413,8 @@ class TestRAPIDInflow(unittest.TestCase):
         """
         Checks generating inflow file from GLDAS V2 LSM
         """
-        rapid_input_path, rapid_output_path = self._setup_automated("x-x")
-
-        # run main process
-        self._run_automatic('gldas2')
+        rapid_input_path, rapid_output_path = \
+            self._run_automatic('gldas2', "x-x", filter_dates=False)
 
         # CHECK OUTPUT
         # m3_riv
@@ -436,10 +469,9 @@ class TestRAPIDInflow(unittest.TestCase):
         """
         Checks generating inflow file from LIS LSM
         """
-        rapid_input_path, rapid_output_path = self._setup_automated("u-k")
-
         # run main process
-        self._run_automatic('lis', convert_one_hour_to_three=True)
+        rapid_input_path, rapid_output_path = \
+            self._run_automatic('lis', "u-k", convert_one_hour_to_three=True)
 
         # CHECK OUTPUT
         # m3_riv
@@ -496,12 +528,13 @@ class TestRAPIDInflow(unittest.TestCase):
         """
         Checks generating inflow file from Joules LSM
         """
-        rapid_input_path, rapid_output_path = self._setup_automated("u-k")
 
-        self._run_automatic('joules',
-                            file_datetime_pattern="%Y%m%d_%H",
-                            file_datetime_re_pattern=r'\d{8}_\d{2}',
-                            convert_one_hour_to_three=True)
+        rapid_input_path, rapid_output_path = \
+            self._run_automatic('joules',
+                                "u-k",
+                                file_datetime_pattern="%Y%m%d_%H",
+                                file_datetime_re_pattern=r'\d{8}_\d{2}',
+                                convert_one_hour_to_three=True)
 
         # CHECK OUTPUT
         m3_file_name = "m3_riv_bas_met_office_joules_3hr_20080803to20080804.nc"
@@ -558,10 +591,8 @@ class TestRAPIDInflow(unittest.TestCase):
         """
         Checks generating inflow file from ERA Interim t511 24hr LSM
         """
-        rapid_input_path, rapid_output_path = self._setup_automated("x-x")
-
         # run main process
-        self._run_automatic('erai24')
+        rapid_input_path, rapid_output_path = self._run_automatic('erai24', "x-x")
 
         # CHECK OUTPUT
         # m3_riv
@@ -610,10 +641,8 @@ class TestRAPIDInflow(unittest.TestCase):
         """
         Checks generating inflow file from WRF LSM
         """
-        rapid_input_path, rapid_output_path = self._setup_automated("m-s")
-
         # run main process
-        self._run_automatic('wrf')
+        rapid_input_path, rapid_output_path = self._run_automatic('wrf', "m-s")
 
         # CHECK OUTPUT
         # m3_riv
@@ -668,9 +697,9 @@ class TestRAPIDInflow(unittest.TestCase):
         """
         Checks generating inflow file from CMIP5 LSM
         """
-        rapid_input_path, rapid_output_path = self._setup_automated("ark-ms")
         with pytest.raises(ValueError):
             self._run_automatic('cmip5',
+                                "ark-ms",
                                 file_datetime_pattern="%Y",
                                 file_datetime_re_pattern=r'\d{4}')
 
@@ -678,12 +707,12 @@ class TestRAPIDInflow(unittest.TestCase):
         """
         Checks generating inflow file from CMIP5 LSM
         """
-        rapid_input_path, rapid_output_path = self._setup_automated("ark-ms")
-
-        self._run_automatic('cmip5',
-                            file_datetime_pattern="%Y",
-                            file_datetime_re_pattern=r'\d{4}',
-                            expected_time_step=24*3600)
+        rapid_input_path, rapid_output_path = \
+            self._run_automatic('cmip5',
+                                "ark-ms",
+                                file_datetime_pattern="%Y",
+                                file_datetime_re_pattern=r'\d{4}',
+                                expected_time_step=24*3600)
 
         # CHECK OUTPUT
         # m3_riv

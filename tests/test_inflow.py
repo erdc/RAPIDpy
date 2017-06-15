@@ -15,6 +15,7 @@ from numpy.testing import assert_almost_equal
 import numpy as np
 import os
 from past.builtins import xrange
+import pytest
 from shutil import copy, copytree, rmtree
 import unittest
 
@@ -27,6 +28,10 @@ from RAPIDpy.inflow.CreateInflowFileFromWRFHydroRunoff import CreateInflowFileFr
 from RAPIDpy.helper_functions import (compare_csv_decimal_files,
                                       remove_files)
 
+MAIN_TESTS_FOLDER = os.path.dirname(os.path.abspath(__file__))
+RAPID_EXE_PATH = os.path.join(MAIN_TESTS_FOLDER,
+                              "..", "..",
+                              "rapid", "src", "rapid")
 
 def compare_array_nan(a, b):
     # based on https://stackoverflow.com/questions/23810370/python-numpy-comparing-arrays-with-nan
@@ -36,15 +41,12 @@ def compare_array_nan(a, b):
 class TestRAPIDInflow(unittest.TestCase):
     def setUp(self):
         # define global variables
-        MAIN_TESTS_FOLDER = os.path.dirname(os.path.abspath(__file__))
         self.COMPARE_DATA_PATH = os.path.join(MAIN_TESTS_FOLDER, 'compare')
         self.INFLOW_COMPARE_DATA_PATH = os.path.join(self.COMPARE_DATA_PATH, 'inflow')
         self.LSM_INPUT_DATA_PATH = os.path.join(MAIN_TESTS_FOLDER, 'data','lsm_grids')
         self.OUTPUT_DATA_PATH = os.path.join(MAIN_TESTS_FOLDER, 'output')
         self.RAPID_DATA_PATH = os.path.join(self.OUTPUT_DATA_PATH, 'input')
-        self.RAPID_EXE_PATH = os.path.join(MAIN_TESTS_FOLDER,
-                                           "..", "..",
-                                           "rapid", "src", "rapid")
+
         self.CYGWIN_BIN_PATH = 'C:\\cygwin64\\bin'
 
     def _setup_automated(self, directory_name):
@@ -111,8 +113,8 @@ class TestRAPIDInflow(unittest.TestCase):
             end_datetime = datetime(2014, 12, 31)
 
         # run main process
-        run_lsm_rapid_process(
-            rapid_executable_location=self.RAPID_EXE_PATH,
+        output_file_info = run_lsm_rapid_process(
+            rapid_executable_location=RAPID_EXE_PATH,
             cygwin_bin_location=self.CYGWIN_BIN_PATH,
             rapid_io_files_location=rapid_io_folder,
             rapid_input_location=run_input_folder,
@@ -128,8 +130,11 @@ class TestRAPIDInflow(unittest.TestCase):
             convert_one_hour_to_three=convert_one_hour_to_three,
             expected_time_step=expected_time_step,
         )
+        print(output_file_info)
+
         return rapid_input_path, rapid_output_path
 
+    @pytest.mark.skipif(not os.path.exists(RAPID_EXE_PATH), 'Only run if RAPID installed')
     def test_run_era_interim_inflow(self):
         """
         Checks generating inflow file from ERA Interim LSM
@@ -138,7 +143,7 @@ class TestRAPIDInflow(unittest.TestCase):
 
         # run main process
         run_lsm_rapid_process(
-            rapid_executable_location=self.RAPID_EXE_PATH,
+            rapid_executable_location=RAPID_EXE_PATH,
             cygwin_bin_location=self.CYGWIN_BIN_PATH,
             rapid_io_files_location=self.OUTPUT_DATA_PATH,
             lsm_data_location=os.path.join(self.LSM_INPUT_DATA_PATH, 'erai3'),
@@ -185,6 +190,8 @@ class TestRAPIDInflow(unittest.TestCase):
         # additional cleanup
         remove_files(generated_qinit_file)
 
+
+    @pytest.mark.skipif(not os.path.exists(RAPID_EXE_PATH), 'Only run if RAPID installed')
     def test_run_era_interim_inflow_init(self):
         """
         Checks generating inflow file from ERA Interim LSM
@@ -198,7 +205,7 @@ class TestRAPIDInflow(unittest.TestCase):
              qinit_file)
 
         # run main process
-        run_lsm_rapid_process(
+        output_file_info = run_lsm_rapid_process(
             rapid_executable_location=self.RAPID_EXE_PATH,
             cygwin_bin_location=self.CYGWIN_BIN_PATH,
             rapid_io_files_location=self.OUTPUT_DATA_PATH,
@@ -209,7 +216,7 @@ class TestRAPIDInflow(unittest.TestCase):
             initial_flows_file=qinit_file,
             use_all_processors=True,
         )
-
+        print(output_file_info)
         # qout file
         generated_qout_file = os.path.join(rapid_output_path, "Qout_erai_t511_3hr_20030121to20030122.nc")
         generated_qout_file_solution = os.path.join(self.INFLOW_COMPARE_DATA_PATH,

@@ -173,7 +173,7 @@ class CreateInflowFileFromGriddedRunoff(object):
             time_var.calendar = 'gregorian'
             time_var.bounds = 'time_bnds'
     
-            initial_time_seconds = (start_datetime_utc.replace(tzinfo=utc)- \
+            initial_time_seconds = (start_datetime_utc.replace(tzinfo=utc)-
                                     datetime(1970,1,1, tzinfo=utc)).total_seconds()
             final_time_seconds = initial_time_seconds + number_of_timesteps*simulation_time_step_seconds
             time_array = np.arange(initial_time_seconds, final_time_seconds, simulation_time_step_seconds)

@@ -475,8 +475,6 @@ def determine_start_end_timestep(lsm_file_list, file_re_match=None, file_datetim
     if lsm_grid_info is None:
         lsm_grid_info = identify_lsm_grid(lsm_file_list[0])
 
-    print(lsm_file_list)
-
     if None in (lsm_grid_info['time_var'], lsm_grid_info['time_dim'])\
             or lsm_grid_info['model_name'] in ('era_20cm', 'erai'):
         # NOTE: the ERA20CM and ERA 24hr time variables in the tests are erroneous

@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-##
-##  CreateInflowFileFromERAInterimRunoff.py
-##  RAPIDpy
-##
-##  Created by Alan D. Snow (adapted from CreateInflowFileFromECMWFRunoff.py).
-##  Copyright © 2015-2016 Alan D Snow. All rights reserved.
-##  License: BSD-3 Clause
+#
+#  CreateInflowFileFromERAInterimRunoff.py
+#  RAPIDpy
+#
+#  Created by Alan D. Snow (adapted from CreateInflowFileFromECMWFRunoff.py).
+#  Copyright © 2015-2016 Alan D Snow. All rights reserved.
+#  License: BSD-3 Clause
 
 import netCDF4 as NET
 import numpy as NUM
@@ -14,6 +14,7 @@ from sys import version_info
 from past.builtins import xrange
 
 from .CreateInflowFileFromGriddedRunoff import CreateInflowFileFromGriddedRunoff
+
 
 class CreateInflowFileFromERAInterimRunoff(CreateInflowFileFromGriddedRunoff):
     def __init__(self):
@@ -34,26 +35,24 @@ class CreateInflowFileFromERAInterimRunoff(CreateInflowFileFromGriddedRunoff):
                               "No or incorrect header in the weight table",
                               "Incorrect sequence of rows in the weight table"]
 
-
     def dataValidation(self, in_nc):
         """Check the necessary dimensions and variables in the input netcdf data"""
-        vars_oi_index = None
 
         data_nc = NET.Dataset(in_nc)
         
         dims = data_nc.dimensions
-        if version_info[0] == 2:  #Python 2
+        if version_info[0] == 2:  # Python 2
             dims = dims.keys()
-        if version_info[0] == 3:  #Python 3
+        if version_info[0] == 3:  # Python 3
             dims = list(dims)
             
         if dims not in self.dims_oi:
             raise Exception("{0} {1}".format(self.errorMessages[1],dims))
 
         vars = data_nc.variables
-        if version_info[0] == 2:  #Python 2
+        if version_info[0] == 2:  # Python 2
             vars = vars.keys()
-        if version_info[0] == 3:  #Python 3
+        if version_info[0] == 3:  # Python 3
             vars = list(vars)
             
         if vars == self.vars_oi[0]:
@@ -64,7 +63,6 @@ class CreateInflowFileFromERAInterimRunoff(CreateInflowFileFromGriddedRunoff):
             raise Exception("{0} {1}".format(self.errorMessages[2],vars))
 
         return vars_oi_index
-
 
     def dataIdentify(self, in_nc, vars_oi_index):
         """Check if the data is daily (one value) or 3 hourly"""
@@ -114,12 +112,12 @@ class CreateInflowFileFromERAInterimRunoff(CreateInflowFileFromGriddedRunoff):
         if id_data is None:
             raise Exception(self.errorMessages[3])
 
-        #combine inflow data
+        # combine inflow data
         for nc_file_array_index, nc_file in enumerate(nc_file_list):
             index = index_list[nc_file_array_index]
             
             '''Calculate water inflows'''
-            #print("Calculating water inflows for {0} {1} ...".format(os.path.basename(nc_file) , grid_type))
+            # print("Calculating water inflows for {0} {1} ...".format(os.path.basename(nc_file) , grid_type))
 
             ''' Read the netcdf dataset'''
             data_in_nc = NET.Dataset(nc_file)
@@ -137,7 +135,6 @@ class CreateInflowFileFromERAInterimRunoff(CreateInflowFileFromGriddedRunoff):
             len_lat_subset_all = data_subset_all.shape[1]
             len_lon_subset_all = data_subset_all.shape[2]
             data_subset_all = data_subset_all.reshape(len_time_subset_all, (len_lat_subset_all * len_lon_subset_all))
-
 
             # compute new indices based on the data_subset_all
             if not index_new:
@@ -166,21 +163,21 @@ class CreateInflowFileFromERAInterimRunoff(CreateInflowFileFromGriddedRunoff):
                 data_goal = data_subset_new[:, pointer:(pointer + npoints)]
 
                 if grid_type == 't255':
-                    #A) ERA Interim Low Res (T255) - data is cumulative
+                    # A) ERA Interim Low Res (T255) - data is cumulative
                     data_goal = data_goal.astype(NUM.float32)
-                    #from time 3/6/9/12 (time zero not included, so assumed to be zero)
+                    # from time 3/6/9/12 (time zero not included, so assumed to be zero)
                     ro_first_half = NUM.concatenate([data_goal[0:1,], NUM.subtract(data_goal[1:4,], data_goal[0:3,])])
-                    #from time 15/18/21/24 (time restarts at time 12, assumed to be zero)
+                    # from time 15/18/21/24 (time restarts at time 12, assumed to be zero)
                     ro_second_half = NUM.concatenate([data_goal[4:5,], NUM.subtract(data_goal[5:,], data_goal[4:7,])])
                     ro_stream = NUM.multiply(NUM.concatenate([ro_first_half, ro_second_half]), area_sqm_npoints)
                 else:
-                    #A) ERA Interim High Res (T511) - data is incremental
-                    #from time 3/6/9/12/15/18/21/24
+                    # A) ERA Interim High Res (T511) - data is incremental
+                    # from time 3/6/9/12/15/18/21/24
                     ro_stream = NUM.multiply(data_goal, area_sqm_npoints)
                 inflow_data[:,stream_index] = ro_stream.sum(axis=1)
                 pointer += npoints
                 
-            #only one process is allowed to write at a time to netcdf file
+            # only one process is allowed to write at a time to netcdf file
             mp_lock.acquire()
             data_out_nc = NET.Dataset(out_nc, "a", format="NETCDF3_CLASSIC")
             data_out_nc.variables['m3_riv'][index*size_time:(index+1)*size_time,:] = inflow_data

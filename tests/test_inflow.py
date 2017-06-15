@@ -134,7 +134,7 @@ class TestRAPIDInflow(unittest.TestCase):
 
         return rapid_input_path, rapid_output_path
 
-    @pytest.mark.skipif(not os.path.exists(RAPID_EXE_PATH), 'Only run if RAPID installed')
+    @pytest.mark.skipif(not os.path.exists(RAPID_EXE_PATH), reason='Only run if RAPID installed')
     def test_run_era_interim_inflow(self):
         """
         Checks generating inflow file from ERA Interim LSM
@@ -191,7 +191,7 @@ class TestRAPIDInflow(unittest.TestCase):
         remove_files(generated_qinit_file)
 
 
-    @pytest.mark.skipif(not os.path.exists(RAPID_EXE_PATH), 'Only run if RAPID installed')
+    @pytest.mark.skipif(not os.path.exists(RAPID_EXE_PATH), reason='Only run if RAPID installed')
     def test_run_era_interim_inflow_init(self):
         """
         Checks generating inflow file from ERA Interim LSM
@@ -206,7 +206,7 @@ class TestRAPIDInflow(unittest.TestCase):
 
         # run main process
         output_file_info = run_lsm_rapid_process(
-            rapid_executable_location=self.RAPID_EXE_PATH,
+            rapid_executable_location=RAPID_EXE_PATH,
             cygwin_bin_location=self.CYGWIN_BIN_PATH,
             rapid_io_files_location=self.OUTPUT_DATA_PATH,
             lsm_data_location=os.path.join(self.LSM_INPUT_DATA_PATH, 'erai3'),
@@ -349,7 +349,7 @@ class TestRAPIDInflow(unittest.TestCase):
         rapid_input_path, rapid_output_path = self._setup_automated("x-x")
 
         run_lsm_rapid_process(
-            rapid_executable_location=self.RAPID_EXE_PATH,
+            rapid_executable_location=RAPID_EXE_PATH,
             cygwin_bin_location=self.CYGWIN_BIN_PATH,
             rapid_io_files_location=self.OUTPUT_DATA_PATH,
             lsm_data_location=os.path.join(self.LSM_INPUT_DATA_PATH, 'era20cm'),

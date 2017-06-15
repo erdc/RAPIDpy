@@ -251,7 +251,7 @@ def test_gen_weight_table_gldas2():
     generated_weight_table_file_solution = os.path.join(COMPARE_DATA_PATH, "x-x",
                                                         "weight_gldas2.csv")
     assert (compare_csv_decimal_files(generated_weight_table_file,
-                                  generated_weight_table_file_solution))
+                                      generated_weight_table_file_solution))
 
     remove_files(generated_weight_table_file)
 
@@ -278,7 +278,7 @@ def test_gen_weight_table_lis():
     generated_weight_table_file_solution = os.path.join(COMPARE_DATA_PATH, "u-k",
                                                         "weight_lis.csv")
     assert (compare_csv_decimal_files(generated_weight_table_file,
-                                  generated_weight_table_file_solution))
+                                      generated_weight_table_file_solution))
 
     remove_files(generated_weight_table_file)
 
@@ -305,7 +305,7 @@ def test_gen_weight_table_lis_no_intersect():
     generated_weight_table_file_solution = os.path.join(COMPARE_DATA_PATH, "uk-no_intersect",
                                                         "weight_lis_no_intersect.csv")
     assert (compare_csv_decimal_files(generated_weight_table_file,
-                                  generated_weight_table_file_solution))
+                                      generated_weight_table_file_solution))
 
     remove_files(generated_weight_table_file)
 
@@ -332,7 +332,7 @@ def test_gen_weight_table_joules():
     generated_weight_table_file_solution = os.path.join(COMPARE_DATA_PATH, "u-k",
                                                         "weight_joules.csv")
     assert (compare_csv_decimal_files(generated_weight_table_file,
-                                  generated_weight_table_file_solution))
+                                      generated_weight_table_file_solution))
 
     remove_files(generated_weight_table_file)
 
@@ -505,7 +505,7 @@ def test_add_length_to_network_taudem():
     #cleanup
     remove_files(*glob(os.path.join(OUTPUT_DATA_PATH,"DrainageLineSubset2.*")))
 
-@pytest.mark.skipif(not os.path.exists(TAUDEM_EXE_PATH), 'Only run if TauDEM installed')
+@pytest.mark.skipif(not os.path.exists(TAUDEM_EXE_PATH), reason='Only run if TauDEM installed')
 def test_generate_network_taudem():
     """
     Checks generate TauDEM network
@@ -546,7 +546,7 @@ def test_generate_network_taudem():
     #cleanup
     remove_files(*[f for f in glob(os.path.join(OUTPUT_DATA_PATH,"*")) if not f.endswith(".gitignore")])
 
-@pytest.mark.skipif(not os.path.exists(TAUDEM_EXE_PATH), 'Only run if TauDEM installed')
+@pytest.mark.skipif(not os.path.exists(TAUDEM_EXE_PATH), reason='Only run if TauDEM installed')
 def test_generate_network_taudem_dinf():
     """
     Checks generate TauDEM network dinf

@@ -39,7 +39,7 @@ install:
   #Installing RAPID
   #- '%CYG_ROOT%/bin/bash -lc "cd $(cygpath "$APPVEYOR_BUILD_FOLDER\..); git clone https://github.com/c-h-david/rapid.git; cd rapid; source ./rapid_specify_varpath.sh $(cygpath "$INSTALLZ_DIR")"; cd src; make rapid"'
   #Installing TauDEM
-  - '%CYG_ROOT%/bin/bash -lc "cd $(cygpath "$APPVEYOR_BUILD_FOLDER\..); git clone  https://github.com/dtarb/TauDEM.git; cd TauDEM/src; make"'
+  #- '%CYG_ROOT%/bin/bash -lc "cd $(cygpath "$APPVEYOR_BUILD_FOLDER\..); git clone  https://github.com/dtarb/TauDEM.git; cd TauDEM/src; make"'
   #Installing RAPIDpy
   - activate rapid
   - 'cd %APPVEYOR_BUILD_FOLDER%'

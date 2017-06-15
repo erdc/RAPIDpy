@@ -14,7 +14,10 @@ import re
 import traceback
 
 # external packages
+import pandas as pd
+import pangaea
 from netCDF4 import Dataset
+import numpy as np
 
 # local imports
 from ..rapid import RAPID
@@ -178,6 +181,17 @@ def identify_lsm_grid(lsm_grid_path):
         # FLDAS
         longitude_dim = 'X'
 
+    time_dim = None
+    if 'time' in dim_list:
+        time_dim = 'time'
+    elif 'Time' in dim_list:
+        time_dim = 'Time'
+    elif 'Times' in dim_list:
+        time_dim = 'Times'
+    elif 'times' in dim_list:
+        time_dim = 'times'
+
+
     lat_dim_size = len(lsm_example_file.dimensions[latitude_dim])
     lon_dim_size = len(lsm_example_file.dimensions[longitude_dim])
 
@@ -215,6 +229,16 @@ def identify_lsm_grid(lsm_grid_path):
     elif 'X' in var_list:
         # FLDAS
         longitude_var = 'X'
+
+    time_var = None
+    if 'time' in var_list:
+        time_var = 'time'
+    elif 'Time' in var_list:
+        time_var = 'Time'
+    elif 'Times' in var_list:
+        time_var = 'Times'
+    elif 'times' in var_list:
+        time_var = 'times'
 
     surface_runoff_var = ""
     subsurface_runoff_var = ""
@@ -264,6 +288,12 @@ def identify_lsm_grid(lsm_grid_path):
         "model_name": "",
         "description": "",
         "rapid_inflow_tool": None,
+        "latitude_var": latitude_var,
+        "longitude_var": longitude_var,
+        "time_var": time_var,
+        "latitude_dim": latitude_dim,
+        "longitude_dim": longitude_dim,
+        "time_dim": time_dim,
     }
 
     institution = ""
@@ -436,6 +466,87 @@ def identify_lsm_grid(lsm_grid_path):
     return lsm_file_data
 
 
+def determine_start_end_timestep(lsm_file_list, file_re_match=None, file_datetime_pattern=None,
+                                 expected_time_step=None, lsm_grid_info=None):
+    """
+    Determine the start and end date from LSM input files
+    """
+
+    if lsm_grid_info is None:
+        lsm_grid_info = identify_lsm_grid(lsm_file_list[0])
+
+    print(lsm_file_list)
+
+    if None in (lsm_grid_info['time_var'], lsm_grid_info['time_dim'])\
+            or lsm_grid_info['model_name'] in ('era_20cm', 'erai'):
+        # NOTE: the ERA20CM and ERA 24hr time variables in the tests are erroneous
+        if None in (file_re_match, file_datetime_pattern):
+            raise ValueError("LSM files missing time dimension and/or variable."
+                             "To mitigate this, add the 'file_re_match' and "
+                             "'file_datetime_pattern' arguments.")
+
+        if lsm_grid_info['time_dim'] is None:
+            print("Assuming time dimension is 1")
+            file_size_time = 1
+        else:
+            lsm_example_file = Dataset(lsm_file_list[0])
+            file_size_time = len(lsm_example_file.dimensions[lsm_grid_info['time_dim']])
+            lsm_example_file.close()
+
+        total_num_time_steps = int(file_size_time * len(lsm_file_list))
+
+        # determine the start time from the existing files
+        actual_simulation_start_datetime = datetime.strptime(file_re_match.search(lsm_file_list[0]).group(0),
+                                                             file_datetime_pattern)
+
+        # check to see if the time step matches expected
+        if len(lsm_file_list) > 1:
+            time_step = int((datetime.strptime(file_re_match.search(lsm_file_list[1]).group(0), file_datetime_pattern)
+                             - actual_simulation_start_datetime).total_seconds()
+                            / float(file_size_time))
+
+        elif expected_time_step is not None:
+            time_step = int(expected_time_step)
+        else:
+            raise ValueError("Only one LSM file with one timestep present. "
+                             "'expected_time_step' parameter required to continue.")
+
+        # determine the end datetime
+        actual_simulation_end_datetime = \
+            datetime.strptime(file_re_match.search(lsm_file_list[-1]).group(0),
+                              file_datetime_pattern) \
+            + timedelta(seconds=(file_size_time-1) * time_step)
+    else:
+        with pangaea.open_mfdataset(lsm_file_list,
+                                    lat_var=lsm_grid_info['latitude_var'],
+                                    lon_var=lsm_grid_info['longitude_var'],
+                                    time_var=lsm_grid_info['time_var'],
+                                    lat_dim=lsm_grid_info['latitude_dim'],
+                                    lon_dim=lsm_grid_info['longitude_dim'],
+                                    time_dim=lsm_grid_info['time_dim']) as xds:
+
+            datetime_arr = [pd.to_datetime(dval) for dval in xds.lsm.datetime.values]
+            actual_simulation_start_datetime = datetime_arr[0]
+            actual_simulation_end_datetime = datetime_arr[-1]
+            total_num_time_steps = len(datetime_arr)
+
+            if total_num_time_steps <= 1:
+                if expected_time_step is not None:
+                    time_step = int(expected_time_step)
+                else:
+                    raise ValueError("Only one LSM file with one timestep present. "
+                                     "'expected_time_step' parameter required to continue.")
+
+            else:
+                time_step = int(np.diff(xds.lsm.datetime.values)[0] / np.timedelta64(1, 's'))
+
+    if expected_time_step is not None:
+        if time_step != int(expected_time_step):
+            print("WARNING: The time step used {0} is different than expected {1}".format(time_step,
+                                                                                          expected_time_step))
+
+    return actual_simulation_start_datetime, actual_simulation_end_datetime, time_step, total_num_time_steps
+
 # ------------------------------------------------------------------------------
 # MAIN PROCESS
 # ------------------------------------------------------------------------------
@@ -448,6 +559,7 @@ def run_lsm_rapid_process(rapid_executable_location,
                           simulation_end_datetime=datetime.utcnow(),
                           file_datetime_pattern=None,
                           file_datetime_re_pattern=None,
+                          initial_flows_file=None,
                           ensemble_list=[None],
                           generate_rapid_namelist_file=True,
                           run_rapid_simulation=True,
@@ -477,6 +589,7 @@ def run_lsm_rapid_process(rapid_executable_location,
         simulation_end_datetime(Optional[datetime]): Datetime object with date bound of latest simulation end. Defaults to datetime.utcnow().
         file_datetime_pattern(Optional[str]): Datetime pattern for files (Ex. '%Y%m%d%H'). If set, file_datetime_re_pattern is required. Various defaults used by each model.
         file_datetime_re_pattern(Optional[raw str]): Regex pattern to extract datetime (Ex. r'\d{10}'). If set, file_datetime_pattern is required. Various defaults used by each model.
+        initial_flows_file(Optional[str]): If given, this is the path to a file with initial flows for the simulaion.
         ensemble_list(Optional[list]): This is the expexted ensemble name appended to the end of the file name.
         generate_rapid_namelist_file(Optional[bool]): If True, this will create a RAPID namelist file for the run in your RAPID input directory. Default is True.
         run_rapid_simulation(Optional[bool]): If True, the RAPID simulation will run after generating the inflow file. Default is True.
@@ -492,6 +605,9 @@ def run_lsm_rapid_process(rapid_executable_location,
         modeling_institution(Optional[str]): This is the institution performing the modeling and is in the output files. Default is "US Army Engineer Research and Development Center".
         convert_one_hour_to_three(Optional[bool]): If the time step is expected to be 1-hr it will convert to 3. Set to False if the LIS, NLDAS, or Joules grid time step is greater than 1-hr.
         expected_time_step(Optional[int]): The time step in seconds of your LSM input data if only one file is given. Required if only one file is present.
+
+    Returns:
+        list: A list of output file information.
 
     Example of regular run:
 
@@ -597,7 +713,12 @@ def run_lsm_rapid_process(rapid_executable_location,
         raise ValueError("Need 'rapid_io_files_location' or 'rapid_input_location' "
                          "and 'rapid_output_location' set to continue.")
 
+    all_output_file_information = []
+
     for ensemble in ensemble_list:
+        output_file_information = {
+            'ensemble' : ensemble,
+        }
         ensemble_file_ending = ".nc"
         ensemble_file_ending4 = ".nc4"
         if ensemble != None:
@@ -638,60 +759,30 @@ def run_lsm_rapid_process(rapid_executable_location,
         print("Running from {0} to {1}".format(lsm_file_list[0],
                                                lsm_file_list[-1]))
 
-        # determine the start time from the existing files
-        actual_simulation_start_datetime = datetime.strptime(file_re_match.search(lsm_file_list[0]).group(0),
-                                                             file_datetime_pattern)
-
         # get number of time steps in file
-        lsm_example_file = Dataset(lsm_file_list[0])
-        try:
-            time_dim = "time"
-            if "Time" in lsm_example_file.dimensions:
-                time_dim = "Time"
-            file_size_time = len(lsm_example_file.dimensions[time_dim])
-        except Exception as ex:
-            print("ERROR: {0}".format(ex))
-            print("Assuming time dimension is 1")
-            file_size_time = 1
-        lsm_example_file.close()
-        total_num_time_steps = int(file_size_time * len(lsm_file_list))
+        actual_simulation_start_datetime, actual_simulation_end_datetime, time_step, total_num_time_steps = \
+            determine_start_end_timestep(lsm_file_list,
+                                         file_re_match=file_re_match,
+                                         file_datetime_pattern=file_datetime_pattern,
+                                         expected_time_step=expected_time_step,
+                                         lsm_grid_info=lsm_file_data)
 
         # VALIDATING INPUT IF DIVIDING BY 3
         time_step_multiply_factor = 1
         if (lsm_file_data['grid_type'] in ('nldas', 'lis', 'joules')) and convert_one_hour_to_three:
-            num_extra_files = file_size_time*len(lsm_file_list) % 3
+            num_extra_files = total_num_time_steps % 3
             if num_extra_files != 0:
                 print("WARNING: Number of files needs to be divisible by 3. Remainder is {0}".format(num_extra_files))
                 print("This means your simulation will be truncated")
             total_num_time_steps /= 3
-            time_step_multiply_factor = 3
-
-        # check to see if the time step matches expected
-        if len(lsm_file_list) > 1:
-            time_step = int((datetime.strptime(file_re_match.search(lsm_file_list[1]).group(0), file_datetime_pattern)
-                             - actual_simulation_start_datetime).total_seconds()
-                            * time_step_multiply_factor / float(file_size_time))
-            if expected_time_step is not None:
-                if time_step != int(expected_time_step):
-                    print("WARNING: The time step used {0} is different than expected {1}".format(time_step,
-                                                                                                  expected_time_step))
-        elif expected_time_step is not None:
-            time_step = int(expected_time_step)
-        else:
-            raise ValueError("Only one LSM file present. 'expected_time_step' parameter required to continue.")
-
-        # determine the end datetime
-        actual_simulation_end_datetime = \
-            datetime.strptime(file_re_match.search(lsm_file_list[-1]).group(0),
-                              file_datetime_pattern) \
-            + timedelta(seconds=file_size_time*time_step)
+            time_step *= 3
 
         # compile the file ending
-        out_file_ending = "{0}_{1}_{2}hr_{3}to{4}{5}".format(lsm_file_data['model_name'],
+        out_file_ending = "{0}_{1}_{2}hr_{3:%Y%m%d}to{4:%Y%m%d}{5}".format(lsm_file_data['model_name'],
                                                              lsm_file_data['grid_type'],
                                                              int(time_step/3600),
-                                                             actual_simulation_start_datetime.strftime("%Y%m%d"),
-                                                             actual_simulation_end_datetime.strftime("%Y%m%d"),
+                                                             actual_simulation_start_datetime,
+                                                             actual_simulation_end_datetime,
                                                              ensemble_file_ending)
 
         # set up RAPID manager
@@ -704,6 +795,11 @@ def run_lsm_rapid_process(rapid_executable_location,
                               ZS_TauM=total_num_time_steps*time_step,  # total simulation time
                               ZS_dtM=time_step  # RAPID recommended internal time step (1 day)
                               )
+        if initial_flows_file and os.path.exists(initial_flows_file):
+            rapid_manager.update_parameters(
+                Qinit_file=initial_flows_file,
+                BS_opt_Qinit=True
+            )
 
         # run LSM processes
         for master_watershed_input_directory, master_watershed_output_directory in rapid_directories:
@@ -794,6 +890,13 @@ def run_lsm_rapid_process(rapid_executable_location,
 
             rapid_manager.update_reach_number_data()
 
+
+            output_file_information[os.path.basename(master_watershed_input_directory)] = {
+                'm3_riv': master_rapid_runoff_file,
+                'qout': lsm_rapid_output_file
+            }
+
+
             if generate_rapid_namelist_file:
                 rapid_manager.generate_namelist_file(os.path.join(master_watershed_input_directory,
                                                                   "rapid_namelist_{}".format(out_file_ending[:-3])))
@@ -839,8 +942,12 @@ def run_lsm_rapid_process(rapid_executable_location,
                                               'qinit_{0}.csv'.format(out_file_ending[:-3]))
                     rapid_manager.generate_qinit_from_past_qout(qinit_file)
 
+        all_output_file_information.append(output_file_information)
+
     # print info to user
     time_end = datetime.utcnow()
     print("Time Begin All: {0}".format(time_begin_all))
     print("Time Finish All: {0}".format(time_end))
     print("TOTAL TIME: {0}".format(time_end-time_begin_all))
+
+    return all_output_file_information

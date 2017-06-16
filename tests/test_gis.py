@@ -12,6 +12,7 @@ from numpy.testing import assert_almost_equal
 from numpy import array
 import os
 from osgeo import ogr
+import pytest
 
 #local import
 from RAPIDpy.gis.weight import CreateWeightTableECMWF, CreateWeightTableLDAS
@@ -28,6 +29,9 @@ GIS_INPUT_DATA_PATH = os.path.join(MAIN_TESTS_FOLDER, 'data', 'gis')
 RAPID_INPUT_DATA_PATH = os.path.join(MAIN_TESTS_FOLDER, 'input')
 OUTPUT_DATA_PATH = os.path.join(MAIN_TESTS_FOLDER, 'output')
 LSM_INPUT_DATA_PATH = os.path.join(MAIN_TESTS_FOLDER, 'data','lsm_grids')
+TAUDEM_EXE_PATH = os.path.join(MAIN_TESTS_FOLDER,
+                               "..", "..", "TauDEM", "src")
+
 
 #------------------------------------------------------------------------------
 # MAIN TEST SCRIPTS
@@ -247,7 +251,7 @@ def test_gen_weight_table_gldas2():
     generated_weight_table_file_solution = os.path.join(COMPARE_DATA_PATH, "x-x",
                                                         "weight_gldas2.csv")
     assert (compare_csv_decimal_files(generated_weight_table_file,
-                                  generated_weight_table_file_solution))
+                                      generated_weight_table_file_solution))
 
     remove_files(generated_weight_table_file)
 
@@ -274,7 +278,7 @@ def test_gen_weight_table_lis():
     generated_weight_table_file_solution = os.path.join(COMPARE_DATA_PATH, "u-k",
                                                         "weight_lis.csv")
     assert (compare_csv_decimal_files(generated_weight_table_file,
-                                  generated_weight_table_file_solution))
+                                      generated_weight_table_file_solution))
 
     remove_files(generated_weight_table_file)
 
@@ -301,7 +305,7 @@ def test_gen_weight_table_lis_no_intersect():
     generated_weight_table_file_solution = os.path.join(COMPARE_DATA_PATH, "uk-no_intersect",
                                                         "weight_lis_no_intersect.csv")
     assert (compare_csv_decimal_files(generated_weight_table_file,
-                                  generated_weight_table_file_solution))
+                                      generated_weight_table_file_solution))
 
     remove_files(generated_weight_table_file)
 
@@ -328,7 +332,7 @@ def test_gen_weight_table_joules():
     generated_weight_table_file_solution = os.path.join(COMPARE_DATA_PATH, "u-k",
                                                         "weight_joules.csv")
     assert (compare_csv_decimal_files(generated_weight_table_file,
-                                  generated_weight_table_file_solution))
+                                      generated_weight_table_file_solution))
 
     remove_files(generated_weight_table_file)
 
@@ -501,13 +505,12 @@ def test_add_length_to_network_taudem():
     #cleanup
     remove_files(*glob(os.path.join(OUTPUT_DATA_PATH,"DrainageLineSubset2.*")))
 
+@pytest.mark.skipif(not os.path.exists(TAUDEM_EXE_PATH), reason='Only run if TauDEM installed')
 def test_generate_network_taudem():
     """
     Checks generate TauDEM network
     """
     print("TEST 12: TEST GENERATE TauDEM NETWORK")
-    TAUDEM_EXE_PATH = os.path.join(MAIN_TESTS_FOLDER,
-                                   "..", "..", "TauDEM", "src")
     td = TauDEM(TAUDEM_EXE_PATH, use_all_processors=True)
 
     elevation_dem = os.path.join(GIS_INPUT_DATA_PATH, 'jamaica_dem.tif')
@@ -543,13 +546,12 @@ def test_generate_network_taudem():
     #cleanup
     remove_files(*[f for f in glob(os.path.join(OUTPUT_DATA_PATH,"*")) if not f.endswith(".gitignore")])
 
+@pytest.mark.skipif(not os.path.exists(TAUDEM_EXE_PATH), reason='Only run if TauDEM installed')
 def test_generate_network_taudem_dinf():
     """
     Checks generate TauDEM network dinf
     """
     print("TEST 13: TEST GENERATE TauDEM NETWORK DINF")
-    TAUDEM_EXE_PATH = os.path.join(MAIN_TESTS_FOLDER,
-                                   "..", "..", "TauDEM", "src")
     td = TauDEM(TAUDEM_EXE_PATH)
 
     elevation_dem = os.path.join(GIS_INPUT_DATA_PATH, 'jamaica_dem.tif')

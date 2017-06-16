@@ -11,12 +11,12 @@ from datetime import datetime
 from glob import glob
 import multiprocessing
 from netCDF4 import Dataset
-from numpy.testing import assert_allclose, assert_almost_equal
+from numpy.testing import assert_almost_equal
 import numpy as np
 import os
 from past.builtins import xrange
 import pytest
-from shutil import copytree, rmtree
+from shutil import copy, copytree, rmtree
 import unittest
 
 # local import
@@ -28,6 +28,10 @@ from RAPIDpy.inflow.CreateInflowFileFromWRFHydroRunoff import CreateInflowFileFr
 from RAPIDpy.helper_functions import (compare_csv_decimal_files,
                                       remove_files)
 
+MAIN_TESTS_FOLDER = os.path.dirname(os.path.abspath(__file__))
+RAPID_EXE_PATH = os.path.join(MAIN_TESTS_FOLDER,
+                              "..", "..",
+                              "rapid", "src", "rapid")
 
 def compare_array_nan(a, b):
     # based on https://stackoverflow.com/questions/23810370/python-numpy-comparing-arrays-with-nan
@@ -37,15 +41,12 @@ def compare_array_nan(a, b):
 class TestRAPIDInflow(unittest.TestCase):
     def setUp(self):
         # define global variables
-        MAIN_TESTS_FOLDER = os.path.dirname(os.path.abspath(__file__))
         self.COMPARE_DATA_PATH = os.path.join(MAIN_TESTS_FOLDER, 'compare')
         self.INFLOW_COMPARE_DATA_PATH = os.path.join(self.COMPARE_DATA_PATH, 'inflow')
         self.LSM_INPUT_DATA_PATH = os.path.join(MAIN_TESTS_FOLDER, 'data','lsm_grids')
         self.OUTPUT_DATA_PATH = os.path.join(MAIN_TESTS_FOLDER, 'output')
         self.RAPID_DATA_PATH = os.path.join(self.OUTPUT_DATA_PATH, 'input')
-        self.RAPID_EXE_PATH = os.path.join(MAIN_TESTS_FOLDER,
-                                           "..", "..",
-                                           "rapid", "src", "rapid")
+
         self.CYGWIN_BIN_PATH = 'C:\\cygwin64\\bin'
 
     def _setup_automated(self, directory_name):
@@ -112,8 +113,8 @@ class TestRAPIDInflow(unittest.TestCase):
             end_datetime = datetime(2014, 12, 31)
 
         # run main process
-        run_lsm_rapid_process(
-            rapid_executable_location=self.RAPID_EXE_PATH,
+        output_file_info = run_lsm_rapid_process(
+            rapid_executable_location=RAPID_EXE_PATH,
             cygwin_bin_location=self.CYGWIN_BIN_PATH,
             rapid_io_files_location=rapid_io_folder,
             rapid_input_location=run_input_folder,
@@ -129,8 +130,9 @@ class TestRAPIDInflow(unittest.TestCase):
             convert_one_hour_to_three=convert_one_hour_to_three,
             expected_time_step=expected_time_step,
         )
-        return rapid_input_path, rapid_output_path
+        return rapid_input_path, rapid_output_path, output_file_info
 
+    @pytest.mark.skipif(not os.path.exists(RAPID_EXE_PATH), reason='Only run if RAPID installed')
     def test_run_era_interim_inflow(self):
         """
         Checks generating inflow file from ERA Interim LSM
@@ -138,8 +140,8 @@ class TestRAPIDInflow(unittest.TestCase):
         rapid_input_path, rapid_output_path = self._setup_automated("x-x")
 
         # run main process
-        run_lsm_rapid_process(
-            rapid_executable_location=self.RAPID_EXE_PATH,
+        output_file_info = run_lsm_rapid_process(
+            rapid_executable_location=RAPID_EXE_PATH,
             cygwin_bin_location=self.CYGWIN_BIN_PATH,
             rapid_io_files_location=self.OUTPUT_DATA_PATH,
             lsm_data_location=os.path.join(self.LSM_INPUT_DATA_PATH, 'erai3'),
@@ -155,13 +157,13 @@ class TestRAPIDInflow(unittest.TestCase):
 
         # CHECK OUTPUT
         # m3_riv
-        m3_file_name = "m3_riv_bas_erai_t511_3hr_20030121to20030123.nc"
+        m3_file_name = "m3_riv_bas_erai_t511_3hr_20030121to20030122.nc"
         generated_m3_file = os.path.join(rapid_output_path, m3_file_name)
         generated_m3_file_solution = os.path.join(self.INFLOW_COMPARE_DATA_PATH, m3_file_name)
         self._compare_m3(generated_m3_file,generated_m3_file_solution)
 
         # qout file
-        qout_file_name = "Qout_erai_t511_3hr_20030121to20030123.nc"
+        qout_file_name = "Qout_erai_t511_3hr_20030121to20030122.nc"
         generated_qout_file = os.path.join(rapid_output_path, qout_file_name)
         generated_qout_file_solution = os.path.join(self.INFLOW_COMPARE_DATA_PATH, qout_file_name)
         d1 = Dataset(generated_qout_file)
@@ -176,8 +178,12 @@ class TestRAPIDInflow(unittest.TestCase):
         d1.close()
         d2.close()
 
+        # check output file info
+        assert output_file_info[0]['x-x']['m3_riv'] == generated_m3_file
+        assert output_file_info[0]['x-x']['qout'] == generated_qout_file
+
         # initialization file
-        qinit_file_name = "qinit_erai_t511_3hr_20030121to20030123.csv"
+        qinit_file_name = "qinit_erai_t511_3hr_20030121to20030122.csv"
         generated_qinit_file = os.path.join(rapid_input_path, qinit_file_name)
         generated_qinit_file_solution = os.path.join(self.INFLOW_COMPARE_DATA_PATH, qinit_file_name)
 
@@ -185,6 +191,54 @@ class TestRAPIDInflow(unittest.TestCase):
 
         # additional cleanup
         remove_files(generated_qinit_file)
+
+
+    @pytest.mark.skipif(not os.path.exists(RAPID_EXE_PATH), reason='Only run if RAPID installed')
+    def test_run_era_interim_inflow_init(self):
+        """
+        Checks generating inflow file from ERA Interim LSM
+        """
+        rapid_input_path, rapid_output_path = self._setup_automated("x-x")
+
+        # initialization file
+        qinit_file_name = "qinit_erai_t511_3hr_20030121to20030122.csv"
+        qinit_file = os.path.join(rapid_input_path, qinit_file_name)
+        copy(os.path.join(self.INFLOW_COMPARE_DATA_PATH, qinit_file_name),
+             qinit_file)
+
+        # run main process
+        output_file_info = run_lsm_rapid_process(
+            rapid_executable_location=RAPID_EXE_PATH,
+            cygwin_bin_location=self.CYGWIN_BIN_PATH,
+            rapid_io_files_location=self.OUTPUT_DATA_PATH,
+            lsm_data_location=os.path.join(self.LSM_INPUT_DATA_PATH, 'erai3'),
+            generate_rapid_namelist_file=False,
+            run_rapid_simulation=True,
+            generate_initialization_file=True,
+            initial_flows_file=qinit_file,
+            use_all_processors=True,
+        )
+        # qout file
+        generated_qout_file = os.path.join(rapid_output_path, "Qout_erai_t511_3hr_20030121to20030122.nc")
+        generated_qout_file_solution = os.path.join(self.INFLOW_COMPARE_DATA_PATH,
+                                                    "Qout_erai_t511_3hr_20030121to20030122_init.nc")
+
+        # check output file info
+        assert output_file_info[0]['x-x']['m3_riv'] == os.path.join(rapid_output_path, "m3_riv_bas_erai_t511_3hr_20030121to20030122.nc")
+        assert output_file_info[0]['x-x']['qout'] == generated_qout_file
+
+        d1 = Dataset(generated_qout_file)
+        d2 = Dataset(generated_qout_file_solution)
+        assert_almost_equal(d1.variables['Qout'][:], d2.variables['Qout'][:], decimal=0)
+        assert (d1.variables['rivid'][:] == d2.variables['rivid'][:]).all()
+        assert (d1.variables['time'][:] == d2.variables['time'][:]).all()
+        if 'lat' in d2.variables.keys():
+            assert (d1.variables['lat'][:] == d2.variables['lat'][:]).all()
+        if 'lon' in d2.variables.keys():
+            assert (d1.variables['lon'][:] == d2.variables['lon'][:]).all()
+        d1.close()
+        d2.close()
+
 
     def test_generate_erai_t511_inflow_manual(self):
         """
@@ -197,7 +251,7 @@ class TestRAPIDInflow(unittest.TestCase):
 
         inf_tool = CreateInflowFileFromERAInterimRunoff()
 
-        m3_file_name = "m3_riv_bas_erai_t511_3hr_20030121to20030123.nc"
+        m3_file_name = "m3_riv_bas_erai_t511_3hr_20030121to20030122.nc"
         generated_m3_file = os.path.join(rapid_output_path, m3_file_name)
 
         inf_tool.generateOutputInflowFile(out_nc=generated_m3_file,
@@ -225,30 +279,35 @@ class TestRAPIDInflow(unittest.TestCase):
         """
         Checks generating inflow file from NLDAS V2 LSM
         """
-        rapid_input_path, rapid_output_path = \
+        rapid_input_path, rapid_output_path, output_file_info = \
             self._run_automatic('nldas2', "x-x", convert_one_hour_to_three=True)
 
         # CHECK OUTPUT
         # m3_riv
-        m3_file_name = "m3_riv_bas_nasa_nldas_3hr_20030121to20030122.nc"
+        m3_file_name = "m3_riv_bas_nasa_nldas_3hr_20030121to20030121.nc"
         generated_m3_file = os.path.join(rapid_output_path, m3_file_name)
         generated_m3_file_solution = os.path.join(self.INFLOW_COMPARE_DATA_PATH, m3_file_name)
         self._compare_m3(generated_m3_file,generated_m3_file_solution)
+        # check output file info
+        assert output_file_info[0]['x-x']['m3_riv'] == generated_m3_file
+
 
     def test_generate_nldas2_inflow_single(self):
         """
         Checks generating inflow file from NLDAS V2 LSM
         """
-        rapid_input_path, rapid_output_path = \
+        rapid_input_path, rapid_output_path, output_file_info = \
             self._run_automatic('nldas2', "x-x", convert_one_hour_to_three=True,
                                 single_run=True, filter_dates=False)
 
         # CHECK OUTPUT
         # m3_riv
-        m3_file_name = "m3_riv_bas_nasa_nldas_3hr_20030121to20030122.nc"
+        m3_file_name = "m3_riv_bas_nasa_nldas_3hr_20030121to20030121.nc"
         generated_m3_file = os.path.join(rapid_output_path, m3_file_name)
         generated_m3_file_solution = os.path.join(self.INFLOW_COMPARE_DATA_PATH, m3_file_name)
         self._compare_m3(generated_m3_file,generated_m3_file_solution)
+        # check output file info
+        assert output_file_info[0]['x-x']['m3_riv'] == generated_m3_file
 
     def test_generate_nldas2_inflow2(self):
         """
@@ -269,7 +328,7 @@ class TestRAPIDInflow(unittest.TestCase):
                                                                "BGRUNsfc_110_SFC_ave2h"],
                                                   )
 
-        m3_file_name = "m3_riv_bas_nasa_nldas_3hr_20030121to20030122.nc"
+        m3_file_name = "m3_riv_bas_nasa_nldas_3hr_20030121to20030121.nc"
         generated_m3_file = os.path.join(rapid_output_path, m3_file_name)
 
         inf_tool.generateOutputInflowFile(out_nc=generated_m3_file,
@@ -300,8 +359,8 @@ class TestRAPIDInflow(unittest.TestCase):
         """
         rapid_input_path, rapid_output_path = self._setup_automated("x-x")
 
-        run_lsm_rapid_process(
-            rapid_executable_location=self.RAPID_EXE_PATH,
+        output_file_info = run_lsm_rapid_process(
+            rapid_executable_location=RAPID_EXE_PATH,
             cygwin_bin_location=self.CYGWIN_BIN_PATH,
             rapid_io_files_location=self.OUTPUT_DATA_PATH,
             lsm_data_location=os.path.join(self.LSM_INPUT_DATA_PATH, 'era20cm'),
@@ -316,11 +375,13 @@ class TestRAPIDInflow(unittest.TestCase):
         for i in range(10):
             # CHECK OUTPUT
             # m3_riv
-            m3_file_name = "m3_riv_bas_era_20cm_t159_3hr_20000129to20000131_{0}.nc".format(i)
+            m3_file_name = "m3_riv_bas_era_20cm_t159_3hr_20000129to20000130_{0}.nc".format(i)
             generated_m3_file = os.path.join(rapid_output_path, m3_file_name)
             generated_m3_file_solution = os.path.join(self.INFLOW_COMPARE_DATA_PATH, m3_file_name)
 
             self._compare_m3(generated_m3_file,generated_m3_file_solution)
+            # check output file info
+            assert output_file_info[i]['x-x']['m3_riv'] == generated_m3_file
 
     def test_generate_era20cm_inflow2(self):
         """
@@ -333,7 +394,7 @@ class TestRAPIDInflow(unittest.TestCase):
 
         inf_tool = CreateInflowFileFromERAInterimRunoff()
 
-        m3_file_name = "m3_riv_bas_era_20cm_t159_3hr_20000129to20000131_0.nc"
+        m3_file_name = "m3_riv_bas_era_20cm_t159_3hr_20000129to20000130_0.nc"
         generated_m3_file = os.path.join(rapid_output_path, m3_file_name)
 
         inf_tool.generateOutputInflowFile(out_nc=generated_m3_file,
@@ -363,12 +424,12 @@ class TestRAPIDInflow(unittest.TestCase):
         """
 
         # run main process
-        rapid_input_path, rapid_output_path = \
+        rapid_input_path, rapid_output_path, output_file_info = \
             self._run_automatic('erai3t255', "x-x")
 
         # CHECK OUTPUT
         # m3_riv
-        m3_file_name = "m3_riv_bas_erai_t255_3hr_20140820to20140822.nc"
+        m3_file_name = "m3_riv_bas_erai_t255_3hr_20140820to20140821.nc"
         generated_m3_file = os.path.join(rapid_output_path, m3_file_name)
         generated_m3_file_solution = os.path.join(self.INFLOW_COMPARE_DATA_PATH, m3_file_name)
 
@@ -385,7 +446,7 @@ class TestRAPIDInflow(unittest.TestCase):
 
         inf_tool = CreateInflowFileFromERAInterimRunoff()
 
-        m3_file_name = "m3_riv_bas_erai_t255_3hr_20140820to20140822.nc"
+        m3_file_name = "m3_riv_bas_erai_t255_3hr_20140820to20140821.nc"
         generated_m3_file = os.path.join(rapid_output_path, m3_file_name)
 
         inf_tool.generateOutputInflowFile(out_nc=generated_m3_file,
@@ -413,7 +474,7 @@ class TestRAPIDInflow(unittest.TestCase):
         """
         Checks generating inflow file from GLDAS V2 LSM
         """
-        rapid_input_path, rapid_output_path = \
+        rapid_input_path, rapid_output_path, output_file_info = \
             self._run_automatic('gldas2', "x-x", filter_dates=False)
 
         # CHECK OUTPUT
@@ -421,8 +482,9 @@ class TestRAPIDInflow(unittest.TestCase):
         m3_file_name = "m3_riv_bas_nasa_gldas2_3hr_20101231to20101231.nc"
         generated_m3_file = os.path.join(rapid_output_path, m3_file_name)
         generated_m3_file_solution = os.path.join(self.INFLOW_COMPARE_DATA_PATH, m3_file_name)
-
         self._compare_m3(generated_m3_file,generated_m3_file_solution)
+        # check output file info
+        assert output_file_info[0]['x-x']['m3_riv'] == generated_m3_file
 
     def test_generate_gldas2_inflow2(self):
         """
@@ -470,16 +532,17 @@ class TestRAPIDInflow(unittest.TestCase):
         Checks generating inflow file from LIS LSM
         """
         # run main process
-        rapid_input_path, rapid_output_path = \
+        rapid_input_path, rapid_output_path, output_file_info = \
             self._run_automatic('lis', "u-k", convert_one_hour_to_three=True)
 
         # CHECK OUTPUT
         # m3_riv
-        m3_file_name = "m3_riv_bas_nasa_lis_3hr_20110121to20110122.nc"
+        m3_file_name = "m3_riv_bas_nasa_lis_3hr_20110121to20110121.nc"
         generated_m3_file = os.path.join(rapid_output_path, m3_file_name)
         generated_m3_file_solution = os.path.join(self.INFLOW_COMPARE_DATA_PATH, m3_file_name)
-
         self._compare_m3(generated_m3_file,generated_m3_file_solution)
+        # check output file info
+        assert output_file_info[0]['u-k']['m3_riv'] == generated_m3_file
 
     def test_generate_lis_inflow2(self):
         """
@@ -499,7 +562,7 @@ class TestRAPIDInflow(unittest.TestCase):
                                                   runoff_vars=["Qs_inst",
                                                                "Qsb_inst"])
 
-        m3_file_name = "m3_riv_bas_nasa_lis_3hr_20110121to20110122.nc"
+        m3_file_name = "m3_riv_bas_nasa_lis_3hr_20110121to20110121.nc"
         generated_m3_file = os.path.join(rapid_output_path, m3_file_name)
 
         inf_tool.generateOutputInflowFile(out_nc=generated_m3_file,
@@ -529,7 +592,7 @@ class TestRAPIDInflow(unittest.TestCase):
         Checks generating inflow file from Joules LSM
         """
 
-        rapid_input_path, rapid_output_path = \
+        rapid_input_path, rapid_output_path, output_file_info = \
             self._run_automatic('joules',
                                 "u-k",
                                 file_datetime_pattern="%Y%m%d_%H",
@@ -537,12 +600,13 @@ class TestRAPIDInflow(unittest.TestCase):
                                 convert_one_hour_to_three=True)
 
         # CHECK OUTPUT
-        m3_file_name = "m3_riv_bas_met_office_joules_3hr_20080803to20080804.nc"
+        m3_file_name = "m3_riv_bas_met_office_joules_3hr_20080803to20080803.nc"
         generated_m3_file = os.path.join(rapid_output_path, m3_file_name)
         generated_m3_file_solution = os.path.join(self.INFLOW_COMPARE_DATA_PATH, m3_file_name)
-
         # check other info in netcdf file
         self._compare_m3(generated_m3_file, generated_m3_file_solution)
+        # check output file info
+        assert output_file_info[0]['u-k']['m3_riv'] == generated_m3_file
 
     def test_generate_joules_inflow2(self):
         """
@@ -562,7 +626,7 @@ class TestRAPIDInflow(unittest.TestCase):
                                                   runoff_vars=["Qs_inst",
                                                                "Qsb_inst"])
 
-        m3_file_name = "m3_riv_bas_met_office_joules_3hr_20080803to20080804.nc"
+        m3_file_name = "m3_riv_bas_met_office_joules_3hr_20080803to20080803.nc"
         generated_m3_file = os.path.join(rapid_output_path, m3_file_name)
 
         inf_tool.generateOutputInflowFile(out_nc=generated_m3_file,
@@ -592,15 +656,16 @@ class TestRAPIDInflow(unittest.TestCase):
         Checks generating inflow file from ERA Interim t511 24hr LSM
         """
         # run main process
-        rapid_input_path, rapid_output_path = self._run_automatic('erai24', "x-x")
+        rapid_input_path, rapid_output_path, output_file_info = self._run_automatic('erai24', "x-x")
 
         # CHECK OUTPUT
         # m3_riv
-        m3_file_name = "m3_riv_bas_erai_t511_24hr_19990109to19990111.nc"
+        m3_file_name = "m3_riv_bas_erai_t511_24hr_19990109to19990110.nc"
         generated_m3_file = os.path.join(rapid_output_path, m3_file_name)
         generated_m3_file_solution = os.path.join(self.INFLOW_COMPARE_DATA_PATH, m3_file_name)
-
         self._compare_m3(generated_m3_file,generated_m3_file_solution)
+        # check output file info
+        assert output_file_info[0]['x-x']['m3_riv'] == generated_m3_file
 
     def test_generate_erai_t511_24_inflow2(self):
         """
@@ -613,7 +678,7 @@ class TestRAPIDInflow(unittest.TestCase):
 
         inf_tool = CreateInflowFileFromERAInterimRunoff()
 
-        m3_file_name = "m3_riv_bas_erai_t511_24hr_19990109to19990111.nc"
+        m3_file_name = "m3_riv_bas_erai_t511_24hr_19990109to19990110.nc"
         generated_m3_file = os.path.join(rapid_output_path, m3_file_name)
 
         inf_tool.generateOutputInflowFile(out_nc=generated_m3_file,
@@ -642,15 +707,16 @@ class TestRAPIDInflow(unittest.TestCase):
         Checks generating inflow file from WRF LSM
         """
         # run main process
-        rapid_input_path, rapid_output_path = self._run_automatic('wrf', "m-s")
+        rapid_input_path, rapid_output_path, output_file_info = self._run_automatic('wrf', "m-s")
 
         # CHECK OUTPUT
         # m3_riv
-        m3_file_name = "m3_riv_bas_wrf_wrf_1hr_20080601to20080602.nc"
+        m3_file_name = "m3_riv_bas_wrf_wrf_1hr_20080601to20080601.nc"
         generated_m3_file = os.path.join(rapid_output_path, m3_file_name)
         generated_m3_file_solution = os.path.join(self.INFLOW_COMPARE_DATA_PATH, m3_file_name)
-
         self._compare_m3(generated_m3_file, generated_m3_file_solution)
+        # check output file info
+        assert output_file_info[0]['m-s']['m3_riv'] == generated_m3_file
 
     def test_generate_wrf_inflow2(self):
         """
@@ -669,7 +735,7 @@ class TestRAPIDInflow(unittest.TestCase):
                                                       subsurface_runoff_var="UDROFF",
                                                       )
 
-        m3_file_name = "m3_riv_bas_wrf_wrf_1hr_20080601to20080602.nc"
+        m3_file_name = "m3_riv_bas_wrf_wrf_1hr_20080601to20080601.nc"
         generated_m3_file = os.path.join(rapid_output_path, m3_file_name)
 
         inf_tool.generateOutputInflowFile(out_nc=generated_m3_file,
@@ -693,21 +759,12 @@ class TestRAPIDInflow(unittest.TestCase):
         generated_m3_file_solution = os.path.join(self.INFLOW_COMPARE_DATA_PATH, m3_file_name)
         self._compare_m3(generated_m3_file,generated_m3_file_solution)
 
-    def test_generate_cmip5_inflow_error(self):
-        """
-        Checks generating inflow file from CMIP5 LSM
-        """
-        with pytest.raises(ValueError):
-            self._run_automatic('cmip5',
-                                "ark-ms",
-                                file_datetime_pattern="%Y",
-                                file_datetime_re_pattern=r'\d{4}')
 
     def test_generate_cmip5_inflow(self):
         """
         Checks generating inflow file from CMIP5 LSM
         """
-        rapid_input_path, rapid_output_path = \
+        rapid_input_path, rapid_output_path, output_file_info = \
             self._run_automatic('cmip5',
                                 "ark-ms",
                                 file_datetime_pattern="%Y",
@@ -716,10 +773,12 @@ class TestRAPIDInflow(unittest.TestCase):
 
         # CHECK OUTPUT
         # m3_riv
-        m3_file_name = "m3_riv_bas_cmip5_cmip5_24hr_20010101to20010104.nc"
+        m3_file_name = "m3_riv_bas_cmip5_cmip5_24hr_20010101to20010103.nc"
         generated_m3_file = os.path.join(rapid_output_path, m3_file_name)
         generated_m3_file_solution = os.path.join(self.INFLOW_COMPARE_DATA_PATH, m3_file_name)
         self._compare_m3(generated_m3_file,generated_m3_file_solution)
+        # check output file info
+        assert output_file_info[0]['ark-ms']['m3_riv'] == generated_m3_file
 
     def _compare_m3(self, generated_m3_file, generated_m3_file_solution):
 

@@ -745,17 +745,13 @@ class RAPID(object):
         log("Generating qinit file from qout file ...",
             "INFO")
         #get information from dataset
-        if out_datetime is None:
-            with RAPIDDataset(self.Qout_file) as qout_nc:
-                log("Extracting data ...",
-                    "INFO")
-            streamflow_values = qout_nc.get_qout(time_index=time_index)
-            rivid_array = qout_nc.get_river_id_array()
-        else:
-            with xarray.open_dataset(self.Qout_file) as qds:
+        with xarray.open_dataset(self.Qout_file) as qds:
+            rivid_array = qds.rivid.values
+            if out_datetime is None:
+                streamflow_values = qds.isel(time=time_index).Qout.values
+            else:
                 streamflow_values = qds.sel(time=str(out_datetime)).Qout.values
-                rivid_array = qds.rivid.values
-
+                
         log("Reordering data ...",
             "INFO")
 

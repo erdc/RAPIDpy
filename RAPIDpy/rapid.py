@@ -83,9 +83,6 @@ class RAPID(object):
         """
         Initialize the class with variables given by the user
         """
-        if rapid_executable_location and not os.path.exists(rapid_executable_location):
-            raise Exception("Path to rapid_executable_location '{0}' invalid ...".format(rapid_executable_location))
-            
         if os.name == "nt" and (not cygwin_bin_location or not os.path.exists(cygwin_bin_location))\
             and rapid_executable_location:
             raise Exception("Required to have cygwin_bin_location set if using windows!")
@@ -620,7 +617,6 @@ class RAPID(object):
             rapid_manager.update_simulation_runtime()
             rapid_manager.run()
         """
-    
         if not self._rapid_executable_location or not self._rapid_executable_location:
             log("Missing rapid_executable_location. Please set before running this function ...",
                 "ERROR")

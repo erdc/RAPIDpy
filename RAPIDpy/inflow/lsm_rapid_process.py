@@ -783,22 +783,6 @@ def run_lsm_rapid_process(rapid_executable_location,
                                                              actual_simulation_end_datetime,
                                                              ensemble_file_ending)
 
-        # set up RAPID manager
-        rapid_manager = RAPID(rapid_executable_location=rapid_executable_location,
-                              cygwin_bin_location=cygwin_bin_location,
-                              num_processors=NUM_CPUS,
-                              mpiexec_command=mpiexec_command,
-                              ZS_TauR=time_step,  # duration of routing procedure (time step of runoff data)
-                              ZS_dtR=15*60,  # internal routing time step
-                              ZS_TauM=total_num_time_steps*time_step,  # total simulation time
-                              ZS_dtM=time_step  # RAPID recommended internal time step (1 day)
-                              )
-        if initial_flows_file and os.path.exists(initial_flows_file):
-            rapid_manager.update_parameters(
-                Qinit_file=initial_flows_file,
-                BS_opt_Qinit=True
-            )
-
         # run LSM processes
         for master_watershed_input_directory, master_watershed_output_directory in rapid_directories:
             print("Running from: {0}".format(master_watershed_input_directory))
@@ -869,6 +853,23 @@ def run_lsm_rapid_process(rapid_executable_location,
                      job_combinations)
             pool.close()
             pool.join()
+
+            # set up RAPID manager
+            rapid_manager = RAPID(rapid_executable_location=rapid_executable_location,
+                                  cygwin_bin_location=cygwin_bin_location,
+                                  num_processors=NUM_CPUS,
+                                  mpiexec_command=mpiexec_command,
+                                  ZS_TauR=time_step,  # duration of routing procedure (time step of runoff data)
+                                  ZS_dtR=15 * 60,  # internal routing time step
+                                  ZS_TauM=total_num_time_steps * time_step,  # total simulation time
+                                  ZS_dtM=time_step  # RAPID recommended internal time step (1 day)
+                                  )
+
+            if initial_flows_file and os.path.exists(initial_flows_file):
+                rapid_manager.update_parameters(
+                    Qinit_file=initial_flows_file,
+                    BS_opt_Qinit=True
+                )
 
             # run RAPID for the watershed
             lsm_rapid_output_file = os.path.join(master_watershed_output_directory,

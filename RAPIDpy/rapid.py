@@ -20,7 +20,7 @@ import os
 from requests import get
 from subprocess import Popen, PIPE
 from time import gmtime
-
+import xarray
 #local
 from .dataset import RAPIDDataset
 from .helper_functions import csv_to_list, log, open_csv
@@ -711,13 +711,14 @@ class RAPID(object):
         log("Time to run RAPID: %s" % (datetime.datetime.utcnow()-time_start),
             "INFO")
 
-    def generate_qinit_from_past_qout(self, qinit_file, time_index=-1):
+    def generate_qinit_from_past_qout(self, qinit_file, time_index=-1, out_datetime=None):
         """
         Generate qinit from a RAPID qout file
 
         Parameters:
             qinit_file(str): Path to output qinit_file.
             time_index(Optional[int]): Index of simulation to generate initial flow file. Default is the end.
+            out_datetime(Optional[datetime]): Datetime object containing time of initialization.
 
         Example:
         
@@ -744,23 +745,25 @@ class RAPID(object):
         log("Generating qinit file from qout file ...",
             "INFO")
         #get information from dataset
-        with RAPIDDataset(self.Qout_file) as qout_nc:
-            log("Extracting data ...",
-                "INFO")
-            streamflow_values = qout_nc.get_qout(time_index=time_index)
-    
-            log("Reordering data ...",
-                "INFO")
+        with xarray.open_dataset(self.Qout_file) as qds:
+            rivid_array = qds.rivid.values
+            if out_datetime is None:
+                streamflow_values = qds.isel(time=time_index).Qout.values
+            else:
+                streamflow_values = qds.sel(time=str(out_datetime)).Qout.values
+                
+        log("Reordering data ...",
+            "INFO")
 
-            stream_id_array = np.loadtxt(self.rapid_connect_file, ndmin=1, delimiter=",", usecols=(0,), dtype=int)
-            init_flows_array = np.zeros(stream_id_array.size)
-            for riv_bas_index, riv_bas_id in enumerate(qout_nc.get_river_id_array()):
-                try:
-                    data_index = np.where(stream_id_array==riv_bas_id)[0][0]
-                    init_flows_array[data_index] = streamflow_values[riv_bas_index]
-                except Exception:
-                    log('riv bas id {0} not found in connectivity list.'.format(riv_bas_id),
-                        "WARNING")
+        stream_id_array = np.loadtxt(self.rapid_connect_file, ndmin=1, delimiter=",", usecols=(0,), dtype=int)
+        init_flows_array = np.zeros(stream_id_array.size)
+        for riv_bas_index, riv_bas_id in enumerate(rivid_array):
+            try:
+                data_index = np.where(stream_id_array==riv_bas_id)[0][0]
+                init_flows_array[data_index] = streamflow_values[riv_bas_index]
+            except Exception:
+                log('riv bas id {0} not found in connectivity list.'.format(riv_bas_id),
+                    "WARNING")
         
         log("Writing to file ...",
             "INFO")

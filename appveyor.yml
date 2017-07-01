@@ -6,7 +6,7 @@ environment:
     CYG_MIRROR: "http://cygwin.mirror.constant.com"
     CYG_CACHE: "C:/cygwin/var/cache/setup"
 
-  matrix: lot
+  matrix:
     - PYTHON_VERSION: "2.7"
       MINICONDA: "C:\\Miniconda-x64"
     - PYTHON_VERSION: "3.5"

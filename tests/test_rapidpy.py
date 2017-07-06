@@ -13,7 +13,7 @@ from netCDF4 import Dataset
 import os
 from pytz import timezone
 from shutil import copy
-
+import pytest
 
 #local import
 from RAPIDpy import RAPID
@@ -219,6 +219,7 @@ def test_qout_same():
 
     assert (compare_qout_files(input_qout_file, input_qout_file_cf))
 
+@pytest.mark.skipif(not os.path.exists(RAPID_EXE_PATH), reason='Only run if RAPID installed')
 def test_run_rapid_simulation():
     """
     Test Running RAPID Simulation

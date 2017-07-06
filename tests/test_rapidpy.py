@@ -13,7 +13,7 @@ from netCDF4 import Dataset
 import os
 from pytz import timezone
 from shutil import copy
-
+import pytest
 
 #local import
 from RAPIDpy import RAPID
@@ -219,6 +219,7 @@ def test_qout_same():
 
     assert (compare_qout_files(input_qout_file, input_qout_file_cf))
 
+@pytest.mark.skipif(not os.path.exists(RAPID_EXE_PATH), reason='Only run if RAPID installed')
 def test_run_rapid_simulation():
     """
     Test Running RAPID Simulation
@@ -294,10 +295,10 @@ def test_convert_file_to_be_cf_compliant_new_format_comid_lat_lon_z():
     d2 = Dataset(cf_qout_file_solution)
     assert (d1.dimensions.keys() == d2.dimensions.keys())
     assert (d1.variables.keys() == d2.variables.keys())
-    assert ((d1.variables['time'][:] == d1.variables['time'][:]).all())
-    assert ((d1.variables['rivid'][:] == d1.variables['rivid'][:]).all())
-    assert ((d1.variables['lat'][:] == d1.variables['lat'][:]).all())
-    assert ((d1.variables['lon'][:] == d1.variables['lon'][:]).all())
+    assert ((d1.variables['time'][:] == d2.variables['time'][:]).all())
+    assert ((d1.variables['rivid'][:] == d2.variables['rivid'][:]).all())
+    assert ((d1.variables['lat'][:] == d2.variables['lat'][:]).all())
+    assert ((d1.variables['lon'][:] == d2.variables['lon'][:]).all())
     d1.close()
     d2.close()
 
@@ -334,8 +335,8 @@ def test_convert_file_to_be_cf_compliant_new_format():
     d2 = Dataset(cf_qout_file_solution)
     assert (d1.dimensions.keys() == d2.dimensions.keys())
     assert (d1.variables.keys() == d2.variables.keys())
-    assert ((d1.variables['time'][:] == d1.variables['time'][:]).all())
-    assert ((d1.variables['rivid'][:] == d1.variables['rivid'][:]).all())
+    assert ((d1.variables['time'][:] == d2.variables['time'][:]).all())
+    assert ((d1.variables['rivid'][:] == d2.variables['rivid'][:]).all())
     d1.close()
     d2.close()
 
@@ -372,10 +373,10 @@ def test_convert_file_to_be_cf_compliant_original_format():
     d2 = Dataset(cf_qout_file_solution)
     assert (d1.dimensions.keys() == d2.dimensions.keys())
     assert (d1.variables.keys() == d2.variables.keys())
-    assert ((d1.variables['time'][:] == d1.variables['time'][:]).all())
-    assert ((d1.variables['rivid'][:] == d1.variables['rivid'][:]).all())
-    assert ((d1.variables['lat'][:] == d1.variables['lat'][:]).all())
-    assert ((d1.variables['lon'][:] == d1.variables['lon'][:]).all())
+    assert ((d1.variables['time'][:] == d2.variables['time'][:]).all())
+    assert ((d1.variables['rivid'][:] == d2.variables['rivid'][:]).all())
+    assert ((d1.variables['lat'][:] == d2.variables['lat'][:]).all())
+    assert ((d1.variables['lon'][:] == d2.variables['lon'][:]).all())
     d1.close()
     d2.close()
 
@@ -632,8 +633,8 @@ def test_cf_merge():
     d2 = Dataset(cf_merge_qout_file_solution)
     assert (d1.dimensions.keys() == d2.dimensions.keys())
     assert (d1.variables.keys() == d2.variables.keys())
-    assert ((d1.variables['time'][:] == d1.variables['time'][:]).all())
-    assert ((d1.variables['rivid'][:] == d1.variables['rivid'][:]).all())
+    assert ((d1.variables['time'][:] == d2.variables['time'][:]).all())
+    assert ((d1.variables['rivid'][:] == d2.variables['rivid'][:]).all())
     d1.close()
     d2.close()
 

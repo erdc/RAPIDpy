@@ -10,6 +10,8 @@ The source code for RAPID is located at https://github.com/c-h-david/rapid/. Oth
 
 [![PyPI version](https://badge.fury.io/py/RAPIDpy.svg)](https://badge.fury.io/py/RAPIDpy)
 
+[![Anaconda-Server Badge](https://anaconda.org/conda-forge/rapidpy/badges/version.svg)](https://anaconda.org/conda-forge/rapidpy)
+
 [![Build Status](https://travis-ci.org/erdc-cm/RAPIDpy.svg?branch=master)](https://travis-ci.org/erdc-cm/RAPIDpy)
 
 [![Docs](https://readthedocs.org/projects/rapidpy/badge/?version=latest)](http://rapidpy.readthedocs.io/en/latest)

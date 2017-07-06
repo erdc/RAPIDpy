@@ -96,7 +96,6 @@ before_install:
     git clone https://github.com/dtarb/TauDEM.git ;
     cd TauDEM/src ;
     rm makefile ;
-    # use conda gdal for build
     source activate rapid ;
     cmake . ;
     make ;

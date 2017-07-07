@@ -20,6 +20,7 @@ os:
 env:
   - TRAVIS_PYTHON_VERSION="2.7"
   - TRAVIS_PYTHON_VERSION="3.5"
+  - TRAVIS_PYTHON_VERSION="3.6"
 matrix:
   fast_finish: true
   allow_failures:

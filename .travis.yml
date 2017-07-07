@@ -90,14 +90,16 @@ before_install:
 #-------------------------------------------------------------------------------
 #Installing TauDEM
 #-------------------------------------------------------------------------------
-- cd $TRAVIS_BUILD_DIR/..
-- git clone https://github.com/dtarb/TauDEM.git
-- cd TauDEM/src
-- rm makefile
-# use conda gdal for build
-- source activate rapid
-- cmake .
-- make
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+    wget http://repo.continuum.io/miniconda/Miniconda${TRAVIS_PYTHON_VERSION:0:1}-latest-Linux-x86_64.sh -O miniconda.sh ;
+    cd $TRAVIS_BUILD_DIR/.. ;
+    git clone https://github.com/dtarb/TauDEM.git ;
+    cd TauDEM/src ;
+    rm makefile ;
+    source activate rapid ;
+    cmake . ;
+    make ;
+  fi
 
 #*******************************************************************************
 #Installing RAPIDpy

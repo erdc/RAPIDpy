@@ -22,7 +22,8 @@ setup(
     package_data={'': ['gis/lsm_grids/*.nc']},
     install_requires=[
         'future', 'numpy', 'netcdf4', 'pandas',
-        'python-dateutil', 'pytz', 'requests',
+        'pangaea', 'python-dateutil', 'pytz', 
+        'requests',
     ],
     classifiers=[
         'Intended Audience :: Developers',

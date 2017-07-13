@@ -639,6 +639,8 @@ def run_lsm_rapid_process(rapid_executable_location,
                 rapid_output_location='/home/alan/rapid-io/output/provo_watershed',
                 lsm_data_location='/home/alan/era_data',
             )
+
+
     Example of run with FLDAS and datetime filter:
 
     .. note:: http://disc.sci.gsfc.nasa.gov/uui/datasets?keywords=FLDAS
@@ -660,9 +662,11 @@ def run_lsm_rapid_process(rapid_executable_location,
                 file_datetime_pattern = "%Y%m%d",
             )
 
+
     Example of run with CMIP5:
 
     .. note:: http://gdo-dcp.ucllnl.org/downscaled_cmip_projections/techmemo/BCSD5HydrologyMemo.pdf
+
 
     .. code:: python
 

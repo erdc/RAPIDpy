@@ -200,8 +200,11 @@ def RTreeCreateWeightTable(lsm_grid_lat, lsm_grid_lon,
                         try:
                             intersect_poly = catchment_polygon.intersection(lsm_grid_polygon)
                         except TopologicalError:
+                            print(rapid_connect_rivid)
                             print(lsm_grid_polygon.area)
                             print(lsm_grid_polygon)
+                            print(catchment_polygon.area)
+                            print(catchment_polygon)
                             lsm_grid_polygon = lsm_grid_polygon.buffer(0)
                             intersect_poly = catchment_polygon.intersection(lsm_grid_polygon)
 

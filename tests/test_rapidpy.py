@@ -170,6 +170,51 @@ def test_update_rapid_numbers_input_file():
 
     remove_files(generated_input_file)
 
+def test_update_rapid_numbers_forcing_input_file():
+    """
+    Checks RAPID input file update with forcing data and number validation
+    """
+    rapid_manager = RAPID(rapid_executable_location=RAPID_EXE_PATH,
+                          cygwin_bin_location=CYGWIN_BIN_PATH,
+                          use_all_processors=True,
+                          rapid_connect_file=os.path.join(INPUT_DATA_PATH,
+                                                          'rapid_connect.csv'),
+                          riv_bas_id_file=os.path.join(INPUT_DATA_PATH,
+                                                       'riv_bas_id.csv'),
+                          for_tot_id_file=os.path.join(INPUT_DATA_PATH,
+                                                       'for_tot_id.csv'),
+                          for_use_id_file=os.path.join(INPUT_DATA_PATH,
+                                                       'for_use_id.csv'),
+                          ZS_dtF=3 * 60 * 60,
+                          BS_opt_for=True
+                          )
+
+    rapid_manager.update_reach_number_data()
+
+    rapid_manager.update_parameters(rapid_connect_file='rapid_connect.csv',
+                                    Vlat_file='m3_nasa_lis_3hr_20020830.nc',
+                                    riv_bas_id_file='riv_bas_id.csv',
+                                    k_file='k.csv',
+                                    x_file='x.csv',
+                                    Qout_file='Qout.nc',
+                                    Qfor_file='qfor.csv',
+                                    for_tot_id_file='for_tot_id.csv',
+                                    for_use_id_file='for_use_id.csv',
+                                    )
+
+    generated_input_file = os.path.join(OUTPUT_DATA_PATH,
+                                      "rapid_namelist-GENERATE-NUMBERS-FORCING")
+
+    rapid_manager.generate_namelist_file(generated_input_file)
+
+    generated_input_file_solution = os.path.join(COMPARE_DATA_PATH,
+                                                 "rapid_namelist-GENERATE-NUMBERS-FORCING")
+
+
+    assert (fcmp(generated_input_file, generated_input_file_solution))
+
+    remove_files(generated_input_file)
+
 def test_update_rapid_runtime():
     """
     Checks RAPID input file update with number validation

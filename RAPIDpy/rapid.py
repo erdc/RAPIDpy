@@ -326,14 +326,35 @@ class RAPID(object):
                                  )
                                  
             rapid_manager.update_reach_number_data()
-                                 
+
+
+        Example with forcing data:
+
+        .. code:: python
+
+            from RAPIDpy import RAPID
+
+            rapid_manager = RAPID(
+                                  #ADD PARAMETERS
+                                  rapid_connect_file='../rapid-io/input/rapid_connect.csv',
+                                  riv_bas_id_file='../rapid-io/input/riv_bas_id.csv',
+                                 )
+
+            rapid_manager.update_parameters(Qfor_file=qfor_file,
+                                            for_tot_id_file=for_tot_id_file,
+                                            for_use_id_file=for_use_id_file,
+                                            ZS_dtF=3*60*60,
+                                            BS_opt_for=True)
+
+            rapid_manager.update_reach_number_data()
+
         """
         
-        if not self.rapid_connect_file or not self.rapid_connect_file:
+        if not self.rapid_connect_file:
             log("Missing rapid_connect_file. Please set before running this function ...",
                 "ERROR")
 
-        if not self.riv_bas_id_file or not self.riv_bas_id_file:
+        if not self.riv_bas_id_file:
             log("Missing riv_bas_id_file. Please set before running this function ...",
                 "ERROR")
 
@@ -346,7 +367,31 @@ class RAPID(object):
         #get riv_bas_id info
         riv_bas_id_table = np.loadtxt(self.riv_bas_id_file, ndmin=1, delimiter=",", usecols=(0,), dtype=int)
         self.IS_riv_bas = int(riv_bas_id_table.size)
-    
+
+        # add the forcing files
+        if not self.for_tot_id_file:
+            self.IS_for_tot = 0
+            log("Missing for_tot_id_file. Skipping ...",
+                "WARNING")
+        else:
+            # get riv_bas_id info
+            for_tot_id_table = np.loadtxt(self.for_tot_id_file, ndmin=1,
+                                          delimiter=",", usecols=(0,),
+                                          dtype=int)
+            self.IS_for_tot = int(for_tot_id_table.size)
+
+        if not self.for_use_id_file:
+            self.IS_for_use = 0
+            log("Missing for_use_id_file. Skipping ...",
+                "WARNING")
+        else:
+            # get riv_bas_id info
+            for_use_id_table = np.loadtxt(self.for_use_id_file, ndmin=1,
+                                          delimiter=",", usecols=(0,),
+                                          dtype=int)
+            self.IS_for_use = int(for_use_id_table.size)
+
+
     def update_simulation_runtime(self):
         """
         Updates the total simulation duration from

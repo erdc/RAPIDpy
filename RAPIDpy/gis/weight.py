@@ -12,6 +12,7 @@ import csv
 from datetime import datetime
 from functools import partial
 from netCDF4 import Dataset
+import pangaea as pa
 import numpy as np
 
 try:
@@ -19,16 +20,41 @@ try:
     from shapely.wkb import loads as shapely_loads
     from shapely.ops import transform as shapely_transform
     from shapely.geos import TopologicalError
+    from shapely.geometry import Polygon
     import rtree #http://toblerity.org/rtree/install.html
     from osgeo import gdal, ogr, osr
 except Exception:
     raise Exception("You need the gdal, pyproj, shapely, and rtree python package to run these tools ...")
 
 #local
-from .voronoi import pointsToVoronoiGridArray
+from .voronoi import pointsToVoronoiGridArray, pointsArrayToPolygonGridList
 from ..helper_functions import open_csv
 
+GRIDDING_METHODS = {
+    'array_math': pointsArrayToPolygonGridList,
+    'voronoi': pointsToVoronoiGridArray
+}
+
 gdal.UseExceptions()
+
+
+def gdal_error_handler(err_class, err_num, err_msg):
+    errtype = {
+            gdal.CE_None: 'None',
+            gdal.CE_Debug: 'Debug',
+            gdal.CE_Warning: 'Warning',
+            gdal.CE_Failure: 'Failure',
+            gdal.CE_Fatal: 'Fatal'
+    }
+    err_msg = err_msg.replace('\n', ' ')
+    err_class = errtype.get(err_class, 'None')
+    print('Error Number: %s' % (err_num,))
+    print('Error Type: %s' % (err_class,))
+    print('Error Message: %s' % (err_msg,))
+
+# install error handler
+gdal.PushErrorHandler(gdal_error_handler)
+
 
 def get_poly_area_geo(poly):
     """
@@ -46,26 +72,6 @@ def get_poly_area_geo(poly):
                            reprojected_for_area)
     reprojected_poly = shapely_transform(project_func, poly)
     return reprojected_poly.area
-
-def _get_lat_lon_indices(lsm_lat_array, lsm_lon_array, lat, lon):
-    """
-    Determines the index in the array (1D or 2D) where the 
-    lat/lon point is
-    """    
-    if lsm_lat_array.ndim == 2 and lsm_lon_array.ndim == 2:
-        lsm_lat_indices_from_lat, lsm_lon_indices_from_lat = np.where((lsm_lat_array == lat))
-        lsm_lat_indices_from_lon, lsm_lon_indices_from_lon = np.where((lsm_lon_array == lon))
-
-        index_lsm_grid_lat = np.intersect1d(lsm_lat_indices_from_lat, lsm_lat_indices_from_lon)[0]
-        index_lsm_grid_lon = np.intersect1d(lsm_lon_indices_from_lat, lsm_lon_indices_from_lon)[0]
-        
-    elif lsm_lat_array.ndim == 1 and lsm_lon_array.ndim == 1:
-        index_lsm_grid_lon = np.where(lsm_lon_array == lon)[0][0]
-        index_lsm_grid_lat = np.where(lsm_lat_array == lat)[0][0]
-    else:
-        raise IndexError("Lat/Lon lists have invalid dimensions. Only 1D or 2D arrays allowed ...")
-    
-    return index_lsm_grid_lat, index_lsm_grid_lon     
    
 
 def find_nearest(array, value):
@@ -73,11 +79,15 @@ def find_nearest(array, value):
     Get the nearest index to value searching for
     """
     return (np.abs(array-value)).argmin()
-    
+
+
 def RTreeCreateWeightTable(lsm_grid_lat, lsm_grid_lon, 
                            in_catchment_shapefile, river_id,
                            in_rapid_connect, out_weight_table,
-                           file_geodatabase=None, area_id=None):
+                           file_geodatabase=None, area_id=None,
+                           grid_proj=None, no_data_value=-9999,
+                           gridding_method='array_math'
+                           ):
                                       
     """
     Create Weight Table for Land Surface Model Grids
@@ -97,19 +107,49 @@ def RTreeCreateWeightTable(lsm_grid_lat, lsm_grid_lon,
     else:
         ogr_catchment_shapefile = ogr.Open(in_catchment_shapefile)
         ogr_catchment_shapefile_lyr = ogr_catchment_shapefile.GetLayer()
-        
-    ogr_catchment_shapefile_lyr_proj = ogr_catchment_shapefile_lyr.GetSpatialRef()
-    original_catchment_proj = Proj(ogr_catchment_shapefile_lyr_proj.ExportToProj4())
-    geographic_proj =  Proj(init='EPSG:4326') #geographic
+
+    osr_geographic_proj = osr.SpatialReference()
+    osr_geographic_proj.ImportFromEPSG(4326)
+
+    ogr_catchment_proj = ogr_catchment_shapefile_lyr.GetSpatialRef()
+
     extent = ogr_catchment_shapefile_lyr.GetExtent()
-    if original_catchment_proj != geographic_proj:
-        x, y = transform(original_catchment_proj,
-                         geographic_proj,
-                         [extent[0], extent[1]], 
-                         [extent[2], extent[3]])
+
+    catchment_transform = None
+    if ogr_catchment_proj != osr_geographic_proj:
+        catchment_transform = osr.CoordinateTransformation(ogr_catchment_proj, osr_geographic_proj)
+
+        point1, point2 = catchment_transform.TransformPoints(((extent[0], extent[2]), (extent[1], extent[3])))
+        x = point1[0], point2[0]
+        y = point1[1], point2[1]
+
         extent = [min(x), max(x), min(y), max(y)]
-            
-    lsm_grid_feature_list = pointsToVoronoiGridArray(lsm_grid_lat, lsm_grid_lon, extent)
+
+        poly = Polygon([(extent[0], extent[2]),
+                        (extent[1], extent[2]),
+                        (extent[1], extent[3]),
+                        (extent[0], extent[3]),
+                        ])
+
+        ogr_poly = ogr.CreateGeometryFromWkb(poly.wkb)
+        ogr_poly.Transform(catchment_transform)
+
+        extent = ogr_poly.GetEnvelope()
+
+    grid_transform_in = None
+    grid_transform_out = None
+
+    if grid_proj is not None:
+        grid_transform_in = osr.CoordinateTransformation(osr_geographic_proj, grid_proj)
+        grid_transform_out = osr.CoordinateTransformation(grid_proj, osr_geographic_proj)
+
+        extent = None
+        # TODO figure out how to define the extents if grid needs to be reprojected
+
+    generate_grid_function = GRIDDING_METHODS[gridding_method]
+    lsm_grid_feature_list = generate_grid_function(lsm_grid_lat, lsm_grid_lon,
+                                                     extent, grid_transform_in, grid_transform_out,
+                                                     no_data_value)
     
     ##COMMENTED LINES FOR TESTING
 #    import os
@@ -131,7 +171,7 @@ def RTreeCreateWeightTable(lsm_grid_lat, lsm_grid_lon,
     
     print("Retrieving catchment river id list ...")
     number_of_catchment_features = ogr_catchment_shapefile_lyr.GetFeatureCount()
-    catchment_rivid_list = np.zeros(number_of_catchment_features, dtype=np.int32)
+    catchment_rivid_list = np.zeros(number_of_catchment_features, dtype=np.int64)
     for feature_idx, catchment_feature in enumerate(ogr_catchment_shapefile_lyr):
         catchment_rivid_list[feature_idx] = catchment_feature.GetField(river_id)
         
@@ -143,28 +183,22 @@ def RTreeCreateWeightTable(lsm_grid_lat, lsm_grid_lon,
                                           dtype=int)
     print("Find LSM grid cells that intersect with each catchment")
     print("and write out weight table ...")
-    
-    dummy_lat_index, dummy_lon_index = _get_lat_lon_indices(lsm_grid_lat, lsm_grid_lon, 
-                                                            lsm_grid_feature_list[0]['lat'], 
-                                                            lsm_grid_feature_list[0]['lon'])
+
+    dummy_grid_feature = lsm_grid_feature_list[0]
+    dummy_lat_index = dummy_grid_feature['lat_index']
+    dummy_lon_index = dummy_grid_feature['lon_index']
     dummy_row_end = [0,
-                    dummy_lon_index,
-                    dummy_lat_index,
-                    1,
-                    lsm_grid_feature_list[0]['lon'],
-                    lsm_grid_feature_list[0]['lat']
-                    ]
+                     dummy_lon_index,
+                     dummy_lat_index,
+                     1,
+                     lsm_grid_feature_list[0]['lon'],
+                     lsm_grid_feature_list[0]['lat']
+                     ]
                     
     with open_csv(out_weight_table, 'w') as csvfile:
         connectwriter = csv.writer(csvfile)
         connectwriter.writerow(['rivid', 'area_sqm', 'lon_index', 'lat_index', 
                                 'npoints', 'lsm_grid_lon', 'lsm_grid_lat'])
-        geographic_proj =  Proj(init='EPSG:4326') #geographic
-        osr_geographic_proj = osr.SpatialReference()
-        osr_geographic_proj.ImportFromEPSG(4326)
-        proj_transform = None
-        if original_catchment_proj != geographic_proj:
-            proj_transform = osr.CoordinateTransformation(ogr_catchment_shapefile_lyr_proj, osr_geographic_proj)
             
         for rapid_connect_rivid in rapid_connect_rivid_list:
             intersect_grid_info_list = []
@@ -178,8 +212,8 @@ def RTreeCreateWeightTable(lsm_grid_lat, lsm_grid_lon,
             get_catchment_feature = ogr_catchment_shapefile_lyr.GetFeature(catchment_pos)
             feat_geom = get_catchment_feature.GetGeometryRef()
             #make sure coordinates are geographic
-            if proj_transform:
-                feat_geom.Transform(proj_transform)
+            if catchment_transform:
+                feat_geom.Transform(catchment_transform)
             catchment_polygon = shapely_loads(feat_geom.ExportToWkb())
 
             for sub_lsm_grid_pos in rtree_idx.intersection(catchment_polygon.bounds):
@@ -205,11 +239,10 @@ def RTreeCreateWeightTable(lsm_grid_lat, lsm_grid_lon,
                     else:
                         poly_area = float(get_catchment_feature.GetField(area_id))*intersect_poly.area/catchment_polygon.area
 
-                    index_lsm_grid_lat, index_lsm_grid_lon = _get_lat_lon_indices(lsm_grid_lat, lsm_grid_lon, 
-                                                                                  lsm_grid_feature_list[sub_lsm_grid_pos]['lat'], 
-                                                                                  lsm_grid_feature_list[sub_lsm_grid_pos]['lon'])
-                    intersect_grid_info_list.append({'rivid' : rapid_connect_rivid,
-                                                     'area' : poly_area,
+                    index_lsm_grid_lat = lsm_grid_feature_list[sub_lsm_grid_pos]['lat_index']
+                    index_lsm_grid_lon = lsm_grid_feature_list[sub_lsm_grid_pos]['lon_index']
+                    intersect_grid_info_list.append({'rivid': rapid_connect_rivid,
+                                                     'area': poly_area,
                                                      'lsm_grid_lat': lsm_grid_feature_list[sub_lsm_grid_pos]['lat'],
                                                      'lsm_grid_lon': lsm_grid_feature_list[sub_lsm_grid_pos]['lon'],
                                                      'index_lsm_grid_lon': index_lsm_grid_lon,
@@ -289,6 +322,7 @@ def CreateWeightTableECMWF(in_ecmwf_nc,
                            in_connectivity_file, out_weight_table, 
                            file_geodatabase, area_id)
 
+
 def CreateWeightTableLDAS(in_ldas_nc,
                           in_nc_lon_var,
                           in_nc_lat_var,
@@ -343,3 +377,41 @@ def CreateWeightTableLDAS(in_ldas_nc,
                            in_catchment_shapefile, river_id,
                            in_connectivity_file, out_weight_table, 
                            file_geodatabase, area_id)
+
+
+def CreateWeightTable(lsm_grid,
+                      lat_var,
+                      lon_var,
+                      time_var,
+                      lat_dim,
+                      lon_dim,
+                      time_dim,
+                      in_catchment_shapefile,
+                      river_id,
+                      in_rapid_connect,
+                      out_weight_table,
+                      area_id=None,
+                      file_geodatabase=None
+                      ):
+
+    with pa.open_mfdataset(lsm_grid,
+                           lat_var,
+                           lon_var,
+                           time_var,
+                           lat_dim,
+                           lon_dim,
+                           time_dim) as xds:
+        proj = xds.lsm.projection
+        lsm_grid_lat, lsm_grid_lon = xds.lsm.latlon
+
+    RTreeCreateWeightTable(lsm_grid_lat,
+                           lsm_grid_lon,
+                           in_catchment_shapefile,
+                           river_id,
+                           in_rapid_connect,
+                           out_weight_table,
+                           file_geodatabase=None,
+                           area_id=None,
+                           grid_proj=proj,
+                           no_data_value=-9999,
+                           )

@@ -14,7 +14,7 @@ from csv import writer as csv_writer
 import datetime
 from netCDF4 import Dataset, num2date
 import numpy as np
-from numpy.ma import masked
+from numpy.ma import is_masked
 import pandas as pd
 from past.builtins import xrange
 from pytz import utc
@@ -247,7 +247,7 @@ class RAPIDDataset(object):
         time_var_valid = False
         if 'time' in self.qout_nc.variables.keys():
             if len(self.qout_nc.dimensions['time']) > 0:
-                if not (self.qout_nc.variables['time'][:] == masked).any():
+                if not is_masked(self.qout_nc.variables['time'][:]):
                     try:
                         timestep = (datetime.datetime
                                     .utcfromtimestamp(

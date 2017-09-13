@@ -662,6 +662,7 @@ class RAPID(object):
             rapid_manager.update_simulation_runtime()
             rapid_manager.run()
         """
+    
         if not self._rapid_executable_location or not self._rapid_executable_location:
             log("Missing rapid_executable_location. Please set before running this function ...",
                 "ERROR")
@@ -783,41 +784,59 @@ class RAPID(object):
             log('Missing rapid_connect file. Please set before running this function ...',
                 "ERROR")
  
-        log("Generating qinit file from qout file ...",
-            "INFO")
-        #get information from dataset
+        # read in stream ids from rapid_connect
+        stream_id_array = np.loadtxt(self.rapid_connect_file, ndmin=1,
+                                     delimiter=",", usecols=(0,), dtype=int)
+
+        # get information from dataset
         with xarray.open_dataset(self.Qout_file) as qds:
-            rivid_array = qds.rivid.values
             if out_datetime is None:
-                streamflow_values = qds.isel(time=time_index).Qout.values
+                streamflow_ds = qds.isel(time=time_index)
             else:
-                streamflow_values = qds.sel(time=str(out_datetime)).Qout.values
-                
-        log("Reordering data ...",
-            "INFO")
+                streamflow_ds = qds.sel(time=str(out_datetime))
 
-        stream_id_array = np.loadtxt(self.rapid_connect_file, ndmin=1, delimiter=",", usecols=(0,), dtype=int)
-        init_flows_array = np.zeros(stream_id_array.size)
-        for riv_bas_index, riv_bas_id in enumerate(rivid_array):
-            try:
-                data_index = np.where(stream_id_array==riv_bas_id)[0][0]
-                init_flows_array[data_index] = streamflow_values[riv_bas_index]
-            except Exception:
-                log('riv bas id {0} not found in connectivity list.'.format(riv_bas_id),
-                    "WARNING")
-        
-        log("Writing to file ...",
-            "INFO")
-        with open_csv(qinit_file, 'w') as qinit_out:
-            for init_flow in init_flows_array:
-                qinit_out.write('{0}\n'.format(init_flow))
+            rivid_array = qds.rivid.values
 
+            if (rivid_array == stream_id_array).all():
+                streamflow_ds.time.encoding['units'] = "seconds since 1970-01-01 00:00:00+00:00"
+                streamflow_ds.time.encoding['calendar'] = "gregorian"
+                streamflow_ds.Qout.to_netcdf(qinit_file)
+            else:
+                # data needs to be re-ordered into the same order as the
+                # rapid connect file
+                streamflow_values = streamflow_ds.Qout.values
+
+                init_flows_array = np.zeros(stream_id_array.size)
+                for riv_bas_index, riv_bas_id in enumerate(rivid_array):
+                    try:
+                        data_index = np.where(stream_id_array==riv_bas_id)[0][0]
+                        init_flows_array[data_index] = streamflow_values[riv_bas_index]
+                    except Exception:
+                        log('riv bas id {0} not found in connectivity list.'.format(riv_bas_id),
+                            "WARNING")
+
+                # convert to NetCDF
+                qinit_ds = xarray.Dataset(
+                    {'Qout': (['time', 'rivid'], [init_flows_array])},
+                    coords = {'rivid': stream_id_array,
+                              'time': [streamflow_ds.time.values]}
+                )
+
+                qinit_ds.time.attrs = streamflow_ds.time.attrs
+                qinit_ds.Qout.attrs = streamflow_ds.Qout.attrs
+                qinit_ds.rivid.attrs = qinit_ds.rivid.attrs
+
+                qinit_ds.time.encoding['units'] = "seconds since 1970-01-01 00:00:00+00:00"
+                qinit_ds.time.encoding['calendar'] = "gregorian"
+
+                qinit_ds.to_netcdf(qinit_file)
+
+        # add options for namelist
         self.Qinit_file = qinit_file
         self.BS_opt_Qinit = True
-        log("Initialization Complete!",
-            "INFO")
 
-    def generate_seasonal_intitialization(self, 
+
+    def generate_seasonal_intitialization(self,
                                           qinit_file,
                                           datetime_start_initialization=datetime.datetime.utcnow()):
         """
@@ -836,7 +855,7 @@ class RAPID(object):
         This example shows how to use it:
         
         .. code:: python
-        
+
             from RAPIDpy.rapid import RAPID
             
             rapid_manager = RAPID(Qout_file='/output_mississippi-nfie/Qout_2000to2015.nc', 

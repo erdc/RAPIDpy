@@ -10,10 +10,12 @@
 from datetime import datetime
 from filecmp import cmp as fcmp
 from netCDF4 import Dataset
+import numpy as np
+from numpy.testing import assert_array_equal, assert_almost_equal
 import os
+import pytest
 from pytz import timezone
 from shutil import copy
-import pytest
 
 #local import
 from RAPIDpy import RAPID
@@ -442,25 +444,42 @@ def test_generate_qinit_file():
     original_qout_file = os.path.join(OUTPUT_DATA_PATH, 'Qout_nasa_lis_3hr_20020830.nc')
     copy(input_qout_file, original_qout_file)
 
-    qinit_original_rapid_qout = os.path.join(OUTPUT_DATA_PATH, 'qinit_original_rapid_qout.csv')
+    qinit_original_rapid_qout = os.path.join(OUTPUT_DATA_PATH, 'qinit_original_rapid_qout.nc')
     rapid_manager.update_parameters(Qout_file=original_qout_file)
     rapid_manager.generate_qinit_from_past_qout(qinit_file=qinit_original_rapid_qout)
 
-    qinit_original_rapid_qout_solution = os.path.join(COMPARE_DATA_PATH, 'qinit_original_rapid_qout.csv')
-    assert (compare_csv_decimal_files(qinit_original_rapid_qout, qinit_original_rapid_qout_solution, header=False))
+    qinit_original_rapid_qout_solution = os.path.join(COMPARE_DATA_PATH, 'qinit_original_rapid_qout.nc')
+    d1 = Dataset(qinit_original_rapid_qout)
+    d2 = Dataset(qinit_original_rapid_qout_solution)
+    assert (d1.dimensions.keys() == d2.dimensions.keys())
+    assert (d1.variables.keys() == d2.variables.keys())
+    assert (d1.variables['time'][:] is np.ma.masked)
+    assert (d2.variables['time'][:] is np.ma.masked)
+    assert_array_equal(d1.variables['rivid'][:], d2.variables['rivid'][:])
+    assert_almost_equal(d1.variables['Qout'][:], d2.variables['Qout'][:])
+    d1.close()
+    d2.close()
 
     #test with CF rapid output and alternate time index
     cf_input_qout_file = os.path.join(COMPARE_DATA_PATH, 'Qout_nasa_lis_3hr_20020830_CF.nc')
     cf_qout_file = os.path.join(OUTPUT_DATA_PATH, 'Qout_nasa_lis_3hr_20020830_CF.nc')
     copy(cf_input_qout_file, cf_qout_file)
 
-    qinit_cf_rapid_qout = os.path.join(OUTPUT_DATA_PATH, 'qinit_cf_rapid_qout.csv')
+    qinit_cf_rapid_qout = os.path.join(OUTPUT_DATA_PATH, 'qinit_cf_rapid_qout.nc')
     rapid_manager.update_parameters(Qout_file=cf_qout_file)
     rapid_manager.generate_qinit_from_past_qout(qinit_file=qinit_cf_rapid_qout,
                                                 time_index=5)
+    qinit_cf_rapid_qout_solution = os.path.join(COMPARE_DATA_PATH, 'qinit_cf_rapid_qout.nc')
 
-    qinit_cf_rapid_qout_solution = os.path.join(COMPARE_DATA_PATH, 'qinit_cf_rapid_qout.csv')
-    assert (compare_csv_decimal_files(qinit_cf_rapid_qout, qinit_cf_rapid_qout_solution, header=False))
+    d1 = Dataset(qinit_cf_rapid_qout)
+    d2 = Dataset(qinit_cf_rapid_qout_solution)
+    assert (d1.dimensions.keys() == d2.dimensions.keys())
+    assert (d1.variables.keys() == d2.variables.keys())
+    assert_array_equal(d1.variables['time'][:], d2.variables['time'][:])
+    assert_array_equal(d1.variables['rivid'][:], d2.variables['rivid'][:])
+    assert_almost_equal(d1.variables['Qout'][:], d2.variables['Qout'][:])
+    d1.close()
+    d2.close()
 
     remove_files(original_qout_file,
                  qinit_original_rapid_qout,
@@ -495,6 +514,7 @@ def test_download_usgs_daily_avg():
 
     remove_files(out_streamflow_file,
                  out_stream_id_file)
+
 
 def test_extract_timeseries():
     """

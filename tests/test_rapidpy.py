@@ -325,7 +325,7 @@ def test_convert_file_to_be_cf_compliant_new_format_comid_lat_lon_z():
                           rapid_connect_file=os.path.join(INPUT_DATA_PATH, 'rapid_connect.csv'),
                           ZS_TauR=3*3600)
 
-    rapid_manager.make_output_CF_compliant(simulation_start_datetime=datetime(2002, 8, 30),
+    rapid_manager.make_output_cf_compliant(simulation_start_datetime=datetime(2002, 8, 30),
                                            comid_lat_lon_z_file=os.path.join(INPUT_DATA_PATH, 'comid_lat_lon_z.csv'),
                                            project_name="ERA Interim (T511 Grid) 3 Hourly Runoff Based Historical flows by US Army ERDC")
 
@@ -365,7 +365,7 @@ def test_convert_file_to_be_cf_compliant_new_format():
                           rapid_connect_file=os.path.join(INPUT_DATA_PATH, 'rapid_connect.csv'),
                           ZS_TauR=3*3600)
 
-    rapid_manager.make_output_CF_compliant(simulation_start_datetime=datetime(2002, 8, 30),
+    rapid_manager.make_output_cf_compliant(simulation_start_datetime=datetime(2002, 8, 30),
                                            comid_lat_lon_z_file="",
                                            project_name="ERA Interim (T511 Grid) 3 Hourly Runoff Based Historical flows by US Army ERDC")
 
@@ -403,7 +403,7 @@ def test_convert_file_to_be_cf_compliant_original_format():
                           rapid_connect_file=os.path.join(INPUT_DATA_PATH, 'rapid_connect.csv'),
                           ZS_TauR=3*3600)
 
-    rapid_manager.make_output_CF_compliant(simulation_start_datetime=datetime(2002, 8, 30),
+    rapid_manager.make_output_cf_compliant(simulation_start_datetime=datetime(2002, 8, 30),
                                            comid_lat_lon_z_file=os.path.join(INPUT_DATA_PATH, 'comid_lat_lon_z.csv'),
                                            project_name="ERA Interim (T511 Grid) 3 Hourly Runoff Based Historical flows by US Army ERDC")
 

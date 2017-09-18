@@ -906,7 +906,7 @@ def run_lsm_rapid_process(rapid_executable_location,
             if run_rapid_simulation:
                 rapid_manager.run()
 
-                rapid_manager.make_output_CF_compliant(
+                rapid_manager.make_output_cf_compliant(
                     simulation_start_datetime=actual_simulation_start_datetime,
                     comid_lat_lon_z_file=in_rivid_lat_lon_z_file,
                     project_name="{0} Based Historical flows by {1}".format(lsm_file_data['description'],

@@ -40,6 +40,7 @@ setup(
         'tests': [
             'pytest',
             'pytest-cov',
+            'coveralls'
         ],
         'docs': [
             'mock',

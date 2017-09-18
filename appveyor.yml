@@ -24,8 +24,6 @@ install:
   # Install required python packages
   - conda config --add channels conda-forge
   - conda install --yes cmake gdal future netcdf4 numpy pandas pangaea pyproj pytz requests rtree scipy shapely
-  - conda install --yes pytest-cov
-  - pip install coveralls
   - deactivate rapid
   #install cygwin
   - '%CYG_ROOT%\setup-x86_64.exe -qnNdO -R "%CYG_ROOT%" -s "%CYG_MIRROR%" -l "%CYG_CACHE%" -P dos2unix,gcc-core,gcc-g++,gcc-fortran,gdb,git,make,time,wget,gdal,libgdal-devel > NULL'
@@ -43,7 +41,7 @@ install:
   #Installing RAPIDpy
   - activate rapid
   - 'cd %APPVEYOR_BUILD_FOLDER%'
-  - python setup.py install
+  - pip install -e .[tests]
 
 build: false
 

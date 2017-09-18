@@ -1,28 +1,30 @@
 # -*- coding: utf-8 -*-
-#
-#  utilities.py
-#  RAPIDpy
-#
-#  Created by Alan D. Snow.
-#  Copyright © 2016 Alan D Snow. All rights reserved.
-#
+"""
+   utilities.py
+   RAPIDpy
+
+   Created by Alan D. Snow, 2016.
+   License BSD-3-Clause
+"""
 
 import os
-from past.builtins import xrange
 import re
 
+from past.builtins import xrange
 
-# ----------------------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
 # HELPER FUNCTIONS
-# ----------------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 def case_insensitive_file_search(directory, pattern):
     """
     Looks for file with pattern with case insensitive search
     """
     try:
-        return os.path.join(directory,
-                            [filename for filename in os.listdir(directory) \
-                             if re.search(pattern, filename, re.IGNORECASE)][0])
+        return os.path.join(
+            directory,
+            [filename for filename in os.listdir(directory) \
+             if re.search(pattern, filename, re.IGNORECASE)][0])
     except IndexError:
         print("{0} not found".format(pattern))
         raise

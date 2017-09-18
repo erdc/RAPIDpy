@@ -39,7 +39,7 @@ Step 5: Run RAPID
 Step 6 (optional): Convert RAPID output to be CF Compliant
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. automethod:: RAPIDpy.rapid.RAPID.make_output_CF_compliant
+.. automethod:: RAPIDpy.rapid.RAPID.make_output_cf_compliant
 
 
 Full API Description

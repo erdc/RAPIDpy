@@ -81,9 +81,8 @@ before_install:
 - git clone https://github.com/c-h-david/rapid.git --branch 20161221
 - cd rapid
 # Installing RAPID Prereqs
-- chmod +x rapid_install_prereqs.sh
-- ./rapid_install_prereqs.sh -i=$INSTALLZ_DIR
-- source ./rapid_specify_varpath.sh $INSTALLZ_DIR
+- bash rapid_install_prereqs.sh -i=$INSTALLZ_DIR
+- source rapid_specify_varpath.sh $INSTALLZ_DIR
 # Building RAPID
 - cd src
 - make rapid

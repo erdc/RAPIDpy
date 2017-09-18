@@ -1,2 +1,2 @@
 [MESSAGES CONTROL]
-disable=invalid-name, bad-continuation, too-many-lines, superfluous-parens
+disable=invalid-name, bad-continuation, too-many-lines, superfluous-parens, too-many-arguments, too-many-branches, too-many-statements, too-many-locals

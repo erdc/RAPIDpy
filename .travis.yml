@@ -110,9 +110,10 @@ install:
 #*******************************************************************************
 #Testing RAPIDpy
 #*******************************************************************************
-- cd $TRAVIS_BUILD_DIR/tests
 script:
 - py.test --cov-report term-missing --cov=RAPIDpy
+- flake8 RAPIDpy/rapid.py RAPIDpy/utilities.py
+- pylint RAPIDpy/rapid.py RAPIDpy/utilities.py
 ##ADD Coveralls stats for code coverage
 after_success:
 - coveralls

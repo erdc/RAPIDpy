@@ -85,6 +85,7 @@ class RAPID(object):
             ZS_dtM=24 * 3600
         )
     """
+    # pylint: disable=too-many-instance-attributes
     def __init__(self,
                  rapid_executable_location="",
                  num_processors=1,
@@ -612,7 +613,7 @@ class RAPID(object):
                     "INFO")
                 return
 
-        cv = ConvertRAPIDOutputToCF(
+        crv = ConvertRAPIDOutputToCF(
             rapid_output_file=self.Qout_file,
             start_datetime=simulation_start_datetime,
             time_step=self.ZS_TauR,
@@ -624,7 +625,7 @@ class RAPID(object):
             output_flow_var_name='Qout',
             print_debug=False
         )
-        cv.convert()
+        crv.convert()
 
     def run(self, rapid_namelist_file=""):
         """
@@ -720,6 +721,7 @@ class RAPID(object):
             rapid_manager.update_simulation_runtime()
             rapid_manager.run()
         """
+        # pylint: disable=no-member
         if not self._rapid_executable_location:
             log("Missing rapid_executable_location. "
                 "Please set before running this function ...",
@@ -939,8 +941,8 @@ class RAPID(object):
                 "INFO")
 
             time_indices = []
-            for idx, t in enumerate(qout_hist_nc.get_time_array()):
-                var_time = gmtime(t)
+            for idx, ttt in enumerate(qout_hist_nc.get_time_array()):
+                var_time = gmtime(ttt)
                 compare_yday = var_time.tm_yday
                 # move day back one past because of leap year adds
                 # a day after feb 29 (day 60)
@@ -1184,14 +1186,14 @@ class RAPID(object):
                 "INFO")
             np_array = np.array(gage_data_matrix).transpose()
             with open_csv(out_streamflow_file, 'w') as gage_data:
-                wf = csvwriter(gage_data)
+                wgd = csvwriter(gage_data)
                 for row in np_array:
-                    wf.writerow(row)
+                    wgd.writerow(row)
 
             with open_csv(out_stream_id_file, 'w') as comid_data:
-                cf = csvwriter(comid_data)
+                wcd = csvwriter(comid_data)
                 for row in valid_comid_list:
-                    cf.writerow([int(float(row))])
+                    wcd.writerow([int(float(row))])
 
             # set parameters for RAPID run
             self.IS_obs_tot = len(valid_comid_list)

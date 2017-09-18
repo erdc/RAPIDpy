@@ -64,8 +64,6 @@ before_install:
 #-----------------------------------------------------------------------------
 - conda config --add channels conda-forge
 - conda install --yes cmake gdal future netcdf4 numpy pandas pangaea pyproj pytz requests rtree scipy shapely
-- conda install --yes pytest-cov
-- pip install coveralls
 - source deactivate rapid
 
 #-------------------------------------------------------------------------------
@@ -106,14 +104,14 @@ before_install:
 #*******************************************************************************
 install:
 - cd $TRAVIS_BUILD_DIR
-- python setup.py install
+- pip install -e .[tests]
 #*******************************************************************************
 #Testing RAPIDpy
 #*******************************************************************************
 script:
 - py.test --cov-report term-missing --cov=RAPIDpy
-- flake8 RAPIDpy/rapid.py RAPIDpy/utilities.py
-- pylint RAPIDpy/rapid.py RAPIDpy/utilities.py
+- flake8 RAPIDpy/rapid.py RAPIDpy/utilities.py RAPIDpy/helper_functions.py
+- pylint RAPIDpy/rapid.py RAPIDpy/utilities.py RAPIDpy/helper_functions.py
 ##ADD Coveralls stats for code coverage
 after_success:
 - coveralls

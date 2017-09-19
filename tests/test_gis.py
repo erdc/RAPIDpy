@@ -383,26 +383,25 @@ def test_extract_sub_network_taudem():
     Checks extracting sub network from larger network
     """
     print("TEST 10: TEST EXTRACTING SUB NETWORK FROM LARGER NETWORK")
-    td = TauDEM()
 
     subset_network_file = os.path.join(OUTPUT_DATA_PATH, "DrainageLineSubset2.shp")
     #to extract a specific network
-    td.extractSubNetwork(network_file=os.path.join(GIS_INPUT_DATA_PATH, 'u-k', "DrainageLineSubset.shp"),
-                         out_subset_network_file=subset_network_file,
-                         outlet_ids=[42911], #list of outlet ids
-                         river_id_field="HydroID",
-                         next_down_id_field="NextDownID",
-                         river_magnitude_field="HydroID",
-                         safe_mode=False,
-                         )
+    TauDEM.extractSubNetwork(network_file=os.path.join(GIS_INPUT_DATA_PATH, 'u-k', "DrainageLineSubset.shp"),
+                             out_subset_network_file=subset_network_file,
+                             outlet_ids=[42911], #list of outlet ids
+                             river_id_field="HydroID",
+                             next_down_id_field="NextDownID",
+                             river_magnitude_field="HydroID",
+                             safe_mode=False)
 
     #to extract the subset watersheds using subset river network
     subset_watershed_file = os.path.join(OUTPUT_DATA_PATH,"CatchmentSubset2.shp")
-    td.extractSubsetFromWatershed(subset_network_file=subset_network_file,
-                                  subset_network_river_id_field="HydroID",
-                                  watershed_file=os.path.join(GIS_INPUT_DATA_PATH, 'u-k', 'CatchmentSubset.shp'),
-                                  watershed_network_river_id_field="DrainLnID",
-                                  out_watershed_subset_file=subset_watershed_file)
+    TauDEM.extractSubsetFromWatershed(
+        subset_network_file=subset_network_file,
+        subset_network_river_id_field="HydroID",
+        watershed_file=os.path.join(GIS_INPUT_DATA_PATH, 'u-k', 'CatchmentSubset.shp'),
+        watershed_network_river_id_field="DrainLnID",
+        out_watershed_subset_file=subset_watershed_file)
 
 
     #Test results
@@ -459,21 +458,19 @@ def test_add_length_to_network_taudem():
     Checks adding length to network
     """
     print("TEST 11: TEST ADD LENGTH TO NETWORK")
-    td = TauDEM()
-
     subset_network_file = os.path.join(OUTPUT_DATA_PATH, "DrainageLineSubset2.shp")
     #to extract a specific network
-    td.extractSubNetwork(network_file=os.path.join(GIS_INPUT_DATA_PATH, 'u-k', "DrainageLineSubset.shp"),
-                         out_subset_network_file=subset_network_file,
-                         outlet_ids=[42911], #list of outlet ids
-                         river_id_field="HydroID",
-                         next_down_id_field="NextDownID",
-                         river_magnitude_field="HydroID",
-                         safe_mode=False,
-                         )
+    TauDEM.extractSubNetwork(
+        network_file=os.path.join(GIS_INPUT_DATA_PATH, 'u-k', "DrainageLineSubset.shp"),
+        out_subset_network_file=subset_network_file,
+        outlet_ids=[42911], #list of outlet ids
+        river_id_field="HydroID",
+        next_down_id_field="NextDownID",
+        river_magnitude_field="HydroID",
+        safe_mode=False)
 
     #add length m field
-    td.addLengthMeters(subset_network_file)
+    TauDEM.addLengthMeters(subset_network_file)
 
     #Test results
     subset_network_shapefile = ogr.Open(subset_network_file)

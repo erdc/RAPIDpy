@@ -564,7 +564,7 @@ def test_extract_timeseries():
                                    date_search_start=datetime(2002, 8, 31),
                                    date_search_end=datetime(2002, 8, 31, 23, 59, 59),
                                    daily=True,
-                                   mode='max')
+                                   filter_mode='max')
 
     cf_timeseries_daily_date_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_timeseries_daily_date.csv')
     assert (compare_csv_timeseries_files(cf_timeseries_daily_date_file, cf_timeseries_daily_date_file_solution, header=False))
@@ -731,7 +731,7 @@ def test_extract_timeseries_to_gssha_xys():
                                                      date_search_start=datetime(2002, 8, 31),
                                                      date_search_end=datetime(2002, 8, 31, 23, 59, 59),
                                                      daily=True,
-                                                     mode='max')
+                                                     filter_mode='max')
 
     cf_timeseries_daily_date_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_timeseries_daily_date.xys')
     assert (compare_csv_timeseries_files(cf_timeseries_daily_date_file, cf_timeseries_daily_date_file_solution))
@@ -800,7 +800,7 @@ def test_extract_timeseries_to_gssha_ihg():
                                                      date_search_start=datetime(2002, 8, 31),
                                                      date_search_end=datetime(2002, 8, 31, 23, 59, 59),
                                                      daily=True,
-                                                     mode='max')
+                                                     filter_mode='max')
 
     cf_timeseries_daily_date_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_timeseries_daily_date.ihg')
     assert (compare_csv_timeseries_files(cf_timeseries_daily_date_file, cf_timeseries_daily_date_file_solution, header=False))
@@ -817,7 +817,6 @@ def test_extract_timeseries_to_gssha_ihg():
 
     cf_timeseries_date_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_timeseries_date.ihg')
     assert (compare_csv_timeseries_files(cf_timeseries_date_file, cf_timeseries_date_file_solution, header=False))
-
     remove_files(cf_timeseries_file,
                  cf_qout_file,
                  cf_timeseries_daily_file,
@@ -872,7 +871,7 @@ def test_extract_timeseries_to_gssha_ihg_tzinfo():
                                                      date_search_start=datetime(2002, 8, 31),
                                                      date_search_end=datetime(2002, 8, 31, 23, 59, 59),
                                                      daily=True,
-                                                     mode='max')
+                                                     filter_mode='max')
 
     cf_timeseries_daily_date_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_timeseries_daily_date_tz.ihg')
     assert (compare_csv_timeseries_files(cf_timeseries_daily_date_file, cf_timeseries_daily_date_file_solution, header=False))

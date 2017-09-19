@@ -41,6 +41,8 @@ setup(
             'pytest',
             'pytest-cov',
             'coveralls'
+            'pylint',
+            'flake8',
         ],
         'docs': [
             'mock',

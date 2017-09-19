@@ -301,7 +301,7 @@ class RAPIDDataset(object):
         datetime_simulation_start: :obj:`datetime.datetime`, optional
             The start datetime of the simulation. Only required if the time
             variable is not included in the file.
-        simulation_time_step_sections: int, optional
+        simulation_time_step_seconds: int, optional
             The time step of the file in seconds. Only required if the time
             variable is not included in the file.
         return_datetime: bool, optional
@@ -666,6 +666,9 @@ class RAPIDDataset(object):
         filter_mode: str, optional
             You can get the daily average "mean" or the maximum "max".
             Default is "mean".
+        as_dataframe: bool, optional
+            Return as a pandas dataframe object. Default is False.
+
 
         Returns
         -------

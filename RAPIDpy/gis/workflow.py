@@ -13,7 +13,7 @@ from .network import (CreateNetworkConnectivity,
                       CreateNetworkConnectivityTauDEMTree,
                       CreateNetworkConnectivityNHDPlus,
                       CreateSubsetFile)
-from .muskingum import (CreateMuskingumKfacFile, CreateMuskingumKFile, 
+from .muskingum import (CreateMuskingumKfacFile, CreateMuskingumKFile,
                         CreateConstMuskingumXFile)
 from .weight import CreateWeightTableECMWF
 from .centroid import FlowlineToPoint
@@ -82,7 +82,7 @@ def CreateAllStaticRAPIDFiles(in_drainage_line,
 
 
     Example::
-    
+
         from RAPIDpy.gis.workflow import CreateAllStaticRAPIDFiles
 
         CreateAllStaticRAPIDFiles(
@@ -110,11 +110,11 @@ def CreateAllStaticRAPIDFiles(in_drainage_line,
                                   next_down_id,
                                   rapid_connect_file,
                                   file_geodatabase)
-        
+
     # river basin id file
     riv_bas_id_file = os.path.join(rapid_output_folder, 'riv_bas_id.csv')
     CreateSubsetFile(in_drainage_line,
-                     river_id, 
+                     river_id,
                      riv_bas_id_file,
                      file_geodatabase)
     # kfac file
@@ -157,7 +157,7 @@ def CreateAllStaticECMWFFiles(in_catchment,
     """
     This creates all of the ECMWF grid weight tables using an area
     weighted method based on Esri's RAPID_Toolbox.
-    
+
     Parameters
     ----------
     in_catchment: str
@@ -175,7 +175,7 @@ def CreateAllStaticECMWFFiles(in_catchment,
 
 
     Example::
-    
+
         from RAPIDpy.gis.workflow import CreateAllStaticECMWFFiles
 
         CreateAllStaticECMWFFiles(
@@ -194,10 +194,10 @@ def CreateAllStaticECMWFFiles(in_catchment,
         os.path.join(lsm_grid_folder, 'runoff_ecmwf_t1279_grid.nc')
     weight_ecmwf_t1279_file = \
         os.path.join(rapid_output_folder, 'weight_ecmwf_t1279.csv')
-    CreateWeightTableECMWF(ecmwf_t1279_grid_file, 
-                           in_catchment, 
+    CreateWeightTableECMWF(ecmwf_t1279_grid_file,
+                           in_catchment,
                            catchment_river_id,
-                           rapid_connect_file, 
+                           rapid_connect_file,
                            weight_ecmwf_t1279_file,
                            file_geodatabase=file_geodatabase)
 
@@ -206,10 +206,10 @@ def CreateAllStaticECMWFFiles(in_catchment,
         os.path.join(lsm_grid_folder, 'runoff_ecmwf_tco639_grid.nc')
     weight_ecmwf_tco639_file = \
         os.path.join(rapid_output_folder, 'weight_ecmwf_tco639.csv')
-    CreateWeightTableECMWF(ecmwf_tco639_grid_file, 
-                           in_catchment, 
+    CreateWeightTableECMWF(ecmwf_tco639_grid_file,
+                           in_catchment,
                            catchment_river_id,
-                           rapid_connect_file, 
+                           rapid_connect_file,
                            weight_ecmwf_tco639_file,
                            file_geodatabase=file_geodatabase)
 
@@ -218,10 +218,10 @@ def CreateAllStaticECMWFFiles(in_catchment,
         os.path.join(lsm_grid_folder, 'runoff_era_t511_grid.nc')
     weight_era_t511_file = \
         os.path.join(rapid_output_folder, 'weight_era_t511.csv')
-    CreateWeightTableECMWF(era_t511_grid_file, 
-                           in_catchment, 
+    CreateWeightTableECMWF(era_t511_grid_file,
+                           in_catchment,
                            catchment_river_id,
-                           rapid_connect_file, 
+                           rapid_connect_file,
                            weight_era_t511_file,
                            file_geodatabase=file_geodatabase)
 
@@ -244,7 +244,7 @@ def CreateAllStaticECMWFRAPIDFiles(in_drainage_line,
                                    file_geodatabase=None):
     """
     This creates all of the static RAPID files and ECMWF grid weight tables.
-    
+
     Parameters
     ----------
     in_drainage_line: str
@@ -294,7 +294,7 @@ def CreateAllStaticECMWFRAPIDFiles(in_drainage_line,
 
 
     Example::
-    
+
         from RAPIDpy.gis.workflow import CreateAllStaticECMWFRAPIDFiles
 
         CreateAllStaticECMWFRAPIDFiles(

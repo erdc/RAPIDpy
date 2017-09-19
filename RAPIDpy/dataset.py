@@ -840,7 +840,8 @@ class RAPIDDataset(object):
             If True and the file is CF-Compliant, write out daily flows.
         filter_mode: str, optional
             You can get the daily average "mean" or the maximum "max".
-            Defauls is "mean".
+            Default is "mean".
+
 
         Example writing entire time series to file:
 

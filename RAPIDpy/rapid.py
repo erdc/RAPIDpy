@@ -32,8 +32,8 @@ class RAPID(object):
     This class is designed to prepare the rapid_namelist file and run
     the RAPID program. There are also other utilities added.
 
-    Attributes:
-    -----------
+    Attributes
+    ----------
     rapid_executable_location: str, optional
         Path to the RAPID executable location.
     num_processors: int, optional
@@ -51,8 +51,8 @@ class RAPID(object):
     **kwargs: str, optional
         Keyword arguments matching the input parameters in the RAPID namelist.
 
+
     Linux Example:
-    --------------
 
     .. code:: python
 
@@ -67,8 +67,8 @@ class RAPID(object):
             ZS_dtM=24 * 3600
         )
 
+
     Windows with Cygwin Example:
-    ----------------------------
 
     .. code:: python
 
@@ -84,6 +84,7 @@ class RAPID(object):
             ZS_TauM=365 * 24 * 3600,
             ZS_dtM=24 * 3600
         )
+
     """
     # pylint: disable=too-many-instance-attributes
     def __init__(self,
@@ -298,14 +299,14 @@ class RAPID(object):
         You can add or update rapid namelist parameters by using the name of
         the variable in the rapid namelist file (this is case sensitive).
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         **kwargs: str, optional
             Keyword arguments matching the input parameters
             in the RAPID namelist.
 
+
         Example:
-        --------
 
         .. code:: python
 
@@ -345,8 +346,8 @@ class RAPID(object):
         .. warning:: You need to make sure you set *rapid_connect_file*
                      and *riv_bas_id_file* before running this function.
 
+
         Example:
-        --------
 
         .. code:: python
 
@@ -361,7 +362,6 @@ class RAPID(object):
 
 
         Example with forcing data:
-        --------------------------
 
         .. code:: python
 
@@ -434,6 +434,7 @@ class RAPID(object):
         .. warning:: You need to set the m3 file (Vlat_file) and the
                      time step (ZS_TauR) before runnning this function.
 
+
         Example:
 
         .. code:: python
@@ -469,8 +470,8 @@ class RAPID(object):
         """
         Generate rapid_namelist file.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         rapid_namelist_file: str
             Path of namelist file to generate from
             parameters added to the RAPID manager.
@@ -504,8 +505,8 @@ class RAPID(object):
         """
         Update existing namelist file with new parameters
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         rapid_namelist_file: str
             Path of namelist file to use in the simulation. It will be
             updated with any parameters added to the RAPID manager.
@@ -567,8 +568,8 @@ class RAPID(object):
 
         .. warning:: This will delete your original Qout file.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         simulation_start_datetime: datetime
             Datetime object with the start date of the simulation.
         comid_lat_lon_z_file: str, optional
@@ -577,8 +578,8 @@ class RAPID(object):
         project_name: str, optional
             Name of project to add to the RAPID output file.
 
+
         Example:
-        --------
 
         .. code:: python
 
@@ -606,6 +607,7 @@ class RAPID(object):
                 comid_lat_lon_z_file='../rapid-io/input/comid_lat_lon_z.csv',
                 project_name="ERA Interim Historical flows by US Army ERDC"
             )
+
         """
         with RAPIDDataset(self.Qout_file) as qout_nc:
             if qout_nc.is_time_variable_valid():
@@ -633,14 +635,14 @@ class RAPID(object):
         This will generate your rapid_namelist file and run RAPID from wherever
         you call this script (your working directory).
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         rapid_namelist_file: str, optional
             Path of namelist file to use in the simulation.
             It will be updated with any parameters added to the RAPID manager.
 
+
         Linux Example:
-        --------------
 
         .. code:: python
 
@@ -665,8 +667,8 @@ class RAPID(object):
             rapid_manager.run(
                 rapid_namelist_file='../rapid-io/input/rapid_namelist')
 
+
         Linux Reservoir Forcing Flows Example:
-        --------------------------------------
 
         .. code:: python
 
@@ -688,7 +690,6 @@ class RAPID(object):
                 rapid_namelist_file='../rapid-io/input/rapid_namelist_regular')
 
         Windows with Cygwin Example:
-        ----------------------------
 
         .. code:: python
 
@@ -803,18 +804,18 @@ class RAPID(object):
         """
         Generate qinit from a RAPID qout file
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         qinit_file: str
             Path to output qinit_file.
         time_index: int, optional
             Index of simulation to generate initial flow file.
             Default is the last index.
-        out_datetime: datetime, optional
+        out_datetime: :obj:`datetime.datetime`, optional
             Datetime object containing time of initialization.
 
+
         Example:
-        --------
 
         .. code:: python
 
@@ -829,6 +830,7 @@ class RAPID(object):
                 qinit_file='/input_mississippi_nfie/Qinit_2008_flood.csv',
                 time_index=10162
             )
+
         """
         if not self.Qout_file or not os.path.exists(self.Qout_file):
             log('Missing Qout_file. '
@@ -882,24 +884,22 @@ class RAPID(object):
         qinit_file,
         datetime_start_initialization=datetime.datetime.utcnow()
     ):
-        """
-        This creates a seasonal qinit file from a RAPID qout file. This
+        """This creates a seasonal qinit file from a RAPID qout file. This
         requires a simulation Qout file with a longer time period of record and
         to be CF compliant. It takes the average of the current date +- 3 days
         and goes back as far as possible.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         qinit_file: str
             Path to output qinit_file.
-        datetime_start_initialization: datetime, optional
+        datetime_start_initialization: :obj:`datetime.datetime`, optional
             Datetime object with date of simulation to go back through the
             years and get a running average to generate streamflow
             initialization. Default is utcnow.
 
 
         Example:
-        --------
 
         .. code:: python
 
@@ -999,8 +999,8 @@ class RAPID(object):
         calibration or for substituting flows based on USGS gage ids
         associated with stream ids.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         reach_id_gage_id_file: str
             Path to reach_id_gage_id file.
         start_datetime: datetime
@@ -1012,6 +1012,7 @@ class RAPID(object):
         out_stream_id_file: str
             The path to output the stream ID file associated with the
             streamflow file for RAPID.
+
 
         Example *reach_id_gage_id_file*::
 
@@ -1029,8 +1030,8 @@ class RAPID(object):
         .. warning:: The code skips gages that do not have data
                      for the entire time period.
 
+
         Simple Example:
-        ---------------
 
         .. code:: python
 
@@ -1051,7 +1052,6 @@ class RAPID(object):
 
 
         Complex Example:
-        ----------------
 
         .. code:: python
 

@@ -110,8 +110,8 @@ install:
 #*******************************************************************************
 script:
 - py.test --cov-report term-missing --cov=RAPIDpy
-- flake8 RAPIDpy/rapid.py RAPIDpy/utilities.py RAPIDpy/helper_functions.py
-- pylint RAPIDpy/rapid.py RAPIDpy/utilities.py RAPIDpy/helper_functions.py
+- flake8 RAPIDpy/rapid.py RAPIDpy/utilities.py RAPIDpy/helper_functions.py RAPIDpy/dataset.py
+- pylint RAPIDpy/rapid.py RAPIDpy/utilities.py RAPIDpy/helper_functions.py RAPIDpy/dataset.py
 ##ADD Coveralls stats for code coverage
 after_success:
 - coveralls

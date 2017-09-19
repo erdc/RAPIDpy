@@ -9,11 +9,11 @@
 from csv import writer as csv_writer
 import datetime
 
-from netCDF4 import Dataset, num2date
+from netCDF4 import Dataset, num2date  # pylint: disable=no-name-in-module
 import numpy as np
 from numpy.ma import is_masked
 import pandas as pd
-from past.builtins import xrange
+from past.builtins import xrange  # pylint: disable=redefined-builtin
 from pytz import utc
 
 from .helper_functions import log, open_csv
@@ -70,7 +70,7 @@ def compare_qout_files(dataset1_path, dataset2_path):
                 if decimal_test <= 1:
                     print(ex)
                 decimal_test -= 1
-                pass
+
         log("Number of different timeseries: {0}".format(len(un_where_diff)),
             "INFO")
         log("COMID idexes where different: {0}".format(un_where_diff),
@@ -134,6 +134,7 @@ class RAPIDDataset(object):
             #USE FUNCTIONS TO ACCESS DATA HERE
 
     """
+    # pylint: disable=too-many-instance-attributes
     def __init__(self, filename,
                  river_id_dimension="",
                  river_id_variable="",
@@ -227,6 +228,7 @@ class RAPIDDataset(object):
         self.close()
 
     def close(self):
+        """Close the dataset."""
         self.qout_nc.close()
 
     def _is_legacy_time_valid(self):
@@ -262,6 +264,7 @@ class RAPIDDataset(object):
                     #DO WORK HERE
 
         """
+        # pylint: disable=len-as-condition
         time_var_valid = False
         if 'time' in self.qout_nc.variables.keys():
             if len(self.qout_nc.dimensions['time']) > 0:
@@ -608,7 +611,6 @@ class RAPIDDataset(object):
                 print("WARNING: ReachID {0} not found in netCDF dataset."
                       " Skipping ...".format(river_id))
                 missing_river_ids.append(river_id)
-                pass
 
         np_valid_river_indices_list = np.array(netcdf_river_indices_list)
         np_valid_river_ids = np.array(valid_river_ids)
@@ -813,7 +815,7 @@ class RAPIDDataset(object):
         """
         Write out RAPID output to CSV file.
 
-        .. note:: Need either *reach\_id* or *reach\_index* parameter,
+        .. note:: Need either *reach_id* or *reach_index* parameter,
                   but either can be used.
 
         Parameters
@@ -1068,6 +1070,7 @@ class RAPIDDataset(object):
                                              date_search_end=None,
                                              daily=False,
                                              filter_mode="mean"):
+        # pylint: disable=line-too-long
         """
         Write out RAPID output to GSSHA time series ihg file
 
@@ -1101,6 +1104,7 @@ class RAPIDDataset(object):
             599, 1, 0.0, 80968
             603, 1, 0.0, 80967
 
+
         Example writing entire time series to file:
 
         .. code:: python
@@ -1112,9 +1116,10 @@ class RAPIDDataset(object):
 
             with RAPIDDataset(path_to_rapid_qout) as qout_nc:
                 #for writing entire time series to file
-                qout_nc.write_flows_to_gssha_time_series_ihg('/timeseries/Qout_3624735.ihg',
-                                                             connection_list_file,
-                                                             )
+                qout_nc.write_flows_to_gssha_time_series_ihg(
+                    '/timeseries/Qout_3624735.ihg',
+                    connection_list_file)
+
 
         Example writing entire time series as daily average to file:
 
@@ -1127,10 +1132,10 @@ class RAPIDDataset(object):
 
             with RAPIDDataset(path_to_rapid_qout) as qout_nc:
                 # if file is CF compliant, you can write out daily average
-                qout_nc.write_flows_to_gssha_time_series_ihg('/timeseries/Qout_3624735.ihg',
-                                                             connection_list_file,
-                                                             daily=True,
-                                                             )
+                qout_nc.write_flows_to_gssha_time_series_ihg(
+                    '/timeseries/Qout_3624735.ihg',
+                    connection_list_file,
+                    daily=True)
 
 
         Example writing subset of time series as daily maximum to file:
@@ -1144,15 +1149,16 @@ class RAPIDDataset(object):
             connection_list_file = '/path/to/connection_list_file.csv'
 
             with RAPIDDataset(path_to_rapid_qout) as qout_nc:
-                # if file is CF compliant, you can filter by date and get daily values
-                qout_nc.write_flows_to_gssha_time_series_ihg('/timeseries/Qout_daily_date_filter.ihg',
-                                                             connection_list_file,
-                                                             date_search_start=datetime(2002, 8, 31),
-                                                             date_search_end=datetime(2002, 9, 15),
-                                                             daily=True,
-                                                             filter_mode="max"
-                                                             )
-        """
+                # if file is CF compliant, you can filter by
+                # date and get daily values
+                qout_nc.write_flows_to_gssha_time_series_ihg(
+                    '/timeseries/Qout_daily_date_filter.ihg',
+                    connection_list_file,
+                    date_search_start=datetime(2002, 8, 31),
+                    date_search_end=datetime(2002, 9, 15),
+                    daily=True,
+                    filter_mode="max")
+        """  # noqa
         # analyze and write
         if not (self.is_time_variable_valid() or self._is_legacy_time_valid()):
             raise IndexError(
@@ -1160,57 +1166,57 @@ class RAPIDDataset(object):
                 " variable required in Qout file to proceed ...")
 
         with open_csv(path_to_output_file, 'w') as out_ts:
-                # HEADER SECTION EXAMPLE:
-                # NUMPT 3
-                # POINT 1 599 0.0
-                # POINT 1 603 0.0
-                # POINT 1 605 0.0
+            # HEADER SECTION EXAMPLE:
+            # NUMPT 3
+            # POINT 1 599 0.0
+            # POINT 1 603 0.0
+            # POINT 1 605 0.0
 
-                connection_list = np.loadtxt(connection_list_file,
-                                             skiprows=1, ndmin=1,
-                                             delimiter=',',
-                                             usecols=(0, 1, 2, 3),
-                                             dtype={'names': ('link_id',
-                                                              'node_id',
-                                                              'baseflow',
-                                                              'rapid_rivid'),
-                                                    'formats': ('i8', 'i8',
-                                                                'f4', 'i8')
-                                                    },
-                                             )
+            connection_list = np.loadtxt(connection_list_file,
+                                         skiprows=1, ndmin=1,
+                                         delimiter=',',
+                                         usecols=(0, 1, 2, 3),
+                                         dtype={'names': ('link_id',
+                                                          'node_id',
+                                                          'baseflow',
+                                                          'rapid_rivid'),
+                                                'formats': ('i8', 'i8',
+                                                            'f4', 'i8')
+                                                },
+                                         )
 
-                out_ts.write("NUMPT {0}\n".format(connection_list.size))
+            out_ts.write("NUMPT {0}\n".format(connection_list.size))
 
-                river_idx_list = []
-                for connection in connection_list:
-                    out_ts.write("POINT {0} {1} {2}\n"
-                                 "".format(connection['node_id'],
-                                           connection['link_id'],
-                                           connection['baseflow'],
-                                           ),
-                                 )
-                    river_idx_list.append(
-                        self.get_river_index(connection['rapid_rivid'])
-                        )
+            river_idx_list = []
+            for connection in connection_list:
+                out_ts.write("POINT {0} {1} {2}\n"
+                             "".format(connection['node_id'],
+                                       connection['link_id'],
+                                       connection['baseflow'],
+                                       ),
+                             )
+                river_idx_list.append(
+                    self.get_river_index(connection['rapid_rivid'])
+                    )
 
-                # INFLOW SECTION EXAMPLE:
-                # NRPDS 54
-                # INPUT 2002 01 01 00 00 15.551210 12.765090 0.000000
-                # INPUT 2002 01 02 00 00 15.480830 12.765090 0.000000
-                # INPUT 2002 01 03 00 00 16.078910 12.765090 0.000000
-                # ...
-                qout_df = self.get_qout_index(
-                    river_idx_list,
-                    date_search_start=date_search_start,
-                    date_search_end=date_search_end,
-                    daily=daily,
-                    filter_mode=filter_mode,
-                    as_dataframe=True)
+            # INFLOW SECTION EXAMPLE:
+            # NRPDS 54
+            # INPUT 2002 01 01 00 00 15.551210 12.765090 0.000000
+            # INPUT 2002 01 02 00 00 15.480830 12.765090 0.000000
+            # INPUT 2002 01 03 00 00 16.078910 12.765090 0.000000
+            # ...
+            qout_df = self.get_qout_index(
+                river_idx_list,
+                date_search_start=date_search_start,
+                date_search_end=date_search_end,
+                daily=daily,
+                filter_mode=filter_mode,
+                as_dataframe=True)
 
-                out_ts.write("NRPDS {0}\n".format(len(qout_df.index)))
+            out_ts.write("NRPDS {0}\n".format(len(qout_df.index)))
 
-                for index, pd_row in qout_df.iterrows():
-                    date_str = index.strftime("%Y %m %d %H %M")
-                    qout_str = " ".join(["{0:.5f}".format(pd_row[column])
-                                         for column in qout_df])
-                    out_ts.write("INPUT {0} {1}\n".format(date_str, qout_str))
+            for index, pd_row in qout_df.iterrows():
+                date_str = index.strftime("%Y %m %d %H %M")
+                qout_str = " ".join(["{0:.5f}".format(pd_row[column])
+                                     for column in qout_df])
+                out_ts.write("INPUT {0} {1}\n".format(date_str, qout_str))

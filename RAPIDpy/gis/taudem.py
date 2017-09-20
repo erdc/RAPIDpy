@@ -531,7 +531,7 @@ class TauDEM(object):
         (The added field name will be 'LENGTH_M').
 
         .. note:: This may be needed for generating the kfac file
-        depending on the units of your raster. See: :doc:`gis_tools`.
+                  depending on the units of your raster. See: :doc:`gis_tools`.
 
         Parameters
         ----------

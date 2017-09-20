@@ -11,11 +11,12 @@ from csv import writer as csv_writer
 
 
 import numpy as np
-from osgeo import gdal, ogr
+from osgeo import gdal
 from past.builtins import xrange  # pylint: disable=redefined-builtin
 
 # local
 from ..helper_functions import log, open_csv
+from . import open_shapefile
 
 # Enable GDAL/OGR exceptions
 gdal.UseExceptions()
@@ -95,15 +96,8 @@ def CreateNetworkConnectivity(in_drainage_line,
             out_connectivity_file='/path/to/rapid_connect.csv')
 
     """
-    if file_geodatabase:
-        gdb_driver = ogr.GetDriverByName("OpenFileGDB")
-        ogr_file_geodatabase = gdb_driver.Open(file_geodatabase, 0)
-        ogr_drainage_line_shapefile_lyr = \
-            ogr_file_geodatabase.GetLayer(in_drainage_line)
-    else:
-        ogr_drainage_line_shapefile = ogr.Open(in_drainage_line)
-        ogr_drainage_line_shapefile_lyr = \
-            ogr_drainage_line_shapefile.GetLayer()
+    ogr_drainage_line_shapefile_lyr, ogr_drainage_line_shapefile = \
+        open_shapefile(in_drainage_line, file_geodatabase)
 
     stream_id_array = []
     next_down_id_array = []
@@ -117,6 +111,8 @@ def CreateNetworkConnectivity(in_drainage_line,
     StreamIDNextDownIDToConnectivity(stream_id_array,
                                      next_down_id_array,
                                      out_connectivity_file)
+
+    del ogr_drainage_line_shapefile
 
 
 def CreateNetworkConnectivityTauDEMTree(network_connectivity_tree_file,
@@ -172,15 +168,8 @@ def CreateNetworkConnectivityNHDPlus(in_drainage_line,
             out_connectivity_file='/path/to/rapid_connect.csv')
 
     """
-    if file_geodatabase:
-        gdb_driver = ogr.GetDriverByName("OpenFileGDB")
-        ogr_file_geodatabase = gdb_driver.Open(file_geodatabase, 0)
-        ogr_drainage_line_shapefile_lyr = \
-            ogr_file_geodatabase.GetLayer(in_drainage_line)
-    else:
-        ogr_drainage_line_shapefile = ogr.Open(in_drainage_line)
-        ogr_drainage_line_shapefile_lyr = \
-            ogr_drainage_line_shapefile.GetLayer()
+    ogr_drainage_line_shapefile_lyr, ogr_drainage_line_shapefile = \
+        open_shapefile(in_drainage_line, file_geodatabase)
 
     ogr_drainage_line_definition = \
         ogr_drainage_line_shapefile_lyr.GetLayerDefn()
@@ -224,6 +213,7 @@ def CreateNetworkConnectivityNHDPlus(in_drainage_line,
         divergence_list[feature_idx] = \
             catchment_feature.GetField(divergence_field)
 
+    del ogr_drainage_line_shapefile
     # -------------------------------------------------------------------------
     # Compute connectivity, based on:
     # https://github.com/c-h-david/rrr/blob/master/src/rrr_riv_tot_gen_all_nhdplus.py
@@ -291,15 +281,8 @@ def CreateSubsetFile(in_drainage_line,
             out_riv_bas_id_file='/path/to/riv_bas_id.csv')
 
     """
-    if file_geodatabase:
-        gdb_driver = ogr.GetDriverByName("OpenFileGDB")
-        ogr_file_geodatabase = gdb_driver.Open(file_geodatabase, 0)
-        ogr_drainage_line_shapefile_lyr = \
-            ogr_file_geodatabase.GetLayer(in_drainage_line)
-    else:
-        ogr_drainage_line_shapefile = ogr.Open(in_drainage_line)
-        ogr_drainage_line_shapefile_lyr = \
-            ogr_drainage_line_shapefile.GetLayer()
+    ogr_drainage_line_shapefile_lyr, ogr_drainage_line_shapefile = \
+        open_shapefile(in_drainage_line, file_geodatabase)
 
     ogr_drainage_line_definition = \
         ogr_drainage_line_shapefile_lyr.GetLayerDefn()
@@ -326,6 +309,8 @@ def CreateSubsetFile(in_drainage_line,
         hydroid_list.append(drainage_line_feature.GetField(river_id))
         if sort_field:
             hydroseq_list.append(drainage_line_feature.GetField(sort_field))
+
+    del ogr_drainage_line_shapefile
 
     hydroid_list = np.array(hydroid_list, dtype=np.int32)
     if hydroseq_list:

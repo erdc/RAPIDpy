@@ -467,7 +467,7 @@ class TauDEM(object):
                                          self_mask=True)
 
         log("Time to convert to polygon: {0}"
-              .format(datetime.utcnow()-time_start))
+            .format(datetime.utcnow()-time_start))
 
         log("Dissolving ...")
         time_start_dissolve = datetime.utcnow()
@@ -521,9 +521,9 @@ class TauDEM(object):
         # clean up
         shp_drv.DeleteDataSource(temp_polygon_file)
         log("Time to dissolve: {0}".format(datetime.utcnow() -
-                                             time_start_dissolve))
+                                           time_start_dissolve))
         log("Total time to convert: {0}".format(datetime.utcnow() -
-                                                  time_start))
+                                                time_start))
 
     @staticmethod
     def addLengthMeters(stream_network):
@@ -961,4 +961,4 @@ class TauDEM(object):
             os.path.join(output_directory, 'watershed_shapefile.shp')
         self.rasterToPolygon(out_watershed_grid, out_watershed_shapefile)
         log("Total time to complete: {0}".format(datetime.utcnow() -
-                                                   time_start))
+                                                 time_start))

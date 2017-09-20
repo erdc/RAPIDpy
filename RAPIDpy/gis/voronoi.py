@@ -13,6 +13,8 @@ from osgeo import ogr, osr
 from scipy.spatial import Voronoi  # pylint: disable=no-name-in-module
 from shapely.geometry import Polygon
 
+from ..helper_functions import log
+
 
 def _get_voronoi_centroid_array(lsm_lat_array, lsm_lon_array, extent):
     """
@@ -151,8 +153,8 @@ def pointsToVoronoiGridShapefile(lat, lon, vor_shp_path, extent=None):
     voronoi_centroids = _get_voronoi_centroid_array(lat, lon, extent)
 
     # set-up output polygon shp
-    print("Creating output polygon shp {0}"
-          .format(os.path.basename(vor_shp_path)))
+    log("Creating output polygon shp {0}"
+        .format(os.path.basename(vor_shp_path)))
     if os.path.exists(vor_shp_path):
         os.remove(vor_shp_path)
     drv = ogr.GetDriverByName('ESRI Shapefile')
@@ -167,7 +169,7 @@ def pointsToVoronoiGridShapefile(lat, lon, vor_shp_path, extent=None):
     # find nodes surrounding polygon centroid
     # sort nodes in counterclockwise order
     # create polygon perimeter through nodes
-    print("Building Voronoi polygons...")
+    log("Building Voronoi polygons...")
     # compute voronoi
     voronoi_manager = Voronoi(voronoi_centroids)
     voronoi_vertices = voronoi_manager.vertices
@@ -203,7 +205,7 @@ def pointsToVoronoiGridArray(lat, lon, extent=None):
     # find nodes surrounding polygon centroid
     # sort nodes in counterclockwise order
     # create polygon perimeter through nodes
-    print("Building Voronoi polygons...")
+    log("Building Voronoi polygons...")
     # compute voronoi
     voronoi_manager = Voronoi(voronoi_centroids)
     voronoi_vertices = voronoi_manager.vertices

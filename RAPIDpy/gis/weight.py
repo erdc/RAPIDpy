@@ -22,7 +22,7 @@ from osgeo import gdal, ogr, osr
 
 # local
 from .voronoi import pointsToVoronoiGridArray
-from ..helper_functions import open_csv
+from ..helper_functions import log, open_csv
 
 gdal.UseExceptions()
 
@@ -94,7 +94,7 @@ def rtree_create_weight_table(lsm_grid_lat, lsm_grid_lon,
         lsm_grid_lat = lsm_grid_lat[0]
         lsm_grid_lon = lsm_grid_lon[0]
 
-    print("Generating LSM Grid Thiessen Array ...")
+    log("Generating LSM Grid Thiessen Array ...")
     if file_geodatabase:
         gdb_driver = ogr.GetDriverByName("OpenFileGDB")
         ogr_file_geodatabase = gdb_driver.Open(file_geodatabase, 0)
@@ -129,18 +129,18 @@ def rtree_create_weight_table(lsm_grid_lat, lsm_grid_lon,
 #                                 vor_shp_path, extent)
 
     time_end_lsm_grid_thiessen = datetime.utcnow()
-    print(time_end_lsm_grid_thiessen - time_start_all)
+    log(time_end_lsm_grid_thiessen - time_start_all)
 
-    print("Generating LSM Grid Rtree ...")
+    log("Generating LSM Grid Rtree ...")
     rtree_idx = rtree.index.Index()
     # Populate R-tree index with bounds of ECMWF grid cells
     for lsm_grid_pos, lsm_grid_feature in enumerate(lsm_grid_feature_list):
         rtree_idx.insert(lsm_grid_pos, lsm_grid_feature['polygon'].bounds)
 
     time_end_lsm_grid_rtree = datetime.utcnow()
-    print(time_end_lsm_grid_rtree - time_end_lsm_grid_thiessen)
+    log(time_end_lsm_grid_rtree - time_end_lsm_grid_thiessen)
 
-    print("Retrieving catchment river id list ...")
+    log("Retrieving catchment river id list ...")
     number_of_catchment_features = \
         ogr_catchment_shapefile_lyr.GetFeatureCount()
     catchment_rivid_list = \
@@ -150,14 +150,14 @@ def rtree_create_weight_table(lsm_grid_lat, lsm_grid_lon,
         catchment_rivid_list[feature_idx] = \
             catchment_feature.GetField(river_id)
 
-    print("Reading in RAPID connect file ...")
+    log("Reading in RAPID connect file ...")
     rapid_connect_rivid_list = np.loadtxt(in_rapid_connect,
                                           delimiter=",",
                                           usecols=(0,),
                                           ndmin=1,
                                           dtype=int)
-    print("Find LSM grid cells that intersect with each catchment")
-    print("and write out weight table ...")
+    log("Find LSM grid cells that intersect with each catchment")
+    log("and write out weight table ...")
 
     dummy_lat_index, dummy_lon_index = \
         _get_lat_lon_indices(lsm_grid_lat,
@@ -213,19 +213,19 @@ def rtree_create_weight_table(lsm_grid_lat, lsm_grid_lon,
                         intersect_poly = \
                             catchment_polygon.intersection(lsm_grid_polygon)
                     except TopologicalError:
-                        print('INFO: The catchment polygon with id {0} was '
-                              'invalid. Attempting to self clean...'
-                              .format(rapid_connect_rivid))
+                        log('The catchment polygon with id {0} was '
+                            'invalid. Attempting to self clean...'
+                            .format(rapid_connect_rivid))
                         original_area = catchment_polygon.area
                         catchment_polygon = catchment_polygon.buffer(0)
                         area_ratio = original_area/catchment_polygon.area
-                        print('AREA_RATIO', area_ratio)
+                        log('AREA_RATIO: {0}'.format(area_ratio))
                         msg_level = "INFO"
                         if round(area_ratio, 5) != 1:
                             msg_level = "WARNING"
-                        print('{0}: The cleaned catchment polygon area '
-                              'differs from the original area by {1}%.'
-                              .format(msg_level, abs(area_ratio - 1)))
+                        log('The cleaned catchment polygon area '
+                            'differs from the original area by {1}%.'
+                            .format(abs(area_ratio - 1)), severity=msg_level)
                         intersect_poly = \
                             catchment_polygon.intersection(lsm_grid_polygon)
                     if not area_id:
@@ -270,8 +270,8 @@ def rtree_create_weight_table(lsm_grid_lat, lsm_grid_lon,
                 ])
 
     time_end_all = datetime.utcnow()
-    print(time_end_all - time_end_lsm_grid_rtree)
-    print("TOTAL TIME: {0}".format(time_end_all - time_start_all))
+    log(time_end_all - time_end_lsm_grid_rtree)
+    log("TOTAL TIME: {0}".format(time_end_all - time_start_all))
 
 
 def CreateWeightTableECMWF(in_ecmwf_nc,

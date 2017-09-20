@@ -21,7 +21,7 @@ except Exception:
 gdal.UseExceptions()
 
 #local
-from ..helper_functions import open_csv
+from ..helper_functions import log, open_csv
 
 def StreamIDNextDownIDToConnectivity(stream_id_array,
                                      next_down_id_array,
@@ -263,7 +263,7 @@ def CreateSubsetFile(in_drainage_line,
     if 'HYDROSEQ' in upper_field_names:
         #with this method, smaller is downstream
         sort_field = orig_field_names[upper_field_names.index('HYDROSEQ')]
-        print("Sorting by {0}".format(sort_field))
+        log("Sorting by {0}".format(sort_field))
 
     hydroseq_list = []
     hydroid_list = []

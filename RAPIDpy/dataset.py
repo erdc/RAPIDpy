@@ -68,7 +68,7 @@ def compare_qout_files(dataset1_path, dataset2_path):
                 decimal_test = -1
             except AssertionError as ex:
                 if decimal_test <= 1:
-                    print(ex)
+                    log(ex, "WARNING")
                 decimal_test -= 1
 
         log("Number of different timeseries: {0}".format(len(un_where_diff)),
@@ -211,11 +211,13 @@ class RAPIDDataset(object):
             elif 'FEATUREID' in variable_keys:
                 self.river_id_variable = 'FEATUREID'
             else:
-                print('WARNING: Could not find river ID variable'
-                      ' in {0}.'.format(variable_keys))
+                log('Could not find river ID variable'
+                    ' in {0}.'.format(variable_keys),
+                    "WARNING")
         elif river_id_variable not in variable_keys:
-            print('WARNING: Could not find river ID variable:'
-                  ' {0}.'.format(river_id_variable))
+            log('Could not find river ID variable:'
+                ' {0}.'.format(river_id_variable),
+                "WARNING")
 
         self.out_tzinfo = out_tzinfo
         self.datetime_simulation_start = datetime_simulation_start
@@ -474,8 +476,9 @@ class RAPIDDataset(object):
                 (date_search_start is not None or
                  date_search_end is not None)):
 
-            print("Determining time range ({0} to {1})"
-                  "...".format(date_search_start, date_search_end))
+            log("Determining time range ({0} to {1})"
+                "...".format(date_search_start, date_search_end),
+                "INFO")
             time_array = self.get_time_array()
             if date_search_start is not None:
                 date_search_start_utc = date_search_start
@@ -608,8 +611,9 @@ class RAPIDDataset(object):
                     .append(self.get_river_index(river_id))
                 valid_river_ids.append(river_id)
             except IndexError:
-                print("WARNING: ReachID {0} not found in netCDF dataset."
-                      " Skipping ...".format(river_id))
+                log("ReachID {0} not found in netCDF dataset."
+                    " Skipping ...".format(river_id),
+                    "WARNING")
                 missing_river_ids.append(river_id)
 
         np_valid_river_indices_list = np.array(netcdf_river_indices_list)
@@ -927,7 +931,8 @@ class RAPIDDataset(object):
             qout_df.to_csv(path_to_output_file, header=False)
 
         else:
-            print("Valid time variable not found. Printing values only ...")
+            log("Valid time variable not found. Printing values only ...",
+                "WARNING")
             qout_arr = self.get_qout_index(river_index)
             with open_csv(path_to_output_file, 'w') as outcsv:
                 writer = csv_writer(outcsv)

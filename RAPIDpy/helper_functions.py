@@ -33,7 +33,7 @@ def open_csv(csv_file, mode='r'):
     return open(csv_file, access, **kwargs)
 
 
-def log(message, severity, print_debug=True):
+def log(message, severity="INFO", print_debug=True):
     """Logs, prints, or raises a message.
 
     Arguments:

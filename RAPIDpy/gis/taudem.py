@@ -22,6 +22,8 @@ from shapely.wkb import loads as shapely_loads
 from shapely.ops import cascaded_union
 from osgeo import gdal, ogr, osr
 
+from ..helper_functions import log
+
 
 # -----------------------------------------------------------------------------
 # MAIN CLASS
@@ -78,23 +80,22 @@ class TauDEM(object):
         """
         This runs the command you send in
         """
-        print("Number of Processes: {0}".format(self.num_processors))
+        log("Number of Processes: {0}".format(self.num_processors))
         time_start = datetime.utcnow()
 
         # Construct the taudem command line.
         cmd = [self.mpiexec_path, '-n', str(self.num_processors)] + cmd
-        print("Command Line: {0}".format(" ".join(cmd)))
+        log("Command Line: {0}".format(" ".join(cmd)))
         process = Popen(cmd, stdout=PIPE, stderr=PIPE, shell=False)
         out, err = process.communicate()
         if out:
-            print("OUTPUT:")
+            log("OUTPUT:")
             for line in out.split(b'\n'):
-                print(line)
+                log(line)
         if err:
-            print("ERROR:")
-            print(err)
+            log(err, severity="ERROR")
             # raise Exception(err)
-        print("Time to complete: {0}".format(datetime.utcnow()-time_start))
+        log("Time to complete: {0}".format(datetime.utcnow()-time_start))
 
     @staticmethod
     def _add_prj_file(original_gis_file, new_gis_file):
@@ -425,7 +426,7 @@ class TauDEM(object):
                              drainage_line_feature.GetField(
                                  subset_network_river_id_field))[0][0]
             except IndexError:
-                print("{0} {1} not found ...".format(
+                log("{0} {1} not found ...".format(
                     subset_network_river_id_field,
                     drainage_line_feature.GetField(
                         subset_network_river_id_field)))
@@ -455,7 +456,7 @@ class TauDEM(object):
         Converts watershed raster to polygon and then dissolves it.
         It dissolves features based on the LINKNO attribute.
         """
-        print("Process: Raster to Polygon ...")
+        log("Process: Raster to Polygon ...")
         time_start = datetime.utcnow()
         temp_polygon_file = \
             "{0}_temp.shp".format(
@@ -465,10 +466,10 @@ class TauDEM(object):
                                          fieldname="LINKNO",
                                          self_mask=True)
 
-        print("Time to convert to polygon: {0}"
+        log("Time to convert to polygon: {0}"
               .format(datetime.utcnow()-time_start))
 
-        print("Dissolving ...")
+        log("Dissolving ...")
         time_start_dissolve = datetime.utcnow()
         ogr_polygin_shapefile = ogr.Open(temp_polygon_file)
         ogr_polygon_shapefile_lyr = ogr_polygin_shapefile.GetLayer()
@@ -519,9 +520,9 @@ class TauDEM(object):
             dissolve_layer.CreateFeature(new_feat)
         # clean up
         shp_drv.DeleteDataSource(temp_polygon_file)
-        print("Time to dissolve: {0}".format(datetime.utcnow() -
+        log("Time to dissolve: {0}".format(datetime.utcnow() -
                                              time_start_dissolve))
-        print("Total time to convert: {0}".format(datetime.utcnow() -
+        log("Total time to convert: {0}".format(datetime.utcnow() -
                                                   time_start))
 
     @staticmethod
@@ -598,7 +599,7 @@ class TauDEM(object):
         """
         Remove low spots from DEM.
         """
-        print("PROCESS: PitRemove")
+        log("PROCESS: PitRemove")
         self.pit_filled_elevation_grid = pit_filled_elevation_grid
 
         # Construct the taudem command line.
@@ -625,7 +626,7 @@ class TauDEM(object):
         """
         Calculates flow direction with Dinf method
         """
-        print("PROCESS: DinfFlowDirection")
+        log("PROCESS: DinfFlowDirection")
         if pit_filled_elevation_grid:
             self.pit_filled_elevation_grid = pit_filled_elevation_grid
 
@@ -651,7 +652,7 @@ class TauDEM(object):
         """
         Calculates flow direction with D8 method.
         """
-        print("PROCESS: D8FlowDirection")
+        log("PROCESS: D8FlowDirection")
         if pit_filled_elevation_grid:
             self.pit_filled_elevation_grid = pit_filled_elevation_grid
 
@@ -682,7 +683,7 @@ class TauDEM(object):
         """
         Calculates contributing area with Dinf method.
         """
-        print("PROCESS: DinfContributingArea")
+        log("PROCESS: DinfContributingArea")
 
         # Construct the taudem command line.
         cmd = [os.path.join(self.taudem_exe_path, 'areadinf'),
@@ -712,7 +713,7 @@ class TauDEM(object):
         """
         Calculates contributing area with D8 method.
         """
-        print("PROCESS: D8ContributingArea")
+        log("PROCESS: D8ContributingArea")
         if flow_dir_grid:
             self.flow_dir_grid = flow_dir_grid
 
@@ -745,7 +746,7 @@ class TauDEM(object):
         """
         Calculates the stream definition by threshold.
         """
-        print("PROCESS: StreamDefByThreshold")
+        log("PROCESS: StreamDefByThreshold")
         self.stream_raster_grid = stream_raster_grid
 
         # Construct the taudem command line.
@@ -780,7 +781,7 @@ class TauDEM(object):
         """
         Creates vector network and shapefile from stream raster grid
         """
-        print("PROCESS: StreamReachAndWatershed")
+        log("PROCESS: StreamReachAndWatershed")
         if pit_filled_elevation_grid:
             self.pit_filled_elevation_grid = pit_filled_elevation_grid
         if flow_dir_grid:
@@ -913,7 +914,7 @@ class TauDEM(object):
         stream_raster_grid = \
             os.path.join(output_directory, 'stream_raster_grid.tif')
         if use_dinf:
-            print("USING DINF METHOD TO GET STREAM DEFINITION ...")
+            log("USING DINF METHOD TO GET STREAM DEFINITION ...")
             if not flow_dir_grid_dinf:
                 flow_dir_grid_dinf = \
                     os.path.join(output_directory, 'flow_dir_grid_dinf.tif')
@@ -932,7 +933,7 @@ class TauDEM(object):
                                       threshold,
                                       contributing_area_grid_dinf)
         else:
-            print("USING D8 METHOD TO GET STREAM DEFINITION ...")
+            log("USING D8 METHOD TO GET STREAM DEFINITION ...")
             self.streamDefByThreshold(stream_raster_grid,
                                       threshold,
                                       contributing_area_grid_d8)
@@ -959,5 +960,5 @@ class TauDEM(object):
         out_watershed_shapefile = \
             os.path.join(output_directory, 'watershed_shapefile.shp')
         self.rasterToPolygon(out_watershed_grid, out_watershed_shapefile)
-        print("Total time to complete: {0}".format(datetime.utcnow() -
+        log("Total time to complete: {0}".format(datetime.utcnow() -
                                                    time_start))

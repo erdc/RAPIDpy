@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
-##
-##  merge.py
-##  RAPIDpy
-##
-##  Created by Tim Whitaker, 2015.
-##  Modified by Alan D Snow, 2015-2016
-##
+"""
+merge.py
+RAPIDpy
 
-"""Copies data from RAPID netCDF output to a CF-compliant netCDF file.
+Created by Tim Whitaker, 2015.
+Modified by Alan D Snow, 2015-2016
+
+Copies data from RAPID netCDF output to a CF-compliant netCDF file.
 Code originated from Tim Whitaker at University of Texas. The code was
 modified by Alan Snow at US Army ERDC.
  
@@ -58,20 +57,16 @@ References:
 
 from datetime import datetime
 import os
+
 from netCDF4 import Dataset
 import numpy as np
+from past.builtins import xrange  # pylint: disable=redefined-builtin
 from pytz import utc
 
-#local
+# local
 from ..dataset import RAPIDDataset
 from ..helper_functions import csv_to_list, remove_files, log
 
-#in Python 3 xrange is now range
-try:
-    xrange
-except NameError:
-    xrange = range
-    pass
 
 class ConvertRAPIDOutputToCF(object):
     """

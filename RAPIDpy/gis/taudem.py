@@ -324,9 +324,11 @@ class TauDEM(object):
         number_of_features = network_layer.GetFeatureCount()
         riv_magnuitude_list = np.zeros(number_of_features, dtype=np.int32)
         for feature_idx, drainage_line_feature in enumerate(network_layer):
-            riv_magnuitude_list[feature_idx] = drainage_line_feature.GetField(river_magnitude_field)
+            riv_magnuitude_list[feature_idx] =\
+                drainage_line_feature.GetField(river_magnitude_field)
 
-        max_magnitude_feature = network_layer.GetFeature(np.argmax(riv_magnuitude_list))
+        max_magnitude_feature = \
+            network_layer.GetFeature(np.argmax(riv_magnuitude_list))
         cls.extractSubNetwork(network_file,
                               out_subset_network_file,
                               [max_magnitude_feature.GetField(river_id_field)],
@@ -369,12 +371,18 @@ class TauDEM(object):
             from RAPIDpy.gis.taudem import TauDEM
 
             output_directory = '/path/to/output/files'
+            network_shp = os.path.join(output_directory,
+                                       "stream_reach_file.shp")
+            water_shp = os.path.join(output_directory,
+                                    "watershed_shapefile.shp")
+            out_shp = os.path.join(output_directory,
+                                   "watershed_shapefile_subset.shp")
             TauDEM.extractSubsetFromWatershed(
-                subset_network_file=os.path.join(output_directory, "stream_reach_file_subset.shp"),
+                subset_network_filenetwork_shp,
                 subset_network_river_id_field="LINKNO",
-                watershed_file=os.path.join(output_directory, "watershed_shapefile.shp"),
+                watershed_file=water_shp,
                 watershed_network_river_id_field="LINKNO",
-                out_watershed_subset_file=os.path.join(output_directory, "watershed_shapefile_subset.shp"))
+                out_watershed_subset_file=out_shp)
 
         """
         subset_network_shapefile = ogr.Open(subset_network_file)
@@ -557,11 +565,11 @@ class TauDEM(object):
                                                           geographic_proj)
 
         # check for field
-        create_field=True
+        create_field = True
         for i in xrange(network_layer_defn.GetFieldCount()):
             field_name = network_layer_defn.GetFieldDefn(i).GetName()
             if field_name == 'LENGTH_M':
-                create_field=False
+                create_field = False
                 break
 
         if create_field:
@@ -576,8 +584,8 @@ class TauDEM(object):
 
             line = shapely_loads(feat_geom.ExportToWkb())
             lon_list, lat_list = line.xy
-            az1, az2, dist = geo_manager.inv(lon_list[:-1], lat_list[:-1],
-                                             lon_list[1:], lat_list[1:])
+            dist = geo_manager.inv(lon_list[:-1], lat_list[:-1],
+                                   lon_list[1:], lat_list[1:])[2]
             network_feature.SetField('LENGTH_M', sum(dist))
             network_layer.SetFeature(network_feature)
 

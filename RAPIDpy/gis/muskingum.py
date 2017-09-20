@@ -11,10 +11,11 @@ from csv import writer as csv_writer
 
 import numpy as np
 from past.builtins import xrange  # pylint: disable=redefined-builtin
-from osgeo import gdal, ogr
+from osgeo import gdal
 
 # local
 from ..helper_functions import csv_to_list, log, open_csv
+from . import open_shapefile
 
 # Enable GDAL/OGR exceptions
 gdal.UseExceptions()
@@ -111,20 +112,14 @@ def CreateMuskingumKfacFile(in_drainage_line,
             length_units="m",
         )
     """  # noqa
-    if file_geodatabase:
-        gdb_driver = ogr.GetDriverByName("OpenFileGDB")
-        ogr_file_geodatabase = gdb_driver.Open(file_geodatabase)
-        ogr_drainage_line_shapefile_lyr = \
-            ogr_file_geodatabase.GetLayer(in_drainage_line)
-    else:
-        ogr_drainage_line_shapefile = ogr.Open(in_drainage_line)
-        ogr_drainage_line_shapefile_lyr = \
-            ogr_drainage_line_shapefile.GetLayer()
+    ogr_drainage_line_shapefile_lyr, ogr_drainage_line_shapefile = \
+        open_shapefile(in_drainage_line, file_geodatabase)
 
     number_of_features = ogr_drainage_line_shapefile_lyr.GetFeatureCount()
     river_id_list = np.zeros(number_of_features, dtype=np.int32)
     # pylint: disable=no-member
-    length_list = np.zeros(number_of_features, dtype=np.float32)
+    length_list = \
+        np.zeros(number_of_features, dtype=np.float32)
     slope_list = np.zeros(number_of_features, dtype=np.float32)
     for feature_idx, drainage_line_feature in \
             enumerate(ogr_drainage_line_shapefile_lyr):
@@ -135,6 +130,8 @@ def CreateMuskingumKfacFile(in_drainage_line,
         slope = drainage_line_feature.GetField(slope_id)
         if slope is not None:
             slope_list[feature_idx] = slope
+
+    del ogr_drainage_line_shapefile
 
     if slope_percentage:
         slope_list /= 100.0
@@ -293,20 +290,15 @@ def CreateMuskingumXFileFromDranageLine(in_drainage_line,
             out_x_file='/path/to/x.csv')
 
     """
-    if file_geodatabase:
-        gdb_driver = ogr.GetDriverByName("OpenFileGDB")
-        ogr_file_geodatabase = gdb_driver.Open(file_geodatabase)
-        ogr_drainage_line_shapefile_lyr = \
-            ogr_file_geodatabase.GetLayer(in_drainage_line)
-    else:
-        ogr_drainage_line_shapefile = ogr.Open(in_drainage_line)
-        ogr_drainage_line_shapefile_lyr = \
-            ogr_drainage_line_shapefile.GetLayer()
+    ogr_drainage_line_shapefile_lyr, ogr_drainage_line_shapefile = \
+        open_shapefile(in_drainage_line, file_geodatabase)
 
     with open_csv(out_x_file, 'w') as kfile:
         x_writer = csv_writer(kfile)
         for drainage_line_feature in ogr_drainage_line_shapefile_lyr:
             x_writer.writerow([drainage_line_feature.GetField(x_id)])
+
+    del ogr_drainage_line_shapefile
 
 
 def CreateConstMuskingumXFile(x_value,

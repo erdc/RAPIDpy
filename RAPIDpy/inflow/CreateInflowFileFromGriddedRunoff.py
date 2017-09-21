@@ -28,8 +28,8 @@ class CreateInflowFileFromGriddedRunoff(object):
     of water inflow based on land surface model
     runoff and previously created weight table.
     """
-    header_wt = ['rivid', 'area_sqm', 'lon_index', 'lat_index', 'npoints']
     land_surface_model_name = "land surface model"
+    header_wt = ['rivid', 'area_sqm', 'lon_index', 'lat_index', 'npoints']
 
     def __init__(self):
         self.dict_list = []

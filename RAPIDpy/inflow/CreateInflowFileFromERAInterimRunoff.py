@@ -19,12 +19,12 @@ class CreateInflowFileFromERAInterimRunoff(CreateInflowFileFromGriddedRunoff):
     Creates RAPID NetCDF input of water inflow based on
     ERA Interim runoff and previously created weight table.
     """
+    land_surface_model_name = "ERA Interim"
     header_wt = ['rivid', 'area_sqm', 'lon_index', 'lat_index', 'npoints']
     dims_oi = [['lon', 'lat', 'time'], ['longitude', 'latitude', 'time']]
     vars_oi = [["lon", "lat", "time", "RO"],
                ['longitude', 'latitude', 'time', 'ro']]
     length_time = {"Daily": 1, "3-Hourly": 8}
-    land_surface_model_name = "ERA Interim"
 
     def __init__(self):
         """Define the attributes to look for"""

@@ -47,7 +47,7 @@ setup(
         'tests': [
             'pytest',
             'pytest-cov',
-            'coveralls'
+            'coveralls',
             'pylint',
             'flake8',
         ],

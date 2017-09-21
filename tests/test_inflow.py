@@ -65,13 +65,18 @@ class TestRAPIDInflow(unittest.TestCase):
         # check other info in netcdf file
         d1 = Dataset(generated_m3_file)
         d2 = Dataset(generated_m3_file_solution)
-        assert_almost_equal(d1.variables['m3_riv'][:], d2.variables['m3_riv'][:], decimal=5)
-        if 'rivid' in d2.variables.keys():
-            compare_array_nan(d1.variables['rivid'][:], d2.variables['rivid'][:])
-        if 'lat' in d2.variables.keys():
-            compare_array_nan(d1.variables['lat'][:], d2.variables['lat'][:])
-        if 'lon' in d2.variables.keys():
-            compare_array_nan(d1.variables['lon'][:], d2.variables['lon'][:])
+        try:
+            assert_almost_equal(d1.variables['m3_riv'][:], d2.variables['m3_riv'][:], decimal=4)
+            if 'rivid' in d2.variables.keys():
+                compare_array_nan(d1.variables['rivid'][:], d2.variables['rivid'][:])
+            if 'lat' in d2.variables.keys():
+                compare_array_nan(d1.variables['lat'][:], d2.variables['lat'][:])
+            if 'lon' in d2.variables.keys():
+                compare_array_nan(d1.variables['lon'][:], d2.variables['lon'][:])
+        except AssertionError:
+            d1.close()
+            d2.close()
+            raise
         d1.close()
         d2.close()
 

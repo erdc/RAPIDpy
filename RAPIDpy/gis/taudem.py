@@ -93,8 +93,7 @@ class TauDEM(object):
             for line in out.split(b'\n'):
                 log(line)
         if err:
-            log(err, severity="ERROR")
-            # raise Exception(err)
+            log(err, severity="WARNING")
         log("Time to complete: {0}".format(datetime.utcnow()-time_start))
 
     @staticmethod

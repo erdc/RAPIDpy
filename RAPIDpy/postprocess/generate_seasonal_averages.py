@@ -1,18 +1,20 @@
 # -*- coding: utf-8 -*-
-##
-##  generate_seasonal_averages.py
-##  RAPIDpy
-##
-##  Created by Alan D. Snow
-##  License: BSD-3 Clause
+"""
+    generate_seasonal_averages.py
+    RAPIDpy
 
+    Created by: Alan D. Snow, 2016.
+    License: BSD 3-Clause
+"""
 from calendar import isleap
 import multiprocessing
-from netCDF4 import Dataset
-import numpy as np
 from time import gmtime
 
+from netCDF4 import Dataset  # pylint: disable=no-name-in-module
+import numpy as np
+
 from ..dataset import RAPIDDataset
+
 
 def generate_single_seasonal_average(args):
     """
@@ -27,22 +29,22 @@ def generate_single_seasonal_average(args):
     min_day = day_of_year - 3
     max_day = day_of_year + 3
 
-    with RAPIDDataset(qout_file) as qout_nc_file: 
+    with RAPIDDataset(qout_file) as qout_nc_file:
         time_indices = []
         for idx, t in enumerate(qout_nc_file.get_time_array()):
             var_time = gmtime(t)
             compare_yday = var_time.tm_yday
-            #move day back one past because of leap year adds 
-            #a day after feb 29 (day 60)
+            # move day back one past because of leap year adds
+            # a day after feb 29 (day 60)
             if isleap(var_time.tm_year) and compare_yday > 60:
                 compare_yday -= 1
-            #check if date within range of season
-            if compare_yday >= min_day and compare_yday < max_day:
+            # check if date within range of season
+            if max_day < compare_yday >= min_day:
                 time_indices.append(idx)
-    
+
         if not time_indices:
             raise IndexError("No time steps found within range ...")
-        
+
         streamflow_array = qout_nc_file.get_qout(time_index_array=time_indices)
 
     avg_streamflow_array = np.mean(streamflow_array, axis=1)
@@ -52,76 +54,91 @@ def generate_single_seasonal_average(args):
 
     mp_lock.acquire()
     seasonal_avg_nc = Dataset(seasonal_average_file, 'a')
-    seasonal_avg_nc.variables['average_flow'][:, day_of_year-1] = avg_streamflow_array
-    seasonal_avg_nc.variables['std_dev_flow'][:, day_of_year-1] = std_streamflow_array
-    seasonal_avg_nc.variables['max_flow'][:, day_of_year-1] = max_streamflow_array
-    seasonal_avg_nc.variables['min_flow'][:, day_of_year-1] = min_streamflow_array
+    seasonal_avg_nc.variables['average_flow'][:, day_of_year-1] = \
+        avg_streamflow_array
+    seasonal_avg_nc.variables['std_dev_flow'][:, day_of_year-1] = \
+        std_streamflow_array
+    seasonal_avg_nc.variables['max_flow'][:, day_of_year-1] = \
+        max_streamflow_array
+    seasonal_avg_nc.variables['min_flow'][:, day_of_year-1] = \
+        min_streamflow_array
     seasonal_avg_nc.close()
     mp_lock.release()
 
-def generate_seasonal_averages(qout_file, seasonal_average_file, 
+
+def generate_seasonal_averages(qout_file, seasonal_average_file,
                                num_cpus=multiprocessing.cpu_count()):
     """
     This function loops through a CF compliant rapid streamflow
     file to produce a netCDF file with a seasonal average for
     365 days a year
     """
-    
     with RAPIDDataset(qout_file) as qout_nc_file:
         print("Generating seasonal average file ...")
         seasonal_avg_nc = Dataset(seasonal_average_file, 'w')
-        
+
         seasonal_avg_nc.createDimension('rivid', qout_nc_file.size_river_id)
         seasonal_avg_nc.createDimension('day_of_year', 365)
 
-        timeSeries_var = seasonal_avg_nc.createVariable('rivid', 'i4', ('rivid',))
-        timeSeries_var.long_name = (
+        time_series_var = seasonal_avg_nc.createVariable('rivid', 'i4',
+                                                         ('rivid',))
+        time_series_var.long_name = (
             'unique identifier for each river reach')
 
-        average_flow_var = seasonal_avg_nc.createVariable('average_flow', 'f8', ('rivid','day_of_year'))
+        average_flow_var = \
+            seasonal_avg_nc.createVariable('average_flow', 'f8',
+                                           ('rivid', 'day_of_year'))
         average_flow_var.long_name = 'seasonal average streamflow'
         average_flow_var.units = 'm3/s'
-        
-        std_dev_flow_var = seasonal_avg_nc.createVariable('std_dev_flow', 'f8', ('rivid','day_of_year'))
+
+        std_dev_flow_var = \
+            seasonal_avg_nc.createVariable('std_dev_flow', 'f8',
+                                           ('rivid', 'day_of_year'))
         std_dev_flow_var.long_name = 'seasonal std. dev. streamflow'
         std_dev_flow_var.units = 'm3/s'
 
-        std_dev_flow_var = seasonal_avg_nc.createVariable('max_flow', 'f8', ('rivid','day_of_year'))
+        std_dev_flow_var = \
+            seasonal_avg_nc.createVariable('max_flow', 'f8',
+                                           ('rivid', 'day_of_year'))
         std_dev_flow_var.long_name = 'seasonal max streamflow'
         std_dev_flow_var.units = 'm3/s'
 
-        std_dev_flow_var = seasonal_avg_nc.createVariable('min_flow', 'f8', ('rivid','day_of_year'))
+        std_dev_flow_var = \
+            seasonal_avg_nc.createVariable('min_flow', 'f8',
+                                           ('rivid', 'day_of_year'))
         std_dev_flow_var.long_name = 'seasonal min streamflow'
         std_dev_flow_var.units = 'm3/s'
 
         lat_var = seasonal_avg_nc.createVariable('lat', 'f8', ('rivid',),
-                                                  fill_value=-9999.0)
+                                                 fill_value=-9999.0)
         lat_var.long_name = 'latitude'
         lat_var.standard_name = 'latitude'
         lat_var.units = 'degrees_north'
         lat_var.axis = 'Y'
 
         lon_var = seasonal_avg_nc.createVariable('lon', 'f8', ('rivid',),
-                                                  fill_value=-9999.0)
+                                                 fill_value=-9999.0)
         lon_var.long_name = 'longitude'
         lon_var.standard_name = 'longitude'
         lon_var.units = 'degrees_east'
         lon_var.axis = 'X'
 
-        seasonal_avg_nc.variables['lat'][:] = qout_nc_file.qout_nc.variables['lat'][:]
-        seasonal_avg_nc.variables['lon'][:] = qout_nc_file.qout_nc.variables['lon'][:]
+        seasonal_avg_nc.variables['lat'][:] = \
+            qout_nc_file.qout_nc.variables['lat'][:]
+        seasonal_avg_nc.variables['lon'][:] = \
+            qout_nc_file.qout_nc.variables['lon'][:]
 
         river_id_list = qout_nc_file.get_river_id_array()
         seasonal_avg_nc.variables['rivid'][:] = river_id_list
         seasonal_avg_nc.close()
-        
-    #generate multiprocessing jobs
-    mp_lock = multiprocessing.Manager().Lock()
+
+    # generate multiprocessing jobs
+    mp_lock = multiprocessing.Manager().Lock()  # pylint: disable=no-member
     job_combinations = []
     for day_of_year in range(1, 366):
         job_combinations.append((qout_file,
                                  seasonal_average_file,
-                                 day_of_year, 
+                                 day_of_year,
                                  mp_lock
                                  ))
 

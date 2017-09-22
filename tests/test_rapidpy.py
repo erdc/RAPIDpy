@@ -623,11 +623,14 @@ def test_goodness_of_fit():
                                            'goodness_of_fit_obs_sim.csv')
     goodness_obs_sim_solution = os.path.join(OUTPUT_DATA_PATH,
                                              'goodness_of_fit_obs_sim.txt')
+    # test print goodness of fit to file
     find_goodness_of_fit_csv(observed_simulated_file,
                              out_file=goodness_obs_sim_solution)
     goodness_obs_sim = os.path.join(COMPARE_DATA_PATH,
                                     'goodness_of_fit_obs_sim.txt')
     assert (fcmp(goodness_obs_sim, goodness_obs_sim_solution))
+    # test print goodness of fit to console
+    find_goodness_of_fit_csv(observed_simulated_file)
 
     remove_files(cf_out_analysis_file,
                  cf_out_analysis_file_1)

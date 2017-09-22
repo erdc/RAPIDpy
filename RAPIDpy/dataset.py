@@ -161,9 +161,9 @@ class RAPIDDataset(object):
             elif 'FEATUREID' in self.qout_nc.dimensions:
                 self.river_id_dimension = 'FEATUREID'
             else:
-                raise IndexError('ERROR: Could not find river ID dimension.')
+                raise IndexError('Could not find river ID dimension.')
         elif river_id_dimension not in self.qout_nc.dimensions:
-            raise IndexError('ERROR: Could not find river ID dimension:'
+            raise IndexError('Could not find river ID dimension:'
                              ' {0}.'.format(river_id_dimension))
 
         self.size_river_id = len(self.qout_nc
@@ -184,7 +184,7 @@ class RAPIDDataset(object):
                 raise IndexError('ERROR: Could not find flow variable.'
                                  ' Looked for Qout, streamflow, and m3_riv.')
         elif streamflow_variable not in variable_keys:
-            raise IndexError('ERROR: Could not find flow variable.'
+            raise IndexError('Could not find flow variable.'
                              ' Looked for {0}.'.format(streamflow_variable))
 
         self.size_q_var = len(self.qout_nc.variables[self.q_var_name])
@@ -195,7 +195,7 @@ class RAPIDDataset(object):
         elif 'Time' in self.qout_nc.dimensions:
             self.size_time = len(self.qout_nc.dimensions['Time'])
         else:
-            raise IndexError('ERROR: Could not find time dimension.')
+            raise IndexError('Could not find time dimension.')
 
         # determine river ID variable
         self.river_id_variable = river_id_variable
@@ -286,6 +286,12 @@ class RAPIDDataset(object):
                         pass
 
         return time_var_valid
+
+    def raise_time_valid(self):
+        """Raise ValueError if time not valid"""
+        if not (self.is_time_variable_valid() or self._is_legacy_time_valid()):
+            raise IndexError("Valid time variable not found. Valid time"
+                             " variable required in Qout file to proceed ...")
 
     def get_time_array(self,
                        datetime_simulation_start=None,
@@ -385,10 +391,10 @@ class RAPIDDataset(object):
                                    final_time_seconds,
                                    self.simulation_time_step_seconds)
         else:
-            raise Exception("ERROR: This file does not contain the time"
-                            " variable. To get time array, add"
-                            " datetime_simulation_start and"
-                            " simulation_time_step_seconds")
+            raise ValueError("This file does not contain the time"
+                             " variable. To get time array, add"
+                             " datetime_simulation_start and"
+                             " simulation_time_step_seconds")
 
         if time_index_array is not None:
             time_array = time_array[time_index_array]
@@ -917,7 +923,7 @@ class RAPIDDataset(object):
         if river_id is not None:
             river_index = self.get_river_index(river_id)
         elif river_id is None and river_index is None:
-            raise Exception("ERROR: Need reach id or reach index ...")
+            raise ValueError("Need reach id or reach index ...")
 
         # analyze and write
         if self.is_time_variable_valid() or self._is_legacy_time_valid():
@@ -1049,13 +1055,11 @@ class RAPIDDataset(object):
         if river_id is not None:
             river_index = self.get_river_index(river_id)
         elif river_id is None and river_index is None:
-            raise Exception("ERROR: Need reach id or reach index ...")
+            raise ValueError(" Need reach id or reach index ...")
+
+        self.raise_time_valid()
 
         # analyze and write
-        if not (self.is_time_variable_valid() or self._is_legacy_time_valid()):
-            raise IndexError("Valid time variable not found. Valid time"
-                             " variable required in Qout file to proceed ...")
-
         qout_df = self.get_qout_index(river_index,
                                       date_search_start=date_search_start,
                                       date_search_end=date_search_end,
@@ -1168,12 +1172,9 @@ class RAPIDDataset(object):
                     daily=True,
                     filter_mode="max")
         """  # noqa
-        # analyze and write
-        if not (self.is_time_variable_valid() or self._is_legacy_time_valid()):
-            raise IndexError(
-                "Valid time variable not found. Valid time"
-                " variable required in Qout file to proceed ...")
+        self.raise_time_valid()
 
+        # analyze and write
         with open_csv(path_to_output_file, 'w') as out_ts:
             # HEADER SECTION EXAMPLE:
             # NUMPT 3

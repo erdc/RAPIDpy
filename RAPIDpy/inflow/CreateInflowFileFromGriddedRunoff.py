@@ -29,9 +29,9 @@ class CreateInflowFileFromGriddedRunoff(object):
     """
     land_surface_model_name = "land surface model"
     header_wt = ['rivid', 'area_sqm', 'lon_index', 'lat_index', 'npoints']
+    runoff_vars = []
 
     def __init__(self):
-        self.runoff_vars = []
         self.dict_list = []
         self.count = 0
         self.size_stream_id = 0

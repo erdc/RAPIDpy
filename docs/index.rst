@@ -17,8 +17,8 @@ https://github.com/c-h-david/rapid.
 
 |License (3-Clause BSD)|
 
-.. |DOI| image:: https://zenodo.org/badge/19918/erdc-cm/RAPIDpy.svg
-   :target: https://zenodo.org/badge/latestdoi/19918/erdc-cm/RAPIDpy
+.. |DOI| image:: https://zenodo.org/badge/19918/erdc/RAPIDpy.svg
+   :target: https://zenodo.org/badge/latestdoi/19918/erdc/RAPIDpy
 .. |PyPI version| image:: https://badge.fury.io/py/RAPIDpy.svg
    :target: https://badge.fury.io/py/RAPIDpy
 .. |Build Status| image:: https://travis-ci.org/erdc-cm/RAPIDpy.svg?branch=master

@@ -33,6 +33,7 @@ RAPID_EXE_PATH = os.path.join(MAIN_TESTS_FOLDER,
                               "..", "..",
                               "rapid", "src", "rapid")
 
+
 def compare_array_nan(a, b):
     # based on https://stackoverflow.com/questions/23810370/python-numpy-comparing-arrays-with-nan
     return ((a == b) | (np.isnan(a) & np.isnan(b))).all()
@@ -48,6 +49,36 @@ class TestRAPIDInflow(unittest.TestCase):
         self.RAPID_DATA_PATH = os.path.join(self.OUTPUT_DATA_PATH, 'input')
 
         self.CYGWIN_BIN_PATH = 'C:\\cygwin64\\bin'
+
+        try:
+            self.tearDown()
+        except OSError:
+            pass
+
+    def tearDown(self):
+        rmtree(os.path.join(self.OUTPUT_DATA_PATH, "input"))
+        rmtree(os.path.join(self.OUTPUT_DATA_PATH, "output"))
+
+    @staticmethod
+    def _compare_m3(generated_m3_file, generated_m3_file_solution):
+
+        # check other info in netcdf file
+        d1 = Dataset(generated_m3_file)
+        d2 = Dataset(generated_m3_file_solution)
+        try:
+            assert_almost_equal(d1.variables['m3_riv'][:], d2.variables['m3_riv'][:], decimal=4)
+            if 'rivid' in d2.variables.keys():
+                compare_array_nan(d1.variables['rivid'][:], d2.variables['rivid'][:])
+            if 'lat' in d2.variables.keys():
+                compare_array_nan(d1.variables['lat'][:], d2.variables['lat'][:])
+            if 'lon' in d2.variables.keys():
+                compare_array_nan(d1.variables['lon'][:], d2.variables['lon'][:])
+        except AssertionError:
+            d1.close()
+            d2.close()
+            raise
+        d1.close()
+        d2.close()
 
     def _setup_automated(self, directory_name):
         """
@@ -759,7 +790,6 @@ class TestRAPIDInflow(unittest.TestCase):
         generated_m3_file_solution = os.path.join(self.INFLOW_COMPARE_DATA_PATH, m3_file_name)
         self._compare_m3(generated_m3_file,generated_m3_file_solution)
 
-
     def test_generate_cmip5_inflow(self):
         """
         Checks generating inflow file from CMIP5 LSM
@@ -780,21 +810,3 @@ class TestRAPIDInflow(unittest.TestCase):
         # check output file info
         assert output_file_info[0]['ark-ms']['m3_riv'] == generated_m3_file
 
-    def _compare_m3(self, generated_m3_file, generated_m3_file_solution):
-
-        # check other info in netcdf file
-        d1 = Dataset(generated_m3_file)
-        d2 = Dataset(generated_m3_file_solution)
-        assert_almost_equal(d1.variables['m3_riv'][:], d2.variables['m3_riv'][:], decimal=5)
-        if 'rivid' in d2.variables.keys():
-            compare_array_nan(d1.variables['rivid'][:], d2.variables['rivid'][:])
-        if 'lat' in d2.variables.keys():
-            compare_array_nan(d1.variables['lat'][:], d2.variables['lat'][:])
-        if 'lon' in d2.variables.keys():
-            compare_array_nan(d1.variables['lon'][:], d2.variables['lon'][:])
-        d1.close()
-        d2.close()
-
-    def tearDown(self):
-        rmtree(os.path.join(self.OUTPUT_DATA_PATH, "input"))
-        rmtree(os.path.join(self.OUTPUT_DATA_PATH, "output"))

@@ -23,7 +23,7 @@ from RAPIDpy.helper_functions import (compare_csv_decimal_files,
                                       compare_csv_timeseries_files,
                                       remove_files)
 
-from RAPIDpy.postprocess import find_goodness_of_fit
+from RAPIDpy.postprocess import find_goodness_of_fit, find_goodness_of_fit_csv
 from RAPIDpy.postprocess import ConvertRAPIDOutputToCF
 
 #GLOBAL VARIABLES
@@ -325,7 +325,7 @@ def test_convert_file_to_be_cf_compliant_new_format_comid_lat_lon_z():
                           rapid_connect_file=os.path.join(INPUT_DATA_PATH, 'rapid_connect.csv'),
                           ZS_TauR=3*3600)
 
-    rapid_manager.make_output_CF_compliant(simulation_start_datetime=datetime(2002, 8, 30),
+    rapid_manager.make_output_cf_compliant(simulation_start_datetime=datetime(2002, 8, 30),
                                            comid_lat_lon_z_file=os.path.join(INPUT_DATA_PATH, 'comid_lat_lon_z.csv'),
                                            project_name="ERA Interim (T511 Grid) 3 Hourly Runoff Based Historical flows by US Army ERDC")
 
@@ -365,7 +365,7 @@ def test_convert_file_to_be_cf_compliant_new_format():
                           rapid_connect_file=os.path.join(INPUT_DATA_PATH, 'rapid_connect.csv'),
                           ZS_TauR=3*3600)
 
-    rapid_manager.make_output_CF_compliant(simulation_start_datetime=datetime(2002, 8, 30),
+    rapid_manager.make_output_cf_compliant(simulation_start_datetime=datetime(2002, 8, 30),
                                            comid_lat_lon_z_file="",
                                            project_name="ERA Interim (T511 Grid) 3 Hourly Runoff Based Historical flows by US Army ERDC")
 
@@ -403,7 +403,7 @@ def test_convert_file_to_be_cf_compliant_original_format():
                           rapid_connect_file=os.path.join(INPUT_DATA_PATH, 'rapid_connect.csv'),
                           ZS_TauR=3*3600)
 
-    rapid_manager.make_output_CF_compliant(simulation_start_datetime=datetime(2002, 8, 30),
+    rapid_manager.make_output_cf_compliant(simulation_start_datetime=datetime(2002, 8, 30),
                                            comid_lat_lon_z_file=os.path.join(INPUT_DATA_PATH, 'comid_lat_lon_z.csv'),
                                            project_name="ERA Interim (T511 Grid) 3 Hourly Runoff Based Historical flows by US Army ERDC")
 
@@ -508,6 +508,10 @@ def test_extract_timeseries():
     copy(input_qout_file, new_qout_file)
     new_timeseries_file = os.path.join(OUTPUT_DATA_PATH, 'new_timeseries_file.csv')
 
+    with pytest.raises(ValueError):
+        with RAPIDDataset(new_qout_file) as qout_nc:
+            qout_nc.write_flows_to_csv(new_timeseries_file)
+
     with RAPIDDataset(new_qout_file) as qout_nc:
         qout_nc.write_flows_to_csv(new_timeseries_file,
                                    river_id=75224)
@@ -564,7 +568,7 @@ def test_extract_timeseries():
                                    date_search_start=datetime(2002, 8, 31),
                                    date_search_end=datetime(2002, 8, 31, 23, 59, 59),
                                    daily=True,
-                                   mode='max')
+                                   filter_mode='max')
 
     cf_timeseries_daily_date_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_timeseries_daily_date.csv')
     assert (compare_csv_timeseries_files(cf_timeseries_daily_date_file, cf_timeseries_daily_date_file_solution, header=False))
@@ -608,22 +612,6 @@ def test_goodness_of_fit():
 
     cf_goodness_of_fit_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_goodness_of_fit_analysis.csv')
     assert (compare_csv_decimal_files(cf_out_analysis_file, cf_goodness_of_fit_file_solution))
-    #using original RAPID file
-    raw_goodness_of_fit_file_solution = os.path.join(COMPARE_DATA_PATH, 'raw_goodness_of_fit_analysis.csv')
-    original_input_qout_file = os.path.join(COMPARE_DATA_PATH, 'Qout_nasa_lis_3hr_20020830_original.nc')
-    original_out_analysis_file = os.path.join(OUTPUT_DATA_PATH, 'original_goodness_of_fit_results-daily.csv')
-    find_goodness_of_fit(original_input_qout_file, reach_id_file, observed_file,
-                         original_out_analysis_file, steps_per_group=8)
-
-    assert (compare_csv_decimal_files(original_out_analysis_file, raw_goodness_of_fit_file_solution))
-
-    #using new RAPID file
-    new_input_qout_file = os.path.join(COMPARE_DATA_PATH, 'Qout_nasa_lis_3hr_20020830.nc')
-    new_out_analysis_file = os.path.join(OUTPUT_DATA_PATH, 'goodness_of_fit_results-daily.csv')
-    find_goodness_of_fit(new_input_qout_file, reach_id_file, observed_file,
-                         new_out_analysis_file, steps_per_group=8)
-
-    assert (compare_csv_decimal_files(new_out_analysis_file, raw_goodness_of_fit_file_solution))
 
     reach_id_file = os.path.join(INPUT_DATA_PATH, 'obs_reach_id_1.csv')
     observed_file = os.path.join(INPUT_DATA_PATH, 'obs_flow_1.csv')
@@ -635,9 +623,20 @@ def test_goodness_of_fit():
     cf_goodness_of_fit_file_solution_1 = os.path.join(COMPARE_DATA_PATH, 'cf_goodness_of_fit_analysis_1.csv')
     assert (compare_csv_decimal_files(cf_out_analysis_file_1, cf_goodness_of_fit_file_solution_1))
 
+    observed_simulated_file = os.path.join(COMPARE_DATA_PATH,
+                                           'goodness_of_fit_obs_sim.csv')
+    goodness_obs_sim_solution = os.path.join(OUTPUT_DATA_PATH,
+                                             'goodness_of_fit_obs_sim.txt')
+    # test print goodness of fit to file
+    find_goodness_of_fit_csv(observed_simulated_file,
+                             out_file=goodness_obs_sim_solution)
+    goodness_obs_sim = os.path.join(COMPARE_DATA_PATH,
+                                    'goodness_of_fit_obs_sim.txt')
+    assert (fcmp(goodness_obs_sim, goodness_obs_sim_solution))
+    # test print goodness of fit to console
+    find_goodness_of_fit_csv(observed_simulated_file)
+
     remove_files(cf_out_analysis_file,
-                 original_out_analysis_file,
-                 new_out_analysis_file,
                  cf_out_analysis_file_1)
 
 def test_cf_merge():
@@ -731,7 +730,7 @@ def test_extract_timeseries_to_gssha_xys():
                                                      date_search_start=datetime(2002, 8, 31),
                                                      date_search_end=datetime(2002, 8, 31, 23, 59, 59),
                                                      daily=True,
-                                                     mode='max')
+                                                     filter_mode='max')
 
     cf_timeseries_daily_date_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_timeseries_daily_date.xys')
     assert (compare_csv_timeseries_files(cf_timeseries_daily_date_file, cf_timeseries_daily_date_file_solution))
@@ -800,7 +799,7 @@ def test_extract_timeseries_to_gssha_ihg():
                                                      date_search_start=datetime(2002, 8, 31),
                                                      date_search_end=datetime(2002, 8, 31, 23, 59, 59),
                                                      daily=True,
-                                                     mode='max')
+                                                     filter_mode='max')
 
     cf_timeseries_daily_date_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_timeseries_daily_date.ihg')
     assert (compare_csv_timeseries_files(cf_timeseries_daily_date_file, cf_timeseries_daily_date_file_solution, header=False))
@@ -817,7 +816,6 @@ def test_extract_timeseries_to_gssha_ihg():
 
     cf_timeseries_date_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_timeseries_date.ihg')
     assert (compare_csv_timeseries_files(cf_timeseries_date_file, cf_timeseries_date_file_solution, header=False))
-
     remove_files(cf_timeseries_file,
                  cf_qout_file,
                  cf_timeseries_daily_file,
@@ -872,7 +870,7 @@ def test_extract_timeseries_to_gssha_ihg_tzinfo():
                                                      date_search_start=datetime(2002, 8, 31),
                                                      date_search_end=datetime(2002, 8, 31, 23, 59, 59),
                                                      daily=True,
-                                                     mode='max')
+                                                     filter_mode='max')
 
     cf_timeseries_daily_date_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_timeseries_daily_date_tz.ihg')
     assert (compare_csv_timeseries_files(cf_timeseries_daily_date_file, cf_timeseries_daily_date_file_solution, header=False))
@@ -895,3 +893,75 @@ def test_extract_timeseries_to_gssha_ihg_tzinfo():
                  cf_timeseries_daily_date_file,
                  cf_timeseries_date_file,
                  )
+
+
+def test_dataset_exceptions():
+    """This tests RAPIDDataset exceptions"""
+    dummy_file = os.path.join(OUTPUT_DATA_PATH,
+                              'dummy_file.txt')
+    cf_input_qout_file = os.path.join(COMPARE_DATA_PATH,
+                                      'Qout_nasa_lis_3hr_20020830_CF.nc')
+    cf_qout_file = os.path.join(OUTPUT_DATA_PATH,
+                                'Qout_nasa_lis_3hr_20020830_CF.nc')
+    copy(cf_input_qout_file, cf_qout_file)
+
+    with pytest.raises(IndexError):
+        with RAPIDDataset(cf_qout_file,
+                          river_id_dimension='fake_rivid') as qout_nc:
+            print(qout_nc)
+
+    # this only prints a warning
+    with RAPIDDataset(cf_qout_file,
+                      river_id_variable='fake_rivid') as qout_nc:
+        print(qout_nc)
+
+    with pytest.raises(IndexError):
+        with RAPIDDataset(cf_qout_file,
+                          streamflow_variable='fake_qout') as qout_nc:
+            print(qout_nc)
+
+    with pytest.raises(IndexError):
+        with RAPIDDataset(cf_qout_file) as qout_nc:
+            print(qout_nc.get_qout(49876539))
+
+    with RAPIDDataset(cf_qout_file) as qout_nc:
+        aaa, bbb, ccc = qout_nc.get_subset_riverid_index_list([49876539])
+        assert not aaa
+        assert not bbb
+        assert ccc[0] == 49876539
+
+    with pytest.raises(ValueError):
+        with RAPIDDataset(cf_qout_file) as qout_nc:
+            qout_nc.write_flows_to_gssha_time_series_xys(
+                dummy_file,
+                series_name="RAPID_TO_GSSHA",
+                series_id=34)
+
+    with pytest.raises(ValueError):
+        with RAPIDDataset(cf_qout_file) as qout_nc:
+            qout_nc.write_flows_to_csv(dummy_file)
+
+    # for writing entire time series to file from original rapid output
+    input_qout_file = os.path.join(COMPARE_DATA_PATH,
+                                   'Qout_nasa_lis_3hr_20020830_original.nc')
+    original_qout_file = os.path.join(OUTPUT_DATA_PATH,
+                                      'Qout_nasa_lis_3hr_20020830_original.nc')
+    copy(input_qout_file, original_qout_file)
+
+    with pytest.raises(ValueError):
+        with RAPIDDataset(original_qout_file) as qout_nc:
+            print(qout_nc.get_time_array())
+
+    with pytest.raises(IndexError):
+        with RAPIDDataset(original_qout_file) as qout_nc:
+            qout_nc.write_flows_to_gssha_time_series_xys(
+                dummy_file,
+                series_name="RAPID_TO_GSSHA",
+                series_id=34,
+                river_index=0)
+
+    with pytest.raises(IndexError):
+        with RAPIDDataset(original_qout_file) as qout_nc:
+            qout_nc.write_flows_to_gssha_time_series_ihg(
+                dummy_file,
+                dummy_file)

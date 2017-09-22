@@ -23,7 +23,7 @@ from RAPIDpy.helper_functions import (compare_csv_decimal_files,
                                       compare_csv_timeseries_files,
                                       remove_files)
 
-from RAPIDpy.postprocess import find_goodness_of_fit
+from RAPIDpy.postprocess import find_goodness_of_fit, find_goodness_of_fit_csv
 from RAPIDpy.postprocess import ConvertRAPIDOutputToCF
 
 #GLOBAL VARIABLES
@@ -608,22 +608,6 @@ def test_goodness_of_fit():
 
     cf_goodness_of_fit_file_solution = os.path.join(COMPARE_DATA_PATH, 'cf_goodness_of_fit_analysis.csv')
     assert (compare_csv_decimal_files(cf_out_analysis_file, cf_goodness_of_fit_file_solution))
-    #using original RAPID file
-    raw_goodness_of_fit_file_solution = os.path.join(COMPARE_DATA_PATH, 'raw_goodness_of_fit_analysis.csv')
-    original_input_qout_file = os.path.join(COMPARE_DATA_PATH, 'Qout_nasa_lis_3hr_20020830_original.nc')
-    original_out_analysis_file = os.path.join(OUTPUT_DATA_PATH, 'original_goodness_of_fit_results-daily.csv')
-    find_goodness_of_fit(original_input_qout_file, reach_id_file, observed_file,
-                         original_out_analysis_file, steps_per_group=8)
-
-    assert (compare_csv_decimal_files(original_out_analysis_file, raw_goodness_of_fit_file_solution))
-
-    #using new RAPID file
-    new_input_qout_file = os.path.join(COMPARE_DATA_PATH, 'Qout_nasa_lis_3hr_20020830.nc')
-    new_out_analysis_file = os.path.join(OUTPUT_DATA_PATH, 'goodness_of_fit_results-daily.csv')
-    find_goodness_of_fit(new_input_qout_file, reach_id_file, observed_file,
-                         new_out_analysis_file, steps_per_group=8)
-
-    assert (compare_csv_decimal_files(new_out_analysis_file, raw_goodness_of_fit_file_solution))
 
     reach_id_file = os.path.join(INPUT_DATA_PATH, 'obs_reach_id_1.csv')
     observed_file = os.path.join(INPUT_DATA_PATH, 'obs_flow_1.csv')
@@ -635,9 +619,17 @@ def test_goodness_of_fit():
     cf_goodness_of_fit_file_solution_1 = os.path.join(COMPARE_DATA_PATH, 'cf_goodness_of_fit_analysis_1.csv')
     assert (compare_csv_decimal_files(cf_out_analysis_file_1, cf_goodness_of_fit_file_solution_1))
 
+    observed_simulated_file = os.path.join(COMPARE_DATA_PATH,
+                                           'goodness_of_fit_obs_sim.csv')
+    goodness_obs_sim_solution = os.path.join(OUTPUT_DATA_PATH,
+                                             'goodness_of_fit_obs_sim.txt')
+    find_goodness_of_fit_csv(observed_simulated_file,
+                             out_file=goodness_obs_sim_solution)
+    goodness_obs_sim = os.path.join(COMPARE_DATA_PATH,
+                                    'goodness_of_fit_obs_sim.txt')
+    assert (fcmp(goodness_obs_sim, goodness_obs_sim_solution))
+
     remove_files(cf_out_analysis_file,
-                 original_out_analysis_file,
-                 new_out_analysis_file,
                  cf_out_analysis_file_1)
 
 def test_cf_merge():

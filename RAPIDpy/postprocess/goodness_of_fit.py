@@ -315,23 +315,24 @@ def find_goodness_of_fit_csv(observed_simulated_file, out_file=None):
         print_file = None
 
     print("\n".join([
-               "Percent Bias: {0}"
+               "Percent Bias: {0:.4f}"
                .format(pc_bias(simulated_array, observed_array)),
-               "Absolute Percent Bias: {0}"
+               "Absolute Percent Bias: {0:.4f}"
                .format(apb(simulated_array, observed_array)),
-               "Root Mean Squared Error: {0}"
+               "Root Mean Squared Error: {0:.4f}"
                .format(rmse(simulated_array, observed_array)),
-               "Mean Absolute Error: {0}"
+               "Mean Absolute Error: {0:.4f}"
                .format(mae(simulated_array, observed_array)),
                "Bias: {0}".format(bias(simulated_array, observed_array)),
-               "Nash Sutcliffe efficiency coefficient: {0}"
+               "Nash Sutcliffe efficiency coefficient: {0:.4f}"
                .format(NS(simulated_array, observed_array)),
-               "Likelihood: {0}".format(L(simulated_array, observed_array)),
-               "correlation coefficient: {0}"
+               "Likelihood: {0:.4f}"
+               .format(L(simulated_array, observed_array)),
+               "correlation coefficient: {0:.4f}"
                .format(correlation(simulated_array, observed_array)),
-               "index of agreement: {0}"
+               "index of agreement: {0:.4f}"
                .format(index_agreement(simulated_array, observed_array)),
-               "Kling-Gupta Efficiency: {0}"
+               "Kling-Gupta Efficiency: {0:.4f}"
                .format(KGE(simulated_array, observed_array)[0]),
                ]),
           file=print_file)

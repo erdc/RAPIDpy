@@ -10,10 +10,11 @@ from calendar import isleap
 import multiprocessing
 from time import gmtime
 
-from netCDF4 import Dataset  # pylint: disable=no-name-in-module
+from netCDF4 import Dataset
 import numpy as np
 
 from ..dataset import RAPIDDataset
+from ..helper_functions import add_latlon_metadata
 
 
 def generate_single_seasonal_average(args):
@@ -39,7 +40,7 @@ def generate_single_seasonal_average(args):
             if isleap(var_time.tm_year) and compare_yday > 60:
                 compare_yday -= 1
             # check if date within range of season
-            if max_day < compare_yday >= min_day:
+            if max_day > compare_yday >= min_day:
                 time_indices.append(idx)
 
         if not time_indices:
@@ -111,17 +112,10 @@ def generate_seasonal_averages(qout_file, seasonal_average_file,
 
         lat_var = seasonal_avg_nc.createVariable('lat', 'f8', ('rivid',),
                                                  fill_value=-9999.0)
-        lat_var.long_name = 'latitude'
-        lat_var.standard_name = 'latitude'
-        lat_var.units = 'degrees_north'
-        lat_var.axis = 'Y'
 
         lon_var = seasonal_avg_nc.createVariable('lon', 'f8', ('rivid',),
                                                  fill_value=-9999.0)
-        lon_var.long_name = 'longitude'
-        lon_var.standard_name = 'longitude'
-        lon_var.units = 'degrees_east'
-        lon_var.axis = 'X'
+        add_latlon_metadata(lat_var, lon_var)
 
         seasonal_avg_nc.variables['lat'][:] = \
             qout_nc_file.qout_nc.variables['lat'][:]

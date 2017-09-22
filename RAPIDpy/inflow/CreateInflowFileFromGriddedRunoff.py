@@ -6,13 +6,12 @@
    Created by Alan D. Snow, 2016
    License: BSD-3-Clause
 """
-# pylint: disable=no-member
 from abc import abstractmethod
 import csv
 from datetime import datetime
 import os
 
-from netCDF4 import Dataset  # pylint: disable=no-name-in-module
+from netCDF4 import Dataset
 import numpy as np
 from pytz import utc
 from past.builtins import xrange  # pylint: disable=redefined-builtin
@@ -32,6 +31,7 @@ class CreateInflowFileFromGriddedRunoff(object):
     header_wt = ['rivid', 'area_sqm', 'lon_index', 'lat_index', 'npoints']
 
     def __init__(self):
+        self.runoff_vars = []
         self.dict_list = []
         self.count = 0
         self.size_stream_id = 0

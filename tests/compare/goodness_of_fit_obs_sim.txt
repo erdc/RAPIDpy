@@ -1,0 +1,10 @@
+Percent Bias: -42.3077
+Absolute Percent Bias: 43.5897
+Root Mean Squared Error: 23.2637
+Mean Absolute Error: 13.6000
+Bias: -13.2
+Nash Sutcliffe efficiency coefficient: 0.5522
+Likelihood: 0.1066
+correlation coefficient: 0.9658
+index of agreement: 0.8054
+Kling-Gupta Efficiency: 0.3285

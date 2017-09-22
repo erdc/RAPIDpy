@@ -15,7 +15,7 @@ import traceback
 # external packages
 import pandas as pd
 import pangaea
-from netCDF4 import Dataset  # pylint: disable=no-name-in-module
+from netCDF4 import Dataset
 import numpy as np
 
 # local imports
@@ -476,7 +476,6 @@ def determine_start_end_timestep(lsm_file_list,
     """
     Determine the start and end date from LSM input files
     """
-    # pylint: disable=no-member
     if lsm_grid_info is None:
         lsm_grid_info = identify_lsm_grid(lsm_file_list[0])
 

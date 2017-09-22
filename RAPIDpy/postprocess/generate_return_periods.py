@@ -8,14 +8,13 @@
 """
 from datetime import datetime
 import multiprocessing
-from netCDF4 import Dataset  # pylint: disable=no-name-in-module
+from netCDF4 import Dataset
 import numpy as np
 
 # local
 from ..dataset import RAPIDDataset
-from ..helper_functions import log
+from ..helper_functions import add_latlon_metadata, log
 from ..utilities import partition
-# pylint: disable=no-member
 
 
 def generate_single_return_period(args):
@@ -241,17 +240,11 @@ def generate_return_periods(qout_file,
 
         lat_var = return_period_nc.createVariable('lat', 'f8', ('rivid',),
                                                   fill_value=-9999.0)
-        lat_var.long_name = 'latitude'
-        lat_var.standard_name = 'latitude'
-        lat_var.units = 'degrees_north'
-        lat_var.axis = 'Y'
 
         lon_var = return_period_nc.createVariable('lon', 'f8', ('rivid',),
                                                   fill_value=-9999.0)
-        lon_var.long_name = 'longitude'
-        lon_var.standard_name = 'longitude'
-        lon_var.units = 'degrees_east'
-        lon_var.axis = 'X'
+
+        add_latlon_metadata(lat_var, lon_var)
 
         return_period_nc.variables['lat'][:] = \
             qout_nc_file.qout_nc.variables['lat'][:]
@@ -276,6 +269,7 @@ def generate_return_periods(qout_file,
     step = max(1, int(time_steps_per_day * storm_duration_days))
 
     # generate multiprocessing jobs
+    # pylint: disable=no-member
     mp_lock = multiprocessing.Manager().Lock()
     job_combinations = []
     partition_index_list = partition(river_id_list, num_cpus*2)[1]

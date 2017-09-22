@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
-#
-#  lsm_rapid_process.py
-#  RAPIDpy
-#
-#  Created by Alan D. Snow.
-#  Copyright © 2015-2016 Alan D Snow. All rights reserved.
-#  License: BSD 3-Clause
+"""
+   lsm_rapid_process.py
+   RAPIDpy
 
+   Created by Alan D. Snow, 2015.
+   License: BSD 3-Clause
+"""
 from datetime import datetime, timedelta
 import multiprocessing
 import os
@@ -21,9 +20,11 @@ import numpy as np
 
 # local imports
 from ..rapid import RAPID
-from .CreateInflowFileFromERAInterimRunoff import CreateInflowFileFromERAInterimRunoff
+from .CreateInflowFileFromERAInterimRunoff import \
+    CreateInflowFileFromERAInterimRunoff
 from .CreateInflowFileFromLDASRunoff import CreateInflowFileFromLDASRunoff
-from .CreateInflowFileFromWRFHydroRunoff import CreateInflowFileFromWRFHydroRunoff
+from .CreateInflowFileFromWRFHydroRunoff import \
+    CreateInflowFileFromWRFHydroRunoff
 from ..postprocess.generate_return_periods import generate_return_periods
 from ..postprocess.generate_seasonal_averages import generate_seasonal_averages
 from ..utilities import (case_insensitive_file_search,
@@ -31,9 +32,9 @@ from ..utilities import (case_insensitive_file_search,
                          partition)
 
 
-# ------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # MULTIPROCESSING FUNCTION
-# ------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 def generate_inflows_from_runoff(args):
     """
     prepare runoff inflow file for rapid
@@ -43,7 +44,7 @@ def generate_inflows_from_runoff(args):
     weight_table_file = args[2]
     grid_type = args[3]
     rapid_inflow_file = args[4]
-    RAPID_Inflow_Tool = args[5]
+    rapid_inflow_tool = args[5]
     mp_lock = args[6]
 
     time_start_all = datetime.utcnow()
@@ -69,13 +70,12 @@ def generate_inflows_from_runoff(args):
         print(runoff_string)
         print("Converting inflow ...")
         try:
-            RAPID_Inflow_Tool.execute(nc_file_list=runoff_file_list,
+            rapid_inflow_tool.execute(nc_file_list=runoff_file_list,
                                       index_list=file_index_list,
                                       in_weight_table=weight_table_file,
                                       out_nc=rapid_inflow_file,
                                       grid_type=grid_type,
-                                      mp_lock=mp_lock,
-                                      )
+                                      mp_lock=mp_lock)
         except Exception:
             # This prints the type, value, and stack trace of the
             # current exception being handled.
@@ -83,12 +83,13 @@ def generate_inflows_from_runoff(args):
             raise
 
         time_finish_ecmwf = datetime.utcnow()
-        print("Time to convert inflows: {0}".format(time_finish_ecmwf-time_start_all))
+        print("Time to convert inflows: {0}"
+              .format(time_finish_ecmwf-time_start_all))
 
-# ------------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
 # UTILITY FUNCTIONS
-# ------------------------------------------------------------------------------
-
+# -----------------------------------------------------------------------------
 DEFAULT_LSM_INPUTS = {
     't255': {
         'file_datetime_re_pattern': r'\d{8}',
@@ -190,7 +191,6 @@ def identify_lsm_grid(lsm_grid_path):
         time_dim = 'Times'
     elif 'times' in dim_list:
         time_dim = 'times'
-
 
     lat_dim_size = len(lsm_example_file.dimensions[latitude_dim])
     lon_dim_size = len(lsm_example_file.dimensions[longitude_dim])
@@ -331,7 +331,7 @@ def identify_lsm_grid(lsm_grid_path):
             #   lon = 1024 ;
             #   lat = 512 ;
             lsm_file_data["description"] = "ERA Interim (T511 Grid)"
-            lsm_file_data["weight_file_name"]= r'weight_era_t511\.csv'
+            lsm_file_data["weight_file_name"] = r'weight_era_t511\.csv'
             lsm_file_data["model_name"] = "erai"
             lsm_file_data["grid_type"] = 't511'
         elif lat_dim_size == 161 and lon_dim_size == 320:
@@ -399,9 +399,11 @@ def identify_lsm_grid(lsm_grid_path):
             #     g0_lat_0 = 600 ;
             #     g0_lon_1 = 1440 ;
             # variables
-            # SSRUN_GDS0_SFC_ave1h (surface), BGRUN_GDS0_SFC_ave1h (subsurface)
+            # SSRUN_GDS0_SFC_ave1h (surface)
+            # BGRUN_GDS0_SFC_ave1h (subsurface)
             #  or
-            # SSRUNsfc_GDS0_SFC_ave1h (surface), BGRUNsfc_GDS0_SFC_ave1h (subsurface)
+            # SSRUNsfc_GDS0_SFC_ave1h (surface)
+            # BGRUNsfc_GDS0_SFC_ave1h (subsurface)
             lsm_file_data["description"] = "GLDAS"
             lsm_file_data["weight_file_name"] = r'weight_gldas\.csv'
             lsm_file_data["grid_type"] = 'gldas'
@@ -466,48 +468,58 @@ def identify_lsm_grid(lsm_grid_path):
     return lsm_file_data
 
 
-def determine_start_end_timestep(lsm_file_list, file_re_match=None, file_datetime_pattern=None,
-                                 expected_time_step=None, lsm_grid_info=None):
+def determine_start_end_timestep(lsm_file_list,
+                                 file_re_match=None,
+                                 file_datetime_pattern=None,
+                                 expected_time_step=None,
+                                 lsm_grid_info=None):
     """
     Determine the start and end date from LSM input files
     """
-
     if lsm_grid_info is None:
         lsm_grid_info = identify_lsm_grid(lsm_file_list[0])
 
     if None in (lsm_grid_info['time_var'], lsm_grid_info['time_dim'])\
             or lsm_grid_info['model_name'] in ('era_20cm', 'erai'):
-        # NOTE: the ERA20CM and ERA 24hr time variables in the tests are erroneous
+        # NOTE: the ERA20CM and ERA 24hr time variables
+        # in the tests are erroneous
         if None in (file_re_match, file_datetime_pattern):
-            raise ValueError("LSM files missing time dimension and/or variable."
-                             "To mitigate this, add the 'file_re_match' and "
-                             "'file_datetime_pattern' arguments.")
+            raise ValueError("LSM files missing time dimension and/or "
+                             "variable.To mitigate this, add the "
+                             "'file_re_match' and 'file_datetime_pattern' "
+                             "arguments.")
 
         if lsm_grid_info['time_dim'] is None:
             print("Assuming time dimension is 1")
             file_size_time = 1
         else:
             lsm_example_file = Dataset(lsm_file_list[0])
-            file_size_time = len(lsm_example_file.dimensions[lsm_grid_info['time_dim']])
+            file_size_time = \
+                len(lsm_example_file.dimensions[lsm_grid_info['time_dim']])
             lsm_example_file.close()
 
         total_num_time_steps = int(file_size_time * len(lsm_file_list))
 
         # determine the start time from the existing files
-        actual_simulation_start_datetime = datetime.strptime(file_re_match.search(lsm_file_list[0]).group(0),
-                                                             file_datetime_pattern)
+        actual_simulation_start_datetime = \
+            datetime.strptime(file_re_match.search(lsm_file_list[0]).group(0),
+                              file_datetime_pattern)
 
         # check to see if the time step matches expected
         if len(lsm_file_list) > 1:
-            time_step = int((datetime.strptime(file_re_match.search(lsm_file_list[1]).group(0), file_datetime_pattern)
-                             - actual_simulation_start_datetime).total_seconds()
-                            / float(file_size_time))
+            time_step = \
+                int((datetime.strptime(
+                    file_re_match.search(lsm_file_list[1]).group(0),
+                    file_datetime_pattern) -
+                    actual_simulation_start_datetime).total_seconds()
+                    / float(file_size_time))
 
         elif expected_time_step is not None:
             time_step = int(expected_time_step)
         else:
             raise ValueError("Only one LSM file with one timestep present. "
-                             "'expected_time_step' parameter required to continue.")
+                             "'expected_time_step' parameter required to "
+                             "continue.")
 
         # determine the end datetime
         actual_simulation_end_datetime = \
@@ -523,7 +535,8 @@ def determine_start_end_timestep(lsm_file_list, file_re_match=None, file_datetim
                                     lon_dim=lsm_grid_info['longitude_dim'],
                                     time_dim=lsm_grid_info['time_dim']) as xds:
 
-            datetime_arr = [pd.to_datetime(dval) for dval in xds.lsm.datetime.values]
+            datetime_arr = [pd.to_datetime(dval) for dval in
+                            xds.lsm.datetime.values]
             actual_simulation_start_datetime = datetime_arr[0]
             actual_simulation_end_datetime = datetime_arr[-1]
             total_num_time_steps = len(datetime_arr)
@@ -532,18 +545,21 @@ def determine_start_end_timestep(lsm_file_list, file_re_match=None, file_datetim
                 if expected_time_step is not None:
                     time_step = int(expected_time_step)
                 else:
-                    raise ValueError("Only one LSM file with one timestep present. "
-                                     "'expected_time_step' parameter required to continue.")
-
+                    raise ValueError("Only one LSM file with one timestep "
+                                     "present. 'expected_time_step' parameter "
+                                     "required to continue.")
             else:
-                time_step = int(np.diff(xds.lsm.datetime.values)[0] / np.timedelta64(1, 's'))
+                time_step = int(np.diff(xds.lsm.datetime.values)[0]
+                                / np.timedelta64(1, 's'))
 
     if expected_time_step is not None:
         if time_step != int(expected_time_step):
-            print("WARNING: The time step used {0} is different than expected {1}".format(time_step,
-                                                                                          expected_time_step))
+            print("WARNING: The time step used {0} is different than "
+                  "expected {1}".format(time_step, expected_time_step))
 
-    return actual_simulation_start_datetime, actual_simulation_end_datetime, time_step, total_num_time_steps
+    return (actual_simulation_start_datetime, actual_simulation_end_datetime,
+            time_step, total_num_time_steps)
+
 
 # ------------------------------------------------------------------------------
 # MAIN PROCESS
@@ -558,7 +574,7 @@ def run_lsm_rapid_process(rapid_executable_location,
                           file_datetime_pattern=None,
                           file_datetime_re_pattern=None,
                           initial_flows_file=None,
-                          ensemble_list=[None],
+                          ensemble_list=(None,),
                           generate_rapid_namelist_file=True,
                           run_rapid_simulation=True,
                           generate_return_periods_file=False,
@@ -570,42 +586,97 @@ def run_lsm_rapid_process(rapid_executable_location,
                           num_processors=1,
                           mpiexec_command="mpiexec",
                           cygwin_bin_location="",
-                          modeling_institution="US Army Engineer Research and Development Center",
+                          modeling_institution="US Army Engineer Research "
+                                               "and Development Center",
                           convert_one_hour_to_three=False,
-                          expected_time_step=None,
-                          ):
+                          expected_time_step=None):
+    # pylint: disable=anomalous-backslash-in-string
     """
     This is the main process to generate inflow for RAPID and to run RAPID.
 
-    Args:
-        rapid_executable_location(str): Path to the RAPID executable.
-        lsm_data_location(str): Path to the directory containing the Land Surface Model output files.
-        rapid_io_files_location(Optional[str]): Path to the directory containing the input and output folders for RAPID. This is for running multiple watersheds.
-        rapid_input_location(Optional[str]): Path to directory with RAPID simulation input data. Required if `rapid_io_files_location` is not set.
-        rapid_output_location(Optional[str]): Path to directory to put output. Required if `rapid_io_files_location` is not set.
-        simulation_start_datetime(Optional[datetime]): Datetime object with date bound of earliest simulation start.
-        simulation_end_datetime(Optional[datetime]): Datetime object with date bound of latest simulation end. Defaults to datetime.utcnow().
-        file_datetime_pattern(Optional[str]): Datetime pattern for files (Ex. '%Y%m%d%H'). If set, file_datetime_re_pattern is required. Various defaults used by each model.
-        file_datetime_re_pattern(Optional[raw str]): Regex pattern to extract datetime (Ex. r'\d{10}'). If set, file_datetime_pattern is required. Various defaults used by each model.
-        initial_flows_file(Optional[str]): If given, this is the path to a file with initial flows for the simulaion.
-        ensemble_list(Optional[list]): This is the expexted ensemble name appended to the end of the file name.
-        generate_rapid_namelist_file(Optional[bool]): If True, this will create a RAPID namelist file for the run in your RAPID input directory. Default is True.
-        run_rapid_simulation(Optional[bool]): If True, the RAPID simulation will run after generating the inflow file. Default is True.
-        generate_return_periods_file(Optional[bool]): If True, the return period file will be generated in the output. Default is False.
-        return_period_method(Optional[str]): If True, the return period file will be generated in the output. Default is False.
-        generate_seasonal_averages_file(Optional[bool]): If True, the season average file will be generated. Default is False.
-        generate_seasonal_initialization_file(Optional[bool]): If True, an intialization based on the seasonal average for the current day of the year will be created. Default is False.
-        generate_initialization_file(Optional[bool]): If True, an initialization file from the last time step of the simulation willl be created. Default is False.
-        use_all_processors(Optional[bool]): If True, it will use all available processors to perform this operation. Default is True.
-        num_processors(Optional[int]): If use_all_processors is False, this argument will determine the number of processors to use. Default is 1.
-        mpiexec_command(Optional[str]): This is the command to execute RAPID. Default is "mpiexec".
-        cygwin_bin_location(Optional[str]): If using Windows, this is the path to the Cygwin bin location. Default is "".
-        modeling_institution(Optional[str]): This is the institution performing the modeling and is in the output files. Default is "US Army Engineer Research and Development Center".
-        convert_one_hour_to_three(Optional[bool]): If the time step is expected to be 1-hr it will convert to 3. Set to False if the LIS, NLDAS, or Joules grid time step is greater than 1-hr.
-        expected_time_step(Optional[int]): The time step in seconds of your LSM input data if only one file is given. Required if only one file is present.
+    Parameters
+    ----------
+    rapid_executable_location: str
+        Path to the RAPID executable.
+    lsm_data_location: str
+        Path to the directory containing the Land Surface Model output files.
+    rapid_io_files_location: str, optional
+        Path to the directory containing the input and output folders for
+        RAPID. This is for running multiple watersheds.
+    rapid_input_location: str, optional
+        Path to directory with RAPID simulation input data.
+        Required if `rapid_io_files_location` is not set.
+    rapid_output_location: str, optional
+        Path to directory to put output. Required if
+        `rapid_io_files_location` is not set.
+    simulation_start_datetime: datetime, optional
+        Datetime object with date bound of earliest simulation start.
+    simulation_end_datetime: datetime, optional
+        Datetime object with date bound of latest simulation end.
+        Defaults to :obj:`datetime.utcnow`.
+    file_datetime_pattern: str, optional
+        Datetime pattern for files (Ex. '%Y%m%d%H'). If set,
+        `file_datetime_re_pattern` is required.
+        Various defaults used by each model.
+    file_datetime_re_pattern: raw str, optional
+        Regex pattern to extract datetime (Ex. r'\d{10}').
+        If set, `file_datetime_pattern` is required.
+        Various defaults used by each model.
+    initial_flows_file: str, optional
+        If given, this is the path to a file with initial flows
+        for the simulaion.
+    ensemble_list: list, optional
+        This is the expexted ensemble name appended to the end of the
+        file name.
+    generate_rapid_namelist_file: bool, optional
+        If True, this will create a RAPID namelist file for the run in
+        your RAPID input directory. Default is True.
+    run_rapid_simulation: bool, optional
+        If True, the RAPID simulation will run after generating the
+            inflow file. Default is True.
+    generate_return_periods_file: bool, optional
+        If True, the return period file will be generated in the output.
+        Default is False.
+    return_period_method: str, optional
+        If True, the return period file will be generated in the output.
+        Default is False.
+    generate_seasonal_averages_file: bool, optional
+        If True, the season average file will be generated. Default is False.
+    generate_seasonal_initialization_file: bool, optional
+        If True, an intialization based on the seasonal average for the
+        current day of the year will be created. Default is False.
+    generate_initialization_file: bool, optional
+        If True, an initialization file from the last time step of the
+        simulation willl be created. Default is False.
+    use_all_processors: bool, optional
+        If True, it will use all available processors to perform this
+        operation. Default is True.
+    num_processors: int, optional
+        If use_all_processors is False, this argument will determine the
+        number of processors to use. Default is 1.
+    mpiexec_command: str, optional
+        This is the command to execute RAPID. Default is "mpiexec".
+    cygwin_bin_location: str, optional
+        If using Windows, this is the path to the Cygwin bin location.
+        Default is "".
+    modeling_institution: str, optional
+        This is the institution performing the modeling and is in the
+        output files.
+        Default is "US Army Engineer Research and Development Center".
+    convert_one_hour_to_three: bool, optional
+        If the time step is expected to be 1-hr it will convert to 3.
+        Set to False if the LIS, NLDAS, or Joules grid time step is
+        greater than 1-hr.
+    expected_time_step: int, optional
+        The time step in seconds of your LSM input data if only one file
+        is given. Required if only one file is present.
 
-    Returns:
-        list: A list of output file information.
+
+    Returns
+    -------
+    list:
+        A list of output file information.
+
 
     Example of regular run:
 
@@ -613,15 +684,12 @@ def run_lsm_rapid_process(rapid_executable_location,
 
         from datetime import datetime
         from RAPIDpy.inflow import run_lsm_rapid_process
-        #------------------------------------------------------------------------------
-        #main process
-        #------------------------------------------------------------------------------
-        if __name__ == "__main__":
-            run_lsm_rapid_process(
-                rapid_executable_location='/home/alan/rapid/src/rapid',
-                rapid_io_files_location='/home/alan/rapid-io',
-                lsm_data_location='/home/alan/era_data',
-            )
+
+        run_lsm_rapid_process(
+            rapid_executable_location='/home/alan/rapid/src/rapid',
+            rapid_io_files_location='/home/alan/rapid-io',
+            lsm_data_location='/home/alan/era_data',
+        )
 
     Example of single input/output run:
 
@@ -629,16 +697,13 @@ def run_lsm_rapid_process(rapid_executable_location,
 
         from datetime import datetime
         from RAPIDpy.inflow import run_lsm_rapid_process
-        #------------------------------------------------------------------------------
-        #main process
-        #------------------------------------------------------------------------------
-        if __name__ == "__main__":
-            run_lsm_rapid_process(
-                rapid_executable_location='/home/alan/rapid/src/rapid',
-                rapid_input_location='/home/alan/rapid-io/input/provo_watershed',
-                rapid_output_location='/home/alan/rapid-io/output/provo_watershed',
-                lsm_data_location='/home/alan/era_data',
-            )
+
+        run_lsm_rapid_process(
+            rapid_executable_location='/home/alan/rapid/src/rapid',
+            rapid_input_location='/home/alan/rapid-io/input/provo_watershed',
+            rapid_output_location='/home/alan/rapid-io/output/provo_watershed',
+            lsm_data_location='/home/alan/era_data',
+        )
 
 
     Example of run with FLDAS and datetime filter:
@@ -649,18 +714,15 @@ def run_lsm_rapid_process(rapid_executable_location,
 
         from datetime import datetime
         from RAPIDpy.inflow import run_lsm_rapid_process
-        #------------------------------------------------------------------------------
-        #main process
-        #------------------------------------------------------------------------------
-        if __name__ == "__main__":
-            run_lsm_rapid_process(
-                rapid_executable_location='/home/alan/rapid/src/rapid',
-                rapid_io_files_location='/home/alan/rapid-io',
-                lsm_data_location='/home/alan/lsm_data',
-                simulation_start_datetime=datetime(1980, 1, 1),
-                file_datetime_re_pattern = r'\d{8}',
-                file_datetime_pattern = "%Y%m%d",
-            )
+
+        run_lsm_rapid_process(
+            rapid_executable_location='/home/alan/rapid/src/rapid',
+            rapid_io_files_location='/home/alan/rapid-io',
+            lsm_data_location='/home/alan/lsm_data',
+            simulation_start_datetime=datetime(1980, 1, 1),
+            file_datetime_re_pattern = r'\d{8}',
+            file_datetime_pattern = "%Y%m%d",
+        )
 
 
     Example of run with CMIP5:
@@ -672,67 +734,70 @@ def run_lsm_rapid_process(rapid_executable_location,
 
         from datetime import datetime
         from RAPIDpy.inflow import run_lsm_rapid_process
-        #------------------------------------------------------------------------------
-        #main process
-        #------------------------------------------------------------------------------
-        if __name__ == "__main__":
-            run_lsm_rapid_process(
-                rapid_executable_location='/home/jimwlewis/rapid/src/rapid',
-                rapid_io_files_location='/data/rapid-io4',
-                lsm_data_location='/data/rapid-io4/input/cmip5-jun01',
-                simulation_start_datetime=datetime(2001, 1, 1),
-                simulation_end_datetime=datetime(2002, 12, 31),
-                file_datetime_pattern="%Y",
-                file_datetime_re_pattern=r'\d{4}',
-            )
-    """
+
+        run_lsm_rapid_process(
+            rapid_executable_location='/home/jimwlewis/rapid/src/rapid',
+            rapid_io_files_location='/data/rapid-io4',
+            lsm_data_location='/data/rapid-io4/input/cmip5-jun01',
+            simulation_start_datetime=datetime(2001, 1, 1),
+            simulation_end_datetime=datetime(2002, 12, 31),
+            file_datetime_pattern="%Y",
+            file_datetime_re_pattern=r'\d{4}',
+        )
+    """  # noqa
     time_begin_all = datetime.utcnow()
 
     # use all processors makes precedent over num_processors arg
-    if use_all_processors == True:
-        NUM_CPUS = multiprocessing.cpu_count()
+    if use_all_processors is True:
+        num_cpus = multiprocessing.cpu_count()
     elif num_processors > multiprocessing.cpu_count():
         print("WARNING: Num processors requested exceeded max. Set to max ...")
-        NUM_CPUS = multiprocessing.cpu_count()
+        num_cpus = multiprocessing.cpu_count()
     else:
-        NUM_CPUS = num_processors
+        num_cpus = num_processors
 
-    # get list of correclty formatted rapid input directories in rapid directory
-
+    # get list of correctly formatted rapid input directories in
+    # rapid directory
     rapid_directories = []
     if rapid_io_files_location is not None:
-        main_rapid_input_directory = os.path.join(rapid_io_files_location, 'input')
-        for watershed_directory in get_valid_directory_list(main_rapid_input_directory):
+        main_rapid_input_directory = os.path.join(rapid_io_files_location,
+                                                  'input')
+        for watershed_directory in \
+                get_valid_directory_list(main_rapid_input_directory):
             watershed_input_path = os.path.join(main_rapid_input_directory,
                                                 watershed_directory)
             watershed_output_path = os.path.join(rapid_io_files_location,
                                                  'output',
                                                  watershed_directory)
-            rapid_directories.append((watershed_input_path, watershed_output_path))
+            rapid_directories.append(
+                (watershed_input_path, watershed_output_path))
     elif None not in (rapid_input_location, rapid_output_location):
         rapid_directories = [(rapid_input_location, rapid_output_location)]
     else:
-        raise ValueError("Need 'rapid_io_files_location' or 'rapid_input_location' "
-                         "and 'rapid_output_location' set to continue.")
+        raise ValueError("Need 'rapid_io_files_location' or "
+                         "'rapid_input_location' and 'rapid_output_location'"
+                         " set to continue.")
 
     all_output_file_information = []
-
     for ensemble in ensemble_list:
         output_file_information = {
-            'ensemble' : ensemble,
+            'ensemble': ensemble,
         }
         ensemble_file_ending = ".nc"
         ensemble_file_ending4 = ".nc4"
-        if ensemble != None:
+        if ensemble is not None:
             ensemble_file_ending = "_{0}.nc".format(ensemble)
             ensemble_file_ending4 = "_{0}.nc4".format(ensemble)
 
         # get list of files
         lsm_file_list = []
-        for subdir, dirs, files in os.walk(lsm_data_location, followlinks=True):
-            for lsm_file in files:
-                if lsm_file.endswith(ensemble_file_ending) or lsm_file.endswith(ensemble_file_ending4):
-                    lsm_file_list.append(os.path.join(subdir, lsm_file))
+        for walkdir_info in os.walk(lsm_data_location,
+                                    followlinks=True):
+            for lsm_file in walkdir_info[2]:
+                if lsm_file.endswith(ensemble_file_ending) or \
+                        lsm_file.endswith(ensemble_file_ending4):
+                    lsm_file_list.append(
+                        os.path.join(walkdir_info[0], lsm_file))
         lsm_file_list = sorted(lsm_file_list)
 
         # IDENTIFY THE GRID
@@ -740,8 +805,12 @@ def run_lsm_rapid_process(rapid_executable_location,
 
         # load in the datetime pattern
         if file_datetime_pattern is None or file_datetime_re_pattern is None:
-            file_datetime_re_pattern = DEFAULT_LSM_INPUTS[lsm_file_data['grid_type']]['file_datetime_re_pattern']
-            file_datetime_pattern = DEFAULT_LSM_INPUTS[lsm_file_data['grid_type']]['file_datetime_pattern']
+            file_datetime_re_pattern = \
+                DEFAULT_LSM_INPUTS[lsm_file_data['grid_type']][
+                    'file_datetime_re_pattern']
+            file_datetime_pattern = \
+                DEFAULT_LSM_INPUTS[lsm_file_data['grid_type']][
+                    'file_datetime_pattern']
         file_re_match = re.compile(file_datetime_re_pattern)
 
         # get subset based on time bounds
@@ -750,11 +819,12 @@ def run_lsm_rapid_process(rapid_executable_location,
             lsm_file_list_subset = []
             for lsm_file in lsm_file_list:
                 match = file_re_match.search(lsm_file)
-                file_date = datetime.strptime(match.group(0), file_datetime_pattern)
+                file_date = datetime.strptime(match.group(0),
+                                              file_datetime_pattern)
                 if file_date > simulation_end_datetime:
                     break
                 if file_date >= simulation_start_datetime:
-                    lsm_file_list_subset.append(os.path.join(subdir, lsm_file))
+                    lsm_file_list_subset.append(lsm_file)
 
             lsm_file_list = sorted(lsm_file_list_subset)
 
@@ -762,33 +832,38 @@ def run_lsm_rapid_process(rapid_executable_location,
                                                lsm_file_list[-1]))
 
         # get number of time steps in file
-        actual_simulation_start_datetime, actual_simulation_end_datetime, time_step, total_num_time_steps = \
-            determine_start_end_timestep(lsm_file_list,
-                                         file_re_match=file_re_match,
-                                         file_datetime_pattern=file_datetime_pattern,
-                                         expected_time_step=expected_time_step,
-                                         lsm_grid_info=lsm_file_data)
+        actual_simulation_start_datetime, actual_simulation_end_datetime, \
+            time_step, total_num_time_steps = \
+            determine_start_end_timestep(
+                lsm_file_list,
+                file_re_match=file_re_match,
+                file_datetime_pattern=file_datetime_pattern,
+                expected_time_step=expected_time_step,
+                lsm_grid_info=lsm_file_data)
 
         # VALIDATING INPUT IF DIVIDING BY 3
-        time_step_multiply_factor = 1
-        if (lsm_file_data['grid_type'] in ('nldas', 'lis', 'joules')) and convert_one_hour_to_three:
+        if (lsm_file_data['grid_type'] in ('nldas', 'lis', 'joules')) \
+                and convert_one_hour_to_three:
             num_extra_files = total_num_time_steps % 3
             if num_extra_files != 0:
-                print("WARNING: Number of files needs to be divisible by 3. Remainder is {0}".format(num_extra_files))
+                print("WARNING: Number of files needs to be divisible by 3. "
+                      "Remainder is {0}".format(num_extra_files))
                 print("This means your simulation will be truncated")
             total_num_time_steps /= 3
             time_step *= 3
 
         # compile the file ending
-        out_file_ending = "{0}_{1}_{2}hr_{3:%Y%m%d}to{4:%Y%m%d}{5}".format(lsm_file_data['model_name'],
-                                                             lsm_file_data['grid_type'],
-                                                             int(time_step/3600),
-                                                             actual_simulation_start_datetime,
-                                                             actual_simulation_end_datetime,
-                                                             ensemble_file_ending)
+        out_file_ending = "{0}_{1}_{2}hr_{3:%Y%m%d}to{4:%Y%m%d}{5}"\
+            .format(lsm_file_data['model_name'],
+                    lsm_file_data['grid_type'],
+                    int(time_step/3600),
+                    actual_simulation_start_datetime,
+                    actual_simulation_end_datetime,
+                    ensemble_file_ending)
 
         # run LSM processes
-        for master_watershed_input_directory, master_watershed_output_directory in rapid_directories:
+        for master_watershed_input_directory, \
+                master_watershed_output_directory in rapid_directories:
             print("Running from: {0}".format(master_watershed_input_directory))
             try:
                 os.makedirs(master_watershed_output_directory)
@@ -796,78 +871,92 @@ def run_lsm_rapid_process(rapid_executable_location,
                 pass
 
             # create inflow to dump data into
-            master_rapid_runoff_file = os.path.join(master_watershed_output_directory,
-                                                    'm3_riv_bas_{0}'.format(out_file_ending))
+            master_rapid_runoff_file = \
+                os.path.join(master_watershed_output_directory,
+                             'm3_riv_bas_{0}'.format(out_file_ending))
 
-            weight_table_file = case_insensitive_file_search(master_watershed_input_directory,
-                                                             lsm_file_data['weight_file_name'])
+            weight_table_file = \
+                case_insensitive_file_search(master_watershed_input_directory,
+                                             lsm_file_data['weight_file_name'])
 
             try:
-                in_rivid_lat_lon_z_file = case_insensitive_file_search(master_watershed_input_directory,
-                                                                       r'comid_lat_lon_z\.csv')
-            except Exception:
+                in_rivid_lat_lon_z_file = \
+                    case_insensitive_file_search(
+                        master_watershed_input_directory,
+                        r'comid_lat_lon_z\.csv')
+            except IndexError:
                 in_rivid_lat_lon_z_file = ""
-                print("WARNING: comid_lat_lon_z file not found. The lat/lon will not be added ...")
-                pass
+                print("WARNING: comid_lat_lon_z file not found."
+                      " The lat/lon will not be added ...")
 
-            print("Writing inflow file to: {0}".format(master_rapid_runoff_file))
+            print("Writing inflow file to: {0}"
+                  .format(master_rapid_runoff_file))
             lsm_file_data['rapid_inflow_tool'].generateOutputInflowFile(
                 out_nc=master_rapid_runoff_file,
                 start_datetime_utc=actual_simulation_start_datetime,
                 number_of_timesteps=total_num_time_steps,
                 simulation_time_step_seconds=time_step,
-                in_rapid_connect_file=case_insensitive_file_search(master_watershed_input_directory,
-                                                                   r'rapid_connect\.csv'),
+                in_rapid_connect_file=case_insensitive_file_search(
+                    master_watershed_input_directory,
+                    r'rapid_connect\.csv'),
                 in_rivid_lat_lon_z_file=in_rivid_lat_lon_z_file,
                 land_surface_model_description=lsm_file_data['description'],
                 modeling_institution=modeling_institution
             )
 
             job_combinations = []
-            if (lsm_file_data['grid_type'] in ('nldas', 'lis', 'joules')) and convert_one_hour_to_three:
-                print("Grouping {0} in threes".format(lsm_file_data['grid_type']))
+            if (lsm_file_data['grid_type'] in ('nldas', 'lis', 'joules')) \
+                    and convert_one_hour_to_three:
+                print("Grouping {0} in threes"
+                      .format(lsm_file_data['grid_type']))
                 lsm_file_list = [lsm_file_list[nldas_index:nldas_index+3]
-                                 for nldas_index in range(0, len(lsm_file_list), 3)
-                                 if len(lsm_file_list[nldas_index:nldas_index+3]) == 3]
+                                 for nldas_index in
+                                 range(0, len(lsm_file_list), 3)
+                                 if len(lsm_file_list[
+                                        nldas_index:nldas_index+3]) == 3]
 
-            if len(lsm_file_list) < NUM_CPUS:
-                NUM_CPUS = len(lsm_file_list)
+            if len(lsm_file_list) < num_cpus:
+                num_cpus = len(lsm_file_list)
+            # pylint: disable=no-member
             mp_lock = multiprocessing.Manager().Lock()
-            partition_list, partition_index_list = partition(lsm_file_list, NUM_CPUS)
+            partition_list, partition_index_list = \
+                partition(lsm_file_list, num_cpus)
 
             for loop_index, cpu_grouped_file_list in enumerate(partition_list):
                 if cpu_grouped_file_list and partition_index_list[loop_index]:
-                    job_combinations.append((cpu_grouped_file_list,
-                                             partition_index_list[loop_index],
-                                             weight_table_file,
-                                             lsm_file_data['grid_type'],
-                                             master_rapid_runoff_file,
-                                             lsm_file_data['rapid_inflow_tool'],
-                                             mp_lock))
-                    # COMMENTED CODE IS FOR DEBUGGING
-#                    generate_inflows_from_runoff((cpu_grouped_file_list,
-#                                                  partition_index_list[loop_index],
-#                                                  lsm_file_data['weight_table_file'],
-#                                                  lsm_file_data['grid_type'],
-#                                                  master_rapid_runoff_file,
-#                                                  lsm_file_data['rapid_inflow_tool'],
-#                                                  mp_lock))
-            pool = multiprocessing.Pool(NUM_CPUS)
+                    job_combinations.append((
+                        cpu_grouped_file_list,
+                        partition_index_list[loop_index],
+                        weight_table_file,
+                        lsm_file_data['grid_type'],
+                        master_rapid_runoff_file,
+                        lsm_file_data['rapid_inflow_tool'],
+                        mp_lock))
+#                   # COMMENTED CODE IS FOR DEBUGGING
+#                   generate_inflows_from_runoff((
+#                       cpu_grouped_file_list,
+#                       partition_index_list[loop_index],
+#                       lsm_file_data['weight_table_file'],
+#                       lsm_file_data['grid_type'],
+#                       master_rapid_runoff_file,
+#                       lsm_file_data['rapid_inflow_tool'],
+#                       mp_lock))
+            pool = multiprocessing.Pool(num_cpus)
             pool.map(generate_inflows_from_runoff,
                      job_combinations)
             pool.close()
             pool.join()
 
             # set up RAPID manager
-            rapid_manager = RAPID(rapid_executable_location=rapid_executable_location,
-                                  cygwin_bin_location=cygwin_bin_location,
-                                  num_processors=NUM_CPUS,
-                                  mpiexec_command=mpiexec_command,
-                                  ZS_TauR=time_step,  # duration of routing procedure (time step of runoff data)
-                                  ZS_dtR=15 * 60,  # internal routing time step
-                                  ZS_TauM=total_num_time_steps * time_step,  # total simulation time
-                                  ZS_dtM=time_step  # RAPID recommended internal time step (1 day)
-                                  )
+            rapid_manager = RAPID(
+                rapid_executable_location=rapid_executable_location,
+                cygwin_bin_location=cygwin_bin_location,
+                num_processors=num_cpus,
+                mpiexec_command=mpiexec_command,
+                ZS_TauR=time_step,
+                ZS_dtR=15 * 60,
+                ZS_TauM=total_num_time_steps * time_step,
+                ZS_dtM=time_step)
 
             if initial_flows_file and os.path.exists(initial_flows_file):
                 rapid_manager.update_parameters(
@@ -876,73 +965,94 @@ def run_lsm_rapid_process(rapid_executable_location,
                 )
 
             # run RAPID for the watershed
-            lsm_rapid_output_file = os.path.join(master_watershed_output_directory,
-                                                 'Qout_{0}'.format(out_file_ending))
+            lsm_rapid_output_file = \
+                os.path.join(master_watershed_output_directory,
+                             'Qout_{0}'.format(out_file_ending))
             rapid_manager.update_parameters(
-                rapid_connect_file=case_insensitive_file_search(master_watershed_input_directory,
-                                                                r'rapid_connect\.csv'),
+                rapid_connect_file=case_insensitive_file_search(
+                    master_watershed_input_directory,
+                    r'rapid_connect\.csv'),
                 Vlat_file=master_rapid_runoff_file,
-                riv_bas_id_file=case_insensitive_file_search(master_watershed_input_directory,
-                                                             r'riv_bas_id\.csv'),
-                k_file=case_insensitive_file_search(master_watershed_input_directory,
-                                                    r'k\.csv'),
-                x_file=case_insensitive_file_search(master_watershed_input_directory,
-                                                    r'x\.csv'),
+                riv_bas_id_file=case_insensitive_file_search(
+                    master_watershed_input_directory,
+                    r'riv_bas_id\.csv'),
+                k_file=case_insensitive_file_search(
+                    master_watershed_input_directory,
+                    r'k\.csv'),
+                x_file=case_insensitive_file_search(
+                    master_watershed_input_directory,
+                    r'x\.csv'),
                 Qout_file=lsm_rapid_output_file
             )
 
             rapid_manager.update_reach_number_data()
 
-
-            output_file_information[os.path.basename(master_watershed_input_directory)] = {
-                'm3_riv': master_rapid_runoff_file,
-                'qout': lsm_rapid_output_file
-            }
-
+            output_file_information[
+                os.path.basename(master_watershed_input_directory)] = {
+                    'm3_riv': master_rapid_runoff_file,
+                    'qout': lsm_rapid_output_file
+                }
 
             if generate_rapid_namelist_file:
-                rapid_manager.generate_namelist_file(os.path.join(master_watershed_input_directory,
-                                                                  "rapid_namelist_{}".format(out_file_ending[:-3])))
+                rapid_manager.generate_namelist_file(
+                    os.path.join(master_watershed_input_directory,
+                                 "rapid_namelist_{}"
+                                 .format(out_file_ending[:-3])))
             if run_rapid_simulation:
                 rapid_manager.run()
 
-                rapid_manager.make_output_CF_compliant(
+                rapid_manager.make_output_cf_compliant(
                     simulation_start_datetime=actual_simulation_start_datetime,
                     comid_lat_lon_z_file=in_rivid_lat_lon_z_file,
-                    project_name="{0} Based Historical flows by {1}".format(lsm_file_data['description'],
-                                                                            modeling_institution)
+                    project_name="{0} Based Historical flows by {1}"
+                                 .format(lsm_file_data['description'],
+                                         modeling_institution)
                 )
 
                 # generate return periods
-                if generate_return_periods_file and os.path.exists(lsm_rapid_output_file) and lsm_rapid_output_file:
-                    return_periods_file = os.path.join(master_watershed_output_directory,
-                                                       'return_periods_{0}'.format(out_file_ending))
+                if generate_return_periods_file and \
+                        os.path.exists(lsm_rapid_output_file) and \
+                        lsm_rapid_output_file:
+                    return_periods_file = os.path.join(
+                        master_watershed_output_directory,
+                        'return_periods_{0}'.format(out_file_ending))
                     # assume storm has 3 day length
                     storm_length_days = 3
-                    generate_return_periods(qout_file=lsm_rapid_output_file,
-                                            return_period_file=return_periods_file,
-                                            num_cpus=NUM_CPUS,
-                                            storm_duration_days=storm_length_days,
-                                            method=return_period_method)
-                                            
+                    generate_return_periods(
+                        qout_file=lsm_rapid_output_file,
+                        return_period_file=return_periods_file,
+                        num_cpus=num_cpus,
+                        storm_duration_days=storm_length_days,
+                        method=return_period_method)
+
                 # generate seasonal averages file
-                if generate_seasonal_averages_file and os.path.exists(lsm_rapid_output_file) and lsm_rapid_output_file:
-                    seasonal_averages_file = os.path.join(master_watershed_output_directory,
-                                                          'seasonal_averages_{0}'.format(out_file_ending))
+                if generate_seasonal_averages_file and \
+                        os.path.exists(lsm_rapid_output_file) and \
+                        lsm_rapid_output_file:
+                    seasonal_averages_file = os.path.join(
+                        master_watershed_output_directory,
+                        'seasonal_averages_{0}'.format(out_file_ending))
                     generate_seasonal_averages(lsm_rapid_output_file,
                                                seasonal_averages_file,
-                                               NUM_CPUS)
+                                               num_cpus)
 
                 # generate seasonal initialization file
-                if generate_seasonal_initialization_file and os.path.exists(lsm_rapid_output_file) and lsm_rapid_output_file:
-                    seasonal_qinit_file = os.path.join(master_watershed_input_directory,
-                                                       'seasonal_qinit_{0}.csv'.format(out_file_ending[:-3]))
-                    rapid_manager.generate_seasonal_intitialization(seasonal_qinit_file)
+                if generate_seasonal_initialization_file and \
+                        os.path.exists(lsm_rapid_output_file) and \
+                        lsm_rapid_output_file:
+                    seasonal_qinit_file = os.path.join(
+                        master_watershed_input_directory,
+                        'seasonal_qinit_{0}.csv'.format(out_file_ending[:-3]))
+                    rapid_manager.generate_seasonal_intitialization(
+                        seasonal_qinit_file)
 
                 # generate initialization file
-                if generate_initialization_file and os.path.exists(lsm_rapid_output_file) and lsm_rapid_output_file:
-                    qinit_file = os.path.join(master_watershed_input_directory,
-                                              'qinit_{0}.csv'.format(out_file_ending[:-3]))
+                if generate_initialization_file and \
+                        os.path.exists(lsm_rapid_output_file) and \
+                        lsm_rapid_output_file:
+                    qinit_file = os.path.join(
+                        master_watershed_input_directory,
+                        'qinit_{0}.csv'.format(out_file_ending[:-3]))
                     rapid_manager.generate_qinit_from_past_qout(qinit_file)
 
         all_output_file_information.append(output_file_information)

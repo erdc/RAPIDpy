@@ -64,8 +64,6 @@ before_install:
 #-----------------------------------------------------------------------------
 - conda config --add channels conda-forge
 - conda install --yes cmake gdal future netcdf4 numpy pandas pangaea pyproj pytz requests rtree scipy shapely
-- conda install --yes pytest-cov
-- pip install coveralls
 - source deactivate rapid
 
 #-------------------------------------------------------------------------------
@@ -81,9 +79,8 @@ before_install:
 - git clone https://github.com/c-h-david/rapid.git --branch 20161221
 - cd rapid
 # Installing RAPID Prereqs
-- chmod +x rapid_install_prereqs.sh
-- ./rapid_install_prereqs.sh -i=$INSTALLZ_DIR
-- source ./rapid_specify_varpath.sh $INSTALLZ_DIR
+- bash rapid_install_prereqs.sh -i=$INSTALLZ_DIR
+- source rapid_specify_varpath.sh $INSTALLZ_DIR
 # Building RAPID
 - cd src
 - make rapid
@@ -92,7 +89,6 @@ before_install:
 #Installing TauDEM
 #-------------------------------------------------------------------------------
 - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-    wget http://repo.continuum.io/miniconda/Miniconda${TRAVIS_PYTHON_VERSION:0:1}-latest-Linux-x86_64.sh -O miniconda.sh ;
     cd $TRAVIS_BUILD_DIR/.. ;
     git clone https://github.com/dtarb/TauDEM.git ;
     cd TauDEM/src ;
@@ -107,13 +103,14 @@ before_install:
 #*******************************************************************************
 install:
 - cd $TRAVIS_BUILD_DIR
-- python setup.py install
+- pip install -e .[tests]
 #*******************************************************************************
 #Testing RAPIDpy
 #*******************************************************************************
-- cd $TRAVIS_BUILD_DIR/tests
 script:
 - py.test --cov-report term-missing --cov=RAPIDpy
+- flake8 RAPIDpy
+- pylint RAPIDpy
 ##ADD Coveralls stats for code coverage
 after_success:
 - coveralls

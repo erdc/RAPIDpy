@@ -6,7 +6,6 @@
    Created by Alan D. Snow, 2016.
    License BSD-3-Clause
 """
-
 import os
 import re
 

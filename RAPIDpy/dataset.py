@@ -9,7 +9,7 @@
 from csv import writer as csv_writer
 import datetime
 
-from netCDF4 import Dataset, num2date  # pylint: disable=no-name-in-module
+from netCDF4 import Dataset, num2date
 import numpy as np
 from numpy.ma import is_masked
 import pandas as pd

@@ -11,7 +11,7 @@ from sys import version_info
 
 from numpy.testing import assert_almost_equal
 from numpy import array as np_array
-from numpy import float32 as np_float32  # pylint: disable=no-name-in-module
+from numpy import float32 as np_float32
 
 
 # -----------------------------------------------------------------------------
@@ -121,3 +121,16 @@ def remove_files(*args):
             remove(arg)
         except OSError:
             pass
+
+
+def add_latlon_metadata(lat_var, lon_var):
+    """Adds latitude and longitude metadata"""
+    lat_var.long_name = 'latitude'
+    lat_var.standard_name = 'latitude'
+    lat_var.units = 'degrees_north'
+    lat_var.axis = 'Y'
+
+    lon_var.long_name = 'longitude'
+    lon_var.standard_name = 'longitude'
+    lon_var.units = 'degrees_east'
+    lon_var.axis = 'X'

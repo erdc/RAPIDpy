@@ -10,7 +10,7 @@ import os
 
 import numpy as np
 from osgeo import ogr, osr
-from scipy.spatial import Voronoi  # pylint: disable=no-name-in-module
+from scipy.spatial import Voronoi
 from shapely.geometry import Polygon
 
 from ..helper_functions import log

@@ -117,7 +117,7 @@ def CreateMuskingumKfacFile(in_drainage_line,
 
     number_of_features = ogr_drainage_line_shapefile_lyr.GetFeatureCount()
     river_id_list = np.zeros(number_of_features, dtype=np.int32)
-    # pylint: disable=no-member
+
     length_list = \
         np.zeros(number_of_features, dtype=np.float32)
     slope_list = np.zeros(number_of_features, dtype=np.float32)

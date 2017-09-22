@@ -7,7 +7,7 @@
    Adapted from CreateInflowFileFromECMWFRunoff.py.
    License: BSD-3-Clause
 """
-from netCDF4 import Dataset  # pylint: disable=no-name-in-module
+from netCDF4 import Dataset
 
 from .CreateInflowFileFromGriddedRunoff import \
     CreateInflowFileFromGriddedRunoff

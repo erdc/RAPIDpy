@@ -722,7 +722,6 @@ class RAPID(object):
             rapid_manager.update_simulation_runtime()
             rapid_manager.run()
         """
-        # pylint: disable=no-member
         if not self._rapid_executable_location:
             log("Missing rapid_executable_location. "
                 "Please set before running this function ...",
@@ -756,6 +755,7 @@ class RAPID(object):
 
         # create link to RAPID if needed
         temp_link_to_rapid = ""
+        # pylint: disable=no-member
         if self._rapid_executable_location != \
                 local_rapid_executable_location:
             rapid_cleanup(local_rapid_executable_location)

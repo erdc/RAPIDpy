@@ -11,7 +11,7 @@ import csv
 from datetime import datetime
 from functools import partial
 
-from netCDF4 import Dataset  # pylint: disable=no-name-in-module
+from netCDF4 import Dataset
 import numpy as np
 from pyproj import Proj, transform
 from shapely.wkb import loads as shapely_loads

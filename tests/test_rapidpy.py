@@ -508,6 +508,10 @@ def test_extract_timeseries():
     copy(input_qout_file, new_qout_file)
     new_timeseries_file = os.path.join(OUTPUT_DATA_PATH, 'new_timeseries_file.csv')
 
+    with pytest.raises(ValueError):
+        with RAPIDDataset(new_qout_file) as qout_nc:
+            qout_nc.write_flows_to_csv(new_timeseries_file)
+
     with RAPIDDataset(new_qout_file) as qout_nc:
         qout_nc.write_flows_to_csv(new_timeseries_file,
                                    river_id=75224)
@@ -889,3 +893,75 @@ def test_extract_timeseries_to_gssha_ihg_tzinfo():
                  cf_timeseries_daily_date_file,
                  cf_timeseries_date_file,
                  )
+
+
+def test_dataset_exceptions():
+    """This tests RAPIDDataset exceptions"""
+    dummy_file = os.path.join(OUTPUT_DATA_PATH,
+                              'dummy_file.txt')
+    cf_input_qout_file = os.path.join(COMPARE_DATA_PATH,
+                                      'Qout_nasa_lis_3hr_20020830_CF.nc')
+    cf_qout_file = os.path.join(OUTPUT_DATA_PATH,
+                                'Qout_nasa_lis_3hr_20020830_CF.nc')
+    copy(cf_input_qout_file, cf_qout_file)
+
+    with pytest.raises(IndexError):
+        with RAPIDDataset(cf_qout_file,
+                          river_id_dimension='fake_rivid') as qout_nc:
+            print(qout_nc)
+
+    # this only prints a warning
+    with RAPIDDataset(cf_qout_file,
+                      river_id_variable='fake_rivid') as qout_nc:
+        print(qout_nc)
+
+    with pytest.raises(IndexError):
+        with RAPIDDataset(cf_qout_file,
+                          streamflow_variable='fake_qout') as qout_nc:
+            print(qout_nc)
+
+    with pytest.raises(IndexError):
+        with RAPIDDataset(cf_qout_file) as qout_nc:
+            print(qout_nc.get_qout(49876539))
+
+    with RAPIDDataset(cf_qout_file) as qout_nc:
+        aaa, bbb, ccc = qout_nc.get_subset_riverid_index_list([49876539])
+        assert not aaa
+        assert not bbb
+        assert ccc[0] == 49876539
+
+    with pytest.raises(ValueError):
+        with RAPIDDataset(cf_qout_file) as qout_nc:
+            qout_nc.write_flows_to_gssha_time_series_xys(
+                dummy_file,
+                series_name="RAPID_TO_GSSHA",
+                series_id=34)
+
+    with pytest.raises(ValueError):
+        with RAPIDDataset(cf_qout_file) as qout_nc:
+            qout_nc.write_flows_to_csv(dummy_file)
+
+    # for writing entire time series to file from original rapid output
+    input_qout_file = os.path.join(COMPARE_DATA_PATH,
+                                   'Qout_nasa_lis_3hr_20020830_original.nc')
+    original_qout_file = os.path.join(OUTPUT_DATA_PATH,
+                                      'Qout_nasa_lis_3hr_20020830_original.nc')
+    copy(input_qout_file, original_qout_file)
+
+    with pytest.raises(ValueError):
+        with RAPIDDataset(original_qout_file) as qout_nc:
+            print(qout_nc.get_time_array())
+
+    with pytest.raises(IndexError):
+        with RAPIDDataset(original_qout_file) as qout_nc:
+            qout_nc.write_flows_to_gssha_time_series_xys(
+                dummy_file,
+                series_name="RAPID_TO_GSSHA",
+                series_id=34,
+                river_index=0)
+
+    with pytest.raises(IndexError):
+        with RAPIDDataset(original_qout_file) as qout_nc:
+            qout_nc.write_flows_to_gssha_time_series_ihg(
+                dummy_file,
+                dummy_file)

@@ -25,6 +25,8 @@ from .CreateInflowFileFromERAInterimRunoff import \
 from .CreateInflowFileFromLDASRunoff import CreateInflowFileFromLDASRunoff
 from .CreateInflowFileFromWRFHydroRunoff import \
     CreateInflowFileFromWRFHydroRunoff
+from .CreateInflowFileFromHIWATRunoff import \
+    CreateInflowFileFromHIWATRunoff
 from ..postprocess.generate_return_periods import generate_return_periods
 from ..postprocess.generate_seasonal_averages import generate_seasonal_averages
 from ..utilities import (case_insensitive_file_search,
@@ -128,6 +130,10 @@ DEFAULT_LSM_INPUTS = {
         'file_datetime_pattern': "%Y%m%d%H",
     },
     'wrf': {
+        'file_datetime_re_pattern': r'\d{10}',
+        'file_datetime_pattern': "%Y%m%d%H",
+    },
+    'hiwat_grid': {
         'file_datetime_re_pattern': r'\d{10}',
         'file_datetime_pattern': "%Y%m%d%H",
     },
@@ -280,6 +286,9 @@ def identify_lsm_grid(lsm_grid_path):
         elif var == "total runoff":
             # CMIP5 data
             total_runoff_var = var
+        elif var == "PCP":
+            # HIWAT uses precipitation as total runoff
+            total_runoff_var = var
 
     # IDENTIFY GRID TYPE
     lsm_file_data = {
@@ -345,6 +354,7 @@ def identify_lsm_grid(lsm_grid_path):
             lsm_file_data["weight_file_name"] = r'weight_era_t159\.csv'
             lsm_file_data["model_name"] = "era_20cm"
             lsm_file_data["grid_type"] = 't159'
+
         else:
             lsm_example_file.close()
             raise Exception("Unsupported ECMWF grid.")
@@ -425,6 +435,15 @@ def identify_lsm_grid(lsm_grid_path):
         else:
             lsm_example_file.close()
             raise Exception("Unsupported runoff grid.")
+
+    elif total_runoff_var == "PCP":
+        print("Runoff/precipitation file identified as HIWAT")
+        lsm_file_data["description"] = "HIWAT"
+        lsm_file_data["weight_file_name"] = r'weight_hiwat\.csv'
+        lsm_file_data["model_name"] = "hiwat"
+        lsm_file_data["grid_type"] = 'hiwat_grid'
+        lsm_file_data["rapid_inflow_tool"] = \
+            CreateInflowFileFromHIWATRunoff()
 
     else:
         title = ""
@@ -539,6 +558,10 @@ def determine_start_end_timestep(lsm_file_list,
                             xds.lsm.datetime.values]
             actual_simulation_start_datetime = datetime_arr[0]
             actual_simulation_end_datetime = datetime_arr[-1]
+            if lsm_grid_info['model_name'] == 'hiwat':
+                print("HIWAT model extend 2 days to end")
+                actual_simulation_end_datetime += timedelta(days=2)
+                print(actual_simulation_end_datetime)
             total_num_time_steps = len(datetime_arr)
 
             if total_num_time_steps <= 1:
@@ -840,6 +863,7 @@ def run_lsm_rapid_process(rapid_executable_location,
                 file_datetime_pattern=file_datetime_pattern,
                 expected_time_step=expected_time_step,
                 lsm_grid_info=lsm_file_data)
+
 
         # VALIDATING INPUT IF DIVIDING BY 3
         if (lsm_file_data['grid_type'] in ('nldas', 'lis', 'joules')) \

@@ -558,10 +558,6 @@ def determine_start_end_timestep(lsm_file_list,
                             xds.lsm.datetime.values]
             actual_simulation_start_datetime = datetime_arr[0]
             actual_simulation_end_datetime = datetime_arr[-1]
-            if lsm_grid_info['model_name'] == 'hiwat':
-                print("HIWAT model extend 2 days to end")
-                actual_simulation_end_datetime += timedelta(days=2)
-                print(actual_simulation_end_datetime)
             total_num_time_steps = len(datetime_arr)
 
             if total_num_time_steps <= 1:

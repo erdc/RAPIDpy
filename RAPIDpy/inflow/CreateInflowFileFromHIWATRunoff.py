@@ -11,6 +11,7 @@ from netCDF4 import Dataset
 
 from .CreateInflowFileFromGriddedRunoff import \
     CreateInflowFileFromGriddedRunoff
+import os
 
 
 class CreateInflowFileFromHIWATRunoff(CreateInflowFileFromGriddedRunoff):
@@ -45,3 +46,33 @@ class CreateInflowFileFromHIWATRunoff(CreateInflowFileFromGriddedRunoff):
                 data_nc.close()
                 raise Exception(self.error_messages[2])
         data_nc.close()
+
+def make_hiwat_fake_data(in_nc_path):
+
+    print("creating fake zero data for 2 days")
+    lsm_file_list = []
+    for walkdir_info in os.walk(in_nc_path,
+                                followlinks=True):
+        for lsm_file in walkdir_info[2]:
+            if lsm_file.endswith(".nc") or \
+                    lsm_file.endswith(".nc4"):
+                lsm_file_list.append(
+                    os.path.join(walkdir_info[0], lsm_file))
+    lsm_file_list = sorted(lsm_file_list)
+
+    if len(lsm_file_list) > 1:
+        raise Exception("More than one hiwat input file found.")
+    in_nc_file_path = lsm_file_list[0]
+    file_folder_path, filename_full = os.path.split(lsm_file_list[0])
+    filename, ext = os.path.splitext(filename_full)
+    out_nc_file_path = os.path.join(file_folder_path, filename + "_fake" + ext)
+    print(out_nc_file_path)
+
+    from shutil import copyfile
+    copyfile(in_nc_file_path, out_nc_file_path)
+
+    with Dataset(out_nc_file_path, "a") as out_nc:
+
+         out_nc.variables['time'][: ] += 24*3600*2
+         out_nc.variables['PCP'][:,:,:] = 0.0
+

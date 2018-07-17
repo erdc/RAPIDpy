@@ -27,6 +27,8 @@ from .CreateInflowFileFromWRFHydroRunoff import \
     CreateInflowFileFromWRFHydroRunoff
 from .CreateInflowFileFromHIWATRunoff import \
     CreateInflowFileFromHIWATRunoff
+from .CreateInflowFileFromCOSMORunoff import \
+    CreateInflowFileFromCOSMORunoff
 from ..postprocess.generate_return_periods import generate_return_periods
 from ..postprocess.generate_seasonal_averages import generate_seasonal_averages
 from ..utilities import (case_insensitive_file_search,
@@ -137,6 +139,10 @@ DEFAULT_LSM_INPUTS = {
         'file_datetime_re_pattern': r'\d{10}',
         'file_datetime_pattern': "%Y%m%d%H",
     },
+    'cosmo_grid': {
+        'file_datetime_re_pattern': r'\d{10}_d{10}',
+        'file_datetime_pattern': "%Y%m%d%H_%Y%m%d%H",
+    },
 }
 
 
@@ -165,6 +171,9 @@ def identify_lsm_grid(lsm_grid_path):
     elif 'south_north' in dim_list:
         # WRF Hydro
         latitude_dim = 'south_north'
+    elif 'rlat' in dim_list:
+        # COSMO
+        latitude_dim = 'rlat'
     elif 'Y' in dim_list:
         # FLDAS
         latitude_dim = 'Y'
@@ -184,6 +193,9 @@ def identify_lsm_grid(lsm_grid_path):
     elif 'west_east' in dim_list:
         # WRF Hydro
         longitude_dim = 'west_east'
+    elif 'rlon' in dim_list:
+        # COSMO
+        longitude_dim = 'rlon'
     elif 'X' in dim_list:
         # FLDAS
         longitude_dim = 'X'
@@ -289,6 +301,12 @@ def identify_lsm_grid(lsm_grid_path):
         elif var == "PCP":
             # HIWAT uses precipitation as total runoff
             total_runoff_var = var
+        elif var == "RUNOFF_S":
+            # COSMO
+            surface_runoff_var = var
+        elif var == "RUNOFF_G":
+            # COSMO
+            subsurface_runoff_var = var
 
     # IDENTIFY GRID TYPE
     lsm_file_data = {
@@ -444,6 +462,24 @@ def identify_lsm_grid(lsm_grid_path):
         lsm_file_data["grid_type"] = 'hiwat_grid'
         lsm_file_data["rapid_inflow_tool"] = \
             CreateInflowFileFromHIWATRunoff()
+
+    elif surface_runoff_var == "RUNOFF_S" \
+            and subsurface_runoff_var == "RUNOFF_G":
+
+        print("Runoff file identified as COSMO")
+        lsm_file_data["model_name"] = "COSMO"
+        lsm_file_data["description"] = "GLDAS"
+        lsm_file_data["weight_file_name"] = r'weight_cosmo\.csv'
+        lsm_file_data["grid_type"] = 'cosmo_grid'
+        runoff_vars = [surface_runoff_var, subsurface_runoff_var]
+        lsm_file_data["rapid_inflow_tool"] = \
+            CreateInflowFileFromCOSMORunoff(
+                latitude_dim,
+                longitude_dim,
+                time_dim,
+                latitude_var,
+                longitude_var,
+                runoff_vars,)
 
     else:
         title = ""

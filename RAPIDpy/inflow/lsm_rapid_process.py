@@ -80,6 +80,7 @@ def generate_inflows_from_runoff(args):
                                       out_nc=rapid_inflow_file,
                                       grid_type=grid_type,
                                       mp_lock=mp_lock)
+
         except Exception:
             # This prints the type, value, and stack trace of the
             # current exception being handled.
@@ -468,7 +469,7 @@ def identify_lsm_grid(lsm_grid_path):
 
         print("Runoff file identified as COSMO")
         lsm_file_data["model_name"] = "COSMO"
-        lsm_file_data["description"] = "GLDAS"
+        lsm_file_data["description"] = "COSMO model for Brazil"
         lsm_file_data["weight_file_name"] = r'weight_cosmo\.csv'
         lsm_file_data["grid_type"] = 'cosmo_grid'
         runoff_vars = [surface_runoff_var, subsurface_runoff_var]
@@ -1002,6 +1003,10 @@ def run_lsm_rapid_process(rapid_executable_location,
                      job_combinations)
             pool.close()
             pool.join()
+
+            # if COSMO, convert results accumulated to incremental
+            if lsm_file_data["model_name"] == "COSMO":
+                lsm_file_data['rapid_inflow_tool'].convert_to_incremental(master_rapid_runoff_file)
 
             # set up RAPID manager
             rapid_manager = RAPID(

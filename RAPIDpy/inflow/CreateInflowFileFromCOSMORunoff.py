@@ -8,7 +8,7 @@
    License: BSD-3-Clause
 """
 from netCDF4 import Dataset
-
+import numpy as np
 from .CreateInflowFileFromGriddedRunoff import \
     CreateInflowFileFromGriddedRunoff
 
@@ -53,3 +53,13 @@ class CreateInflowFileFromCOSMORunoff(CreateInflowFileFromGriddedRunoff):
 
         data_nc.close()
         return
+
+    def convert_to_incremental(self, nc_input_path):
+
+        with Dataset(nc_input_path, "a") as f:
+            inflow = f.variables["m3_riv"][:]
+            inflow_0 = inflow[0]
+
+            inflow_diff = np.diff(inflow, axis=0)
+            inflow_diff_new = np.insert(inflow_diff, 0, inflow_0, axis=0)
+            f.variables["m3_riv"][:] = inflow_diff_new

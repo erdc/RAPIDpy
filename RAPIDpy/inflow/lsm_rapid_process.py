@@ -645,7 +645,8 @@ def run_lsm_rapid_process(rapid_executable_location,
                           modeling_institution="US Army Engineer Research "
                                                "and Development Center",
                           convert_one_hour_to_three=False,
-                          expected_time_step=None):
+                          expected_time_step=None,
+                          timedelta_between_simulations = timedelta(seconds=12 * 3600)):
     # pylint: disable=anomalous-backslash-in-string
     """
     This is the main process to generate inflow for RAPID and to run RAPID.
@@ -1111,10 +1112,15 @@ def run_lsm_rapid_process(rapid_executable_location,
                 if generate_initialization_file and \
                         os.path.exists(lsm_rapid_output_file) and \
                         lsm_rapid_output_file:
-                    qinit_file = os.path.join(
-                        master_watershed_input_directory,
-                        'qinit_{0}.csv'.format(out_file_ending[:-3]))
-                    rapid_manager.generate_qinit_from_past_qout(qinit_file)
+                    if initial_flows_file is None:
+                        qinit_file = os.path.join(
+                            master_watershed_input_directory,
+                            'qinit_{0}.csv'.format(out_file_ending[:-3]))
+                    else:
+                        qinit_file = initial_flows_file
+
+                    next_simulation_start_datetime = actual_simulation_start_datetime + timedelta_between_simulations
+                    rapid_manager.generate_qinit_from_past_qout(qinit_file, out_datetime=next_simulation_start_datetime)
 
         all_output_file_information.append(output_file_information)
 

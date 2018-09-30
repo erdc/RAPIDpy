@@ -704,7 +704,7 @@ def run_lsm_rapid_process(rapid_executable_location,
         current day of the year will be created. Default is False.
     generate_initialization_file: bool, optional
         If True, an initialization file from the last time step of the
-        simulation willl be created. Default is False.
+        simulation will be created. Default is False.
     use_all_processors: bool, optional
         If True, it will use all available processors to perform this
         operation. Default is True.
@@ -1020,11 +1020,17 @@ def run_lsm_rapid_process(rapid_executable_location,
                 ZS_TauM=total_num_time_steps * time_step,
                 ZS_dtM=time_step)
 
-            if initial_flows_file and os.path.exists(initial_flows_file):
-                rapid_manager.update_parameters(
-                    Qinit_file=initial_flows_file,
-                    BS_opt_Qinit=True
-                )
+            if initial_flows_file:
+                if os.path.exists(initial_flows_file):
+                    print ("Use init file at {}".format(initial_flows_file))
+                    rapid_manager.update_parameters(
+                        Qinit_file=initial_flows_file,
+                        BS_opt_Qinit=True
+                        )
+                else:
+                    raise Exception("Specified init file does not exist at {}".format(initial_flows_file))
+            else:
+                print("No init file specified. USE Zero for all streams")
 
             # run RAPID for the watershed
             lsm_rapid_output_file = \
@@ -1115,7 +1121,8 @@ def run_lsm_rapid_process(rapid_executable_location,
                     # if initial_flows_file is None:
                     qinit_file = os.path.join(
                         rapid_io_files_location,
-                        'qinit_{0}.csv'.format(out_file_ending[:-3]))
+                        #'qinit_{0}.csv'.format(out_file_ending[:-3]))
+                        'qinit.csv')
                     # else:
                     #     qinit_file = initial_flows_file
 

@@ -147,7 +147,7 @@ def identify_lsm_grid(lsm_grid_path):
 
     # INDENTIFY LAT/LON DIMENSIONS
     dim_list = lsm_example_file.dimensions.keys()
-
+    print(dim_list)
     latitude_dim = "lat"
     if 'latitude' in dim_list:
         latitude_dim = 'latitude'

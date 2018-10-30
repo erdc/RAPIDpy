@@ -91,6 +91,10 @@ def generate_inflows_from_runoff(args):
 # UTILITY FUNCTIONS
 # -----------------------------------------------------------------------------
 DEFAULT_LSM_INPUTS = {
+    'ERAnew1': {
+        'file_datetime_re_pattern': r'\d{8}',
+        'file_datetime_pattern': "%Y%m",
+    },
     't255': {
         'file_datetime_re_pattern': r'\d{8}',
         'file_datetime_pattern': "%Y%m%d",
@@ -312,6 +316,17 @@ def identify_lsm_grid(lsm_grid_path):
     if institution == "European Centre for Medium-Range Weather Forecasts" \
             or total_runoff_var.lower() == "ro":
         # these are the ECMWF models
+        if lat_dim_size == 1280 and lon_dim_size == 2576:
+            print("Runoff file identified as new ERA Interim GRID")
+            # A) ERA Interim Low Res (T255)
+            # Downloaded as 0.5 degree grid
+            #  dimensions:
+            #    longitude = 720 ;
+            #    latitude = 361 ;
+            lsm_file_data["description"] = "new ERA Interim GRID"
+            lsm_file_data["model_name"] = "erai"
+            lsm_file_data["weight_file_name"] = r'weight_era_new\.csv'
+            lsm_file_data["grid_type"] = 't255'
         if lat_dim_size == 361 and lon_dim_size == 720:
             print("Runoff file identified as ERA Interim Low Res (T255) GRID")
             # A) ERA Interim Low Res (T255)

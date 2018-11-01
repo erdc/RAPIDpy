@@ -23,7 +23,8 @@ class CreateInflowFileFromERAInterimRunoff(CreateInflowFileFromGriddedRunoff):
     header_wt = ['rivid', 'area_sqm', 'lon_index', 'lat_index', 'npoints']
     dims_oi = [['lon', 'lat', 'time'], ['longitude', 'latitude', 'time'],['time','lat','lon']]
     vars_oi = [["lon", "lat", "time", "RO"],
-               ['longitude', 'latitude', 'time', 'ro']]
+               ['longitude', 'latitude', 'time', 'ro'],
+               ['RO', 'lat', 'lon', 'time']]
     length_time = {"Daily": 1, "3-Hourly": 8}
 
     def __init__(self):

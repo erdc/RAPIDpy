@@ -200,7 +200,6 @@ def identify_lsm_grid(lsm_grid_path):
 
     # IDENTIFY VARIABLES
     var_list = lsm_example_file.variables.keys()
-    print(var_list)
     latitude_var = "lat"
     if 'latitude' in var_list:
         latitude_var = 'latitude'
@@ -280,7 +279,6 @@ def identify_lsm_grid(lsm_grid_path):
         elif var.lower() == "ro":
             # ERA Interim
             total_runoff_var = var
-            print("Found this var {0}".format(total_runoff_var))
         elif var == "total runoff":
             # CMIP5 data
             total_runoff_var = var
@@ -326,7 +324,7 @@ def identify_lsm_grid(lsm_grid_path):
             lsm_file_data["description"] = "new ERA Interim GRID"
             lsm_file_data["model_name"] = "erai"
             lsm_file_data["weight_file_name"] = r'weight_era_new\.csv'
-            lsm_file_data["grid_type"] = 'new_grid'
+            lsm_file_data["grid_type"] = 'erai_new'
         if lat_dim_size == 361 and lon_dim_size == 720:
             print("Runoff file identified as ERA Interim Low Res (T255) GRID")
             # A) ERA Interim Low Res (T255)

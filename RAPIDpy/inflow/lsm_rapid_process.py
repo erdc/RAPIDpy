@@ -280,9 +280,7 @@ def identify_lsm_grid(lsm_grid_path):
         elif var.lower() == "ro":
             # ERA Interim
             total_runoff_var = var
-        elif var.lower() == "ro":
-            # ERA Interim new grid
-            total_runoff_var = var
+            print("Found this var {0}".format(total_runoff_var))
         elif var == "total runoff":
             # CMIP5 data
             total_runoff_var = var

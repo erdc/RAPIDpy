@@ -91,7 +91,7 @@ def generate_inflows_from_runoff(args):
 # UTILITY FUNCTIONS
 # -----------------------------------------------------------------------------
 DEFAULT_LSM_INPUTS = {
-    'ERAnew1': {
+    'erai_new': {
         'file_datetime_re_pattern': r'\d{8}',
         'file_datetime_pattern': "%Y%m",
     },

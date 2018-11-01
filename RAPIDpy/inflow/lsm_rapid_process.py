@@ -147,7 +147,6 @@ def identify_lsm_grid(lsm_grid_path):
 
     # INDENTIFY LAT/LON DIMENSIONS
     dim_list = lsm_example_file.dimensions.keys()
-    print(dim_list)
     latitude_dim = "lat"
     if 'latitude' in dim_list:
         latitude_dim = 'latitude'
@@ -201,7 +200,7 @@ def identify_lsm_grid(lsm_grid_path):
 
     # IDENTIFY VARIABLES
     var_list = lsm_example_file.variables.keys()
-
+    print(var_list)
     latitude_var = "lat"
     if 'latitude' in var_list:
         latitude_var = 'latitude'
@@ -280,6 +279,9 @@ def identify_lsm_grid(lsm_grid_path):
             subsurface_runoff_var = var
         elif var.lower() == "ro":
             # ERA Interim
+            total_runoff_var = var
+        elif var.lower() == "ro":
+            # ERA Interim new grid
             total_runoff_var = var
         elif var == "total runoff":
             # CMIP5 data

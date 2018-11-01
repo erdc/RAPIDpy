@@ -949,7 +949,7 @@ def run_lsm_rapid_process(rapid_executable_location,
                     generate_inflows_from_runoff((
                       cpu_grouped_file_list,
                       partition_index_list[loop_index],
-                      lsm_file_data['weight_table_file'],
+                      lsm_file_data['weight_file_name'],
                       lsm_file_data['grid_type'],
                       master_rapid_runoff_file,
                       lsm_file_data['rapid_inflow_tool'],

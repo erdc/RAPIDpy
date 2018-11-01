@@ -840,7 +840,7 @@ def run_lsm_rapid_process(rapid_executable_location,
                     lsm_file_list_subset.append(lsm_file)
 
             lsm_file_list = sorted(lsm_file_list_subset)
-
+            print(lsm_file_list)
         print("Running from {0} to {1}".format(lsm_file_list[0],
                                                lsm_file_list[-1]))
 

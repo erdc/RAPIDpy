@@ -22,7 +22,7 @@ class CreateInflowFileFromERAInterimRunoff(CreateInflowFileFromGriddedRunoff):
     land_surface_model_name = "ERA Interim"
     header_wt = ['rivid', 'area_sqm', 'lon_index', 'lat_index', 'npoints']
     dims_oi = [['lon', 'lat', 'time'], ['longitude', 'latitude', 'time'],['time','lat','lon']]
-    vars_oi = [["lon", "lat", "time", "RO"],
+    vars_oi = [['lon', 'lat', 'time', 'RO'],
                ['longitude', 'latitude', 'time', 'ro'],
                ['RO', 'lat', 'lon', 'time']]
     length_time = {"Daily": 1, "3-Hourly": 8}

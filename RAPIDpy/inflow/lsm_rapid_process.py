@@ -831,8 +831,8 @@ def run_lsm_rapid_process(rapid_executable_location,
             lsm_file_list_subset = []
             for lsm_file in lsm_file_list:
                 match = file_re_match.search(lsm_file)
-                # file_date = datetime.strptime(match.group(0),
-                #                               file_datetime_pattern)
+                file_date = datetime.strptime(match.group(0),
+                                              file_datetime_pattern)
                 if file_date > simulation_end_datetime:
                     break
                 if file_date >= simulation_start_datetime:

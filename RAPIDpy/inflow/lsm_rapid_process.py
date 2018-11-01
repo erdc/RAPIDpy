@@ -825,7 +825,7 @@ def run_lsm_rapid_process(rapid_executable_location,
                 DEFAULT_LSM_INPUTS[lsm_file_data['grid_type']][
                     'file_datetime_pattern']
         file_re_match = re.compile(file_datetime_re_pattern)
-        print(file_datetime_re_pattern)
+        print(file_re_match)
         # get subset based on time bounds
         if simulation_start_datetime is not None:
             print("Filtering files by datetime ...")

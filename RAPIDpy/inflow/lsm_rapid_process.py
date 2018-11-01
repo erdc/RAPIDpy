@@ -946,19 +946,19 @@ def run_lsm_rapid_process(rapid_executable_location,
                         lsm_file_data['rapid_inflow_tool'],
                         mp_lock))
 #                   # COMMENTED CODE IS FOR DEBUGGING
-#                   generate_inflows_from_runoff((
-#                       cpu_grouped_file_list,
-#                       partition_index_list[loop_index],
-#                       lsm_file_data['weight_table_file'],
-#                       lsm_file_data['grid_type'],
-#                       master_rapid_runoff_file,
-#                       lsm_file_data['rapid_inflow_tool'],
-#                       mp_lock))
-            pool = multiprocessing.Pool(num_cpus)
-            pool.map(generate_inflows_from_runoff,
-                     job_combinations)
-            pool.close()
-            pool.join()
+                  generate_inflows_from_runoff((
+                      cpu_grouped_file_list,
+                      partition_index_list[loop_index],
+                      lsm_file_data['weight_table_file'],
+                      lsm_file_data['grid_type'],
+                      master_rapid_runoff_file,
+                      lsm_file_data['rapid_inflow_tool'],
+                      mp_lock))
+            # pool = multiprocessing.Pool(num_cpus)
+            # pool.map(generate_inflows_from_runoff,
+            #          job_combinations)
+            # pool.close()
+            # pool.join()
 
             # set up RAPID manager
             rapid_manager = RAPID(

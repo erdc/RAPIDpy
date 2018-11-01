@@ -325,7 +325,7 @@ def identify_lsm_grid(lsm_grid_path):
             lsm_file_data["model_name"] = "erai"
             lsm_file_data["weight_file_name"] = r'weight_era_new\.csv'
             lsm_file_data["grid_type"] = 'erai_new'
-        if lat_dim_size == 361 and lon_dim_size == 720:
+        elif lat_dim_size == 361 and lon_dim_size == 720:
             print("Runoff file identified as ERA Interim Low Res (T255) GRID")
             # A) ERA Interim Low Res (T255)
             # Downloaded as 0.5 degree grid

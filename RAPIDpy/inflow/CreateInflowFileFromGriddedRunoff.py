@@ -54,6 +54,7 @@ class CreateInflowFileFromGriddedRunoff(object):
         Read in weight table
         """
         print("Reading the weight table...")
+        print(in_weight_table)
         with open_csv(in_weight_table, "r") as csvfile:
             reader = csv.reader(csvfile)
             header_row = next(reader)

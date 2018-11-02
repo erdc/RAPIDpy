@@ -22,9 +22,7 @@ class CreateInflowFileFromERAInterimRunoff(CreateInflowFileFromGriddedRunoff):
     land_surface_model_name = "ERA Interim"
     header_wt = ['rivid', 'area_sqm', 'lon_index', 'lat_index', 'npoints']
     dims_oi = [['lon', 'lat', 'time'], ['longitude', 'latitude', 'time'],['time','lat','lon']]
-    vars_oi = [['lon', 'lat', 'time', 'RO'],
-               ['longitude', 'latitude', 'time', 'ro'],
-               ['RO', 'lat', 'lon', 'time']]
+    vars_oi = [['lon', 'lat', 'time', 'RO'],['longitude', 'latitude', 'time', 'ro'],['RO', 'lat', 'lon', 'time']]
     length_time = {"Daily": 1, "3-Hourly": 8}
 
     def __init__(self):
@@ -43,7 +41,7 @@ class CreateInflowFileFromERAInterimRunoff(CreateInflowFileFromGriddedRunoff):
             raise Exception("{0} {1}".format(self.error_messages[1], dims))
 
         nc_vars = list(data_nc.variables)
-
+        print(nc_vars)
         if nc_vars == self.vars_oi[0]:
             self.runoff_vars = [self.vars_oi[0][-1]]
         elif nc_vars == self.vars_oi[1]:

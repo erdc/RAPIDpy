@@ -323,7 +323,7 @@ def identify_lsm_grid(lsm_grid_path):
             #    latitude = 361 ;
             lsm_file_data["description"] = "new ERA Interim GRID"
             lsm_file_data["model_name"] = "erai"
-            lsm_file_data["weight_file_name"] = 'weight_era_new.csv'
+            lsm_file_data["weight_file_name"] = r'weight_era_new\.csv'
             lsm_file_data["grid_type"] = 'erai_new'
         elif lat_dim_size == 361 and lon_dim_size == 720:
             print("Runoff file identified as ERA Interim Low Res (T255) GRID")
@@ -891,7 +891,6 @@ def run_lsm_rapid_process(rapid_executable_location,
             weight_table_file = \
                 case_insensitive_file_search(master_watershed_input_directory,
                                              lsm_file_data['weight_file_name'])
-
             try:
                 in_rivid_lat_lon_z_file = \
                     case_insensitive_file_search(
@@ -949,7 +948,7 @@ def run_lsm_rapid_process(rapid_executable_location,
                     generate_inflows_from_runoff((
                       cpu_grouped_file_list,
                       partition_index_list[loop_index],
-                      lsm_file_data['weight_file_name'],
+                      weight_table_file,
                       lsm_file_data['grid_type'],
                       master_rapid_runoff_file,
                       lsm_file_data['rapid_inflow_tool'],

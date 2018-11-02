@@ -39,7 +39,7 @@ class CreateInflowFileFromERAInterimRunoff(CreateInflowFileFromGriddedRunoff):
         if dims not in self.dims_oi:
             data_nc.close()
             raise Exception("{0} {1}".format(self.error_messages[1], dims))
-        print(vars_oi[0],[-1])
+        print(self.vars_oi[0],[-1])
         nc_vars = list(data_nc.variables)
         if nc_vars == self.vars_oi[0]:
             self.runoff_vars = [self.vars_oi[0][-1]]

@@ -45,6 +45,8 @@ class CreateInflowFileFromERAInterimRunoff(CreateInflowFileFromGriddedRunoff):
             self.runoff_vars = [self.vars_oi[0][-1]]
         elif nc_vars == self.vars_oi[1]:
             self.runoff_vars = [self.vars_oi[1][-1]]
+        elif nc_vars == self.vars_oi[2]:
+            self.runoff_vars = [self.vars_oi[0][-1]]
         else:
             data_nc.close()
             raise Exception("{0} {1}".format(self.error_messages[2], nc_vars))

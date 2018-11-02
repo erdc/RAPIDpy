@@ -959,7 +959,7 @@ def run_lsm_rapid_process(rapid_executable_location,
             #          job_combinations)
             # pool.close()
             # pool.join()
-
+            
             # set up RAPID manager
             rapid_manager = RAPID(
                 rapid_executable_location=rapid_executable_location,

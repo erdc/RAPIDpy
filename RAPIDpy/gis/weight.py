@@ -149,7 +149,6 @@ def rtree_create_weight_table(lsm_grid_lat, lsm_grid_lon,
             enumerate(ogr_catchment_shapefile_lyr):
         catchment_rivid_list[feature_idx] = \
             catchment_feature.GetField(river_id)
-        print(catchment_rivid_list)
     log("Reading in RAPID connect file ...")
     rapid_connect_rivid_list = np.loadtxt(in_rapid_connect,
                                           delimiter=",",
@@ -191,13 +190,15 @@ def rtree_create_weight_table(lsm_grid_lat, lsm_grid_lon,
             try:
                 catchment_pos = \
                     np.where(catchment_rivid_list == rapid_connect_rivid)[0][0]
+                print("Catchment Pos = {0}".format(catchment_pos))
             except IndexError:
                 # if it is not in the catchment, add dummy row in its place
                 connectwriter.writerow([rapid_connect_rivid] + dummy_row_end)
                 continue
-
+            print("OGR Catchment Shapefile Layer = {0}".format(ogr_catchment_shapefile_lyr))
             get_catchment_feature = \
                 ogr_catchment_shapefile_lyr.GetFeature(catchment_pos)
+            print("Get Catchment Feature = {0}".format(get_catchment_feature))
             feat_geom = get_catchment_feature.GetGeometryRef()
             # make sure coordinates are geographic
             if proj_transform:

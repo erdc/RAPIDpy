@@ -143,7 +143,6 @@ def rtree_create_weight_table(lsm_grid_lat, lsm_grid_lon,
     log("Retrieving catchment river id list ...")
     number_of_catchment_features = \
         ogr_catchment_shapefile_lyr.GetFeatureCount()
-    print(number_of_catchment_features)
     catchment_rivid_list = \
         np.zeros(number_of_catchment_features, dtype=np.int32)
     for feature_idx, catchment_feature in \
@@ -192,6 +191,7 @@ def rtree_create_weight_table(lsm_grid_lat, lsm_grid_lon,
             try:
                 catchment_pos = \
                     np.where(catchment_rivid_list == rapid_connect_rivid)[0][0]
+                print(catchment_pos)
             except IndexError:
                 # if it is not in the catchment, add dummy row in its place
                 connectwriter.writerow([rapid_connect_rivid] + dummy_row_end)

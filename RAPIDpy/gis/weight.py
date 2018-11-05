@@ -149,7 +149,7 @@ def rtree_create_weight_table(lsm_grid_lat, lsm_grid_lon,
             enumerate(ogr_catchment_shapefile_lyr):
         catchment_rivid_list[feature_idx] = \
             catchment_feature.GetField(river_id)
-    print(catchment_rivid_list)
+        print(catchment_rivid_list)
     log("Reading in RAPID connect file ...")
     rapid_connect_rivid_list = np.loadtxt(in_rapid_connect,
                                           delimiter=",",

@@ -184,13 +184,13 @@ def rtree_create_weight_table(lsm_grid_lat, lsm_grid_lon,
             proj_transform = \
                 osr.CoordinateTransformation(ogr_catchment_shapefile_lyr_proj,
                                              osr_geographic_proj)
+        print(catchment_rivid_list)
         for rapid_connect_rivid in rapid_connect_rivid_list:
             intersect_grid_info_list = []
             try:
                 catchment_pos = \
                     np.where(catchment_rivid_list == rapid_connect_rivid)[0][0]
             except IndexError:
-                print("This didn't work")
                 # if it is not in the catchment, add dummy row in its place
                 connectwriter.writerow([rapid_connect_rivid] + dummy_row_end)
                 continue

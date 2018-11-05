@@ -143,6 +143,7 @@ def rtree_create_weight_table(lsm_grid_lat, lsm_grid_lon,
     log("Retrieving catchment river id list ...")
     number_of_catchment_features = \
         ogr_catchment_shapefile_lyr.GetFeatureCount()
+    print(number_of_catchment_features)
     catchment_rivid_list = \
         np.zeros(number_of_catchment_features, dtype=np.int32)
     for feature_idx, catchment_feature in \
@@ -301,7 +302,7 @@ def CreateWeightTableECMWF(in_ecmwf_nc,
         The path to the output weight table file.
     area_id: str, optional
         The name of the field with the area of each catchment stored in meters
-        squared. Default is it calculate the area.
+        squared. Default is to calculate the area.
     file_geodatabase: str, optional
         Path to the file geodatabase. If you use this option, in_drainage_line
         is the name of the stream network feature class.

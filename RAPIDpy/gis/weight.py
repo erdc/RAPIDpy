@@ -145,6 +145,7 @@ def rtree_create_weight_table(lsm_grid_lat, lsm_grid_lon,
         ogr_catchment_shapefile_lyr.GetFeatureCount()
     catchment_rivid_list = \
         np.zeros(number_of_catchment_features, dtype=np.int32)
+    print(catchment_rivid_list)
     for feature_idx, catchment_feature in \
             enumerate(ogr_catchment_shapefile_lyr):
         catchment_rivid_list[feature_idx] = \

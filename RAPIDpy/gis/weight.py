@@ -198,8 +198,8 @@ def rtree_create_weight_table(lsm_grid_lat, lsm_grid_lon,
 
             get_catchment_feature = \
                 ogr_catchment_shapefile_lyr.GetFeature(catchment_pos)
-            print(get_catchment_feature)
             feat_geom = get_catchment_feature.GetGeometryRef()
+            print(feat_geom)
             # make sure coordinates are geographic
             if proj_transform:
                 feat_geom.Transform(proj_transform)

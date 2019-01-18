@@ -4,6 +4,7 @@
    RAPIDpy
 
    Created by Alan D. Snow, 2015.
+        Adapted for ERA-5 by Chris Edwards, 2018.
    License: BSD 3-Clause
 """
 from datetime import datetime, timedelta
@@ -22,6 +23,8 @@ import numpy as np
 from ..rapid import RAPID
 from .CreateInflowFileFromERAInterimRunoff import \
     CreateInflowFileFromERAInterimRunoff
+from .CreateInflowFileFromERA5Runoff import \
+    CreateInflowFileFromERA5Runoff
 from .CreateInflowFileFromLDASRunoff import CreateInflowFileFromLDASRunoff
 from .CreateInflowFileFromWRFHydroRunoff import \
     CreateInflowFileFromWRFHydroRunoff
@@ -96,6 +99,10 @@ DEFAULT_LSM_INPUTS = {
         'file_datetime_pattern': "%Y%m%d",
     },
     't511': {
+        'file_datetime_re_pattern': r'\d{8}',
+        'file_datetime_pattern': "%Y%m%d",
+    },
+    't640': {
         'file_datetime_re_pattern': r'\d{8}',
         'file_datetime_pattern': "%Y%m%d",
     },
@@ -334,6 +341,7 @@ def identify_lsm_grid(lsm_grid_path):
             lsm_file_data["weight_file_name"] = r'weight_era_t511\.csv'
             lsm_file_data["model_name"] = "erai"
             lsm_file_data["grid_type"] = 't511'
+
         elif lat_dim_size == 161 and lon_dim_size == 320:
             print("Runoff file identified as ERA 20CM (T159) GRID")
             # C) ERA 20CM (T159) - 3hr - 10 ensembles
@@ -345,12 +353,29 @@ def identify_lsm_grid(lsm_grid_path):
             lsm_file_data["weight_file_name"] = r'weight_era_t159\.csv'
             lsm_file_data["model_name"] = "era_20cm"
             lsm_file_data["grid_type"] = 't159'
+
+        elif lat_dim_size == 640 and lon_dim_size == 1280:
+            print("Runoff file identified as ERA 5 High Res (t640) GRID")
+            # B) ERA 5 High Res (t640)
+            #  dimensions:
+            #   lon = 1280 ;
+            #   lat = 640 ;
+            lsm_file_data["description"] = "ERA 5 (t640 Grid)"
+            lsm_file_data["weight_file_name"] = r'weight_era_t640\.csv'
+            lsm_file_data["model_name"] = "era5"
+            lsm_file_data["grid_type"] = 't640'
+
         else:
             lsm_example_file.close()
             raise Exception("Unsupported ECMWF grid.")
 
-        lsm_file_data["rapid_inflow_tool"] = \
-            CreateInflowFileFromERAInterimRunoff()
+        # Assign lsm_file_data to either erai or era5 based on model_name
+        if lsm_file_data["model_name"] == "era5":
+            lsm_file_data["rapid_inflow_tool"] = \
+                CreateInflowFileFromERA5Runoff()
+        else:
+            lsm_file_data["rapid_inflow_tool"] = \
+                CreateInflowFileFromERAInterimRunoff()
 
     elif institution == "NASA GSFC":
         if title == "GLDAS2.0 LIS land surface model output":
@@ -480,7 +505,7 @@ def determine_start_end_timestep(lsm_file_list,
         lsm_grid_info = identify_lsm_grid(lsm_file_list[0])
 
     if None in (lsm_grid_info['time_var'], lsm_grid_info['time_dim'])\
-            or lsm_grid_info['model_name'] in ('era_20cm', 'erai'):
+            or lsm_grid_info['model_name'] in ('era_20cm', 'erai', 'era5'):
         # NOTE: the ERA20CM and ERA 24hr time variables
         # in the tests are erroneous
         if None in (file_re_match, file_datetime_pattern):

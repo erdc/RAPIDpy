@@ -22,11 +22,11 @@ from ..helper_functions import open_csv
 
 class CreateInflowFileFromGriddedRunoff(object):
     """Create Inflow File From Gridded Runoff
-
     Base class for creating RAPID NetCDF input
     of water inflow based on land surface model
     runoff and previously created weight table.
     """
+
     land_surface_model_name = "land surface model"
     header_wt = ['rivid', 'area_sqm', 'lon_index', 'lat_index', 'npoints']
     runoff_vars = []

@@ -11,7 +11,7 @@ import csv
 from datetime import datetime
 import os
 
-from netCDF4 import Dataset
+from netCDF4 import Dataset, num2date, date2num
 import numpy as np
 from pytz import utc
 from past.builtins import xrange  # pylint: disable=redefined-builtin
@@ -309,7 +309,7 @@ class CreateInflowFileFromGriddedRunoff(object):
         pass
 
     def execute(self, nc_file_list, index_list, in_weight_table,
-                out_nc, grid_type, mp_lock):
+                out_nc, grid_type, mp_lock, all_simulation_time):
 
         """The source code of the tool."""
         if not os.path.exists(out_nc):
@@ -360,7 +360,7 @@ class CreateInflowFileFromGriddedRunoff(object):
 
                 # Read the netcdf dataset
                 data_in_nc = Dataset(nc_file)
-
+                
                 # Calculate water inflows
                 runoff_dimension_size = \
                     len(data_in_nc.variables[self.runoff_vars[0]].dimensions)
@@ -402,6 +402,21 @@ class CreateInflowFileFromGriddedRunoff(object):
                         data_subset_runoff.reshape(
                             len_time_subset,
                             (len_lat_subset * len_lon_subset))
+
+                    # MPG ADDED:
+                    all_simulation_time_units = (
+                        'seconds since 1970-01-01 00:00:00+00:00')
+                    data_in_nc_start_time = num2date(data_in_nc['time'][0],
+                                                     data_in_nc['time'].units)
+                    
+                    # DEBUG
+                    # print 'DATA_IN_START_TIME', data_in_nc_start_time
+                    data_in_nc_start_time = date2num(data_in_nc_start_time,
+                                                     all_simulation_time_units)
+                    data_out_nc_start_idx = np.abs(data_in_nc_start_time -
+                                                   all_simulation_time).argmin()
+                    # DEBUG
+                    # print 'ALL_SIMULATION_TIME', num2date(all_simulation_time[data_out_nc_start_idx], all_simulation_time_units)
 
                 data_in_nc.close()
 
@@ -499,11 +514,26 @@ class CreateInflowFileFromGriddedRunoff(object):
             # only one process is allowed to write at a time to netcdf file
             mp_lock.acquire()
             data_out_nc = Dataset(out_nc, "a", format="NETCDF3_CLASSIC")
+            
             if runoff_dimension_size == 3 and len_time_subset > 1:
-                data_out_nc.variables['m3_riv'][
-                    index*len_time_subset:(index+1)*len_time_subset, :] = \
-                    inflow_data
+                # MPG ADDED:
+                # data_out_nc_end_idx = data_out_nc_start_idx + len_time_subset
+                data_out_nc_end_idx = data_out_nc_start_idx + len_time_subset
+                try:
+                    data_out_nc.variables['m3_riv'][
+                        data_out_nc_start_idx:data_out_nc_end_idx, :] = \
+                        inflow_data
+                except IndexError:
+                    print ("WARNING: Inflow data dimensions inconsistent" + 
+                           " with 'm3_riv' variable slice")
+                    print "NC_FILE", nc_file
+                    print "INFLOW_DATA.SHAPE", inflow_data.shape
+                    print "DATA_OUT_NC_START_IDX", data_out_nc_start_idx
+                    print "DATA_OUT_NC_END_IDX", data_out_nc_end_idx
             else:
+                # MPG DEBUG:
+                print "INDEX", index
+                print "M3_RIV DIMENSIONS", data_out_nc.variables['m3_riv'].shape
                 data_out_nc.variables['m3_riv'][index] = inflow_data
             data_out_nc.close()
             mp_lock.release()

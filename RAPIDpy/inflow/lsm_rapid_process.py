@@ -1118,17 +1118,12 @@ def run_lsm_rapid_process(rapid_executable_location,
                 if generate_initialization_file and \
                         os.path.exists(lsm_rapid_output_file) and \
                         lsm_rapid_output_file:
-                    # if initial_flows_file is None:
+
                     qinit_file = os.path.join(
-                        rapid_io_files_location,
-                        #'qinit_{0}.csv'.format(out_file_ending[:-3]))
-                        'qinit.csv')
-                    # else:
-                    #     qinit_file = initial_flows_file
+                        rapid_io_files_location, 'qinit.csv')
 
                     next_simulation_start_datetime = actual_simulation_start_datetime + timedelta_between_simulations
                     rapid_manager.generate_qinit_from_past_qout(qinit_file, out_datetime=next_simulation_start_datetime)
-                    print next_simulation_start_datetime
 
         all_output_file_information.append(output_file_information)
 

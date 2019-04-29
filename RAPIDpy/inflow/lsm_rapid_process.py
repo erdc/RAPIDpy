@@ -25,6 +25,10 @@ from .CreateInflowFileFromERAInterimRunoff import \
 from .CreateInflowFileFromLDASRunoff import CreateInflowFileFromLDASRunoff
 from .CreateInflowFileFromWRFHydroRunoff import \
     CreateInflowFileFromWRFHydroRunoff
+from .CreateInflowFileFromHIWATRunoff import \
+    CreateInflowFileFromHIWATRunoff
+from .CreateInflowFileFromCOSMORunoff import \
+    CreateInflowFileFromCOSMORunoff
 from ..postprocess.generate_return_periods import generate_return_periods
 from ..postprocess.generate_seasonal_averages import generate_seasonal_averages
 from ..utilities import (case_insensitive_file_search,
@@ -76,6 +80,7 @@ def generate_inflows_from_runoff(args):
                                       out_nc=rapid_inflow_file,
                                       grid_type=grid_type,
                                       mp_lock=mp_lock)
+
         except Exception:
             # This prints the type, value, and stack trace of the
             # current exception being handled.
@@ -131,6 +136,14 @@ DEFAULT_LSM_INPUTS = {
         'file_datetime_re_pattern': r'\d{10}',
         'file_datetime_pattern': "%Y%m%d%H",
     },
+    'hiwat_grid': {
+        'file_datetime_re_pattern': r'\d{10}',
+        'file_datetime_pattern': "%Y%m%d%H",
+    },
+    'cosmo_grid': {
+        'file_datetime_re_pattern': r'\d{10}_d{10}',
+        'file_datetime_pattern': "%Y%m%d%H_%Y%m%d%H",
+    },
 }
 
 
@@ -159,6 +172,9 @@ def identify_lsm_grid(lsm_grid_path):
     elif 'south_north' in dim_list:
         # WRF Hydro
         latitude_dim = 'south_north'
+    elif 'rlat' in dim_list:
+        # COSMO
+        latitude_dim = 'rlat'
     elif 'Y' in dim_list:
         # FLDAS
         latitude_dim = 'Y'
@@ -178,6 +194,9 @@ def identify_lsm_grid(lsm_grid_path):
     elif 'west_east' in dim_list:
         # WRF Hydro
         longitude_dim = 'west_east'
+    elif 'rlon' in dim_list:
+        # COSMO
+        longitude_dim = 'rlon'
     elif 'X' in dim_list:
         # FLDAS
         longitude_dim = 'X'
@@ -280,6 +299,15 @@ def identify_lsm_grid(lsm_grid_path):
         elif var == "total runoff":
             # CMIP5 data
             total_runoff_var = var
+        elif var == "PCP":
+            # HIWAT uses precipitation as total runoff
+            total_runoff_var = var
+        elif var == "RUNOFF_S":
+            # COSMO
+            surface_runoff_var = var
+        elif var == "RUNOFF_G":
+            # COSMO
+            subsurface_runoff_var = var
 
     # IDENTIFY GRID TYPE
     lsm_file_data = {
@@ -345,6 +373,7 @@ def identify_lsm_grid(lsm_grid_path):
             lsm_file_data["weight_file_name"] = r'weight_era_t159\.csv'
             lsm_file_data["model_name"] = "era_20cm"
             lsm_file_data["grid_type"] = 't159'
+
         else:
             lsm_example_file.close()
             raise Exception("Unsupported ECMWF grid.")
@@ -425,6 +454,33 @@ def identify_lsm_grid(lsm_grid_path):
         else:
             lsm_example_file.close()
             raise Exception("Unsupported runoff grid.")
+
+    elif total_runoff_var == "PCP":
+        print("Runoff/precipitation file identified as HIWAT")
+        lsm_file_data["description"] = "HIWAT"
+        lsm_file_data["weight_file_name"] = r'weight_hiwat\.csv'
+        lsm_file_data["model_name"] = "hiwat"
+        lsm_file_data["grid_type"] = 'hiwat_grid'
+        lsm_file_data["rapid_inflow_tool"] = \
+            CreateInflowFileFromHIWATRunoff()
+
+    elif surface_runoff_var == "RUNOFF_S" \
+            and subsurface_runoff_var == "RUNOFF_G":
+
+        print("Runoff file identified as COSMO")
+        lsm_file_data["model_name"] = "COSMO"
+        lsm_file_data["description"] = "COSMO model for Brazil"
+        lsm_file_data["weight_file_name"] = r'weight_cosmo\.csv'
+        lsm_file_data["grid_type"] = 'cosmo_grid'
+        runoff_vars = [surface_runoff_var, subsurface_runoff_var]
+        lsm_file_data["rapid_inflow_tool"] = \
+            CreateInflowFileFromCOSMORunoff(
+                latitude_dim,
+                longitude_dim,
+                time_dim,
+                latitude_var,
+                longitude_var,
+                runoff_vars,)
 
     else:
         title = ""
@@ -578,7 +634,7 @@ def run_lsm_rapid_process(rapid_executable_location,
                           generate_rapid_namelist_file=True,
                           run_rapid_simulation=True,
                           generate_return_periods_file=False,
-                          return_period_method='weibul',
+                          return_period_method='weibull',
                           generate_seasonal_averages_file=False,
                           generate_seasonal_initialization_file=False,
                           generate_initialization_file=False,
@@ -589,7 +645,8 @@ def run_lsm_rapid_process(rapid_executable_location,
                           modeling_institution="US Army Engineer Research "
                                                "and Development Center",
                           convert_one_hour_to_three=False,
-                          expected_time_step=None):
+                          expected_time_step=None,
+                          timedelta_between_simulations = timedelta(seconds=12 * 3600)):
     # pylint: disable=anomalous-backslash-in-string
     """
     This is the main process to generate inflow for RAPID and to run RAPID.
@@ -647,7 +704,7 @@ def run_lsm_rapid_process(rapid_executable_location,
         current day of the year will be created. Default is False.
     generate_initialization_file: bool, optional
         If True, an initialization file from the last time step of the
-        simulation willl be created. Default is False.
+        simulation will be created. Default is False.
     use_all_processors: bool, optional
         If True, it will use all available processors to perform this
         operation. Default is True.
@@ -841,6 +898,7 @@ def run_lsm_rapid_process(rapid_executable_location,
                 expected_time_step=expected_time_step,
                 lsm_grid_info=lsm_file_data)
 
+
         # VALIDATING INPUT IF DIVIDING BY 3
         if (lsm_file_data['grid_type'] in ('nldas', 'lis', 'joules')) \
                 and convert_one_hour_to_three:
@@ -853,7 +911,7 @@ def run_lsm_rapid_process(rapid_executable_location,
             time_step *= 3
 
         # compile the file ending
-        out_file_ending = "{0}_{1}_{2}hr_{3:%Y%m%d}to{4:%Y%m%d}{5}"\
+        out_file_ending = "{0}_{1}_{2}hr_{3:%Y%m%d%H}to{4:%Y%m%d%H}{5}"\
             .format(lsm_file_data['model_name'],
                     lsm_file_data['grid_type'],
                     int(time_step/3600),
@@ -947,6 +1005,10 @@ def run_lsm_rapid_process(rapid_executable_location,
             pool.close()
             pool.join()
 
+            # if COSMO, convert results accumulated to incremental
+            if lsm_file_data["model_name"] == "COSMO":
+                lsm_file_data['rapid_inflow_tool'].convert_to_incremental(master_rapid_runoff_file)
+
             # set up RAPID manager
             rapid_manager = RAPID(
                 rapid_executable_location=rapid_executable_location,
@@ -958,11 +1020,17 @@ def run_lsm_rapid_process(rapid_executable_location,
                 ZS_TauM=total_num_time_steps * time_step,
                 ZS_dtM=time_step)
 
-            if initial_flows_file and os.path.exists(initial_flows_file):
-                rapid_manager.update_parameters(
-                    Qinit_file=initial_flows_file,
-                    BS_opt_Qinit=True
-                )
+            if initial_flows_file:
+                if os.path.exists(initial_flows_file):
+                    print ("Use init file at {}".format(initial_flows_file))
+                    rapid_manager.update_parameters(
+                        Qinit_file=initial_flows_file,
+                        BS_opt_Qinit=True
+                        )
+                else:
+                    raise Exception("Specified init file does not exist at {}".format(initial_flows_file))
+            else:
+                print("No init file specified. USE Zero for all streams")
 
             # run RAPID for the watershed
             lsm_rapid_output_file = \
@@ -1050,10 +1118,12 @@ def run_lsm_rapid_process(rapid_executable_location,
                 if generate_initialization_file and \
                         os.path.exists(lsm_rapid_output_file) and \
                         lsm_rapid_output_file:
+
                     qinit_file = os.path.join(
-                        master_watershed_input_directory,
-                        'qinit_{0}.csv'.format(out_file_ending[:-3]))
-                    rapid_manager.generate_qinit_from_past_qout(qinit_file)
+                        rapid_io_files_location, 'qinit.csv')
+
+                    next_simulation_start_datetime = actual_simulation_start_datetime + timedelta_between_simulations
+                    rapid_manager.generate_qinit_from_past_qout(qinit_file, out_datetime=next_simulation_start_datetime)
 
         all_output_file_information.append(output_file_information)
 

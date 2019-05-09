@@ -8,10 +8,6 @@ These tools generate the RAPID input files and weight table files from the GIS s
 
 .. note:: For these tools to work, you need GIS dependencies installed (See :doc:`installation`).
 
-There are also tools by Esri for ArcMap located here:
-
-- https://github.com/Esri/python-toolbox-for-rapid
-- https://github.com/erdc-cm/python-toolbox-for-rapid
 
 Workflows
 ---------
@@ -63,18 +59,3 @@ Utilities
 ---------
 
 .. autofunction:: RAPIDpy.gis.centroid.FlowlineToPoint
-
-
-How it works:
--------------
-
-Snow, Alan D., Scott D. Christensen, Nathan R. Swain, E. James Nelson,
-Daniel P. Ames, Norman L. Jones, Deng Ding, Nawajish S. Noman, Cedric H.
-David, Florian Pappenberger, and Ervin Zsoter, 2016. A High-Resolution
-National-Scale Hydrologic Forecast System from a Global Ensemble Land
-Surface Model. *Journal of the American Water Resources Association
-(JAWRA)* 1-15, DOI: 10.1111/1752-1688.12434
-
-Snow, Alan Dee, "A New Global Forecasting Model to Produce
-High-Resolution Stream Forecasts" (2015). All Theses and Dissertations.
-Paper 5272. http://scholarsarchive.byu.edu/etd/5272

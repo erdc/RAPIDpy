@@ -31,6 +31,8 @@ from .CreateInflowFileFromNewERAInterimRunoff import \
     CreateInflowFileFromNewERAInterimRunoff
 from .CreateInflowFileFromJULESRunoff import \
     CreateInflowFileFromJULESRunoff
+from .CreateInflowFileFromWSIMRunoff import \
+    CreateInflowFileFromWSIMRunoff
 from ..postprocess.generate_return_periods import generate_return_periods
 from ..postprocess.generate_seasonal_averages import generate_seasonal_averages
 from ..utilities import (case_insensitive_file_search,
@@ -254,6 +256,9 @@ def identify_lsm_grid(lsm_grid_path):
     subsurface_runoff_var = ""
     total_runoff_var = ""
     for var in var_list:
+        if var == "Runoff_mm":
+            # WSIM
+            total_runoff_var = var
         if var.startswith("SSRUN"):
             # NLDAS/GLDAS
             surface_runoff_var = var
@@ -418,6 +423,15 @@ def identify_lsm_grid(lsm_grid_path):
 
         runoff_vars = [total_runoff_var]
 
+    elif institution == "ERDC-CHL":
+        print("Runoff file identified as WSIM GRID")
+        lsm_file_data["weight_file_name"] = r'weight_wsim\.csv'
+        lsm_file_data["grid_type"] = 'WSIM'
+        lsm_file_data["description"] = "Water Security Indicator Model"
+        lsm_file_data["model_name"] = "WSIM"
+
+        runoff_vars = [total_runoff_var]
+
     elif institution == 'Joint UK Land Environment Simulator':
         print("Runoff file identified as Jules GRID")
         lsm_file_data["weight_file_name"] = r'weight_jules\.csv'
@@ -490,6 +504,28 @@ def identify_lsm_grid(lsm_grid_path):
 
         lsm_file_data["rapid_inflow_tool"] = \
             CreateInflowFileFromGALWEMRunoff(
+                latitude_dim,
+                longitude_dim,
+                latitude_var,
+                longitude_var,
+                runoff_vars)
+
+    elif total_runoff_var.startswith("Runoff_mm"):    
+        lsm_file_data["model_name"] = "WSIM"
+        print("Runoff file identified as WSIM GRID")
+        # WSIM NC FILE
+        # dimensions:
+        #     time (unlimited);
+        #     lat = 360 ;
+        #     lon = 720 ;
+        # variables:
+        # Runoff_mm
+        lsm_file_data["description"] = "WSIM"
+        lsm_file_data["weight_file_name"] = r'weight_wsim\.csv'
+        lsm_file_data["grid_type"] = 'WSIM'
+
+        lsm_file_data["rapid_inflow_tool"] = \
+            CreateInflowFileFromWSIMRunoff(
                 latitude_dim,
                 longitude_dim,
                 latitude_var,
@@ -945,7 +981,7 @@ def run_lsm_rapid_process(rapid_executable_location,
         # print 'ACTUAL_SIMULATION_END_DATETIME', actual_simulation_end_datetime
         
         all_simulation_time = np.arange(start_seconds, 
-                                        end_seconds, # + time_step, 
+                                        end_seconds + time_step, 
                                         time_step)
         # MPG ADDED:
         total_num_time_steps = len(all_simulation_time)

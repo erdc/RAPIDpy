@@ -301,8 +301,13 @@ def test_run_rapid_simulation():
     #check other info in netcdf file
     d1 = Dataset(generated_qout_file)
     d2 = Dataset(generated_qout_file_solution)
-    assert (d1.dimensions.keys() == d2.dimensions.keys())
-    assert (d1.variables.keys() == d2.variables.keys())
+    # MPG: new dimensions have been introduced in RAPID. We only test for those     # included in the original benchmarks.
+    for dim in ['time', 'rivid']:
+        assert (dim in d1.dimensions.keys())
+    # MPG: new variables have been introduced in RAPID. We only test for those 
+    # included in the original benchmarks.
+    for v in [u'Qout', u'rivid', u'time', u'lon', u'lat', u'crs']:
+	assert (v in d1.variables.keys())
     assert ((d1.variables['rivid'][:] == d2.variables['rivid'][:]).all())
     d1.close()
     d2.close()
@@ -338,8 +343,13 @@ def test_convert_file_to_be_cf_compliant_new_format_comid_lat_lon_z():
     #check other info in netcdf file
     d1 = Dataset(temp_qout_file)
     d2 = Dataset(cf_qout_file_solution)
-    assert (d1.dimensions.keys() == d2.dimensions.keys())
-    assert (d1.variables.keys() == d2.variables.keys())
+    # MPG: new dimensions have been introduced in RAPID. We only test for those     # included in the original benchmarks.
+    for dim in ['time', 'rivid']:
+	assert (dim in d1.dimensions.keys())
+    # MPG: new variables have been introduced in RAPID. We only test for those 
+    # included in the original benchmarks.
+    for v in [u'Qout', u'rivid', u'time', u'lon', u'lat', u'crs']:
+        assert (v in d1.variables.keys())
     assert ((d1.variables['time'][:] == d2.variables['time'][:]).all())
     assert ((d1.variables['rivid'][:] == d2.variables['rivid'][:]).all())
     assert ((d1.variables['lat'][:] == d2.variables['lat'][:]).all())

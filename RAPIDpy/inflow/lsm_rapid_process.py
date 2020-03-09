@@ -15,7 +15,7 @@ import traceback
 # external packages
 import pandas as pd
 import pangaea
-from netCDF4 import Dataset
+from netCDF4 import Dataset, num2date, date2num
 import numpy as np
 
 # local imports
@@ -25,6 +25,14 @@ from .CreateInflowFileFromERAInterimRunoff import \
 from .CreateInflowFileFromLDASRunoff import CreateInflowFileFromLDASRunoff
 from .CreateInflowFileFromWRFHydroRunoff import \
     CreateInflowFileFromWRFHydroRunoff
+from .CreateInflowFileFromGALWEMRunoff import \
+    CreateInflowFileFromGALWEMRunoff
+from .CreateInflowFileFromNewERAInterimRunoff import \
+    CreateInflowFileFromNewERAInterimRunoff
+from .CreateInflowFileFromJULESRunoff import \
+    CreateInflowFileFromJULESRunoff
+from .CreateInflowFileFromWSIMRunoff import \
+    CreateInflowFileFromWSIMRunoff
 from ..postprocess.generate_return_periods import generate_return_periods
 from ..postprocess.generate_seasonal_averages import generate_seasonal_averages
 from ..utilities import (case_insensitive_file_search,
@@ -46,6 +54,8 @@ def generate_inflows_from_runoff(args):
     rapid_inflow_file = args[4]
     rapid_inflow_tool = args[5]
     mp_lock = args[6]
+    # MPG ADDED all_simulation_time
+    all_simulation_time = args[7]
 
     time_start_all = datetime.utcnow()
 
@@ -75,7 +85,9 @@ def generate_inflows_from_runoff(args):
                                       in_weight_table=weight_table_file,
                                       out_nc=rapid_inflow_file,
                                       grid_type=grid_type,
-                                      mp_lock=mp_lock)
+                                      mp_lock=mp_lock,
+                                      all_simulation_time=all_simulation_time)
+
         except Exception:
             # This prints the type, value, and stack trace of the
             # current exception being handled.
@@ -244,6 +256,9 @@ def identify_lsm_grid(lsm_grid_path):
     subsurface_runoff_var = ""
     total_runoff_var = ""
     for var in var_list:
+        if var == "Runoff_mm":
+            # WSIM
+            total_runoff_var = var
         if var.startswith("SSRUN"):
             # NLDAS/GLDAS
             surface_runoff_var = var
@@ -274,12 +289,24 @@ def identify_lsm_grid(lsm_grid_path):
         elif var == "UDROFF":
             # WRF Hydro
             subsurface_runoff_var = var
+        elif var == "ssrun":
+            # GALWEM
+            surface_runoff_var = var
+        elif var == "bgrun":
+            # GALWEM
+            subsurface_runoff_var = var
         elif var.lower() == "ro":
             # ERA Interim
             total_runoff_var = var
         elif var == "total runoff":
             # CMIP5 data
             total_runoff_var = var
+        elif var == "surface_runoff":
+            # JULES data
+            surface_runoff_var = var
+        elif var == "subsurface_runoff":
+            # JULES data
+            subsurface_runoff_var = var
 
     # IDENTIFY GRID TYPE
     lsm_file_data = {
@@ -345,12 +372,27 @@ def identify_lsm_grid(lsm_grid_path):
             lsm_file_data["weight_file_name"] = r'weight_era_t159\.csv'
             lsm_file_data["model_name"] = "era_20cm"
             lsm_file_data["grid_type"] = 't159'
+        elif lat_dim_size == 1280 and lon_dim_size == 2576:
+            print("Runoff file identified as ERA Interim new")
+            # MPG: unknown grid type
+            #  dimensions:
+            #   longitude = 2576 ;
+            #   latitude = 1280 ;
+            lsm_file_data["description"] = "ERA interim new"
+            lsm_file_data["weight_file_name"] = r'weight_erai\.csv'
+            lsm_file_data["model_name"] = "era_unknown"
+            lsm_file_data["grid_type"] = 'new_era_interim'
         else:
             lsm_example_file.close()
             raise Exception("Unsupported ECMWF grid.")
 
-        lsm_file_data["rapid_inflow_tool"] = \
-            CreateInflowFileFromERAInterimRunoff()
+        # MPG: Adding ability to read in new ERA Interim data.
+        if lsm_file_data["description"] == "ERA interim new":
+            lsm_file_data["rapid_inflow_tool"] = \
+                CreateInflowFileFromNewERAInterimRunoff()
+        else:
+            lsm_file_data["rapid_inflow_tool"] = \
+                CreateInflowFileFromERAInterimRunoff()
 
     elif institution == "NASA GSFC":
         if title == "GLDAS2.0 LIS land surface model output":
@@ -373,10 +415,28 @@ def identify_lsm_grid(lsm_grid_path):
             lsm_file_data["model_name"] = "nasa"
 
     elif institution == "Met Office, UK":
-        print("Runoff file identified as Joules GRID")
-        lsm_file_data["weight_file_name"] = r'weight_joules\.csv'
-        lsm_file_data["grid_type"] = 'joules'
-        lsm_file_data["description"] = "Met Office Joules"
+        print("Runoff file identified as Jules GRID")
+        lsm_file_data["weight_file_name"] = r'weight_jules\.csv'
+        lsm_file_data["grid_type"] = 'jules'
+        lsm_file_data["description"] = "Met Office Jules"
+        lsm_file_data["model_name"] = "met_office"
+
+        runoff_vars = [total_runoff_var]
+
+    elif institution == "ERDC-CHL":
+        print("Runoff file identified as WSIM GRID")
+        lsm_file_data["weight_file_name"] = r'weight_wsim\.csv'
+        lsm_file_data["grid_type"] = 'WSIM'
+        lsm_file_data["description"] = "Water Security Indicator Model"
+        lsm_file_data["model_name"] = "WSIM"
+
+        runoff_vars = [total_runoff_var]
+
+    elif institution == 'Joint UK Land Environment Simulator':
+        print("Runoff file identified as Jules GRID")
+        lsm_file_data["weight_file_name"] = r'weight_jules\.csv'
+        lsm_file_data["grid_type"] = 'jules'
+        lsm_file_data["description"] = "Met Office Jules"
         lsm_file_data["model_name"] = "met_office"
 
     elif institution == "NCAR, USACE, USBR":
@@ -425,6 +485,77 @@ def identify_lsm_grid(lsm_grid_path):
         else:
             lsm_example_file.close()
             raise Exception("Unsupported runoff grid.")
+
+    elif surface_runoff_var.startswith("ssrun") \
+            and subsurface_runoff_var.startswith("bgrun"):
+        
+        lsm_file_data["model_name"] = "GALWEM"
+        print("Runoff file identified as GALWEM GRID")
+        # GALWEM NC FILE
+        # dimensions:
+        #     lat = 1920 ;
+        #     lon = 2560 ;
+        # variables
+        # ssrum (surface)
+        # bgrun (subsurface)
+        lsm_file_data["description"] = "GALWEM"
+        lsm_file_data["weight_file_name"] = r'weight_galwem\.csv'
+        lsm_file_data["grid_type"] = 'GALWEM'
+
+        lsm_file_data["rapid_inflow_tool"] = \
+            CreateInflowFileFromGALWEMRunoff(
+                latitude_dim,
+                longitude_dim,
+                latitude_var,
+                longitude_var,
+                runoff_vars)
+
+    elif total_runoff_var.startswith("Runoff_mm"):    
+        lsm_file_data["model_name"] = "WSIM"
+        print("Runoff file identified as WSIM GRID")
+        # WSIM NC FILE
+        # dimensions:
+        #     time (unlimited);
+        #     lat = 360 ;
+        #     lon = 720 ;
+        # variables:
+        # Runoff_mm
+        lsm_file_data["description"] = "WSIM"
+        lsm_file_data["weight_file_name"] = r'weight_wsim\.csv'
+        lsm_file_data["grid_type"] = 'WSIM'
+
+        lsm_file_data["rapid_inflow_tool"] = \
+            CreateInflowFileFromWSIMRunoff(
+                latitude_dim,
+                longitude_dim,
+                latitude_var,
+                longitude_var,
+                runoff_vars)
+
+    # elif surface_runoff_var.startswith("surface_runoff") \
+    #         and subsurface_runoff_var.startswith("sub_surface_runoff"):
+        
+    #     lsm_file_data["model_name"] = "JULES"
+    #     print("Runoff file identified as JULES GRID")
+    #     # JULES NC FILE
+    #     # MPG: corrected files to follow standard conventions.
+    #     # dimensions:
+    #     #     lat = 280 ;
+    #     #     lon = 720 ;
+    #     # variables
+    #     # surface_runoff (surface)
+    #     # sub_surface_runoff (subsurface)
+    #     lsm_file_data["description"] = "JULES"
+    #     lsm_file_data["weight_file_name"] = r'weight_jules\.csv'
+    #     lsm_file_data["grid_type"] = 'JULES'
+
+    #     lsm_file_data["rapid_inflow_tool"] = \
+    #         CreateInflowFileFromJULESRunoff(
+    #             latitude_dim,
+    #             longitude_dim,
+    #             latitude_var,
+    #             longitude_var,
+    #             runoff_vars)
 
     else:
         title = ""
@@ -841,6 +972,20 @@ def run_lsm_rapid_process(rapid_executable_location,
                 expected_time_step=expected_time_step,
                 lsm_grid_info=lsm_file_data)
 
+        # MPG ADDED:
+        units = 'seconds since 1970-01-01 00:00:00+00:00'
+        start_seconds = date2num(actual_simulation_start_datetime, units)
+        end_seconds = date2num(actual_simulation_end_datetime, units)
+        # MPG DEBUG:
+        # print 'ACTUAL_SIMULATION_START_DATETIME', actual_simulation_start_datetime
+        # print 'ACTUAL_SIMULATION_END_DATETIME', actual_simulation_end_datetime
+        
+        all_simulation_time = np.arange(start_seconds, 
+                                        end_seconds + time_step, 
+                                        time_step)
+        # MPG ADDED:
+        total_num_time_steps = len(all_simulation_time)
+
         # VALIDATING INPUT IF DIVIDING BY 3
         if (lsm_file_data['grid_type'] in ('nldas', 'lis', 'joules')) \
                 and convert_one_hour_to_three:
@@ -931,7 +1076,7 @@ def run_lsm_rapid_process(rapid_executable_location,
                         lsm_file_data['grid_type'],
                         master_rapid_runoff_file,
                         lsm_file_data['rapid_inflow_tool'],
-                        mp_lock))
+                        mp_lock, all_simulation_time))
 #                   # COMMENTED CODE IS FOR DEBUGGING
 #                   generate_inflows_from_runoff((
 #                       cpu_grouped_file_list,

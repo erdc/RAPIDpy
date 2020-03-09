@@ -1,7 +1,4 @@
-conda:
-    file: conda-env.yml
 python:
     version: 2
-    pip_install: true
-    extra_requirements:
-        - docs
+    pip_install: false
+requirements_file: requirements.readthedocs.txt

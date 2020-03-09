@@ -7,6 +7,10 @@ Code to use to prepare input data for RAPID from Land Surface Models
 - ECMWF's ERA Interim Data
 - NASA's GLDAS/NLDAS/LIS Data
 - CMIP5 Data (daily VIC data available from 1950 to 2099)
+- Joules
+- WRF
+- FLDAS (http://disc.sci.gsfc.nasa.gov/uui/datasets?keywords=FLDAS)
+- ERA 20CM
 
 Step 1: Retrieve Land Surface Model Runoff Output
 -------------------------------------------------

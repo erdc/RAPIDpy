@@ -360,7 +360,7 @@ class CreateInflowFileFromGriddedRunoff(object):
 
                 # Read the netcdf dataset
                 data_in_nc = Dataset(nc_file)
-                
+
                 # Calculate water inflows
                 runoff_dimension_size = \
                     len(data_in_nc.variables[self.runoff_vars[0]].dimensions)
@@ -514,7 +514,6 @@ class CreateInflowFileFromGriddedRunoff(object):
             # only one process is allowed to write at a time to netcdf file
             mp_lock.acquire()
             data_out_nc = Dataset(out_nc, "a", format="NETCDF3_CLASSIC")
-            
             if runoff_dimension_size == 3 and len_time_subset > 1:
                 # MPG ADDED:
                 # data_out_nc_end_idx = data_out_nc_start_idx + len_time_subset
@@ -532,8 +531,8 @@ class CreateInflowFileFromGriddedRunoff(object):
                     print "DATA_OUT_NC_END_IDX", data_out_nc_end_idx
             else:
                 # MPG DEBUG:
-                print "INDEX", index
-                print "M3_RIV DIMENSIONS", data_out_nc.variables['m3_riv'].shape
+                # print "INDEX", index
+                # print "M3_RIV DIMENSIONS", data_out_nc.variables['m3_riv'].shape
                 data_out_nc.variables['m3_riv'][index] = inflow_data
             data_out_nc.close()
             mp_lock.release()

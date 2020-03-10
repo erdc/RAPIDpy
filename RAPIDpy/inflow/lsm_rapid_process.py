@@ -54,8 +54,8 @@ def generate_inflows_from_runoff(args):
     rapid_inflow_file = args[4]
     rapid_inflow_tool = args[5]
     mp_lock = args[6]
-    # MPG ADDED all_simulation_time
-    all_simulation_time = args[7]
+    # MPG ADDED all_simulation_time / Commented out for debugging
+    # all_simulation_time = args[7]
 
     time_start_all = datetime.utcnow()
 
@@ -85,8 +85,8 @@ def generate_inflows_from_runoff(args):
                                       in_weight_table=weight_table_file,
                                       out_nc=rapid_inflow_file,
                                       grid_type=grid_type,
-                                      mp_lock=mp_lock,
-                                      all_simulation_time=all_simulation_time)
+                                      mp_lock=mp_lock) #,
+                                      #all_simulation_time=all_simulation_time)
 
         except Exception:
             # This prints the type, value, and stack trace of the
@@ -415,13 +415,11 @@ def identify_lsm_grid(lsm_grid_path):
             lsm_file_data["model_name"] = "nasa"
 
     elif institution == "Met Office, UK":
-        print("Runoff file identified as Jules GRID")
-        lsm_file_data["weight_file_name"] = r'weight_jules\.csv'
-        lsm_file_data["grid_type"] = 'jules'
-        lsm_file_data["description"] = "Met Office Jules"
+        print("Runoff file identified as Joules GRID")
+        lsm_file_data["weight_file_name"] = r'weight_joules\.csv'
+        lsm_file_data["grid_type"] = 'joules'
+        lsm_file_data["description"] = "Met Office Joules"
         lsm_file_data["model_name"] = "met_office"
-
-        runoff_vars = [total_runoff_var]
 
     elif institution == "ERDC-CHL":
         print("Runoff file identified as WSIM GRID")
@@ -434,10 +432,12 @@ def identify_lsm_grid(lsm_grid_path):
 
     elif institution == 'Joint UK Land Environment Simulator':
         print("Runoff file identified as Jules GRID")
-        lsm_file_data["weight_file_name"] = r'weight_jules\.csv'
-        lsm_file_data["grid_type"] = 'jules'
-        lsm_file_data["description"] = "Met Office Jules"
+        lsm_file_data["weight_file_name"] = r'weight_joules\.csv'
+        lsm_file_data["grid_type"] = 'joules'
+        lsm_file_data["description"] = "Met Office Joules"
         lsm_file_data["model_name"] = "met_office"
+
+        runoff_vars = [total_runoff_var]
 
     elif institution == "NCAR, USACE, USBR":
         print("Runoff file identified as CMIP5")
@@ -628,7 +628,7 @@ def determine_start_end_timestep(lsm_file_list,
             file_size_time = \
                 len(lsm_example_file.dimensions[lsm_grid_info['time_dim']])
             lsm_example_file.close()
-
+        
         total_num_time_steps = int(file_size_time * len(lsm_file_list))
 
         # determine the start time from the existing files
@@ -656,7 +656,7 @@ def determine_start_end_timestep(lsm_file_list,
         actual_simulation_end_datetime = \
             datetime.strptime(file_re_match.search(lsm_file_list[-1]).group(0),
                               file_datetime_pattern) \
-            + timedelta(seconds=(file_size_time-1) * time_step)
+            # + timedelta(seconds=(file_size_time-1) * time_step)
     else:
         with pangaea.open_mfdataset(lsm_file_list,
                                     lat_var=lsm_grid_info['latitude_var'],
@@ -977,14 +977,14 @@ def run_lsm_rapid_process(rapid_executable_location,
         start_seconds = date2num(actual_simulation_start_datetime, units)
         end_seconds = date2num(actual_simulation_end_datetime, units)
         # MPG DEBUG:
-        # print 'ACTUAL_SIMULATION_START_DATETIME', actual_simulation_start_datetime
-        # print 'ACTUAL_SIMULATION_END_DATETIME', actual_simulation_end_datetime
+        print 'ACTUAL_SIMULATION_START_DATETIME', actual_simulation_start_datetime
+        print 'ACTUAL_SIMULATION_END_DATETIME', actual_simulation_end_datetime
         
         all_simulation_time = np.arange(start_seconds, 
                                         end_seconds + time_step, 
                                         time_step)
         # MPG ADDED:
-        total_num_time_steps = len(all_simulation_time)
+        # total_num_time_steps = len(all_simulation_time)
 
         # VALIDATING INPUT IF DIVIDING BY 3
         if (lsm_file_data['grid_type'] in ('nldas', 'lis', 'joules')) \
@@ -1076,7 +1076,7 @@ def run_lsm_rapid_process(rapid_executable_location,
                         lsm_file_data['grid_type'],
                         master_rapid_runoff_file,
                         lsm_file_data['rapid_inflow_tool'],
-                        mp_lock, all_simulation_time))
+                        mp_lock)) #, all_simulation_time))
 #                   # COMMENTED CODE IS FOR DEBUGGING
 #                   generate_inflows_from_runoff((
 #                       cpu_grouped_file_list,
@@ -1087,8 +1087,7 @@ def run_lsm_rapid_process(rapid_executable_location,
 #                       lsm_file_data['rapid_inflow_tool'],
 #                       mp_lock))
             pool = multiprocessing.Pool(num_cpus)
-            pool.map(generate_inflows_from_runoff,
-                     job_combinations)
+            pool.map(generate_inflows_from_runoff, job_combinations)
             pool.close()
             pool.join()
 

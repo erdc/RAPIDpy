@@ -40,6 +40,8 @@ class CreateInflowFileFromLDASRunoff(CreateInflowFileFromGriddedRunoff):
         """Check the necessary dimensions and variables in the
         input netcdf data"""
         data_nc = Dataset(in_nc)
+        print "dims", self.dims_oi
+        print "vars", self.vars_oi
         for dim in self.dims_oi:
             if dim not in data_nc.dimensions.keys():
                 data_nc.close()

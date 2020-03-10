@@ -309,7 +309,7 @@ class CreateInflowFileFromGriddedRunoff(object):
         pass
 
     def execute(self, nc_file_list, index_list, in_weight_table,
-                out_nc, grid_type, mp_lock, all_simulation_time):
+                out_nc, grid_type, mp_lock): #, all_simulation_time):
 
         """The source code of the tool."""
         if not os.path.exists(out_nc):
@@ -406,15 +406,20 @@ class CreateInflowFileFromGriddedRunoff(object):
                     # MPG ADDED:
                     all_simulation_time_units = (
                         'seconds since 1970-01-01 00:00:00+00:00')
-                    data_in_nc_start_time = num2date(data_in_nc['time'][0],
-                                                     data_in_nc['time'].units)
+                    # data_in_nc_start_time = num2date(data_in_nc['time'][0],
+                    #                                  data_in_nc['time'].units)
                     
+                    # MPG FIX FOR TIME OFFSET BETWEEN LSM NC AND M3 NC:
+                    # data_in_nc_start_time = datetime.strptime(
+                    #     file_re_match.search(nc_file).group(0), 
+                    #     file_datetime_pattern)
+
                     # DEBUG
                     # print 'DATA_IN_START_TIME', data_in_nc_start_time
-                    data_in_nc_start_time = date2num(data_in_nc_start_time,
-                                                     all_simulation_time_units)
-                    data_out_nc_start_idx = np.abs(data_in_nc_start_time -
-                                                   all_simulation_time).argmin()
+                    # data_in_nc_start_time = date2num(data_in_nc_start_time,
+                    #                                  all_simulation_time_units)
+                    # data_out_nc_start_idx = np.abs(data_in_nc_start_time -
+                    #                                all_simulation_time).argmin()
                     # DEBUG
                     # print 'ALL_SIMULATION_TIME', num2date(all_simulation_time[data_out_nc_start_idx], all_simulation_time_units)
 
@@ -517,18 +522,26 @@ class CreateInflowFileFromGriddedRunoff(object):
             if runoff_dimension_size == 3 and len_time_subset > 1:
                 # MPG ADDED:
                 # data_out_nc_end_idx = data_out_nc_start_idx + len_time_subset
-                data_out_nc_end_idx = data_out_nc_start_idx + len_time_subset
-                try:
-                    data_out_nc.variables['m3_riv'][
-                        data_out_nc_start_idx:data_out_nc_end_idx, :] = \
-                        inflow_data
-                except IndexError:
-                    print ("WARNING: Inflow data dimensions inconsistent" + 
-                           " with 'm3_riv' variable slice")
-                    print "NC_FILE", nc_file
-                    print "INFLOW_DATA.SHAPE", inflow_data.shape
-                    print "DATA_OUT_NC_START_IDX", data_out_nc_start_idx
-                    print "DATA_OUT_NC_END_IDX", data_out_nc_end_idx
+                # data_out_nc_end_idx = data_out_nc_start_idx + len_time_subset
+                # try:
+                #     data_out_nc.variables['m3_riv'][
+                #         data_out_nc_start_idx:data_out_nc_end_idx, :] = \
+                #         inflow_data
+                # except IndexError:
+                #     print ("WARNING: Inflow data dimensions inconsistent" + 
+                #            " with 'm3_riv' variable slice")
+                #     print "NC_FILE", nc_file
+                #     print "INFLOW_DATA.SHAPE", inflow_data.shape
+                #     print "DATA_OUT_NC_START_IDX", data_out_nc_start_idx
+                #     print "DATA_OUT_NC_END_IDX", data_out_nc_end_idx
+                
+                # MPG DEBUG
+                # import pdb
+                # pdb.set_trace()
+
+                data_out_nc.variables['m3_riv'][
+                    index*len_time_subset:(index+1)*len_time_subset, :] = \
+                    inflow_data
             else:
                 # MPG DEBUG:
                 # print "INDEX", index

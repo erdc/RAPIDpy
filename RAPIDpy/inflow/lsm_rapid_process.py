@@ -785,17 +785,19 @@ def run_lsm_rapid_process(rapid_executable_location,
         }
         ensemble_file_ending = ".nc"
         ensemble_file_ending4 = ".nc4"
+        ensemble_file_ending_alt = ".d01"
         if ensemble is not None:
             ensemble_file_ending = "_{0}.nc".format(ensemble)
             ensemble_file_ending4 = "_{0}.nc4".format(ensemble)
-
+            ensemble_file_ending_alt = "_{0}.d01".format(ensemble)
         # get list of files
         lsm_file_list = []
         for walkdir_info in os.walk(lsm_data_location,
                                     followlinks=True):
             for lsm_file in walkdir_info[2]:
                 if lsm_file.endswith(ensemble_file_ending) or \
-                        lsm_file.endswith(ensemble_file_ending4):
+                        lsm_file.endswith(ensemble_file_ending4) or \
+                        lsm_file.endswith(ensemble_file_ending_alt):
                     lsm_file_list.append(
                         os.path.join(walkdir_info[0], lsm_file))
         lsm_file_list = sorted(lsm_file_list)

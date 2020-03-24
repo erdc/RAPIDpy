@@ -1,0 +1,12 @@
+rapid_executable_location: '/home/testuser2/rapid/src/rapid'
+rapid_io_files_location: '/home/testuser2/RAPIDpy/workflow'
+lsm_data_location: '/home/testuser2/RAPIDpy/tests/data/lsm_grids/erai3'
+simulation_start_timestamp: '20030121'
+simulation_end_timestamp: '20030122'
+run_rapid_simulation: false
+generate_initialization_file: false
+file_datetime_pattern: '%Y%m%d'
+file_datetime_re_pattern: '\d{8}'
+initial_flows_file:
+generate_return_periods_file: false
+generate_seasonal_averages_file: false

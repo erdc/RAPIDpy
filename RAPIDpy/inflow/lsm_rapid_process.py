@@ -280,7 +280,7 @@ def identify_lsm_grid(lsm_grid_path):
         elif var == "total runoff":
             # CMIP5 data
             total_runoff_var = var
-        elif var = 'OUT_TOTAL_RUNOFF':
+        elif var == 'OUT_TOTAL_RUNOFF':
             # ORNL VIC4
             total_runoff_var = var
 
@@ -392,7 +392,7 @@ def identify_lsm_grid(lsm_grid_path):
         runoff_vars = [total_runoff_var]
 
     elif 'Oak Ridge National Laboratory' in institution:
-        if lat dim_size == 697 and lon_dim_size == 1405:
+        if lat_dim_size == 697 and lon_dim_size == 1405:
             print("Runoff file identified as ORNL VIC4")
             lsm_file_data["weight_file_name"] = r'weight_ornl\.csv'
             lsm_file_data["grid_type"] = 'vic4'

@@ -170,6 +170,8 @@ class CreateInflowFileFromGriddedRunoff(object):
         """
         self.simulation_time_step_seconds = simulation_time_step_seconds
 
+        # MPG DEBUG:
+        print('self.simulation_time_step_seconds', self.simulation_time_step_seconds)
         # Create output inflow netcdf data
         print("Generating inflow file ...")
         data_out_nc = Dataset(out_nc, "w", format="NETCDF3_CLASSIC")
@@ -225,6 +227,14 @@ class CreateInflowFileFromGriddedRunoff(object):
                                    simulation_time_step_seconds)
             time_var[:] = time_array
 
+            # MPG DEBUG:
+            print('initial_time_seconds', initial_time_seconds)
+            print('final_time_seconds', final_time_seconds)
+            print('number_of_timesteps', number_of_timesteps)
+            for t in time_array:
+                print t
+            sys.exit(0)
+            
             # time_bnds
             time_bnds_var = data_out_nc.createVariable('time_bnds', 'i4',
                                                        ('time', 'nv',))

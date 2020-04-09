@@ -345,6 +345,16 @@ def identify_lsm_grid(lsm_grid_path):
             lsm_file_data["weight_file_name"] = r'weight_era_t159\.csv'
             lsm_file_data["model_name"] = "era_20cm"
             lsm_file_data["grid_type"] = 't159'
+        # MPG WIP: era5 25km data
+        elif lat_dim_size == 721 and lon_dim_size == 1440:
+            print("Runoff file identified as ERA5 GRID")
+            #  dimensions:
+            #   longitude = 1440 ;
+            #   latitude = 721 ;
+            lsm_file_data["description"] = "ERA 5"
+            lsm_file_data["weight_file_name"] = r'weight_era5\.csv'
+            lsm_file_data["model_name"] = "era5"
+            lsm_file_data["grid_type"] = 'era5'
         else:
             lsm_example_file.close()
             raise Exception("Unsupported ECMWF grid.")

@@ -57,6 +57,8 @@ def FlowlineToPoint(in_drainage_line,
     ogr_drainage_line_shapefile_lyr_proj = \
         ogr_drainage_line_shapefile_lyr.GetSpatialRef()
     osr_geographic_proj = osr.SpatialReference()
+    # MPG: the following line preserves (lon, lat) order in proj_transform.
+    osr_geographic_proj.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
     osr_geographic_proj.ImportFromEPSG(4326)
     proj_transform = None
     if ogr_drainage_line_shapefile_lyr_proj != osr_geographic_proj:

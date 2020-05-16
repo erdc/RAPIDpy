@@ -39,7 +39,7 @@ def get_poly_area_geo(poly):
                                         maxy,
                                         (miny + maxy) / 2.0,
                                         (minx + maxx) / 2.0))
-    geographic_proj = Proj(init='epsg:4326')
+    geographic_proj = Proj('epsg:4326')
     project_func = partial(transform,
                            geographic_proj,
                            reprojected_for_area)
@@ -106,9 +106,11 @@ def rtree_create_weight_table(lsm_grid_lat, lsm_grid_lon,
 
     ogr_catchment_shapefile_lyr_proj = \
         ogr_catchment_shapefile_lyr.GetSpatialRef()
+    # MPG: the following line preserves (lon, lat) order in proj_transform.
+    # ogr_catchment_shapefile_lyr_proj.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER) 
     original_catchment_proj = \
-        Proj(ogr_catchment_shapefile_lyr_proj.ExportToProj4())
-    geographic_proj = Proj(init='EPSG:4326')
+        Proj(ogr_catchment_shapefile_lyr_proj.ExportToWkt())
+    geographic_proj = Proj('EPSG:4326')
     extent = ogr_catchment_shapefile_lyr.GetExtent()
     if original_catchment_proj != geographic_proj:
         x, y = transform(original_catchment_proj,
@@ -177,8 +179,10 @@ def rtree_create_weight_table(lsm_grid_lat, lsm_grid_lon,
         connectwriter = csv.writer(csvfile)
         connectwriter.writerow(['rivid', 'area_sqm', 'lon_index', 'lat_index',
                                 'npoints', 'lsm_grid_lon', 'lsm_grid_lat'])
-        geographic_proj = Proj(init='EPSG:4326')
+        geographic_proj = Proj('EPSG:4326')
         osr_geographic_proj = osr.SpatialReference()
+        # MPG: the following line preserves (lon, lat) order in proj_transform.
+        osr_geographic_proj.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
         osr_geographic_proj.ImportFromEPSG(4326)
         proj_transform = None
         if original_catchment_proj != geographic_proj:
@@ -218,6 +222,11 @@ def rtree_create_weight_table(lsm_grid_lat, lsm_grid_lon,
                             .format(rapid_connect_rivid))
                         original_area = catchment_polygon.area
                         catchment_polygon = catchment_polygon.buffer(0)
+                        # MPG:
+                        log('original area')
+                        log(original_area)
+                        log('catchment polygon area')
+                        log(catchment_polygon.area)
                         area_ratio = original_area/catchment_polygon.area
                         log('AREA_RATIO: {0}'.format(area_ratio))
                         msg_level = "INFO"

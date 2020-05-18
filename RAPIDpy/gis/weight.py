@@ -13,7 +13,7 @@ from functools import partial
 
 from netCDF4 import Dataset
 import numpy as np
-from pyproj import Proj, transform
+import pyproj
 from shapely.wkb import loads as shapely_loads
 from shapely.ops import transform as shapely_transform
 from shapely.geos import TopologicalError
@@ -33,16 +33,23 @@ def get_poly_area_geo(poly):
     """
     minx, miny, maxx, maxy = poly.bounds
     # reproject polygon to get area
-    reprojected_for_area = Proj("+proj=aea +lat_1={0} +lat_1={1} "
+    # MPG: lat_1 listed twice in proj-string?
+    #reprojected_for_area = Proj("+proj=aea +lat_1={0} +lat_1={1} "
+    #                            "+lat_0={2} +lon_0={3}"
+    #                            .format(miny,
+    #                                    maxy,
+    #                                    (miny + maxy) / 2.0,
+    #                                    (minx + maxx) / 2.0))
+    reprojected_for_area = pyproj.CRS("+proj=aea +lat_1={0} +lat_2={1} "
                                 "+lat_0={2} +lon_0={3}"
                                 .format(miny,
                                         maxy,
                                         (miny + maxy) / 2.0,
                                         (minx + maxx) / 2.0))
-    geographic_proj = Proj('epsg:4326')
-    project_func = partial(transform,
-                           geographic_proj,
-                           reprojected_for_area)
+    geographic_proj = pyproj.CRS('epsg:4326')
+    # MPG: always_xy=True required for Shapely (https://shapely.readthedocs.io/en/latest/manual.html).
+    project_func = pyproj.Transformer.from_crs(
+                               geographic_proj, reprojected_for_area, always_xy=True).transform
     reprojected_poly = shapely_transform(project_func, poly)
     return reprojected_poly.area
 
@@ -107,14 +114,15 @@ def rtree_create_weight_table(lsm_grid_lat, lsm_grid_lon,
     ogr_catchment_shapefile_lyr_proj = \
         ogr_catchment_shapefile_lyr.GetSpatialRef()
     # MPG: the following line preserves (lon, lat) order in proj_transform.
-    # ogr_catchment_shapefile_lyr_proj.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER) 
+    ogr_catchment_shapefile_lyr_proj.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
     original_catchment_proj = \
-        Proj(ogr_catchment_shapefile_lyr_proj.ExportToWkt())
-    geographic_proj = Proj('EPSG:4326')
+        pyproj.CRS(ogr_catchment_shapefile_lyr_proj.ExportToProj4())
+    geographic_proj = pyproj.CRS('EPSG:4326')
     extent = ogr_catchment_shapefile_lyr.GetExtent()
     if original_catchment_proj != geographic_proj:
-        x, y = transform(original_catchment_proj,
-                         geographic_proj,
+        # MPG: always_xy=True required for Shapely (https://shapely.readthedocs.io/en/latest/manual.html).
+        transformer = pyproj.Transformer.from_crs(original_catchment_proj, geographic_proj, always_xy=True)
+        x, y = transformer.transform(
                          [extent[0], extent[1]],
                          [extent[2], extent[3]])
         extent = [min(x), max(x), min(y), max(y)]
@@ -179,7 +187,7 @@ def rtree_create_weight_table(lsm_grid_lat, lsm_grid_lon,
         connectwriter = csv.writer(csvfile)
         connectwriter.writerow(['rivid', 'area_sqm', 'lon_index', 'lat_index',
                                 'npoints', 'lsm_grid_lon', 'lsm_grid_lat'])
-        geographic_proj = Proj('EPSG:4326')
+        geographic_proj = pyproj.CRS('EPSG:4326')
         osr_geographic_proj = osr.SpatialReference()
         # MPG: the following line preserves (lon, lat) order in proj_transform.
         osr_geographic_proj.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
@@ -222,18 +230,13 @@ def rtree_create_weight_table(lsm_grid_lat, lsm_grid_lon,
                             .format(rapid_connect_rivid))
                         original_area = catchment_polygon.area
                         catchment_polygon = catchment_polygon.buffer(0)
-                        # MPG:
-                        log('original area')
-                        log(original_area)
-                        log('catchment polygon area')
-                        log(catchment_polygon.area)
                         area_ratio = original_area/catchment_polygon.area
                         log('AREA_RATIO: {0}'.format(area_ratio))
                         msg_level = "INFO"
                         if round(area_ratio, 5) != 1:
                             msg_level = "WARNING"
                         log('The cleaned catchment polygon area '
-                            'differs from the original area by {1}%.'
+                            'differs from the original area by {0}.'
                             .format(abs(area_ratio - 1)), severity=msg_level)
                         intersect_poly = \
                             catchment_polygon.intersection(lsm_grid_polygon)

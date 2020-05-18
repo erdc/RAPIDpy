@@ -9,7 +9,7 @@ import csv
 from os import remove
 from sys import version_info
 
-from numpy.testing import assert_almost_equal
+from numpy.testing import assert_almost_equal, assert_allclose
 from numpy import array as np_array
 from numpy import float32 as np_float32
 
@@ -96,10 +96,13 @@ def compare_csv_decimal_files(file1, file2, header=True, timeseries=False):
                     assert row1[0] == row2[0]  # check dates
                     compare_start_index = 1
 
-                assert_almost_equal(
-                    np_array(row1[compare_start_index:], dtype=np_float32),
+                #assert_almost_equal(
+                #    np_array(row1[compare_start_index:], dtype=np_float32),
+                #    np_array(row2[compare_start_index:], dtype=np_float32),
+                #    decimal=2)
+                assert_allclose(np_array(row1[compare_start_index:], dtype=np_float32),
                     np_array(row2[compare_start_index:], dtype=np_float32),
-                    decimal=2)
+                    rtol=1e-05)
             except StopIteration:
                 break
     return True

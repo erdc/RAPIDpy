@@ -40,7 +40,8 @@ def get_poly_area_geo(poly):
     #                                    maxy,
     #                                    (miny + maxy) / 2.0,
     #                                    (minx + maxx) / 2.0))
-    reprojected_for_area = pyproj.CRS("+proj=aea +lat_1={0} +lat_2={1} "
+    # Not changing for now while testing new configuration.
+    reprojected_for_area = pyproj.CRS("+proj=aea +lat_1={0} +lat_1={1} "
                                 "+lat_0={2} +lon_0={3}"
                                 .format(miny,
                                         maxy,
@@ -113,8 +114,6 @@ def rtree_create_weight_table(lsm_grid_lat, lsm_grid_lon,
 
     ogr_catchment_shapefile_lyr_proj = \
         ogr_catchment_shapefile_lyr.GetSpatialRef()
-    # MPG: the following line preserves (lon, lat) order in proj_transform.
-    ogr_catchment_shapefile_lyr_proj.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
     original_catchment_proj = \
         pyproj.CRS(ogr_catchment_shapefile_lyr_proj.ExportToProj4())
     geographic_proj = pyproj.CRS('EPSG:4326')

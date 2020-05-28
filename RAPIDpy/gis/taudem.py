@@ -558,6 +558,9 @@ class TauDEM(object):
         # make sure projection EPSG:4326
         network_layer_proj = network_layer.GetSpatialRef()
         geographic_proj = osr.SpatialReference()
+        # MPG: the following line preserves (lon, lat) order in proj_transform.
+        geographic_proj.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+
         geographic_proj.ImportFromEPSG(4326)
         proj_transform = None
         if network_layer_proj != geographic_proj:

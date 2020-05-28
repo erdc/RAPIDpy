@@ -160,6 +160,9 @@ def pointsToVoronoiGridShapefile(lat, lon, vor_shp_path, extent=None):
     drv = ogr.GetDriverByName('ESRI Shapefile')
     outShp = drv.CreateDataSource(vor_shp_path)
     osr_geographic_proj = osr.SpatialReference()
+    # MPG: the following line preserves (lon, lat) order in proj_transform.
+    osr_geographic_proj.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+
     osr_geographic_proj.ImportFromEPSG(4326)
     layer = outShp.CreateLayer('', osr_geographic_proj, ogr.wkbPolygon)
     layer.CreateField(ogr.FieldDefn('GRID_LAT', ogr.OFTReal))

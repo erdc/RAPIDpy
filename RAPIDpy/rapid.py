@@ -13,11 +13,12 @@ from multiprocessing import cpu_count
 import os
 from subprocess import Popen, PIPE
 from time import gmtime
+from netCDF4 import Dataset
+import xarray
 
 from dateutil.parser import parse
 import numpy as np
 from requests import get
-import xarray
 
 from .dataset import RAPIDDataset
 from .helper_functions import csv_to_list, log, open_csv
@@ -845,6 +846,12 @@ class RAPID(object):
         log("Generating qinit file from qout file ...",
             "INFO")
         # get information from dataset
+
+       
+       # qds = Dataset(self.Qout_file, "r+")
+       # rivid_array = qds["rivid"][:]
+       # streamflow_values = qds["Qout"][:, time_index]
+
         with xarray.open_dataset(self.Qout_file) as qds:
             rivid_array = qds.rivid.values
             if out_datetime is None:

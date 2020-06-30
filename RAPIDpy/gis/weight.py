@@ -104,6 +104,12 @@ def rtree_create_weight_table(lsm_grid_lat, lsm_grid_lon,
         ogr_catchment_shapefile = ogr.Open(in_catchment_shapefile)
         ogr_catchment_shapefile_lyr = ogr_catchment_shapefile.GetLayer()
 
+    # MPG DEBUG:
+    # ldefn = ogr_catchment_shapefile_lyr.GetLayerDefn()
+    # for n in range(ldefn.GetFieldCount()):
+    #     fdefn = ldefn.GetFieldDefn(n)
+    #     print(fdefn.name)
+
     ogr_catchment_shapefile_lyr_proj = \
         ogr_catchment_shapefile_lyr.GetSpatialRef()
     original_catchment_proj = \

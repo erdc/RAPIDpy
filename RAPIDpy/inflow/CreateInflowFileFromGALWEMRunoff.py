@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-   CreateInflowFileFromLDASRunoff.py
+   CreateInflowFileFromGALWEMRunoff.py
    RAPIDpy
 
-   Created by Alan D. Snow, 2015
+   Created by Matthew P. Geheran, 2018
    Adapted from CreateInflowFileFromECMWFRunoff.py.
-   License: BSD-3-Clause
 """
 from netCDF4 import Dataset
 
@@ -13,7 +12,7 @@ from .CreateInflowFileFromGriddedRunoff import \
     CreateInflowFileFromGriddedRunoff
 
 
-class CreateInflowFileFromLDASRunoff(CreateInflowFileFromGriddedRunoff):
+class CreateInflowFileFromGALWEMRunoff(CreateInflowFileFromGriddedRunoff):
     """Create Inflow File From LDAS Runoff
 
     Base class for creating RAPID NetCDF input
@@ -23,25 +22,23 @@ class CreateInflowFileFromLDASRunoff(CreateInflowFileFromGriddedRunoff):
     land_surface_model_name = "LDAS"
 
     def __init__(self,
-                 lat_dim,  # "g0_lat_0",
-                 lon_dim,  # "g0_lon_1",
-                 lat_var,  # "g0_lat_0",
-                 lon_var,  # "g0_lon_1",
-                 runoff_vars):  # ["Qsb_GDS0_SFC_ave1h", "Qs_GDS0_SFC_ave1h"],
+                 lat_dim,  # "lat",
+                 lon_dim,  # "lon",
+                 lat_var,  # "lat",
+                 lon_var,  # "lon",
+                 runoff_vars):  # ["ssrun", "bgrun"],
         """Define the attributes to look for"""
         self.dims_oi = [lon_dim, lat_dim]
         self.vars_oi = [lon_var, lat_var] + runoff_vars
         self.runoff_vars = runoff_vars
-        self.length_time = {"Hourly": 1}
+        self.length_time = {"3-Hourly": 1}
 
-        super(CreateInflowFileFromLDASRunoff, self).__init__()
+        super(CreateInflowFileFromGALWEMRunoff, self).__init__()
 
     def data_validation(self, in_nc):
         """Check the necessary dimensions and variables in the
         input netcdf data"""
         data_nc = Dataset(in_nc)
-        print "dims", self.dims_oi
-        print "vars", self.vars_oi
         for dim in self.dims_oi:
             if dim not in data_nc.dimensions.keys():
                 data_nc.close()

@@ -14,7 +14,7 @@ import traceback
 
 # external packages
 import pandas as pd
-import pangaea
+#import pangaea
 from netCDF4 import Dataset
 import numpy as np
 
@@ -30,6 +30,9 @@ from ..postprocess.generate_seasonal_averages import generate_seasonal_averages
 from ..utilities import (case_insensitive_file_search,
                          get_valid_directory_list,
                          partition)
+
+from ..pangaea.read import open_mfdataset
+
 
 
 # -----------------------------------------------------------------------------
@@ -527,7 +530,7 @@ def determine_start_end_timestep(lsm_file_list,
                               file_datetime_pattern) \
             + timedelta(seconds=(file_size_time-1) * time_step)
     else:
-        with pangaea.open_mfdataset(lsm_file_list,
+        with open_mfdataset(lsm_file_list, #pangaea.open_mfdataset
                                     lat_var=lsm_grid_info['latitude_var'],
                                     lon_var=lsm_grid_info['longitude_var'],
                                     time_var=lsm_grid_info['time_var'],

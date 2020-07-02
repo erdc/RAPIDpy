@@ -1,0 +1,2 @@
+[MESSAGES CONTROL]
+disable=bad-continuation,broad-except,invalid-name,invalid-unary-operand-type,too-many-arguments,too-many-locals,too-many-instance-attributes,no-member,redefined-variable-type,too-many-branches,too-many-statements

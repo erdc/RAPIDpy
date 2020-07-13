@@ -10,6 +10,7 @@ from csv import writer as csv_writer
 import datetime
 
 from netCDF4 import Dataset, num2date
+#from cftime import num2pydate
 import numpy as np
 from numpy.ma import is_masked
 import pandas as pd
@@ -400,7 +401,11 @@ class RAPIDDataset(object):
             time_array = time_array[time_index_array]
 
         if return_datetime:
-            time_array = num2date(time_array, time_units)
+            try:
+                # only_use_cftime_datetime=True is default after cftime PR #135
+                time_array = num2date(time_array, time_units, only_use_cftime_datetimes=False)
+            except:
+                time_array = num2date(time_array, time_units)
 
             if self.out_tzinfo is not None:
                 for i in xrange(len(time_array)):
@@ -811,7 +816,10 @@ class RAPIDDataset(object):
             if as_dataframe:
                 return qout_df
 
-            streamflow_array = qout_df.as_matrix().T
+            try:
+                streamflow_array = qout_df.to_numpy().T
+            except:
+                streamflow_array = qout_df.as_matrix().T
 
             if streamflow_array.ndim > 0 and streamflow_array.shape[0] == 1:
                 streamflow_array = streamflow_array[0]

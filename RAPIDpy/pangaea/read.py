@@ -125,7 +125,8 @@ def open_mfdataset(path_to_lsm_files,
                             preprocess=preprocess,
                             concat_dim=time_dim,
                             engine=engine,
-                            )
+                            combine = 'nested') 
+
     xds.lsm.y_var = lat_var
     xds.lsm.x_var = lon_var
     xds.lsm.y_dim = lat_dim

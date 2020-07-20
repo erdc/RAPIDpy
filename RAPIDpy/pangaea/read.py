@@ -119,13 +119,21 @@ def open_mfdataset(path_to_lsm_files,
         engine = 'pynio' if engine is None else engine
     else:
         preprocess = define_coords
-
-    xds = xr.open_mfdataset(path_to_lsm_files,
+    
+    try:
+        xds = xr.open_mfdataset(path_to_lsm_files,
                             autoclose=autoclose,
                             preprocess=preprocess,
                             concat_dim=time_dim,
                             engine=engine,
                             combine = 'nested') 
+    except:         
+        xds = xr.open_mfdataset(path_to_lsm_files,
+                            autoclose=autoclose,
+                            preprocess=preprocess,
+                            concat_dim=time_dim,
+                            engine=engine)
+
 
     xds.lsm.y_var = lat_var
     xds.lsm.x_var = lon_var

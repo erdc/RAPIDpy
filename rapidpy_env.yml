@@ -3,11 +3,13 @@
 # Julu 02, 2020
 # v2.0
 # Sara Lytle
-# run command (setup.py with package installtion deactivated)
+# # Create the environment by running the following command (after installing Miniconda):
+# # os: linux
+# #   $ conda env create -f  rapidpy_env.yml
+#
+# run command 
 # 	$ python setup.py develop 
-# Create the environment by running the following command (after installing Miniconda):
-# os: linux
-#   $ conda env create -f  rapidpy_env.yml
+
 
 name: rapidpy_env
 channels:

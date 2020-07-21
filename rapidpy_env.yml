@@ -1,15 +1,16 @@
-#rapidpy_env.yml
-# Configuration file for creating a Conda Environment with dependencies needed for RAPIDpy, updated 
-# Julu 02, 2020
-# v2.0
-# Sara Lytle
-# # Create the environment by running the following command (after installing Miniconda):
-# # os: linux
-# #   $ conda env create -f  rapidpy_env.yml
+# rapidpy_env.yml
 #
-# run command 
-# 	$ python setup.py develop 
-
+# Configuration file for creating a conda environment with dependencies needed for RAPIDpy, updated 
+# July 02, 2020
+# Sara Lytle
+#
+# os: linux
+#
+# Create the environment by running the following command (after installing Miniconda):
+#   $ conda env create -f  rapidpy_env.yml
+#
+# Run command: 
+#   $ python setup.py develop 
 
 name: rapidpy_env
 channels:

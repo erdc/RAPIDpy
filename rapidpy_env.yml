@@ -1,0 +1,36 @@
+# rapidpy_env.yml
+#
+# Configuration file for creating a conda environment with dependencies needed for RAPIDpy, updated 
+# July 02, 2020
+# Sara Lytle
+#
+# os: linux
+#
+# Create the environment by running the following command (after installing Miniconda):
+#   $ conda env create -f  rapidpy_env.yml
+#
+# Run command: 
+#   $ python setup.py develop 
+
+name: rapidpy_env
+channels:
+- conda-forge
+- defaults
+dependencies:
+- python=3.8
+- pytest
+- netcdf4
+- future
+- python-dateutil
+- requests
+- xarray
+- shapely
+- rtree
+- scipy
+- dask
+- gdal
+- affine
+- pyproj
+- gazar
+- wrf-python
+

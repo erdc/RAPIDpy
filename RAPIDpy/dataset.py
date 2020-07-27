@@ -145,6 +145,7 @@ class RAPIDDataset(object):
         """
         Initialize the class with variables given by the user
         """
+        print('THE QOUT FILENAME?',filename)
         self.qout_nc = Dataset(filename, mode='r')
 
         # determine river ID dimension

@@ -172,7 +172,7 @@ class CreateInflowFileFromGriddedRunoff(object):
 
         # Create output inflow netcdf data
         print("Generating inflow file ...")
-        data_out_nc = Dataset(out_nc, "w", format="NETCDF3_CLASSIC")
+        data_out_nc = Dataset(out_nc, "w") #) #, format="NETCDF3_CLASSIC")
         rivid_list = np.loadtxt(in_rapid_connect_file,
                                 delimiter=",",
                                 ndmin=1,
@@ -196,7 +196,7 @@ class CreateInflowFileFromGriddedRunoff(object):
         data_out_nc.close()
 
         try:
-            data_out_nc = Dataset(out_nc, "a", format="NETCDF3_CLASSIC")
+            data_out_nc = Dataset(out_nc, "a") #, format="NETCDF3_CLASSIC")
             # rivid
             rivid_var = data_out_nc.createVariable('rivid', 'i4',
                                                    ('rivid',))
@@ -357,7 +357,6 @@ class CreateInflowFileFromGriddedRunoff(object):
             for nc_file in nc_file_array:
                 # Validate the netcdf dataset
                 self.data_validation(nc_file)
-
                 # Read the netcdf dataset
                 data_in_nc = Dataset(nc_file)
 
@@ -397,6 +396,7 @@ class CreateInflowFileFromGriddedRunoff(object):
                     len_time_subset = data_subset_runoff.shape[0]
                     len_lat_subset = data_subset_runoff.shape[1]
                     len_lon_subset = data_subset_runoff.shape[2]
+                    # build time dim for multiple files with different time lengths
                     # reshape the runoff
                     data_subset_runoff = \
                         data_subset_runoff.reshape(
@@ -446,9 +446,6 @@ class CreateInflowFileFromGriddedRunoff(object):
                 # Check if all npoints points correspond to the same streamID
                 if len(set(self.dict_list[self.header_wt[0]][
                            pointer: (pointer + npoints)])) != 1:
-                    print("ROW INDEX {0}".format(pointer))
-                    print("COMID {0}".format(
-                        self.dict_list[self.header_wt[0]][pointer]))
                     raise Exception(self.error_messages[2])
 
                 area_sqm_npoints = \
@@ -462,9 +459,10 @@ class CreateInflowFileFromGriddedRunoff(object):
                 else:
                     data_goal = data_subset_all[pointer:(pointer + npoints)]
 
-                if grid_type == 't255':
+                if grid_type == 't255': # or grid_type == 't1279':
                     # A) ERA Interim Low Res (T255) - data is cumulative
                     # from time 3/6/9/12
+                    # 0 1 2 3 4 5 6 7 8
                     # (time zero not included, so assumed to be zero)
                     ro_first_half = \
                         np.concatenate([data_goal[0:1, ],
@@ -481,10 +479,29 @@ class CreateInflowFileFromGriddedRunoff(object):
                             np.concatenate([ro_first_half, ro_second_half]),
                             area_sqm_npoints)
 
+                #elif grid_type == 't1279':
+                    # A) ERA Interim Low Res (T1279) - data is cumulative
+                    # from time 6/12
+                    # 0 1 2 3 4
+                    # (time zero not included, so assumed to be zero)
+                #    ro_first_half = \
+                #        np.concatenate([data_goal[0:1, ],
+                #                        np.subtract(data_goal[1:2, ],
+                #                                    data_goal[0:1, ])])
+                    # from time 15/18/21/24
+                    # (time restarts at time 12, assumed to be zero)
+                #    ro_second_half = \
+                #        np.concatenate([data_goal[2:3, ],
+                #                        np.subtract(data_goal[3:, ],
+                #                                    data_goal[2:3, ])])
+                #    ro_stream = \
+                #        np.multiply(
+                #            np.concatenate([ro_first_half, ro_second_half]),
+                #            area_sqm_npoints)
+
                 else:
                     ro_stream = data_goal * area_sqm_npoints * \
                                 conversion_factor
-
                 # filter nan
                 ro_stream[np.isnan(ro_stream)] = 0
 
@@ -498,7 +515,7 @@ class CreateInflowFileFromGriddedRunoff(object):
 
             # only one process is allowed to write at a time to netcdf file
             mp_lock.acquire()
-            data_out_nc = Dataset(out_nc, "a", format="NETCDF3_CLASSIC")
+            data_out_nc = Dataset(out_nc, "a") #, format="NETCDF3_CLASSIC")
             if runoff_dimension_size == 3 and len_time_subset > 1:
                 data_out_nc.variables['m3_riv'][
                     index*len_time_subset:(index+1)*len_time_subset, :] = \

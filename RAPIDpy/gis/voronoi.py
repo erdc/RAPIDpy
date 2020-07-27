@@ -16,7 +16,7 @@ from shapely.geometry import Polygon
 from ..helper_functions import log
 
 
-def _get_voronoi_centroid_array(lsm_lat_array, lsm_lon_array, extent):
+def _get_voronoi_centroid_array(lsm_lat_array, lsm_lon_array, lsm_mask_array, extent):
     """
     This function generates a voronoi centroid point
     list from arrays of latitude and longitude
@@ -30,34 +30,49 @@ def _get_voronoi_centroid_array(lsm_lat_array, lsm_lon_array, extent):
     if (lsm_lat_array.ndim == 2) and (lsm_lon_array.ndim == 2):
         # generate point list with 2D lat lon lists
         if extent:
-            # exctract subset within extent
-            lsm_dx = np.max(np.absolute(np.diff(lsm_lon_array)))
-            lsm_dy = np.max(np.absolute(np.diff(lsm_lat_array, axis=0)))
+            # extract subset within extent
+            #lsm_dx = np.max(np.absolute(np.diff(lsm_lon_array)))
+            #lsm_dy = np.max(np.absolute(np.diff(lsm_lat_array))) #, axis=0)))
+
+            Ybuffer = 2 * abs(lsm_lat_array[0,0]-lsm_lat_array[1,0])
+            Xbuffer = 2 * abs(lsm_lon_array[0,0]-lsm_lon_array[0,1]) 
+
+            #lsm_lat_array[lsm_ro_array<0]=9999 #np.nan #-9999 #np.nan #-9999
+            #lsm_lon_array[lsm_ro_array<0]=9999 #np.nan #-9999 #np.nan #-9999
 
             # remove values with NaN
-            lsm_lat_array = np.ma.filled(lsm_lat_array, fill_value=-9999)
-            lsm_lon_array = np.ma.filled(lsm_lon_array, fill_value=-9999)
+            #lsm_lat_array = np.ma.filled(lsm_lat_array, fill_value=9999)
+            #lsm_lon_array = np.ma.filled(lsm_lon_array, fill_value=9999)
 
-            lsm_lat_indices_from_lat, lsm_lon_indices_from_lat = \
-                np.where((lsm_lat_array >= (YMin - 2*lsm_dy)) &
-                         (lsm_lat_array <= (YMax + 2*lsm_dy)))
-            lsm_lat_indices_from_lon, lsm_lon_indices_from_lon = \
-                np.where((lsm_lon_array >= (XMin - 2*lsm_dx)) &
-                         (lsm_lon_array <= (XMax + 2*lsm_dx)))
+            #lsm_lat_indices_from_lat, lsm_lon_indices_from_lat = \
+            #    np.where((lsm_lat_array >= (YMin - 2*lsm_dy)) & #Ybuffer)) & #2*lsm_dy)) &
+            #             (lsm_lat_array <= (YMax + 2*lsm_dy)))  #Ybuffer)))  #2*lsm_dy)))
+            #lsm_lat_indices_from_lon, lsm_lon_indices_from_lon = \
+            #    np.where((lsm_lon_array >= (XMin - 2*lsm_dx)) & #Xbuffer)) & #2*lsm_dx)) &
+            #             (lsm_lon_array <= (XMax + 2*lsm_dx)))  #Xbuffer)))  #2*lsm_dx)))
 
-            lsm_lat_indices = np.intersect1d(lsm_lat_indices_from_lat,
-                                             lsm_lat_indices_from_lon)
-            lsm_lon_indices = np.intersect1d(lsm_lon_indices_from_lat,
-                                             lsm_lon_indices_from_lon)
+            #lsm_lat_indices = np.intersect1d(lsm_lat_indices_from_lat,
+            #                                 lsm_lat_indices_from_lon)
+            #lsm_lon_indices = np.intersect1d(lsm_lon_indices_from_lat,
+            #                                 lsm_lon_indices_from_lon)
 
-            lsm_lat_list = \
-                lsm_lat_array[lsm_lat_indices, :][:, lsm_lon_indices]
-            lsm_lon_list = \
-                lsm_lon_array[lsm_lat_indices, :][:, lsm_lon_indices]
+            #lsm_lat_list = \
+            #    lsm_lat_array[lsm_lat_indices, :][:, lsm_lon_indices]
+            #lsm_lon_list = \
+            #    lsm_lon_array[lsm_lat_indices, :][:, lsm_lon_indices]
+
+            lsm_lat_list = lsm_lat_array[(lsm_lat_array >= (YMin - Ybuffer)) &
+                                         (lsm_lat_array <= (YMax + Ybuffer))]
+            lsm_lon_list = lsm_lon_array[(lsm_lon_array >= (XMin - Xbuffer)) &
+                                         (lsm_lon_array <= (XMax + Xbuffer))]
+
         # Create a list of geographic coordinate pairs
-        for i in range(len(lsm_lat_indices)):
-            for j in range(len(lsm_lon_indices)):
-                ptList.append([lsm_lon_list[i][j], lsm_lat_list[i][j]])
+        #for i in range(len(lsm_lat_indices)):
+        #    for j in range(len(lsm_lon_indices)):
+        #        ptList.append([lsm_lon_list[i][j], lsm_lat_list[i][j]])
+        for ptX in lsm_lon_list:
+            for ptY in lsm_lat_list:
+                ptList.append([ptX, ptY])
 
     elif lsm_lat_array.ndim == 1 and lsm_lon_array.ndim == 1:
         # generate point list with 1D lat lon lists
@@ -146,11 +161,11 @@ def _get_voronoi_poly_points(vert_index_list, voronoi_vertices,
     return voronoi_poly_points
 
 
-def pointsToVoronoiGridShapefile(lat, lon, vor_shp_path, extent=None):
+def pointsToVoronoiGridShapefile(lat, lon, ro, vor_shp_path, extent=None):
     """
     Converts points to shapefile grid via voronoi
     """
-    voronoi_centroids = _get_voronoi_centroid_array(lat, lon, extent)
+    voronoi_centroids = _get_voronoi_centroid_array(lat, lon, ro, extent)
 
     # set-up output polygon shp
     log("Creating output polygon shp {0}"
@@ -175,6 +190,7 @@ def pointsToVoronoiGridShapefile(lat, lon, vor_shp_path, extent=None):
     voronoi_vertices = voronoi_manager.vertices
     voronoi_regions = voronoi_manager.regions
     for point_id, region_index in enumerate(voronoi_manager.point_region):
+        print(point_id, region_index)
         vert_index_list = np.array(voronoi_regions[region_index])
         voronoi_centroid = voronoi_centroids[point_id]
         voronoi_poly_points = _get_voronoi_poly_points(vert_index_list,
@@ -197,11 +213,11 @@ def pointsToVoronoiGridShapefile(lat, lon, vor_shp_path, extent=None):
             layer.CreateFeature(feat)
 
 
-def pointsToVoronoiGridArray(lat, lon, extent=None):
+def pointsToVoronoiGridArray(lat, lon, ro, extent=None):
     """
     Converts points to grid array via voronoi
     """
-    voronoi_centroids = _get_voronoi_centroid_array(lat, lon, extent)
+    voronoi_centroids = _get_voronoi_centroid_array(lat, lon, ro, extent)
     # find nodes surrounding polygon centroid
     # sort nodes in counterclockwise order
     # create polygon perimeter through nodes

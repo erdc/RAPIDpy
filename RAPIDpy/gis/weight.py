@@ -19,6 +19,7 @@ from shapely.ops import transform as shapely_transform
 from shapely.geos import TopologicalError
 import rtree  # http://toblerity.org/rtree/install.html
 from osgeo import gdal, ogr, osr
+import array
 
 # local
 from .voronoi import pointsToVoronoiGridArray
@@ -80,7 +81,7 @@ def find_nearest(array, value):
     return (np.abs(array-value)).argmin()
 
 
-def rtree_create_weight_table(lsm_grid_lat, lsm_grid_lon,
+def rtree_create_weight_table(lsm_grid_lat, lsm_grid_lon, lsm_grid_mask,
                               in_catchment_shapefile, river_id,
                               in_rapid_connect, out_weight_table,
                               file_geodatabase=None, area_id=None):
@@ -103,7 +104,6 @@ def rtree_create_weight_table(lsm_grid_lat, lsm_grid_lon,
     else:
         ogr_catchment_shapefile = ogr.Open(in_catchment_shapefile)
         ogr_catchment_shapefile_lyr = ogr_catchment_shapefile.GetLayer()
-
     ogr_catchment_shapefile_lyr_proj = \
         ogr_catchment_shapefile_lyr.GetSpatialRef()
     original_catchment_proj = \
@@ -118,7 +118,7 @@ def rtree_create_weight_table(lsm_grid_lat, lsm_grid_lon,
         extent = [min(x), max(x), min(y), max(y)]
 
     lsm_grid_feature_list = \
-        pointsToVoronoiGridArray(lsm_grid_lat, lsm_grid_lon, extent)
+        pointsToVoronoiGridArray(lsm_grid_lat, lsm_grid_lon, lsm_grid_mask, extent)
 
 #    ##COMMENTED LINES FOR TESTING
 #    import os
@@ -196,9 +196,11 @@ def rtree_create_weight_table(lsm_grid_lat, lsm_grid_lon,
                 connectwriter.writerow([rapid_connect_rivid] + dummy_row_end)
                 continue
 
+
             get_catchment_feature = \
                 ogr_catchment_shapefile_lyr.GetFeature(catchment_pos)
             feat_geom = get_catchment_feature.GetGeometryRef()
+
             # make sure coordinates are geographic
             if proj_transform:
                 feat_geom.Transform(proj_transform)
@@ -223,9 +225,9 @@ def rtree_create_weight_table(lsm_grid_lat, lsm_grid_lon,
                         msg_level = "INFO"
                         if round(area_ratio, 5) != 1:
                             msg_level = "WARNING"
-                        log('The cleaned catchment polygon area '
-                            'differs from the original area by {1}%.'
-                            .format(abs(area_ratio - 1)), severity=msg_level)
+                        #log('The cleaned catchment polygon area '
+                        #    'differs from the original area by {1}%.'
+                        #    .format(abs(area_ratio - 1)), severity=msg_level)
                         intersect_poly = \
                             catchment_polygon.intersection(lsm_grid_polygon)
                     if not area_id:
@@ -242,22 +244,38 @@ def rtree_create_weight_table(lsm_grid_lat, lsm_grid_lon,
                             lsm_grid_lon,
                             lsm_grid_feature_list[sub_lsm_grid_pos]['lat'],
                             lsm_grid_feature_list[sub_lsm_grid_pos]['lon'])
-                    intersect_grid_info_list.append({
-                        'rivid': rapid_connect_rivid,
-                        'area': poly_area,
-                        'lsm_grid_lat':
-                            lsm_grid_feature_list[sub_lsm_grid_pos]['lat'],
-                        'lsm_grid_lon':
-                            lsm_grid_feature_list[sub_lsm_grid_pos]['lon'],
-                        'index_lsm_grid_lon': index_lsm_grid_lon,
-                        'index_lsm_grid_lat': index_lsm_grid_lat
-                    })
+                    # If ocean/water point, ECMWF sets ro to very negative number.
+                    # This resulted at times in "island effect", i.e., large 
+                    # grid cell overlaying rivid and thus weird results.  So,
+                    # exclude these ECMWF points.
+                    if lsm_grid_mask[int(index_lsm_grid_lat), int(index_lsm_grid_lon)] > 0: #== 1: #>= 0:
+#                    if 1 == 1:
+                        intersect_grid_info_list.append({
+                            'rivid': rapid_connect_rivid,
+                            'area': poly_area,
+                            'lsm_grid_lat':
+                                lsm_grid_feature_list[sub_lsm_grid_pos]['lat'],
+                            'lsm_grid_lon':
+                                lsm_grid_feature_list[sub_lsm_grid_pos]['lon'],
+                            'index_lsm_grid_lon': index_lsm_grid_lon,
+                            'index_lsm_grid_lat': index_lsm_grid_lat
+                        })
+
+#                    intersect_grid_info_list.append({
+#                        'rivid': rapid_connect_rivid,
+#                        'area': poly_area,
+#                        'lsm_grid_lat':
+#                            lsm_grid_feature_list[sub_lsm_grid_pos]['lat'],
+#                        'lsm_grid_lon':
+#                            lsm_grid_feature_list[sub_lsm_grid_pos]['lon'],
+#                       'index_lsm_grid_lon': index_lsm_grid_lon,
+#                        'index_lsm_grid_lat': index_lsm_grid_lat
+#                    })
 
             npoints = len(intersect_grid_info_list)
             # If no intersection found, add dummy row
             if npoints <= 0:
                 connectwriter.writerow([rapid_connect_rivid] + dummy_row_end)
-
             for intersect_grid_info in intersect_grid_info_list:
                 connectwriter.writerow([
                     intersect_grid_info['rivid'],
@@ -268,7 +286,6 @@ def rtree_create_weight_table(lsm_grid_lat, lsm_grid_lon,
                     intersect_grid_info['lsm_grid_lon'],
                     intersect_grid_info['lsm_grid_lat']
                 ])
-
     time_end_all = datetime.utcnow()
     log(time_end_all - time_end_lsm_grid_rtree)
     log("TOTAL TIME: {0}".format(time_end_all - time_start_all))
@@ -332,15 +349,37 @@ def CreateWeightTableECMWF(in_ecmwf_nc,
     in_ecmwf_lon_var = 'lon'
     if 'longitude' in variables_list:
         in_ecmwf_lon_var = 'longitude'
+    in_ecmwf_mask_var = 'lsm'
+#    in_ecmwf_mask_var = 'LAND_P0_L1_GLL0'
+    if 'mask' in variables_list:
+        in_ecmwf_mask_var = 'mask'
 
     # convert [0, 360] to [-180, 180]
-    ecmwf_lon = \
+    ecmwf_long = \
         (data_ecmwf_nc.variables[in_ecmwf_lon_var][:] + 180) % 360 - 180
     # assume [-90, 90]
-    ecmwf_lat = data_ecmwf_nc.variables[in_ecmwf_lat_var][:]
+    ecmwf_lati = data_ecmwf_nc.variables[in_ecmwf_lat_var][:]
+    #ecmwf_long = \
+    #    (data_ecmwf_nc.variables[in_ecmwf_lon_var][:] + 180) % 360 - 180
+    # assume [-90, 90]
+    #ecmwf_lati = data_ecmwf_nc.variables[in_ecmwf_lat_var][:]
+    #np.array([a,]*len(a))
+    #ecmwf_lon = np.array([ecmwf_long,]*len(ecmwf_lati)) #np.tile(ecmwf_long, (1,len(ecmwf_lati)))
+    #ecmwf_lat = np.array([ecmwf_lati,]*len(ecmwf_long)).T #np.tile(ecmwf_lati, (1,len(ecmwf_long)))
+    ecmwf_lon = ecmwf_long
+    ecmwf_lat = ecmwf_lati
+    ecmwf_mask = data_ecmwf_nc.variables[in_ecmwf_mask_var][0,:,:]
+
+    #ecmwf_lat[ecmwf_ro<0]=np.nan #-9999
+    #ecmwf_lon[ecmwf_ro<0]=np.nan #-9999
+
+    #ecmwf_lat = np.ma.masked_where((ecmwf_ro<0), ecmwf_lat)
+    #np.ma.set_fill_value(ecmwf_lat,-9999)
+    #ecmwf_lon = np.ma.masked_where((ecmwf_ro<0), ecmwf_lon)
+    #np.ma.set_fill_value(ecmwf_lon,-9999)
     data_ecmwf_nc.close()
 
-    rtree_create_weight_table(ecmwf_lat, ecmwf_lon,
+    rtree_create_weight_table(ecmwf_lat, ecmwf_lon, ecmwf_mask, 
                               in_catchment_shapefile, river_id,
                               in_connectivity_file, out_weight_table,
                               file_geodatabase, area_id)
@@ -373,13 +412,6 @@ def CreateWeightTableLDAS(in_ldas_nc,
         The name of the field with the river ID (Ex. 'DrainLnID' or 'LINKNO').
     in_connectivity_file: str
         The path to the RAPID connectivity file.
-    out_weight_table: str
-        The path to the output weight table file.
-    area_id: str, optional
-        The name of the field with the area of each catchment stored in meters
-        squared. Default is it calculate the area.
-    file_geodatabase: str, optional
-        Path to the file geodatabase. If you use this option, in_drainage_line
         is the name of the stream network feature class.
         (WARNING: Not always stable with GDAL.)
 
@@ -395,20 +427,10 @@ def CreateWeightTableLDAS(in_ldas_nc,
             in_nc_lon_var="lon_110",
             in_nc_lat_var="lat_110",
             in_catchment_shapefile='/path/to/catchment.shp',
-            river_id='LINKNO',
-            in_connectivity_file='/path/to/rapid_connect.csv',
-            out_weight_table='/path/to/ldas_weight.csv',
-        )
-    """
-    # extract LDAS GRID
-    data_ldas_nc = Dataset(in_ldas_nc)
-    variables_list = data_ldas_nc.variables.keys()
-    if in_nc_lon_var not in variables_list:
-        raise Exception("Invalid longitude variable. Choose from: {0}"
-                        .format(variables_list))
-    if in_nc_lat_var not in variables_list:
         raise Exception("Invalid latitude variable. Choose from: {0}"
                         .format(variables_list))
+    """
+
     ldas_lon = data_ldas_nc.variables[in_nc_lon_var][:]  # assume [-180, 180]
     ldas_lat = data_ldas_nc.variables[in_nc_lat_var][:]  # assume [-90,90]
     data_ldas_nc.close()

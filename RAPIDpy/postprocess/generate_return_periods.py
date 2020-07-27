@@ -161,7 +161,7 @@ def generate_return_periods(qout_file,
     """
     Generate return period from RAPID Qout file
     """
-    # get ERA Interim Data Analyzed
+    # get ERA Data Analyzed
     with RAPIDDataset(qout_file) as qout_nc_file:
         print("Setting up Return Periods File ...")
         return_period_nc = Dataset(return_period_file, 'w')
@@ -246,10 +246,14 @@ def generate_return_periods(qout_file,
 
         add_latlon_metadata(lat_var, lon_var)
 
-        return_period_nc.variables['lat'][:] = \
-            qout_nc_file.qout_nc.variables['lat'][:]
-        return_period_nc.variables['lon'][:] = \
-            qout_nc_file.qout_nc.variables['lon'][:]
+        print(qout_nc_file.qout_nc.variables)
+        #print(qout_nc_file.qout_nc.variables['lat'][:])
+        #exit()
+
+        #return_period_nc.variables['lat'][:] = \
+        #    qout_nc_file.qout_nc.variables['lat'][:]
+        #return_period_nc.variables['lon'][:] = \
+        #    qout_nc_file.qout_nc.variables['lon'][:]
 
         river_id_list = qout_nc_file.get_river_id_array()
         return_period_nc.variables['rivid'][:] = river_id_list

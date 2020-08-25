@@ -21,10 +21,19 @@ class CreateInflowFileFromERARunoff(CreateInflowFileFromGriddedRunoff):
     """
     land_surface_model_name = "ERA"
     header_wt = ['rivid', 'area_sqm', 'lon_index', 'lat_index', 'npoints']
-    dims_oi = [['lon', 'lat', 'time'], ['longitude', 'latitude', 'time'],['time','lon','lat'],['time','longitude','latitude']]
-    vars_oi = [["lon", "lat", "time", "RO"],['time','lon','lat','ro'],['time','lon','lat','RO'],['time','longitude','latitude','RO'],
-               ['time','longitude','latitude','ro'],['longitude', 'latitude', 'time', 'ro'],
-               ['longitude', 'latitude', 'time', 'RO']]
+    dims_oi = [['lon', 'lat', 'time'],
+               ['longitude', 'latitude', 'time'],
+               ['time','lon','lat'],
+               ['time','longitude','latitude'],
+               ['latitude','longitude','time'],
+               ['time','latitude','longitude']]
+    vars_oi = [['lon', 'lat', 'time', 'RO'],['lon','lat','time','ro'],
+               ['time','lon','lat','RO'],['time','lon','lat','ro'],
+               ['time','longitude','latitude','RO'],['time','longitude','latitude','ro'],
+               ['longitude', 'latitude', 'time', 'RO'],['longitude', 'latitude', 'time', 'ro'],
+               ['latitude','longitude','time','RO'],['latitude','longitude','time','ro'],
+               ['latitude','longitude','RO','time'],['latitude','longitude','ro','time'],
+               ['time','latitude','longitude','RO'],['time','latitude','longitude','ro']]
     length_time = {"Daily": 1, "3-Hourly": 8, "1-Hourly":24}
 
     def __init__(self):
@@ -59,6 +68,20 @@ class CreateInflowFileFromERARunoff(CreateInflowFileFromGriddedRunoff):
             self.runoff_vars = [self.vars_oi[5][-1]]
         elif nc_vars == self.vars_oi[6]:
             self.runoff_vars = [self.vars_oi[6][-1]]
+        elif nc_vars == self.vars_oi[7]:
+            self.runoff_vars = [self.vars_oi[7][-1]]
+        elif nc_vars == self.vars_oi[8]:
+            self.runoff_vars = [self.vars_oi[8][-1]]
+        elif nc_vars == self.vars_oi[9]:
+            self.runoff_vars = [self.vars_oi[9][-1]]
+        elif nc_vars == self.vars_oi[10]:
+            self.runoff_vars = [self.vars_oi[10][-2]]
+        elif nc_vars == self.vars_oi[11]:
+            self.runoff_vars = [self.vars_oi[11][-2]]
+        elif nc_vars == self.vars_oi[12]:
+            self.runoff_vars = [self.vars_oi[12][-1]]
+        elif nc_vars == self.vars_oi[13]:
+            self.runoff_vars = [self.vars_oi[13][-1]]
         else:
             data_nc.close()
             raise Exception("{0} {1}".format(self.error_messages[2], nc_vars))

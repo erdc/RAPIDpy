@@ -252,7 +252,7 @@ def rtree_create_weight_table(lsm_grid_lat, lsm_grid_lon, lsm_grid_mask,
 #                    if 1 == 1:
                         intersect_grid_info_list.append({
                             'rivid': rapid_connect_rivid,
-                            'area': poly_area,
+                            'area': poly_area/lsm_grid_mask[int(index_lsm_grid_lat), int(index_lsm_grid_lon)],
                             'lsm_grid_lat':
                                 lsm_grid_feature_list[sub_lsm_grid_pos]['lat'],
                             'lsm_grid_lon':

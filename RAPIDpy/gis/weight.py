@@ -349,6 +349,7 @@ def CreateWeightTableECMWF(in_ecmwf_nc,
     in_ecmwf_lon_var = 'lon'
     if 'longitude' in variables_list:
         in_ecmwf_lon_var = 'longitude'
+    in_ecmwf_mask_var = 'mask'
     if 'lsm' in variables_list:
         in_ecmwf_mask_var = 'lsm'
 #    in_ecmwf_mask_var = 'LAND_P0_L1_GLL0'

@@ -391,7 +391,7 @@ def identify_lsm_grid(lsm_grid_path):
             #  dimensions:
             #   longitude = 2576 ;
             #   latitude = 1280 ;
-            lsm_file_data["description"] = "ERA5 (Gaussian Grid)"
+            lsm_file_data["description"] = "ERAI (Gaussian Grid)"
             lsm_file_data["weight_file_name"] = r'weight_erai_1279\.csv'
             lsm_file_data["model_name"] = "erai_1279"
             lsm_file_data["grid_type"] = 't1279'

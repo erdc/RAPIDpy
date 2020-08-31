@@ -205,6 +205,9 @@ class RAPID(object):
         # number in subset of dam data to use
         self.dam_use_id_file = ''
         # ids of subset of dams
+        self.dam_file = ''
+        # appropriate parameters Max storage,Min storage,Power Coefficient,
+        # Release Coefficient
         # ---------------------------------------------------------------------
         # Available forcing data
         # ---------------------------------------------------------------------

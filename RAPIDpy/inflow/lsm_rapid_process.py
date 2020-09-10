@@ -639,7 +639,13 @@ def run_lsm_rapid_process(rapid_executable_location,
                           modeling_institution="US Army Engineer Research "
                                                "and Development Center",
                           convert_one_hour_to_three=False,
-                          expected_time_step=None):
+                          expected_time_step=None,
+                          BS_opt_dam='',
+                          IS_dam_tot=0,
+                          IS_dam_use=0,
+                          dam_tot_id_file='',
+                          dam_use_id_file='',
+                          dam_file=''):
     # pylint: disable=anomalous-backslash-in-string
     """
     This is the main process to generate inflow for RAPID and to run RAPID.
@@ -1000,7 +1006,13 @@ def run_lsm_rapid_process(rapid_executable_location,
                 ZS_TauR=time_step,
                 ZS_dtR=15 * 60,
                 ZS_TauM=total_num_time_steps * time_step,
-                ZS_dtM=time_step)
+                ZS_dtM=time_step,
+                BS_opt_dam=BS_opt_dam,
+                IS_dam_tot=IS_dam_tot,
+                IS_dam_use=IS_dam_use,
+                dam_tot_id_file=dam_tot_id_file,
+                dam_use_id_file=dam_use_id_file,
+                dam_file=dam_file)
 
             if initial_flows_file and os.path.exists(initial_flows_file):
                 rapid_manager.update_parameters(

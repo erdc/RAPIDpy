@@ -282,14 +282,18 @@ class CreateInflowFileFromGriddedRunoff(object):
         # convert from kg/m^2 (i.e. mm) to m
         conversion_factor = 0.001
 
-        # ECMWF units are in m
-        if data_in_nc.variables[self.runoff_vars[0]] \
-                .getncattr("units") == "m":
-            conversion_factor = 1
+        # MPG: we need to establish that units are present in the nc file.
+        try:
+            units = data_in_nc.variables[self.runoff_vars[0]].getncattr("units")
+        except:
+            print('Warning: no runoff units specified. Assuming units of kg/m^2/s')
+            units = 'kg/m^2/s'
 
+        # ECMWF units are in m
+        if units == "m":
+            conversion_factor = 1
         # ftp://hydro1.sci.gsfc.nasa.gov/data/s4pa/GLDAS_V1/README.GLDAS.pdf
-        if "s" in data_in_nc.variables[self.runoff_vars[0]] \
-                .getncattr("units"):
+        elif "s" in units:
             # that means kg/m^2/s in GLDAS v1 that is 3-hr avg,
             # so multiply by 3 hr (ex. 3*3600). Assumed same
             # for others (ex. 1*3600).

@@ -25,6 +25,7 @@ from .CreateInflowFileFromERAInterimRunoff import \
 from .CreateInflowFileFromLDASRunoff import CreateInflowFileFromLDASRunoff
 from .CreateInflowFileFromWRFHydroRunoff import \
     CreateInflowFileFromWRFHydroRunoff
+from .CreateInflowFileFromPMMRunoff import CreateInflowFileFromPMMRunoff
 from ..postprocess.generate_return_periods import generate_return_periods
 from ..postprocess.generate_seasonal_averages import generate_seasonal_averages
 from ..utilities import (case_insensitive_file_search,
@@ -280,6 +281,12 @@ def identify_lsm_grid(lsm_grid_path):
         elif var == "total runoff":
             # CMIP5 data
             total_runoff_var = var
+        elif var == "runoff":
+            # NASA PMM data
+            surface_runoff_var = var
+        elif var == "base":
+            # NASA PMM data
+            subsurface_runoff_var = var
 
     # IDENTIFY GRID TYPE
     lsm_file_data = {
@@ -435,6 +442,25 @@ def identify_lsm_grid(lsm_grid_path):
         else:
             lsm_example_file.close()
             raise Exception("Unsupported runoff grid.")
+
+    # MPG: Handle NASA PMM dataset with no metadata.
+    elif surface_runoff_var.startswith("runoff") \
+        and subsurface_runoff_var.startswith("base"):
+
+        lsm_file_data["model_name"] = "PMM"
+        if lat_dim_size == 105 and lon_dim_size == 156:
+            print("Runoff file identified as NASA PMM GRID")
+            lsm_file_data["description"] = "NASA PMM"
+            lsm_file_data["weight_file_name"] = r'weight_pmm\.csv'
+            lsm_file_data["grid_type"] = 'pmm'
+            lsm_file_data["rapid_inflow_tool"] = \
+            CreateInflowFileFromPMMRunoff(
+                latitude_dim,
+                longitude_dim,
+                latitude_var,
+                longitude_var,
+                runoff_vars,
+            )
 
     else:
         title = ""
@@ -942,15 +968,15 @@ def run_lsm_rapid_process(rapid_executable_location,
                         master_rapid_runoff_file,
                         lsm_file_data['rapid_inflow_tool'],
                         mp_lock))
-#                   # COMMENTED CODE IS FOR DEBUGGING
-#                   generate_inflows_from_runoff((
-#                       cpu_grouped_file_list,
-#                       partition_index_list[loop_index],
-#                       lsm_file_data['weight_table_file'],
-#                       lsm_file_data['grid_type'],
-#                       master_rapid_runoff_file,
-#                       lsm_file_data['rapid_inflow_tool'],
-#                       mp_lock))
+                    # COMMENTED CODE IS FOR DEBUGGING
+                    # generate_inflows_from_runoff((
+                    #   cpu_grouped_file_list,
+                    #   partition_index_list[loop_index],
+                    #   weight_table_file,
+                    #   lsm_file_data['grid_type'],
+                    #   master_rapid_runoff_file,
+                    #   lsm_file_data['rapid_inflow_tool'],
+                    #   mp_lock))
             pool = multiprocessing.Pool(num_cpus)
             pool.map(generate_inflows_from_runoff,
                      job_combinations)

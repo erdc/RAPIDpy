@@ -80,10 +80,11 @@ def find_nearest(array, value):
     return (np.abs(array-value)).argmin()
 
 
-def rtree_create_weight_table(lsm_grid_lat, lsm_grid_lon, lsm_grid_mask,
+def rtree_create_weight_table(lsm_grid_lat, lsm_grid_lon,
                               in_catchment_shapefile, river_id,
                               in_rapid_connect, out_weight_table,
-                              file_geodatabase=None, area_id=None):
+                              file_geodatabase=None, area_id=None,
+                              lsm_grid_mask=None):
     """
     Create Weight Table for Land Surface Model Grids
     """
@@ -103,6 +104,7 @@ def rtree_create_weight_table(lsm_grid_lat, lsm_grid_lon, lsm_grid_mask,
     else:
         ogr_catchment_shapefile = ogr.Open(in_catchment_shapefile)
         ogr_catchment_shapefile_lyr = ogr_catchment_shapefile.GetLayer()
+
     ogr_catchment_shapefile_lyr_proj = \
         ogr_catchment_shapefile_lyr.GetSpatialRef()
     original_catchment_proj = \
@@ -195,11 +197,9 @@ def rtree_create_weight_table(lsm_grid_lat, lsm_grid_lon, lsm_grid_mask,
                 connectwriter.writerow([rapid_connect_rivid] + dummy_row_end)
                 continue
 
-
             get_catchment_feature = \
                 ogr_catchment_shapefile_lyr.GetFeature(catchment_pos)
             feat_geom = get_catchment_feature.GetGeometryRef()
-
             # make sure coordinates are geographic
             if proj_transform:
                 feat_geom.Transform(proj_transform)
@@ -243,35 +243,21 @@ def rtree_create_weight_table(lsm_grid_lat, lsm_grid_lon, lsm_grid_mask,
                             lsm_grid_lon,
                             lsm_grid_feature_list[sub_lsm_grid_pos]['lat'],
                             lsm_grid_feature_list[sub_lsm_grid_pos]['lon'])
-                    # If ocean/water point, ECMWF sets ro to very negative number.
-                    # This resulted at times in "island effect", i.e., large 
-                    # grid cell overlaying rivid and thus weird results.  So,
-                    # use land mask field to address these ECMWF points.
-                    # There are arguments for and against division by land fraction. E.g.,
-                    # it's arguable that division by mask might overemphasis some
-                    # pixels that contain fine grained islands with runoff.
-                    if lsm_grid_mask[int(index_lsm_grid_lat), int(index_lsm_grid_lon)] > 0:
-                        intersect_grid_info_list.append({
-                            'rivid': rapid_connect_rivid,
-                            'area': poly_area/lsm_grid_mask[int(index_lsm_grid_lat), int(index_lsm_grid_lon)],
-                            'lsm_grid_lat':
-                                lsm_grid_feature_list[sub_lsm_grid_pos]['lat'],
-                            'lsm_grid_lon':
-                                lsm_grid_feature_list[sub_lsm_grid_pos]['lon'],
-                            'index_lsm_grid_lon': index_lsm_grid_lon,
-                            'index_lsm_grid_lat': index_lsm_grid_lat
-                        })
-# Prior weight table write without addressing land mask.
-#                    intersect_grid_info_list.append({
-#                        'rivid': rapid_connect_rivid,
-#                        'area': poly_area,
-#                        'lsm_grid_lat':
-#                            lsm_grid_feature_list[sub_lsm_grid_pos]['lat'],
-#                        'lsm_grid_lon':
-#                            lsm_grid_feature_list[sub_lsm_grid_pos]['lon'],
-#                       'index_lsm_grid_lon': index_lsm_grid_lon,
-#                        'index_lsm_grid_lat': index_lsm_grid_lat
-#                    })
+
+                    if lsm_grid_mask is not None:
+                        if lsm_grid_mask[int(index_lsm_grid_lat), int(index_lsm_grid_lon)] > 0:
+                            poly_area /= lsm_grid_mask[int(index_lsm_grid_lat), int(index_lsm_grid_lon)]
+                            
+                    intersect_grid_info_list.append({
+                        'rivid': rapid_connect_rivid,
+                        'area': poly_area,
+                        'lsm_grid_lat':
+                            lsm_grid_feature_list[sub_lsm_grid_pos]['lat'],
+                        'lsm_grid_lon':
+                            lsm_grid_feature_list[sub_lsm_grid_pos]['lon'],
+                        'index_lsm_grid_lon': index_lsm_grid_lon,
+                        'index_lsm_grid_lat': index_lsm_grid_lat
+                    })
 
             npoints = len(intersect_grid_info_list)
             # If no intersection found, add dummy row
@@ -287,6 +273,7 @@ def rtree_create_weight_table(lsm_grid_lat, lsm_grid_lon, lsm_grid_mask,
                     intersect_grid_info['lsm_grid_lon'],
                     intersect_grid_info['lsm_grid_lat']
                 ])
+
     time_end_all = datetime.utcnow()
     log(time_end_all - time_end_lsm_grid_rtree)
     log("TOTAL TIME: {0}".format(time_end_all - time_start_all))
@@ -350,26 +337,34 @@ def CreateWeightTableECMWF(in_ecmwf_nc,
     in_ecmwf_lon_var = 'lon'
     if 'longitude' in variables_list:
         in_ecmwf_lon_var = 'longitude'
-    in_ecmwf_mask_var = 'mask'
-#    in_ecmwf_mask_var = 'LAND_P0_L1_GLL0'
-    if 'mask' in variables_list:
-        in_ecmwf_mask_var = 'mask'
-    if 'lsm' in variables_list:
-        in_ecmwf_mask_var = 'lsm'
-
+        
     # convert [0, 360] to [-180, 180]
-    ecmwf_long = \
+    ecmwf_lon = \
         (data_ecmwf_nc.variables[in_ecmwf_lon_var][:] + 180) % 360 - 180
     # assume [-90, 90]
     ecmwf_lat = data_ecmwf_nc.variables[in_ecmwf_lat_var][:]
-    ecmwf_mask = data_ecmwf_nc.variables[in_ecmwf_mask_var][0,:,:]
 
+    mask_var_names = ['mask', 'lsm']
+    mask_var_intersect_variable_list = (
+        set(variables_list) & set(mask_var_names))
+
+    try:
+        in_ecmwf_mask_var = mask_var_intersect_variable_list.pop()
+    except KeyError:
+        in_ecmwf_mask_var = None
+
+    if in_ecmwf_mask_var is None:
+        ecmwf_mask = None
+    else:
+        ecmwf_mask = data_ecmwf_nc.variables[in_ecmwf_mask_var][0,:,:]
+        
     data_ecmwf_nc.close()
 
-    rtree_create_weight_table(ecmwf_lat, ecmwf_lon, ecmwf_mask, 
+    rtree_create_weight_table(ecmwf_lat, ecmwf_lon,
                               in_catchment_shapefile, river_id,
                               in_connectivity_file, out_weight_table,
-                              file_geodatabase, area_id)
+                              file_geodatabase, area_id,
+                              lsm_grid_mask=ecmwf_mask)
 
 
 def CreateWeightTableLDAS(in_ldas_nc,
@@ -425,7 +420,7 @@ def CreateWeightTableLDAS(in_ldas_nc,
             river_id='LINKNO',
             in_connectivity_file='/path/to/rapid_connect.csv',
             out_weight_table='/path/to/ldas_weight.csv',
-            )
+        )
     """
     # extract LDAS GRID
     data_ldas_nc = Dataset(in_ldas_nc)

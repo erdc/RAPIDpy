@@ -358,7 +358,7 @@ def CreateWeightTableECMWF(in_ecmwf_nc,
         in_ecmwf_mask_var = 'lsm'
 
     # convert [0, 360] to [-180, 180]
-    ecmwf_long = \
+    ecmwf_lon = \
         (data_ecmwf_nc.variables[in_ecmwf_lon_var][:] + 180) % 360 - 180
     # assume [-90, 90]
     ecmwf_lat = data_ecmwf_nc.variables[in_ecmwf_lat_var][:]

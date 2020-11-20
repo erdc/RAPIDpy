@@ -293,15 +293,16 @@ class CreateInflowFileFromGriddedRunoff(object):
         if units == "m":
             conversion_factor = 1
         # ftp://hydro1.sci.gsfc.nasa.gov/data/s4pa/GLDAS_V1/README.GLDAS.pdf
-        elif "s" in units:
+        # this is particularly for nasa pmm data
+        #elif "s" in units:
             # that means kg/m^2/s in GLDAS v1 that is 3-hr avg,
             # so multiply by 3 hr (ex. 3*3600). Assumed same
             # for others (ex. 1*3600).
             # If combining files, need to take average of these,
             # so divide by number of files
-            conversion_factor *= \
-                self.simulation_time_step_seconds / \
-                num_nc_files
+        #    conversion_factor *= \
+        #        self.simulation_time_step_seconds / \
+        #        num_nc_files
         data_in_nc.close()
 
         return conversion_factor

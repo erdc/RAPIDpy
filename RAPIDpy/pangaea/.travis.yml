@@ -1,0 +1,68 @@
+#-------------------------------------------------------------------------------
+# .travis.yml
+# Author: Alan D. Snow, 2017
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#System specifications for Travis CI
+#-------------------------------------------------------------------------------
+language: c
+os:
+  - linux
+  - osx
+env:
+  - TRAVIS_PYTHON_VERSION="2.7"
+  - TRAVIS_PYTHON_VERSION="3.5"
+  - TRAVIS_PYTHON_VERSION="3.6"
+matrix:
+  fast_finish: true
+  allow_failures:
+    - os: osx
+    - env: TRAVIS_PYTHON_VERSION="3.5"
+    - env: TRAVIS_PYTHON_VERSION="3.6"
+notifications:
+  email: false
+
+before_install:
+#-----------------------------------------------------------------------------
+# Install minconda
+#-----------------------------------------------------------------------------
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+    wget -O miniconda.sh http://repo.continuum.io/miniconda/Miniconda${TRAVIS_PYTHON_VERSION:0:1}-latest-Linux-x86_64.sh;
+  fi
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+    curl -o miniconda.sh https://repo.continuum.io/miniconda/Miniconda${TRAVIS_PYTHON_VERSION:0:1}-latest-MacOSX-x86_64.sh;
+  fi
+- chmod +x miniconda.sh
+- ./miniconda.sh -b -p $HOME/miniconda
+- export PATH=$HOME/miniconda/bin:$PATH
+- conda config --set always_yes yes
+- conda update conda python
+#-----------------------------------------------------------------------------
+# Create conda environment for pangaea
+#-----------------------------------------------------------------------------
+- conda create -n pangaea python=$TRAVIS_PYTHON_VERSION
+- source activate pangaea
+- conda config --add channels conda-forge
+- conda env update -n pangaea -f conda_env.yml
+# restart environment
+- source deactivate
+- source activate pangaea
+#-----------------------------------------------------------------------------
+# Install additional required python packages
+#-----------------------------------------------------------------------------
+- conda install pynio -c conda-forge/label/dev
+#-------------------------------------------------------------------------------
+# Install pangaea
+#-------------------------------------------------------------------------------
+install:
+- cd $TRAVIS_BUILD_DIR
+- pip install -e .[tests]
+script:
+- py.test --cov-report term-missing --cov=pangaea
+- flake8  --ignore=F401 pangaea setup.py tests
+- pylint pangaea
+#-------------------------------------------------------------------------------
+# Coveralls stats for code coverage
+#-------------------------------------------------------------------------------
+after_success:
+  - coveralls

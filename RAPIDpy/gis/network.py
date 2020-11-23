@@ -45,7 +45,7 @@ def StreamIDNextDownIDToConnectivity(stream_id_array,
             np.concatenate(
                 [np.array([hydroid, nextDownID, count_upstream]),
                  list_upstreamID]
-            ).astype(int))
+            ).astype(np.int64))
 
     with open_csv(out_csv_file, 'w') as csvfile:
         connectwriter = csv_writer(csvfile)
@@ -54,7 +54,7 @@ def StreamIDNextDownIDToConnectivity(stream_id_array,
                 row_list,
                 np.array([0 for _ in xrange(max_count_upstream - row_list[2])])
             ])
-            connectwriter.writerow(out.astype(int))
+            connectwriter.writerow(out.astype(np.int64))
 
 
 def CreateNetworkConnectivity(in_drainage_line,
@@ -105,8 +105,8 @@ def CreateNetworkConnectivity(in_drainage_line,
         stream_id_array.append(drainage_line_feature.GetField(river_id))
         next_down_id_array.append(drainage_line_feature.GetField(next_down_id))
 
-    stream_id_array = np.array(stream_id_array, dtype=np.int32)
-    next_down_id_array = np.array(next_down_id_array, dtype=np.int32)
+    stream_id_array = np.array(stream_id_array, dtype=np.int64)
+    next_down_id_array = np.array(next_down_id_array, dtype=np.int64)
 
     StreamIDNextDownIDToConnectivity(stream_id_array,
                                      next_down_id_array,
@@ -312,9 +312,9 @@ def CreateSubsetFile(in_drainage_line,
 
     del ogr_drainage_line_shapefile
 
-    hydroid_list = np.array(hydroid_list, dtype=np.int32)
+    hydroid_list = np.array(hydroid_list, dtype=np.int64)
     if hydroseq_list:
-        hydroseq_list = np.array(hydroseq_list, dtype=np.int32)
+        hydroseq_list = np.array(hydroseq_list, dtype=np.int64)
         sort_order = hydroseq_list.argsort()[::-1]
         hydroid_list = hydroid_list[sort_order]
     else:

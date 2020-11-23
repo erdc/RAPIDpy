@@ -116,7 +116,7 @@ def CreateMuskingumKfacFile(in_drainage_line,
         open_shapefile(in_drainage_line, file_geodatabase)
 
     number_of_features = ogr_drainage_line_shapefile_lyr.GetFeatureCount()
-    river_id_list = np.zeros(number_of_features, dtype=np.int32)
+    river_id_list = np.zeros(number_of_features, dtype=np.int64)
 
     length_list = \
         np.zeros(number_of_features, dtype=np.float32)
@@ -145,7 +145,7 @@ def CreateMuskingumKfacFile(in_drainage_line,
     connectivity_table = np.loadtxt(in_connectivity_file,
                                     delimiter=",",
                                     ndmin=2,
-                                    dtype=int)
+                                    dtype=np.int64)
 
     length_slope_array = []
     kfac2_array = []

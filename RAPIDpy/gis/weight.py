@@ -285,7 +285,8 @@ def CreateWeightTableECMWF(in_ecmwf_nc,
                            in_connectivity_file,
                            out_weight_table,
                            area_id=None,
-                           file_geodatabase=None):
+                           file_geodatabase=None,
+                           in_ecmwf_mask_var=None):
     """
     Create Weight Table for ECMWF Grids
 
@@ -344,20 +345,11 @@ def CreateWeightTableECMWF(in_ecmwf_nc,
     # assume [-90, 90]
     ecmwf_lat = data_ecmwf_nc.variables[in_ecmwf_lat_var][:]
 
-    mask_var_names = ['mask', 'lsm']
-    mask_var_intersect_variable_list = (
-        set(variables_list) & set(mask_var_names))
-
-    try:
-        in_ecmwf_mask_var = mask_var_intersect_variable_list.pop()
-    except KeyError:
-        in_ecmwf_mask_var = None
-
-    if in_ecmwf_mask_var is None:
-        ecmwf_mask = None
-    else:
+    if in_ecmwf_mask_var is not None and mask_var in variables_list:
         ecmwf_mask = data_ecmwf_nc.variables[in_ecmwf_mask_var][0,:,:]
-        
+    else:
+	ecmwf_mask = None
+
     data_ecmwf_nc.close()
 
     rtree_create_weight_table(ecmwf_lat, ecmwf_lon,

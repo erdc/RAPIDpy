@@ -772,8 +772,7 @@ def test_gen_weight_table_era5_land_mask():
     """
     print("TEST 18: TEST GENERATE WEIGHT TABLE FOR ERA5 GRID WITH LAND MASK.")
     generated_weight_table_file = os.path.join(
-        OUTPUT_DATA_PATH, "mendocino_nhdplus_catchment",
-        "weight_mendocino_sample_era5.csv")
+        OUTPUT_DATA_PATH, "weight_mendocino_era5_land_mask.csv")
 
     #rapid_connect
     rapid_connect_file = os.path.join(COMPARE_DATA_PATH,
@@ -786,11 +785,12 @@ def test_gen_weight_table_era5_land_mask():
                            in_catchment_shapefile=os.path.join(GIS_INPUT_DATA_PATH, 'mendocino_nhdplus_catchment', 'NHDCat_mendocino_watershed_hopland_sample.shp'),
                            river_id="FEATUREID",
                            in_connectivity_file=rapid_connect_file,
-                           out_weight_table=generated_weight_table_file)
+                           out_weight_table=generated_weight_table_file,
+                           in_ecmwf_mask_var='lsm')
 
     generated_weight_table_file_solution = os.path.join(
         COMPARE_DATA_PATH, 'mendocino_nhdplus_catchment',
-        'weight_mendocino_sample_era5.csv')
+        'weight_mendocino_era5_land_mask.csv')
     
     assert (compare_csv_decimal_files(generated_weight_table_file,
                                       generated_weight_table_file_solution))

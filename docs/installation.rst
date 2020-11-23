@@ -75,21 +75,9 @@ Due to the dependencies required, we recommend using Anaconda or Miniconda.
 They can be downloaded from https://www.continuum.io/downloads
 or from https://conda.io/miniconda.html.
 
-
-After installing Anaconda or Miniconda:
-
-::
-
-    $ conda install -c conda-forge rapidpy
-
-
-Developer Installation
 ~~~~~~~~~~~~~~~~~~~~~~
 
 This is how you get the most up-to-date version of the code.
-
-See: https://github.com/erdc-cm/RAPIDpy/blob/master/.travis.yml for a more detailed
-list of installation steps.
 
 .. note:: If you don't have git, you can download the code from https://github.com/erdc-cm/RAPIDpy
 
@@ -97,6 +85,8 @@ list of installation steps.
 
     $ git clone https://github.com/erdc-cm/RAPIDpy.git
     $ cd RAPIDpy
+    $ conda env create -f rapidpy_env.yml
+    $ conda activate rapidpy_env
     $ python setup.py install
 
 To develop on the latest version:
@@ -105,4 +95,6 @@ To develop on the latest version:
 
     $ git clone https://github.com/erdc-cm/RAPIDpy.git
     $ cd RAPIDpy
+    $ conda env create -f rapidpy_env.yml
+    $ conda activate rapidpy_env
     $ python setup.py develop

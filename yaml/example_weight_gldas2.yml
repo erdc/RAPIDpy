@@ -1,0 +1,10 @@
+lsm: 'ldas'
+in_nc: '/home/testuser2/RAPIDpy/tests/data/lsm_grids/gldas2/GLDAS_NOAH025_3H.A20101231.0000.020.nc4'
+in_nc_lon_var: 'lon'
+in_nc_lat_var: 'lat'
+in_catchment_shapefile: '/home/testuser2/RAPIDpy/tests/data/gis/catchment.shp'
+river_id: 'FEATUREID'
+in_connectivity_file: '/home/testuser2/RAPIDpy/tests/compare/gis/x-x/rapid_connect.csv'
+out_weight_table: 'example_weight_gldas2.csv'
+area_id: 
+file_geodatabase:

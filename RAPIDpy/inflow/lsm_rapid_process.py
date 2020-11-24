@@ -23,7 +23,7 @@ from ..rapid import RAPID
 from .CreateInflowFileFromERAInterimRunoff import \
     CreateInflowFileFromERAInterimRunoff
 from .CreateInflowFileFromERA5Runoff import \
-    CreateInflowFileFromERA5Runoff 
+    CreateInflowFileFromERA5Runoff
 from .CreateInflowFileFromLDASRunoff import CreateInflowFileFromLDASRunoff
 from .CreateInflowFileFromWRFHydroRunoff import \
     CreateInflowFileFromWRFHydroRunoff
@@ -51,6 +51,11 @@ def generate_inflows_from_runoff(args):
     rapid_inflow_file = args[4]
     rapid_inflow_tool = args[5]
     mp_lock = args[6]
+    steps_per_file = args[7]
+    convert_one_hour_to_three = args[8]
+
+    # MPG DEBUG
+    # print('args', [a for a in args])
 
     time_start_all = datetime.utcnow()
 
@@ -80,7 +85,10 @@ def generate_inflows_from_runoff(args):
                                       in_weight_table=weight_table_file,
                                       out_nc=rapid_inflow_file,
                                       grid_type=grid_type,
-                                      mp_lock=mp_lock)
+                                      mp_lock=mp_lock,
+                                      steps_per_file=steps_per_file,
+                                      convert_one_hour_to_three=\
+                                      convert_one_hour_to_three)
         except Exception:
             # This prints the type, value, and stack trace of the
             # current exception being handled.
@@ -860,16 +868,35 @@ def run_lsm_rapid_process(rapid_executable_location,
                 expected_time_step=expected_time_step,
                 lsm_grid_info=lsm_file_data)
 
+        steps_per_file = int(total_num_time_steps / len(lsm_file_list))
+        file_timestep_is_hourly = time_step == 3600
+        file_time_is_divisible_by_three = steps_per_file % 3 == 0
+
+        print('MPG DEBUG')
+        print(steps_per_file)
+        print(time_step)
+        
         # VALIDATING INPUT IF DIVIDING BY 3
-        if (lsm_file_data['grid_type'] in ('nldas', 'lis', 'joules')) \
-                and convert_one_hour_to_three:
-            num_extra_files = total_num_time_steps % 3
-            if num_extra_files != 0:
-                print("WARNING: Number of files needs to be divisible by 3. "
-                      "Remainder is {0}".format(num_extra_files))
-                print("This means your simulation will be truncated")
-            total_num_time_steps /= 3
-            time_step *= 3
+        if convert_one_hour_to_three:
+            if (lsm_file_data['grid_type'] in (
+               'nldas', 'lis', 'joules', 'era5')):
+                num_extra_files = total_num_time_steps % 3
+                if num_extra_files != 0:
+                    print(
+                        "WARNING: Number of files needs to be divisible by 3. "
+                        "Remainder is {0}".format(num_extra_files))
+                    print("This means your simulation will be truncated")
+                total_num_time_steps /= 3
+                time_step *= 3
+            else:
+                print('Conversion to three-hourly timestep is not supported \
+                       for {0} data. Continuing without conversion'.format(
+                        lsm_file_data['model_name']))
+                convert_one_hour_to_three = False
+            if file_timestep_is_hourly and file_time_is_divisible_by_three:
+                convert_one_hour_to_three_within_file = True
+            else:
+                convert_one_hour_to_three_within_file = False
 
         # compile the file ending
         out_file_ending = "{0}_{1}_{2}hr_{3:%Y%m%d}to{4:%Y%m%d}{5}"\
@@ -951,19 +978,21 @@ def run_lsm_rapid_process(rapid_executable_location,
                         master_rapid_runoff_file,
                         lsm_file_data['rapid_inflow_tool'],
                         mp_lock))
-#                   # COMMENTED CODE IS FOR DEBUGGING
-#                   generate_inflows_from_runoff((
-#                       cpu_grouped_file_list,
-#                       partition_index_list[loop_index],
-#                       lsm_file_data['weight_table_file'],
-#                       lsm_file_data['grid_type'],
-#                       master_rapid_runoff_file,
-#                       lsm_file_data['rapid_inflow_tool'],
-#                       mp_lock))
-            pool = multiprocessing.Pool(num_cpus)
-            pool.map(generate_inflows_from_runoff,
-                     job_combinations)
-            pool.close()
+                   # COMMENTED CODE IS FOR DEBUGGING
+                    generate_inflows_from_runoff((
+                       cpu_grouped_file_list,
+                       partition_index_list[loop_index],
+                       weight_table_file,
+                       lsm_file_data['grid_type'],
+                       master_rapid_runoff_file,
+                       lsm_file_data['rapid_inflow_tool'],
+                       mp_lock,
+                       steps_per_file,
+                       convert_one_hour_to_three_within_file))
+            #pool = multiprocessing.Pool(num_cpus)
+            #pool.map(generate_inflows_from_runoff,
+            #         job_combinations)
+            #pool.close()
             pool.join()
 
             # set up RAPID manager

@@ -22,6 +22,8 @@ import numpy as np
 from ..rapid import RAPID
 from .CreateInflowFileFromERAInterimRunoff import \
     CreateInflowFileFromERAInterimRunoff
+from .CreateInflowFileFromERA5Runoff import \
+    CreateInflowFileFromERA5Runoff 
 from .CreateInflowFileFromLDASRunoff import CreateInflowFileFromLDASRunoff
 from .CreateInflowFileFromWRFHydroRunoff import \
     CreateInflowFileFromWRFHydroRunoff
@@ -354,7 +356,7 @@ def identify_lsm_grid(lsm_grid_path):
             #  dimensions:
             #   longitude = 1440 ;
             #   latitude = 721 ;
-            lsm_file_data["description"] = "ERA 5"
+            lsm_file_data["description"] = "ERA5"
             lsm_file_data["weight_file_name"] = r'weight_era5\.csv'
             lsm_file_data["model_name"] = "era5"
             lsm_file_data["grid_type"] = 'era5'
@@ -362,7 +364,11 @@ def identify_lsm_grid(lsm_grid_path):
             lsm_example_file.close()
             raise Exception("Unsupported ECMWF grid.")
 
-        lsm_file_data["rapid_inflow_tool"] = \
+        if "ERA5" in lsm_file_data["model_name"].upper():
+            lsm_file_data["rapid_inflow_tool"] = \
+            CreateInflowFileFromERA5Runoff()
+        else:
+            lsm_file_data["rapid_inflow_tool"] = \
             CreateInflowFileFromERAInterimRunoff()
 
     elif institution == "NASA GSFC":

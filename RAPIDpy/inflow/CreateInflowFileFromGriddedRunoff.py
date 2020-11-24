@@ -11,7 +11,7 @@ import csv
 from datetime import datetime
 import os
 
-from netCDF4 import Dataset
+from netCDF4 import Dataset, num2date
 import numpy as np
 from pytz import utc
 from past.builtins import xrange  # pylint: disable=redefined-builtin
@@ -36,6 +36,7 @@ class CreateInflowFileFromGriddedRunoff(object):
         self.count = 0
         self.size_stream_id = 0
         self.simulation_time_step_seconds = 0
+        self.time_units = 'seconds since 1970-01-01 00:00:00+00:00'
         self.error_messages = [
             "Missing Variable 'time'",
             "Incorrect dimensions in the input {} runoff file."
@@ -210,7 +211,7 @@ class CreateInflowFileFromGriddedRunoff(object):
                                                   ('time',))
             time_var.long_name = 'time'
             time_var.standard_name = 'time'
-            time_var.units = 'seconds since 1970-01-01 00:00:00+00:00'
+            time_var.units = self.time_units
             time_var.axis = 'T'
             time_var.calendar = 'gregorian'
             time_var.bounds = 'time_bnds'

@@ -345,10 +345,14 @@ def CreateWeightTableECMWF(in_ecmwf_nc,
     # assume [-90, 90]
     ecmwf_lat = data_ecmwf_nc.variables[in_ecmwf_lat_var][:]
 
-    if in_ecmwf_mask_var is not None and mask_var in variables_list:
-        ecmwf_mask = data_ecmwf_nc.variables[in_ecmwf_mask_var][0,:,:]
-    else:
-	ecmwf_mask = None
+    if in_ecmwf_mask_var is not None:
+        if mask_var in variables_list:
+            ecmwf_mask = data_ecmwf_nc.variables[in_ecmwf_mask_var][0,:,:]
+        else:
+            print('Variable {} not found in {}.'.format(in_ecmwf_mask_var,
+                                                        in_ecmwf_nc))
+            print('Continuing with no land mask.')
+            ecmwf_mask = None
 
     data_ecmwf_nc.close()
 

@@ -338,7 +338,7 @@ def CreateWeightTableECMWF(in_ecmwf_nc,
     in_ecmwf_lon_var = 'lon'
     if 'longitude' in variables_list:
         in_ecmwf_lon_var = 'longitude'
-        
+
     # convert [0, 360] to [-180, 180]
     ecmwf_lon = \
         (data_ecmwf_nc.variables[in_ecmwf_lon_var][:] + 180) % 360 - 180
@@ -349,8 +349,8 @@ def CreateWeightTableECMWF(in_ecmwf_nc,
         if in_ecmwf_mask_var in variables_list:
             ecmwf_mask = data_ecmwf_nc.variables[in_ecmwf_mask_var][0,:,:]
         else:
-            print('Variable "{}" not found in {}.'.format(in_ecmwf_mask_var,
-                                                        in_ecmwf_nc))
+            print('Variable "{}" not found in {}.'.format(
+                in_ecmwf_mask_var, in_ecmwf_nc))
             print('Continuing with no land mask.')
             ecmwf_mask = None
     else:
@@ -392,8 +392,6 @@ def CreateWeightTableLDAS(in_ldas_nc,
         The name of the field with the river ID (Ex. 'DrainLnID' or 'LINKNO').
     in_connectivity_file: str
         The path to the RAPID connectivity file.
-        is the name of the stream network feature class.
-        (WARNING: Not always stable with GDAL.)
     out_weight_table: str
         The path to the output weight table file.
     area_id: str, optional
@@ -403,6 +401,7 @@ def CreateWeightTableLDAS(in_ldas_nc,
         Path to the file geodatabase. If you use this option, in_drainage_line
         is the name of the stream network feature class.
         (WARNING: Not always stable with GDAL.)
+
 
     Example:
 

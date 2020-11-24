@@ -775,14 +775,17 @@ def test_gen_weight_table_era5_land_mask():
         OUTPUT_DATA_PATH, "weight_mendocino_era5_land_mask.csv")
 
     #rapid_connect
-    rapid_connect_file = os.path.join(COMPARE_DATA_PATH,
-                                      "mendocino_nhdplus_catchment",
-                                      "rapid_connectivity_mendocino_sample.csv")
+    rapid_connect_file = os.path.join(
+        COMPARE_DATA_PATH, "mendocino_nhdplus_catchment",
+        "rapid_connectivity_mendocino_sample.csv")
 
     lsm_grid = os.path.join(LSM_INPUT_DATA_PATH, "era5", "era5_land-sea_mask_mendocino_subset.nc")
 
     CreateWeightTableECMWF(in_ecmwf_nc=lsm_grid,
-                           in_catchment_shapefile=os.path.join(GIS_INPUT_DATA_PATH, 'mendocino_nhdplus_catchment', 'NHDCat_mendocino_watershed_hopland_sample.shp'),
+                           in_catchment_shapefile=os.path.join(
+                               GIS_INPUT_DATA_PATH,
+                               'mendocino_nhdplus_catchment',
+                               'NHDCat_mendocino_watershed_hopland_sample.shp'),
                            river_id="FEATUREID",
                            in_connectivity_file=rapid_connect_file,
                            out_weight_table=generated_weight_table_file,

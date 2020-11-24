@@ -286,16 +286,16 @@ class CreateInflowFileFromGriddedRunoff(object):
         time dimension reflects new_timestep_hours-hourly timestep.
         """
         file_time_hours = steps_per_file * old_timestep_hours
-        file_time_is_divisible = (file_time % new_timestep_hours == 0)
+        file_time_is_divisible = (file_time_hours % new_timestep_hours == 0)
         if file_time_is_divisible:
-            new_time_dim = int(file_time / new_timestep_hours)
+            new_time_dim = int(file_time_hours / new_timestep_hours)
             # We add a new dimension, tmp_dim, to sum over.
             tmp_dim = int(new_timestep_hours)
             inflow_data = inflow_data.reshape(new_time_dim, tmp_dim, -1)
             inflow_data = inflow_data.sum(axis=1)
         else:
             print('File time of {0} hours is not divisible by {1}.'.format(
-                  file_time, new_timestep_hours))
+                  file_time_hours, new_timestep_hours))
             print('Not performing change of inflow dimensions.')
 
         return inflow_data
@@ -334,8 +334,8 @@ class CreateInflowFileFromGriddedRunoff(object):
         pass
 
     def execute(self, nc_file_list, index_list, in_weight_table,
-                out_nc, grid_type, mp_lock, steps_per_file,
-                convert_one_hour_to_three):
+                out_nc, grid_type, mp_lock, steps_per_file=1,
+                convert_one_hour_to_three=False):
 
         """The source code of the tool."""
         if not os.path.exists(out_nc):
@@ -525,6 +525,7 @@ class CreateInflowFileFromGriddedRunoff(object):
             if convert_one_hour_to_three:
                inflow_data = self.change_inflow_dimensions(inflow_data, 1, 3, 
                                                            steps_per_file)
+               len_time_subset /= 3
                
             # only one process is allowed to write at a time to netcdf file
             mp_lock.acquire()

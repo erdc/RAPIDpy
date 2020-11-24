@@ -868,6 +868,7 @@ def run_lsm_rapid_process(rapid_executable_location,
         file_time_is_divisible_by_three = (steps_per_file % 3 == 0)
         
         # VALIDATING INPUT IF DIVIDING BY 3
+        convert_one_hour_to_three_within_file = False
         if convert_one_hour_to_three:
             if (lsm_file_data['grid_type'] in (
                     'nldas', 'lis', 'joules', 'era5')):
@@ -890,8 +891,6 @@ def run_lsm_rapid_process(rapid_executable_location,
             # multiple timesteps.
             if file_timestep_is_hourly and file_time_is_divisible_by_three:
                 convert_one_hour_to_three_within_file = True
-            else:
-                convert_one_hour_to_three_within_file = False
 
         # compile the file ending
         out_file_ending = "{0}_{1}_{2}hr_{3:%Y%m%d}to{4:%Y%m%d}{5}"\
@@ -972,22 +971,24 @@ def run_lsm_rapid_process(rapid_executable_location,
                         lsm_file_data['grid_type'],
                         master_rapid_runoff_file,
                         lsm_file_data['rapid_inflow_tool'],
-                        mp_lock))
+                        mp_lock,
+                        steps_per_file,
+                        convert_one_hour_to_three_within_file))
                    # COMMENTED CODE IS FOR DEBUGGING
-                    generate_inflows_from_runoff((
-                       cpu_grouped_file_list,
-                       partition_index_list[loop_index],
-                       weight_table_file,
-                       lsm_file_data['grid_type'],
-                       master_rapid_runoff_file,
-                       lsm_file_data['rapid_inflow_tool'],
-                       mp_lock,
-                       steps_per_file,
-                       convert_one_hour_to_three_within_file))
-            #pool = multiprocessing.Pool(num_cpus)
-            #pool.map(generate_inflows_from_runoff,
-            #         job_combinations)
-            #pool.close()
+                   # generate_inflows_from_runoff((
+                   #    cpu_grouped_file_list,
+                   #    partition_index_list[loop_index],
+                   #    weight_table_file,
+                   #    lsm_file_data['grid_type'],
+                   #    master_rapid_runoff_file,
+                   #    lsm_file_data['rapid_inflow_tool'],
+                   #    mp_lock,
+                   #    steps_per_file,
+                   #    convert_one_hour_to_three_within_file))
+            pool = multiprocessing.Pool(num_cpus)
+            pool.map(generate_inflows_from_runoff,
+                     job_combinations)
+            pool.close()
             pool.join()
 
             # set up RAPID manager

@@ -865,13 +865,14 @@ def run_lsm_rapid_process(rapid_executable_location,
 
         steps_per_file = int(total_num_time_steps / len(lsm_file_list))
         file_timestep_is_hourly = (time_step == 3600)
-        file_time_is_divisible_by_three = (steps_per_file % 3 == 0)
+        file_time_hours = time_step / 3600.0
+        file_time_divisible_by_three = (steps_per_file % 3 == 0)
+        convert_one_hour_to_three_within_file = False
         
         # VALIDATING INPUT IF DIVIDING BY 3
-        convert_one_hour_to_three_within_file = False
         if convert_one_hour_to_three:
             if (lsm_file_data['grid_type'] in (
-                    'nldas', 'lis', 'joules', 'era5')):
+                    'nldas', 'lis', 'joules')):
                 num_extra_files = total_num_time_steps % 3
                 if num_extra_files != 0:
                     print(
@@ -880,17 +881,25 @@ def run_lsm_rapid_process(rapid_executable_location,
                     print("This means your simulation will be truncated")
                 total_num_time_steps /= 3
                 time_step *= 3
-            else:
-                print('Conversion to three-hourly timestep is not supported \
-                       for {0} data. Continuing without conversion'.format(
-                        lsm_file_data['model_name']))
-                convert_one_hour_to_three = False
-
-            # MPG: The above code handles the case where each file contains values
-            # for a single hourly timestep. We must also consider files that contain
-            # multiple timesteps.
-            if file_timestep_is_hourly and file_time_is_divisible_by_three:
+            elif file_timestep_is_hourly and file_time_divisible_by_three:
+                # MPG: The above code handles the case where each file contains values
+                # for a single hourly timestep. We must also consider files that contain
+                # multiple timesteps.
                 convert_one_hour_to_three_within_file = True
+                total_num_time_steps /= 3
+                time_step *= 3
+            elif not file_timestep_is_hourly:
+                raise ValueError(
+                    "{0} data has timestep of {1} hour(s). Cannot perform conversion to three-hourly timestep".format(
+                        lsm_file_data['model_name'], file_time_hours)) 
+            elif not file_time_divisible_by_three:
+                raise ValueError(
+                    "{0} files contain {1} hour(s) of data. Cannot perform conversion to three-hourly timestep".format(
+                        lsm_file_data['model_name'], file_time_hours))
+            else:
+                raise NotImplementedError(
+                    "Conversion to three-hourly timestep is not supported for {0} data.".format(
+                        lsm_file_data['model_name']))
 
         # compile the file ending
         out_file_ending = "{0}_{1}_{2}hr_{3:%Y%m%d}to{4:%Y%m%d}{5}"\

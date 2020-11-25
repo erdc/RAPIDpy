@@ -277,10 +277,10 @@ class CreateInflowFileFromGriddedRunoff(object):
             print("File size too big to add data beforehand."
                   " Performing conversion after ...")
     
-    def change_inflow_dimensions(self, inflow_data,
-                                 old_timestep_hours,
-                                 new_timestep_hours,
-                                 steps_per_file):
+    def sum_inflow_over_time_increment(self, inflow_data,
+                                       old_timestep_hours,
+                                       new_timestep_hours,
+                                       steps_per_file):
         """
         Sum over old_timestep_hours-hourly timesteps so that inflow data
         time dimension reflects new_timestep_hours-hourly timestep.
@@ -293,10 +293,6 @@ class CreateInflowFileFromGriddedRunoff(object):
             tmp_dim = int(new_timestep_hours)
             inflow_data = inflow_data.reshape(new_time_dim, tmp_dim, -1)
             inflow_data = inflow_data.sum(axis=1)
-        else:
-            print('File time of {0} hours is not divisible by {1}.'.format(
-                  file_time_hours, new_timestep_hours))
-            print('Not performing change of inflow dimensions.')
 
         return inflow_data
 
@@ -523,8 +519,8 @@ class CreateInflowFileFromGriddedRunoff(object):
                 pointer += npoints
                 
             if convert_one_hour_to_three:
-               inflow_data = self.change_inflow_dimensions(inflow_data, 1, 3, 
-                                                           steps_per_file)
+               inflow_data = self.sum_inflow_over_time_increment(
+                   inflow_data, 1, 3, steps_per_file)
                len_time_subset /= 3
                
             # only one process is allowed to write at a time to netcdf file

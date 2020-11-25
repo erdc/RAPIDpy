@@ -364,6 +364,17 @@ def identify_lsm_grid(lsm_grid_path):
             lsm_file_data["weight_file_name"] = r'weight_era5\.csv'
             lsm_file_data["model_name"] = "era5"
             lsm_file_data["grid_type"] = 'era5'
+        elif lat_dim_size == 9 and lon_dim_size == 21:
+            # MPG: including this to allow the use of a smaller ERA5 runoff
+            # file for testing purposes.
+            print("Runoff file identified as ERA5 GRID TEST CASE")
+            #  dimensions:
+            #   longitude = 21 ;
+            #   latitude = 9 ;
+            lsm_file_data["description"] = "ERA5"
+            lsm_file_data["weight_file_name"] = r'weight_era5\.csv'
+            lsm_file_data["model_name"] = "era5"
+            lsm_file_data["grid_type"] = 'era5'
         else:
             lsm_example_file.close()
             raise Exception("Unsupported ECMWF grid.")
@@ -824,7 +835,7 @@ def run_lsm_rapid_process(rapid_executable_location,
 
         # IDENTIFY THE GRID
         lsm_file_data = identify_lsm_grid(lsm_file_list[0])
-
+ 
         # load in the datetime pattern
         if file_datetime_pattern is None or file_datetime_re_pattern is None:
             file_datetime_re_pattern = \
@@ -882,24 +893,26 @@ def run_lsm_rapid_process(rapid_executable_location,
                 total_num_time_steps /= 3
                 time_step *= 3
             elif file_timestep_is_hourly and file_time_divisible_by_three:
-                # MPG: The above code handles the case where each file contains values
-                # for a single hourly timestep. We must also consider files that contain
-                # multiple timesteps.
+                # MPG: The above code handles the case where each file contains
+                # values for a single hourly timestep. We must also consider 
+                # the case where files contain multiple timesteps.
                 convert_one_hour_to_three_within_file = True
                 total_num_time_steps /= 3
                 time_step *= 3
             elif not file_timestep_is_hourly:
                 raise ValueError(
-                    "{0} data has timestep of {1} hour(s). Cannot perform conversion to three-hourly timestep".format(
-                        lsm_file_data['model_name'], file_time_hours)) 
+                    "{0} data has timestep of {1} hour(s). " 
+                    .format(lsm_file_data['model_name'], file_time_hours)) + 
+                    "Cannot perform conversion to three-hourly timestep"
             elif not file_time_divisible_by_three:
                 raise ValueError(
-                    "{0} files contain {1} hour(s) of data. Cannot perform conversion to three-hourly timestep".format(
-                        lsm_file_data['model_name'], file_time_hours))
+                    "{0} files contain {1} hour(s) of data. " +
+                    "Cannot perform conversion to three-hourly timestep"
+                    .format(lsm_file_data['model_name'], file_time_hours))
             else:
                 raise NotImplementedError(
-                    "Conversion to three-hourly timestep is not supported for {0} data.".format(
-                        lsm_file_data['model_name']))
+                    "Conversion to three-hourly timestep is not supported " +
+                    "for {0} data.".format(lsm_file_data['model_name']))
 
         # compile the file ending
         out_file_ending = "{0}_{1}_{2}hr_{3:%Y%m%d}to{4:%Y%m%d}{5}"\

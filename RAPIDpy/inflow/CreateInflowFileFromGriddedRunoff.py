@@ -481,6 +481,26 @@ class CreateInflowFileFromGriddedRunoff(object):
                             np.concatenate([ro_first_half, ro_second_half]),
                             area_sqm_npoints)
 
+                elif grid_type == 't1279':
+                    # A) ERA Interim Low Res (T1279) - data is cumulative
+                    # from time 6/12
+                    # 0 1 2 3 4
+                    # (time zero not included, so assumed to be zero)
+                    ro_first_half = \
+                        np.concatenate([data_goal[0:1, ],
+                                        np.subtract(data_goal[1:2, ],
+                                                    data_goal[0:1, ])])
+                    # from time 15/18/21/24
+                    # (time restarts at time 12, assumed to be zero)
+                    ro_second_half = \
+                        np.concatenate([data_goal[2:3, ],
+                                        np.subtract(data_goal[3:, ],
+                                                    data_goal[2:3, ])])
+                    ro_stream = \
+                        np.multiply(
+                            np.concatenate([ro_first_half, ro_second_half]),
+                            area_sqm_npoints)
+
                 else:
                     ro_stream = data_goal * area_sqm_npoints * \
                                 conversion_factor

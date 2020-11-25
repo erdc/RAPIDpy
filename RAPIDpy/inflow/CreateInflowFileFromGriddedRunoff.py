@@ -12,7 +12,7 @@ from datetime import datetime
 import sys
 import os
 
-from netCDF4 import Dataset, num2date
+from netCDF4 import Dataset
 import numpy as np
 from pytz import utc
 from past.builtins import xrange  # pylint: disable=redefined-builtin
@@ -278,12 +278,18 @@ class CreateInflowFileFromGriddedRunoff(object):
                   " Performing conversion after ...")
     
     def change_inflow_dimensions(self, inflow_data,
-                                 old_timestep_hours, new_timestep_hours,
+                                 old_timestep_hours,
+                                 new_timestep_hours,
                                  steps_per_file):
-        file_time = steps_per_file * old_timestep_hours
-        is_divisible = file_time % new_timestep_hours == 0
-        if is_divisible:
+        """
+        Sum over old_timestep_hours-hourly timesteps so that inflow data
+        time dimension reflects new_timestep_hours-hourly timestep.
+        """
+        file_time_hours = steps_per_file * old_timestep_hours
+        file_time_is_divisible = (file_time % new_timestep_hours == 0)
+        if file_time_is_divisible:
             new_time_dim = int(file_time / new_timestep_hours)
+            # We add a new dimension, tmp_dim, to sum over.
             tmp_dim = int(new_timestep_hours)
             inflow_data = inflow_data.reshape(new_time_dim, tmp_dim, -1)
             inflow_data = inflow_data.sum(axis=1)
@@ -513,18 +519,13 @@ class CreateInflowFileFromGriddedRunoff(object):
                         inflow_data[:, stream_index] = ro_stream.sum(axis=1)
                     else:
                         inflow_data[stream_index] = ro_stream.sum()
-            
-            print('MPG DEBUG')
-            print('inflow data shape before', inflow_data.shape)
+
+                pointer += npoints
+                
             if convert_one_hour_to_three:
                inflow_data = self.change_inflow_dimensions(inflow_data, 1, 3, 
                                                            steps_per_file)
-
-            print('MPG DEBUG')
-            print('inflow data shape after', inflow_data.shape)
-            for r in inflow_data:
-                print(r)
-            sys.exit(0)
+               
             # only one process is allowed to write at a time to netcdf file
             mp_lock.acquire()
             data_out_nc = Dataset(out_nc, "a", format="NETCDF3_CLASSIC")

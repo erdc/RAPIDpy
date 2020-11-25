@@ -53,10 +53,7 @@ def generate_inflows_from_runoff(args):
     mp_lock = args[6]
     steps_per_file = args[7]
     convert_one_hour_to_three = args[8]
-
-    # MPG DEBUG
-    # print('args', [a for a in args])
-
+    
     time_start_all = datetime.utcnow()
 
     if not isinstance(runoff_file_list, list):
@@ -358,7 +355,6 @@ def identify_lsm_grid(lsm_grid_path):
             lsm_file_data["weight_file_name"] = r'weight_era_t159\.csv'
             lsm_file_data["model_name"] = "era_20cm"
             lsm_file_data["grid_type"] = 't159'
-        # MPG WIP: era5 25km data
         elif lat_dim_size == 721 and lon_dim_size == 1440:
             print("Runoff file identified as ERA5 GRID")
             #  dimensions:
@@ -373,11 +369,10 @@ def identify_lsm_grid(lsm_grid_path):
             raise Exception("Unsupported ECMWF grid.")
 
         if "ERA5" in lsm_file_data["model_name"].upper():
-            lsm_file_data["rapid_inflow_tool"] = \
-            CreateInflowFileFromERA5Runoff()
+            lsm_file_data["rapid_inflow_tool"] = CreateInflowFileFromERA5Runoff()
         else:
             lsm_file_data["rapid_inflow_tool"] = \
-            CreateInflowFileFromERAInterimRunoff()
+                CreateInflowFileFromERAInterimRunoff()
 
     elif institution == "NASA GSFC":
         if title == "GLDAS2.0 LIS land surface model output":
@@ -869,17 +864,13 @@ def run_lsm_rapid_process(rapid_executable_location,
                 lsm_grid_info=lsm_file_data)
 
         steps_per_file = int(total_num_time_steps / len(lsm_file_list))
-        file_timestep_is_hourly = time_step == 3600
-        file_time_is_divisible_by_three = steps_per_file % 3 == 0
-
-        print('MPG DEBUG')
-        print(steps_per_file)
-        print(time_step)
+        file_timestep_is_hourly = (time_step == 3600)
+        file_time_is_divisible_by_three = (steps_per_file % 3 == 0)
         
         # VALIDATING INPUT IF DIVIDING BY 3
         if convert_one_hour_to_three:
             if (lsm_file_data['grid_type'] in (
-               'nldas', 'lis', 'joules', 'era5')):
+                    'nldas', 'lis', 'joules', 'era5')):
                 num_extra_files = total_num_time_steps % 3
                 if num_extra_files != 0:
                     print(
@@ -893,6 +884,10 @@ def run_lsm_rapid_process(rapid_executable_location,
                        for {0} data. Continuing without conversion'.format(
                         lsm_file_data['model_name']))
                 convert_one_hour_to_three = False
+
+            # MPG: The above code handles the case where each file contains values
+            # for a single hourly timestep. We must also consider files that contain
+            # multiple timesteps.
             if file_timestep_is_hourly and file_time_is_divisible_by_three:
                 convert_one_hour_to_three_within_file = True
             else:

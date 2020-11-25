@@ -882,8 +882,7 @@ def run_lsm_rapid_process(rapid_executable_location,
         
         # VALIDATING INPUT IF DIVIDING BY 3
         if convert_one_hour_to_three:
-            if (lsm_file_data['grid_type'] in (
-                    'nldas', 'lis', 'joules')):
+            if (lsm_file_data['grid_type'] in ('nldas', 'lis', 'joules')):
                 num_extra_files = total_num_time_steps % 3
                 if num_extra_files != 0:
                     print(
@@ -902,13 +901,13 @@ def run_lsm_rapid_process(rapid_executable_location,
             elif not file_timestep_is_hourly:
                 raise ValueError(
                     "{0} data has timestep of {1} hour(s). " 
-                    .format(lsm_file_data['model_name'], file_time_hours)) + 
-                    "Cannot perform conversion to three-hourly timestep"
+                    .format(lsm_file_data['model_name'], file_time_hours) + 
+                    "Cannot perform conversion to three-hourly timestep")
             elif not file_time_divisible_by_three:
                 raise ValueError(
-                    "{0} files contain {1} hour(s) of data. " +
-                    "Cannot perform conversion to three-hourly timestep"
-                    .format(lsm_file_data['model_name'], file_time_hours))
+                    "{0} files contain {1} hour(s) of data. " 
+                    .format(lsm_file_data['model_name'], file_time_hours) +
+                    "Cannot perform conversion to three-hourly timestep")
             else:
                 raise NotImplementedError(
                     "Conversion to three-hourly timestep is not supported " +

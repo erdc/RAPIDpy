@@ -9,6 +9,7 @@
 from abc import abstractmethod
 import csv
 from datetime import datetime
+import sys
 import os
 
 from netCDF4 import Dataset
@@ -36,6 +37,7 @@ class CreateInflowFileFromGriddedRunoff(object):
         self.count = 0
         self.size_stream_id = 0
         self.simulation_time_step_seconds = 0
+        self.time_units = 'seconds since 1970-01-01 00:00:00+00:00'
         self.error_messages = [
             "Missing Variable 'time'",
             "Incorrect dimensions in the input {} runoff file."
@@ -210,7 +212,7 @@ class CreateInflowFileFromGriddedRunoff(object):
                                                   ('time',))
             time_var.long_name = 'time'
             time_var.standard_name = 'time'
-            time_var.units = 'seconds since 1970-01-01 00:00:00+00:00'
+            time_var.units = self.time_units
             time_var.axis = 'T'
             time_var.calendar = 'gregorian'
             time_var.bounds = 'time_bnds'
@@ -274,6 +276,25 @@ class CreateInflowFileFromGriddedRunoff(object):
         except RuntimeError:
             print("File size too big to add data beforehand."
                   " Performing conversion after ...")
+    
+    def sum_inflow_over_time_increment(self, inflow_data,
+                                       old_timestep_hours,
+                                       new_timestep_hours,
+                                       steps_per_file):
+        """
+        Sum over old_timestep_hours-hourly timesteps so that inflow data
+        time dimension reflects new_timestep_hours-hourly timestep.
+        """
+        file_time_hours = steps_per_file * old_timestep_hours
+        file_time_is_divisible = (file_time_hours % new_timestep_hours == 0)
+        if file_time_is_divisible:
+            new_time_dim = int(file_time_hours / new_timestep_hours)
+            # We add a new dimension, tmp_dim, to sum over.
+            tmp_dim = int(new_timestep_hours)
+            inflow_data = inflow_data.reshape(new_time_dim, tmp_dim, -1)
+            inflow_data = inflow_data.sum(axis=1)
+
+        return inflow_data
 
     def get_conversion_factor(self, in_nc, num_nc_files):
         """get conversion_factor"""
@@ -309,7 +330,8 @@ class CreateInflowFileFromGriddedRunoff(object):
         pass
 
     def execute(self, nc_file_list, index_list, in_weight_table,
-                out_nc, grid_type, mp_lock):
+                out_nc, grid_type, mp_lock, steps_per_file=1,
+                convert_one_hour_to_three=False):
 
         """The source code of the tool."""
         if not os.path.exists(out_nc):
@@ -495,7 +517,12 @@ class CreateInflowFileFromGriddedRunoff(object):
                         inflow_data[stream_index] = ro_stream.sum()
 
                 pointer += npoints
-
+                
+            if convert_one_hour_to_three:
+               inflow_data = self.sum_inflow_over_time_increment(
+                   inflow_data, 1, 3, steps_per_file)
+               len_time_subset /= 3
+               
             # only one process is allowed to write at a time to netcdf file
             mp_lock.acquire()
             data_out_nc = Dataset(out_nc, "a", format="NETCDF3_CLASSIC")

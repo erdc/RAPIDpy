@@ -22,6 +22,8 @@ import numpy as np
 from ..rapid import RAPID
 from .CreateInflowFileFromERAInterimRunoff import \
     CreateInflowFileFromERAInterimRunoff
+from .CreateInflowFileFromERA5Runoff import \
+    CreateInflowFileFromERA5Runoff
 from .CreateInflowFileFromLDASRunoff import CreateInflowFileFromLDASRunoff
 from .CreateInflowFileFromWRFHydroRunoff import \
     CreateInflowFileFromWRFHydroRunoff
@@ -49,7 +51,9 @@ def generate_inflows_from_runoff(args):
     rapid_inflow_file = args[4]
     rapid_inflow_tool = args[5]
     mp_lock = args[6]
-
+    steps_per_file = args[7]
+    convert_one_hour_to_three = args[8]
+    
     time_start_all = datetime.utcnow()
 
     if not isinstance(runoff_file_list, list):
@@ -78,7 +82,10 @@ def generate_inflows_from_runoff(args):
                                       in_weight_table=weight_table_file,
                                       out_nc=rapid_inflow_file,
                                       grid_type=grid_type,
-                                      mp_lock=mp_lock)
+                                      mp_lock=mp_lock,
+                                      steps_per_file=steps_per_file,
+                                      convert_one_hour_to_three=\
+                                      convert_one_hour_to_three)
         except Exception:
             # This prints the type, value, and stack trace of the
             # current exception being handled.
@@ -348,12 +355,35 @@ def identify_lsm_grid(lsm_grid_path):
             lsm_file_data["weight_file_name"] = r'weight_era_t159\.csv'
             lsm_file_data["model_name"] = "era_20cm"
             lsm_file_data["grid_type"] = 't159'
+        elif lat_dim_size == 721 and lon_dim_size == 1440:
+            print("Runoff file identified as ERA5 GRID")
+            #  dimensions:
+            #   longitude = 1440 ;
+            #   latitude = 721 ;
+            lsm_file_data["description"] = "ERA5"
+            lsm_file_data["weight_file_name"] = r'weight_era5\.csv'
+            lsm_file_data["model_name"] = "era5"
+            lsm_file_data["grid_type"] = 'era5'
+        elif lat_dim_size == 9 and lon_dim_size == 21:
+            # MPG: including this to allow the use of a smaller ERA5 runoff
+            # file for testing purposes.
+            print("Runoff file identified as ERA5 GRID TEST CASE")
+            #  dimensions:
+            #   longitude = 21 ;
+            #   latitude = 9 ;
+            lsm_file_data["description"] = "ERA5"
+            lsm_file_data["weight_file_name"] = r'weight_era5\.csv'
+            lsm_file_data["model_name"] = "era5"
+            lsm_file_data["grid_type"] = 'era5'
         else:
             lsm_example_file.close()
             raise Exception("Unsupported ECMWF grid.")
 
-        lsm_file_data["rapid_inflow_tool"] = \
-            CreateInflowFileFromERAInterimRunoff()
+        if "ERA5" in lsm_file_data["model_name"].upper():
+            lsm_file_data["rapid_inflow_tool"] = CreateInflowFileFromERA5Runoff()
+        else:
+            lsm_file_data["rapid_inflow_tool"] = \
+                CreateInflowFileFromERAInterimRunoff()
 
     elif institution == "NASA GSFC":
         if title == "GLDAS2.0 LIS land surface model output":
@@ -805,7 +835,7 @@ def run_lsm_rapid_process(rapid_executable_location,
 
         # IDENTIFY THE GRID
         lsm_file_data = identify_lsm_grid(lsm_file_list[0])
-
+ 
         # load in the datetime pattern
         if file_datetime_pattern is None or file_datetime_re_pattern is None:
             file_datetime_re_pattern = \
@@ -844,16 +874,44 @@ def run_lsm_rapid_process(rapid_executable_location,
                 expected_time_step=expected_time_step,
                 lsm_grid_info=lsm_file_data)
 
+        steps_per_file = int(total_num_time_steps / len(lsm_file_list))
+        file_timestep_is_hourly = (time_step == 3600)
+        file_time_hours = time_step / 3600.0
+        file_time_divisible_by_three = (steps_per_file % 3 == 0)
+        convert_one_hour_to_three_within_file = False
+        
         # VALIDATING INPUT IF DIVIDING BY 3
-        if (lsm_file_data['grid_type'] in ('nldas', 'lis', 'joules')) \
-                and convert_one_hour_to_three:
-            num_extra_files = total_num_time_steps % 3
-            if num_extra_files != 0:
-                print("WARNING: Number of files needs to be divisible by 3. "
-                      "Remainder is {0}".format(num_extra_files))
-                print("This means your simulation will be truncated")
-            total_num_time_steps /= 3
-            time_step *= 3
+        if convert_one_hour_to_three:
+            if (lsm_file_data['grid_type'] in ('nldas', 'lis', 'joules')):
+                num_extra_files = total_num_time_steps % 3
+                if num_extra_files != 0:
+                    print(
+                        "WARNING: Number of files needs to be divisible by 3. "
+                        "Remainder is {0}".format(num_extra_files))
+                    print("This means your simulation will be truncated")
+                total_num_time_steps /= 3
+                time_step *= 3
+            elif file_timestep_is_hourly and file_time_divisible_by_three:
+                # MPG: The above code handles the case where each file contains
+                # values for a single hourly timestep. We must also consider 
+                # the case where files contain multiple timesteps.
+                convert_one_hour_to_three_within_file = True
+                total_num_time_steps /= 3
+                time_step *= 3
+            elif not file_timestep_is_hourly:
+                raise ValueError(
+                    "{0} data has timestep of {1} hour(s). " 
+                    .format(lsm_file_data['model_name'], file_time_hours) + 
+                    "Cannot perform conversion to three-hourly timestep")
+            elif not file_time_divisible_by_three:
+                raise ValueError(
+                    "{0} files contain {1} hour(s) of data. " 
+                    .format(lsm_file_data['model_name'], file_time_hours) +
+                    "Cannot perform conversion to three-hourly timestep")
+            else:
+                raise NotImplementedError(
+                    "Conversion to three-hourly timestep is not supported " +
+                    "for {0} data.".format(lsm_file_data['model_name']))
 
         # compile the file ending
         out_file_ending = "{0}_{1}_{2}hr_{3:%Y%m%d}to{4:%Y%m%d}{5}"\
@@ -934,16 +992,20 @@ def run_lsm_rapid_process(rapid_executable_location,
                         lsm_file_data['grid_type'],
                         master_rapid_runoff_file,
                         lsm_file_data['rapid_inflow_tool'],
-                        mp_lock))
-#                   # COMMENTED CODE IS FOR DEBUGGING
-#                   generate_inflows_from_runoff((
-#                       cpu_grouped_file_list,
-#                       partition_index_list[loop_index],
-#                       lsm_file_data['weight_table_file'],
-#                       lsm_file_data['grid_type'],
-#                       master_rapid_runoff_file,
-#                       lsm_file_data['rapid_inflow_tool'],
-#                       mp_lock))
+                        mp_lock,
+                        steps_per_file,
+                        convert_one_hour_to_three_within_file))
+                   # COMMENTED CODE IS FOR DEBUGGING
+                   # generate_inflows_from_runoff((
+                   #    cpu_grouped_file_list,
+                   #    partition_index_list[loop_index],
+                   #    weight_table_file,
+                   #    lsm_file_data['grid_type'],
+                   #    master_rapid_runoff_file,
+                   #    lsm_file_data['rapid_inflow_tool'],
+                   #    mp_lock,
+                   #    steps_per_file,
+                   #    convert_one_hour_to_three_within_file))
             pool = multiprocessing.Pool(num_cpus)
             pool.map(generate_inflows_from_runoff,
                      job_combinations)

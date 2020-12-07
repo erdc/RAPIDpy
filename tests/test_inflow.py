@@ -22,6 +22,7 @@ import unittest
 # local import
 from RAPIDpy.inflow import run_lsm_rapid_process
 from RAPIDpy.inflow.CreateInflowFileFromERAInterimRunoff import CreateInflowFileFromERAInterimRunoff
+from RAPIDpy.inflow.CreateInflowFileFromERA5Runoff import CreateInflowFileFromERA5Runoff
 from RAPIDpy.inflow.CreateInflowFileFromLDASRunoff import CreateInflowFileFromLDASRunoff
 from RAPIDpy.inflow.CreateInflowFileFromWRFHydroRunoff import CreateInflowFileFromWRFHydroRunoff
 
@@ -810,3 +811,24 @@ class TestRAPIDInflow(unittest.TestCase):
         # check output file info
         assert output_file_info[0]['ark-ms']['m3_riv'] == generated_m3_file
 
+    def test_generate_era5_inflow_three_hourly(self):
+        """
+        Checks generating inflow file from ERA5 LSM.
+        """
+        rapid_input_path, rapid_output_path, output_file_info = \
+            self._run_automatic("era5", "mendocino",
+                                file_datetime_pattern="%Y%m%d",
+                                file_datetime_re_pattern=r'\d{8}', 
+                                convert_one_hour_to_three=True,
+                                single_run=True, filter_dates=False)
+
+        print(rapid_input_path, rapid_output_path)
+        print(output_file_info)
+        # CHECK OUTPUT
+        # m3_riv
+        m3_file_name = "m3_riv_bas_era5_era5_3hr_20190101to20190101.nc"
+        generated_m3_file = os.path.join(rapid_output_path, m3_file_name)
+        generated_m3_file_solution = os.path.join(self.INFLOW_COMPARE_DATA_PATH, m3_file_name)
+        self._compare_m3(generated_m3_file,generated_m3_file_solution)
+        # check output file info
+        assert output_file_info[0]['mendocino']['m3_riv'] == generated_m3_file

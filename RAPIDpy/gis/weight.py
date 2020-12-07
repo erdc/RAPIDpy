@@ -83,7 +83,8 @@ def find_nearest(array, value):
 def rtree_create_weight_table(lsm_grid_lat, lsm_grid_lon,
                               in_catchment_shapefile, river_id,
                               in_rapid_connect, out_weight_table,
-                              file_geodatabase=None, area_id=None):
+                              file_geodatabase=None, area_id=None,
+                              lsm_grid_mask=None):
     """
     Create Weight Table for Land Surface Model Grids
     """
@@ -242,6 +243,11 @@ def rtree_create_weight_table(lsm_grid_lat, lsm_grid_lon,
                             lsm_grid_lon,
                             lsm_grid_feature_list[sub_lsm_grid_pos]['lat'],
                             lsm_grid_feature_list[sub_lsm_grid_pos]['lon'])
+
+                    if lsm_grid_mask is not None:
+                        if lsm_grid_mask[int(index_lsm_grid_lat), int(index_lsm_grid_lon)] > 0:
+                            poly_area /= lsm_grid_mask[int(index_lsm_grid_lat), int(index_lsm_grid_lon)]
+                            
                     intersect_grid_info_list.append({
                         'rivid': rapid_connect_rivid,
                         'area': poly_area,
@@ -257,7 +263,6 @@ def rtree_create_weight_table(lsm_grid_lat, lsm_grid_lon,
             # If no intersection found, add dummy row
             if npoints <= 0:
                 connectwriter.writerow([rapid_connect_rivid] + dummy_row_end)
-
             for intersect_grid_info in intersect_grid_info_list:
                 connectwriter.writerow([
                     intersect_grid_info['rivid'],
@@ -280,7 +285,8 @@ def CreateWeightTableECMWF(in_ecmwf_nc,
                            in_connectivity_file,
                            out_weight_table,
                            area_id=None,
-                           file_geodatabase=None):
+                           file_geodatabase=None,
+                           in_ecmwf_mask_var=None):
     """
     Create Weight Table for ECMWF Grids
 
@@ -338,12 +344,25 @@ def CreateWeightTableECMWF(in_ecmwf_nc,
         (data_ecmwf_nc.variables[in_ecmwf_lon_var][:] + 180) % 360 - 180
     # assume [-90, 90]
     ecmwf_lat = data_ecmwf_nc.variables[in_ecmwf_lat_var][:]
+
+    if in_ecmwf_mask_var is not None:
+        if in_ecmwf_mask_var in variables_list:
+            ecmwf_mask = data_ecmwf_nc.variables[in_ecmwf_mask_var][0,:,:]
+        else:
+            print('Variable "{}" not found in {}.'.format(
+                in_ecmwf_mask_var, in_ecmwf_nc))
+            print('Continuing with no land mask.')
+            ecmwf_mask = None
+    else:
+        ecmwf_mask = None
+
     data_ecmwf_nc.close()
 
     rtree_create_weight_table(ecmwf_lat, ecmwf_lon,
                               in_catchment_shapefile, river_id,
                               in_connectivity_file, out_weight_table,
-                              file_geodatabase, area_id)
+                              file_geodatabase, area_id,
+                              lsm_grid_mask=ecmwf_mask)
 
 
 def CreateWeightTableLDAS(in_ldas_nc,

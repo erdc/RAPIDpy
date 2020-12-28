@@ -779,7 +779,8 @@ def test_gen_weight_table_era5_land_mask():
         COMPARE_DATA_PATH, "mendocino_nhdplus_catchment",
         "rapid_connectivity_mendocino_sample.csv")
 
-    lsm_grid = os.path.join(LSM_INPUT_DATA_PATH, "era5", "era5_land-sea_mask_mendocino_subset.nc")
+    lsm_grid = os.path.join(LSM_INPUT_DATA_PATH, "era5_land_mask", 
+                            "era5_land-sea_mask_mendocino_subset.nc")
 
     CreateWeightTableECMWF(in_ecmwf_nc=lsm_grid,
                            in_catchment_shapefile=os.path.join(

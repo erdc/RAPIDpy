@@ -225,7 +225,7 @@ def rtree_create_weight_table(lsm_grid_lat, lsm_grid_lon,
                         if round(area_ratio, 5) != 1:
                             msg_level = "WARNING"
                         log('The cleaned catchment polygon area '
-                            'differs from the original area by {1}%.'
+                            'differs from the original area by {0}%.'
                             .format(abs(area_ratio - 1)), severity=msg_level)
                         intersect_poly = \
                             catchment_polygon.intersection(lsm_grid_polygon)

@@ -36,8 +36,3 @@ def test_find_goodness_of_fit_csv_2():
 
     tmpfile.close()
 
-if __name__=='__main__':
-    st = time.time()
-    test_find_goodness_of_fit_csv_2()
-    e = time.time() - st
-    print('time:', e)

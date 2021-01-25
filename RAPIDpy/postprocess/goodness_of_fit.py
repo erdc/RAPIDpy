@@ -339,3 +339,111 @@ def find_goodness_of_fit_csv(observed_simulated_file, out_file=None):
 
     if print_file:
         print_file.close()
+
+def find_goodness_of_fit_csv_2(observed_file, simulated_file, out_file):
+    """
+    Finds the goodness of fit comparing observed and simulated flows.
+    In both `observed_file` and `simulated file`, the first column contains 
+    the date associated with the reported value and the first row contains the
+    river segment id. It is assumed that the dates and river ids are identical 
+    in both files. The first row of `out_file` contains the same river ids as 
+    the two input files and the first column contains performance 
+    metric names (e.g. "Percent Bias"). 
+
+    Example::
+        date, rivid1, rivid2
+        2016-01-01, 33.5, 77.2
+        2016-01-02, 34.7, 73.0
+
+    Parameters
+    ----------
+    simulated_file: str
+        Path to the csv file with simulated flows.
+    observed_file: str
+        Path to the csv file with observed flows.
+    out_file: str
+        Path to output file. 
+
+
+    Example:
+
+    .. code:: python
+
+        from RAPIDpy.postprocess import find_goodness_of_fit_csv_2
+
+        find_goodness_of_fit_csv('observed.csv', 'simulated.csv', 
+                                 'performance_metrics.csv')
+
+    """
+    observed_table = np.genfromtxt(observed_file, delimiter=',',
+                                   dtype=str)
+
+    simulated_table = np.genfromtxt(simulated_file, delimiter=',',
+                                    dtype=str)
+
+    obs_header = observed_table[0, :]
+    sim_header = simulated_table[0, :]
+    
+    obs_date = observed_table[:, 0]
+    sim_date = simulated_table[:, 0]
+    
+    # Verify that `observed_file` and `simulated_file` contain the same river
+    # ids and have the same data dimensions.
+    assert np.array_equal(obs_header, sim_header), (
+        "{} and {} have inconsistent river ids.".format(
+            observed_file, simulated_file))
+    
+    assert observed_table.shape == simulated_table.shape, (
+        "{} and {} have inconsistent dimensions.".format(
+            observed_file, simulated_file))
+
+    # Remove river id header and date column from both arrays.
+    observed_table = observed_table[1:, 1:].astype(float)
+    simulated_table = simulated_table[1:, 1:].astype(float)
+    
+    nrivid = observed_table.shape[1]
+        
+    metric_names = ["Percent Bias",
+                    "Absolute Percent Bias",
+                    "Root Mean Squared Error",
+                    "Mean Absolute Error",
+                    "Bias", 
+                    "Nash Sutcliffe efficiency coefficient",
+                    "Likelihood",
+                    "correlation coefficient",
+                    "index of agreement",
+                    "Kling-Gupta Efficiency",
+                    "number of observations"]
+
+    nmetrics = len(metric_names)
+        
+    out = np.zeros([nmetrics, nrivid])
+    
+    for idx in range(nrivid):
+        obs = observed_table[:, idx]
+        sim = simulated_table[:, idx]
+        valid = ~np.isnan(obs)
+        obs = obs[valid]
+        sim = sim[valid]
+        nobs = len(obs)
+
+        out[0, idx] = pc_bias(sim, obs)
+        out[1, idx] = apb(sim, obs)
+        out[2, idx] = rmse(sim, obs)
+        out[3, idx] = mae(sim, obs)
+        out[4, idx] = bias(sim, obs)
+        out[5, idx] = NS(sim, obs)
+        out[6, idx] = L(sim, obs)
+        out[7, idx] = correlation(sim, obs)
+        out[8, idx] = index_agreement(sim, obs)
+        out[9, idx] = KGE(sim, obs)[0]
+        out[10, idx] = nobs
+
+    output_header = obs_header
+    output_header[0] = 'metric'
+    output_array = np.column_stack([metric_names, out])
+    output_array = np.vstack([output_header, output_array])
+
+    np.savetxt(out_file, output_array, delimiter=',', fmt='%s')
+
+    

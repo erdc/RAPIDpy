@@ -392,7 +392,7 @@ def find_goodness_of_fit_csv_2(observed_file, simulated_file, out_file):
     assert np.array_equal(obs_header, sim_header), (
         "{} and {} have inconsistent river ids.".format(
             observed_file, simulated_file))
-    
+     
     assert observed_table.shape == simulated_table.shape, (
         "{} and {} have inconsistent dimensions.".format(
             observed_file, simulated_file))
@@ -446,4 +446,3 @@ def find_goodness_of_fit_csv_2(observed_file, simulated_file, out_file):
 
     np.savetxt(out_file, output_array, delimiter=',', fmt='%s')
 
-    

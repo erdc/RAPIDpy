@@ -2,7 +2,7 @@
 
 import sys
 
-from RAPIDpy.postprocess import find_goodness_of_fit
+from RAPIDpy.postprocess import find_goodness_of_fit_csv_2
 
 if __name__=='__main__':
     obs_file = sys.argv[1]

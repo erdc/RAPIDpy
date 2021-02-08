@@ -822,8 +822,6 @@ class TestRAPIDInflow(unittest.TestCase):
                                 convert_one_hour_to_three=True,
                                 single_run=True, filter_dates=False)
 
-        print(rapid_input_path, rapid_output_path)
-        print(output_file_info)
         # CHECK OUTPUT
         # m3_riv
         m3_file_name = "m3_riv_bas_era5_era5_3hr_20190101to20190101.nc"

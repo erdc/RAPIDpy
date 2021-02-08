@@ -542,14 +542,15 @@ class CreateInflowFileFromGriddedRunoff(object):
                inflow_data = self.sum_inflow_over_time_increment(
                    inflow_data, 1, 3, steps_per_file)
                len_time_subset /= 3
-               
+            
+            start_idx = int(index*len_time_subset)
+            end_idx = int((index+1)*len_time_subset)   
             # only one process is allowed to write at a time to netcdf file
             mp_lock.acquire()
             data_out_nc = Dataset(out_nc, "a", format="NETCDF3_CLASSIC")
             if runoff_dimension_size == 3 and len_time_subset > 1:
                 data_out_nc.variables['m3_riv'][
-                    index*len_time_subset:(index+1)*len_time_subset, :] = \
-                    inflow_data
+                    start_idx:end_idx, :] = inflow_data
             else:
                 data_out_nc.variables['m3_riv'][index] = inflow_data
             data_out_nc.close()

@@ -75,7 +75,7 @@ def generate_inflows_from_runoff(args):
         if len(runoff_file_list) > 1:
             runoff_string += " to {0}".format(runoff_file_list[-1])
         print(runoff_string)
-        print("Converting inflow ...")
+        print("Converting inflow in generate inflow from runoff...")
         try:
             rapid_inflow_tool.execute(nc_file_list=runoff_file_list,
                                       index_list=file_index_list,
@@ -101,6 +101,14 @@ def generate_inflows_from_runoff(args):
 # UTILITY FUNCTIONS
 # -----------------------------------------------------------------------------
 DEFAULT_LSM_INPUTS = {
+    'era5': {
+        'file_datetime_re_pattern': r'\d{8}',
+        'file_datetime_pattern': "%Y%m%d",
+    },
+    't1279': {
+        'file_datetime_re_pattern': r'\d{8}',
+        'file_datetime_pattern': "%Y%m%d",
+    },
     't255': {
         'file_datetime_re_pattern': r'\d{8}',
         'file_datetime_pattern': "%Y%m%d",
@@ -319,9 +327,11 @@ def identify_lsm_grid(lsm_grid_path):
 
     runoff_vars = [surface_runoff_var, subsurface_runoff_var]
 
+    print('Checking grid type.',total_runoff_var.lower(),institution)
     if institution == "European Centre for Medium-Range Weather Forecasts" \
             or total_runoff_var.lower() == "ro":
         # these are the ECMWF models
+        print('This is an ECMWF model')
         if lat_dim_size == 361 and lon_dim_size == 720:
             print("Runoff file identified as ERA Interim Low Res (T255) GRID")
             # A) ERA Interim Low Res (T255)
@@ -356,11 +366,13 @@ def identify_lsm_grid(lsm_grid_path):
             lsm_file_data["model_name"] = "era_20cm"
             lsm_file_data["grid_type"] = 't159'
         elif lat_dim_size == 721 and lon_dim_size == 1440:
-            print("Runoff file identified as ERA5 GRID")
+            print("Runoff file identified as ERA5 lat lon .25 degree GRID")
+            # D) ERA 20CM (lat lon quarter degree) - 1hr
+            # Downloaded as .25 degree grid
             #  dimensions:
             #   longitude = 1440 ;
             #   latitude = 721 ;
-            lsm_file_data["description"] = "ERA5"
+            lsm_file_data["description"] = "ERA5 (LL Grid)"
             lsm_file_data["weight_file_name"] = r'weight_era5\.csv'
             lsm_file_data["model_name"] = "era5"
             lsm_file_data["grid_type"] = 'era5'
@@ -375,6 +387,17 @@ def identify_lsm_grid(lsm_grid_path):
             lsm_file_data["weight_file_name"] = r'weight_era5\.csv'
             lsm_file_data["model_name"] = "era5"
             lsm_file_data["grid_type"] = 'era5'
+        elif lat_dim_size == 1280 and lon_dim_size == 2576:
+            print("Runoff file identified as ERAI Gaussian GRID")
+            # E) ERA INTERIM (Gaussian) - Daily
+            # Downloaded as Gaussian grid
+            #  dimensions:
+            #   longitude = 2576 ;
+            #   latitude = 1280 ;
+            lsm_file_data["description"] = "ERAI (Gaussian Grid)"
+            lsm_file_data["weight_file_name"] = r'weight_erai\.csv'
+            lsm_file_data["model_name"] = "erai"
+            lsm_file_data["grid_type"] = 't1279'
         else:
             lsm_example_file.close()
             raise Exception("Unsupported ECMWF grid.")

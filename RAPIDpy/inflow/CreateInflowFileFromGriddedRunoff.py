@@ -503,6 +503,26 @@ class CreateInflowFileFromGriddedRunoff(object):
                             np.concatenate([ro_first_half, ro_second_half]),
                             area_sqm_npoints)
 
+                elif grid_type == 't1279':
+                    # A) ERA Interim Low Res (T1279) - data is cumulative
+                    # from time 6/12
+                    # 0 1 2 3 4
+                    # (time zero not included, so assumed to be zero)
+                    ro_first_half = \
+                        np.concatenate([data_goal[0:1, ],
+                                        np.subtract(data_goal[1:2, ],
+                                                    data_goal[0:1, ])])
+                    # from time 15/18/21/24
+                    # (time restarts at time 12, assumed to be zero)
+                    ro_second_half = \
+                        np.concatenate([data_goal[2:3, ],
+                                        np.subtract(data_goal[3:, ],
+                                                    data_goal[2:3, ])])
+                    ro_stream = \
+                        np.multiply(
+                            np.concatenate([ro_first_half, ro_second_half]),
+                            area_sqm_npoints)
+
                 else:
                     ro_stream = data_goal * area_sqm_npoints * \
                                 conversion_factor
@@ -522,14 +542,15 @@ class CreateInflowFileFromGriddedRunoff(object):
                inflow_data = self.sum_inflow_over_time_increment(
                    inflow_data, 1, 3, steps_per_file)
                len_time_subset /= 3
-               
+            
+            start_idx = int(index*len_time_subset)
+            end_idx = int((index+1)*len_time_subset)   
             # only one process is allowed to write at a time to netcdf file
             mp_lock.acquire()
             data_out_nc = Dataset(out_nc, "a", format="NETCDF3_CLASSIC")
             if runoff_dimension_size == 3 and len_time_subset > 1:
                 data_out_nc.variables['m3_riv'][
-                    index*len_time_subset:(index+1)*len_time_subset, :] = \
-                    inflow_data
+                    start_idx:end_idx, :] = inflow_data
             else:
                 data_out_nc.variables['m3_riv'][index] = inflow_data
             data_out_nc.close()

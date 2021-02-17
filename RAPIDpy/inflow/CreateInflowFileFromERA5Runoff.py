@@ -38,7 +38,7 @@ class CreateInflowFileFromERA5Runoff(CreateInflowFileFromGriddedRunoff):
         dims = list(data_nc.dimensions)
         ndim = len(dims)
 
-	ndim_intersect = len(set(dims) & set(self.dims_oi))
+        ndim_intersect = len(set(dims) & set(self.dims_oi))
         if not ndim_intersect == ndim:
             data_nc.close()
             raise Exception("{0} {1}".format(self.error_messages[1], dims))

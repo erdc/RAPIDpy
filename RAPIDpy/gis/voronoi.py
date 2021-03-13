@@ -157,7 +157,7 @@ def pointsToVoronoiGridShapefile(lat, lon, vor_shp_path, extent=None):
         .format(os.path.basename(vor_shp_path)))
     if os.path.exists(vor_shp_path):
         os.remove(vor_shp_path)
-    drv = ogr.GetDriverByName('ESRI Shapefile')
+    drv = ogr.GetDriverByName('GPKG')
     outShp = drv.CreateDataSource(vor_shp_path)
     osr_geographic_proj = osr.SpatialReference()
     osr_geographic_proj.ImportFromEPSG(4326)

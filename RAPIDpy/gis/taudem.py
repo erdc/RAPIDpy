@@ -234,7 +234,7 @@ class TauDEM(object):
         setrecursionlimit(original_recursion_limit)
 
         # Write out subset to new shapefile
-        shp_drv = ogr.GetDriverByName('ESRI Shapefile')
+        shp_drv = ogr.GetDriverByName('GPKG')
         # Remove output shapefile if it already exists
         if os.path.exists(out_subset_network_file):
             shp_drv.DeleteDataSource(out_subset_network_file)
@@ -400,7 +400,7 @@ class TauDEM(object):
             watershed_rivid_list[feature_idx] = \
                 watershed_feature.GetField(watershed_network_river_id_field)
 
-        shp_drv = ogr.GetDriverByName('ESRI Shapefile')
+        shp_drv = ogr.GetDriverByName('GPKG')
         # Remove output shapefile if it already exists
         if os.path.exists(out_watershed_subset_file):
             shp_drv.DeleteDataSource(out_watershed_subset_file)
@@ -458,7 +458,7 @@ class TauDEM(object):
         log("Process: Raster to Polygon ...")
         time_start = datetime.utcnow()
         temp_polygon_file = \
-            "{0}_temp.shp".format(
+            "{0}_temp.gpkg".format(
                 os.path.splitext(os.path.basename(polygon_file))[0])
 
         GDALGrid(raster_file).to_polygon(out_shapefile=temp_polygon_file,
@@ -479,7 +479,7 @@ class TauDEM(object):
             polygon_rivid_list[feature_idx] = \
                 catchment_feature.GetField('LINKNO')
 
-        shp_drv = ogr.GetDriverByName('ESRI Shapefile')
+        shp_drv = ogr.GetDriverByName('GPKG')
         # Remove output shapefile if it already exists
         if os.path.exists(polygon_file):
             shp_drv.DeleteDataSource(polygon_file)
@@ -945,7 +945,7 @@ class TauDEM(object):
         out_network_coordinates = \
             os.path.join(output_directory, 'network_coordinates.txt')
         out_stream_reach_file = \
-            os.path.join(output_directory, 'stream_reach_file.shp')
+            os.path.join(output_directory, 'stream_reach_file.gpkg')
         out_watershed_grid = \
             os.path.join(output_directory, 'watershed_grid.tif')
         self.streamReachAndWatershed(delineate,
@@ -957,7 +957,7 @@ class TauDEM(object):
 
         # convert watersed grid to shapefile
         out_watershed_shapefile = \
-            os.path.join(output_directory, 'watershed_shapefile.shp')
+            os.path.join(output_directory, 'watershed_shapefile.gpkg')
         self.rasterToPolygon(out_watershed_grid, out_watershed_shapefile)
         log("Total time to complete: {0}".format(datetime.utcnow() -
                                                  time_start))

@@ -17,6 +17,12 @@ def open_shapefile(shapefile_path, file_geodatabase=None):
         gdb_driver = ogr.GetDriverByName("OpenFileGDB")
         ogr_shapefile = gdb_driver.Open(file_geodatabase)
         ogr_shapefile_lyr = ogr_shapefile.GetLayer(shapefile_path)
+        
+    elif shapefile_path[-4:] == 'gpkg' :
+        gdb_driver = ogr.GetDriverByName("GPKG")
+        ogr_shapefile = gdb_driver.Open(shapefile_path)
+        ogr_shapefile_lyr = ogr_shapefile.GetLayer()
+        
     else:
         ogr_shapefile = ogr.Open(shapefile_path)
         ogr_shapefile_lyr = ogr_shapefile.GetLayer()

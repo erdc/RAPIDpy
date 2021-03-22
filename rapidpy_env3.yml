@@ -12,7 +12,7 @@
 # Run command: 
 #   $ python setup.py develop 
 
-name: rapidpy_env
+name: nickgpkg3
 channels:
 - conda-forge
 - defaults

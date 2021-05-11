@@ -174,7 +174,7 @@ class CreateInflowFileFromGriddedRunoff(object):
 
         # Create output inflow netcdf data
         print("Generating inflow file ...")
-        data_out_nc = Dataset(out_nc, "w", format="NETCDF3_CLASSIC")
+        data_out_nc = Dataset(out_nc, "w")
         rivid_list = np.loadtxt(in_rapid_connect_file,
                                 delimiter=",",
                                 ndmin=1,
@@ -198,7 +198,7 @@ class CreateInflowFileFromGriddedRunoff(object):
         data_out_nc.close()
 
         try:
-            data_out_nc = Dataset(out_nc, "a", format="NETCDF3_CLASSIC")
+            data_out_nc = Dataset(out_nc, "a")
             # rivid
             rivid_var = data_out_nc.createVariable('rivid', 'i4',
                                                    ('rivid',))
@@ -547,7 +547,7 @@ class CreateInflowFileFromGriddedRunoff(object):
             end_idx = int((index+1)*len_time_subset)   
             # only one process is allowed to write at a time to netcdf file
             mp_lock.acquire()
-            data_out_nc = Dataset(out_nc, "a", format="NETCDF3_CLASSIC")
+            data_out_nc = Dataset(out_nc, "a")
             if runoff_dimension_size == 3 and len_time_subset > 1:
                 data_out_nc.variables['m3_riv'][
                     start_idx:end_idx, :] = inflow_data

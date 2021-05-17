@@ -32,7 +32,8 @@ class CreateInflowFileFromLDASRunoff(CreateInflowFileFromGriddedRunoff):
         self.dims_oi = [lon_dim, lat_dim]
         self.vars_oi = [lon_var, lat_var] + runoff_vars
         self.runoff_vars = runoff_vars
-        self.length_time = {"Hourly": 1}
+        # MPG: NASA PMM data in 3-hourly files with a single time entry.
+        self.length_time = {"Hourly": 1, "3-Hourly": 1}
 
         super(CreateInflowFileFromLDASRunoff, self).__init__()
 

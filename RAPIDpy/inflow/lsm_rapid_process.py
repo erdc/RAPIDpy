@@ -53,6 +53,7 @@ def generate_inflows_from_runoff(args):
     mp_lock = args[6]
     steps_per_file = args[7]
     convert_one_hour_to_three = args[8]
+    reduction = args[9]
     
     time_start_all = datetime.utcnow()
 
@@ -85,7 +86,8 @@ def generate_inflows_from_runoff(args):
                                       mp_lock=mp_lock,
                                       steps_per_file=steps_per_file,
                                       convert_one_hour_to_three=\
-                                      convert_one_hour_to_three)
+                                      convert_one_hour_to_three,
+                                      reduction=reduction)
         except Exception:
             # This prints the type, value, and stack trace of the
             # current exception being handled.
@@ -298,6 +300,12 @@ def identify_lsm_grid(lsm_grid_path):
         elif var == "total runoff":
             # CMIP5 data
             total_runoff_var = var
+        elif var == "runoff":
+            # NASA PMM data
+            surface_runoff_var = var
+        elif var == "base":
+            # NASA PMM data
+            subsurface_runoff_var = var
 
     # IDENTIFY GRID TYPE
     lsm_file_data = {
@@ -481,6 +489,25 @@ def identify_lsm_grid(lsm_grid_path):
         else:
             lsm_example_file.close()
             raise Exception("Unsupported runoff grid.")
+
+    # MPG: Handle NASA PMM dataset with no metadata.
+    elif surface_runoff_var.startswith("runoff") \
+        and subsurface_runoff_var.startswith("base"):
+
+        lsm_file_data["model_name"] = "PMM"
+        if lat_dim_size == 105 and lon_dim_size == 156:
+            print("Runoff file identified as NASA PMM GRID")
+            lsm_file_data["description"] = "NASA PMM"
+            lsm_file_data["weight_file_name"] = r'weight_pmm\.csv'
+            lsm_file_data["grid_type"] = 'pmm'
+            lsm_file_data["rapid_inflow_tool"] = \
+            CreateInflowFileFromLDASRunoff(
+                latitude_dim,
+                longitude_dim,
+                latitude_var,
+                longitude_var,
+                runoff_vars,
+            )
 
     else:
         title = ""
@@ -999,6 +1026,11 @@ def run_lsm_rapid_process(rapid_executable_location,
                                  if len(lsm_file_list[
                                         nldas_index:nldas_index+3]) == 3]
 
+            if lsm_file_data['model_name'] in ['PMM']:
+                reduction = 'sum'
+            else:
+                reduction = 'mean'
+                
             if len(lsm_file_list) < num_cpus:
                 num_cpus = len(lsm_file_list)
             # pylint: disable=no-member
@@ -1017,7 +1049,8 @@ def run_lsm_rapid_process(rapid_executable_location,
                         lsm_file_data['rapid_inflow_tool'],
                         mp_lock,
                         steps_per_file,
-                        convert_one_hour_to_three_within_file))
+                        convert_one_hour_to_three_within_file,
+                        reduction))
                    # COMMENTED CODE IS FOR DEBUGGING
                    # generate_inflows_from_runoff((
                    #    cpu_grouped_file_list,

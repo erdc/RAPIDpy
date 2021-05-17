@@ -296,26 +296,34 @@ class CreateInflowFileFromGriddedRunoff(object):
 
         return inflow_data
 
-    def get_conversion_factor(self, in_nc, num_nc_files):
+    def get_conversion_factor(self, in_nc, num_nc_files, reduction):
         """get conversion_factor"""
         data_in_nc = Dataset(in_nc)
 
         # convert from kg/m^2 (i.e. mm) to m
         conversion_factor = 0.001
 
+        # MPG: we need to establish that units are present in the nc file.
+        try:
+            units = data_in_nc.variables[self.runoff_vars[0]].getncattr("units")
+        except:
+            print('Warning: no runoff units specified. Assuming units of kg/m^2/s')
+            units = 'kg/m^2/s'
+
         # ECMWF units are in m
-        if data_in_nc.variables[self.runoff_vars[0]] \
-                .getncattr("units") == "m":
+        if units == "m":
             conversion_factor = 1
 
         # ftp://hydro1.sci.gsfc.nasa.gov/data/s4pa/GLDAS_V1/README.GLDAS.pdf
-        if "s" in data_in_nc.variables[self.runoff_vars[0]] \
-                .getncattr("units"):
+        if "s" in units and reduction in ['mean', 'average']:
             # that means kg/m^2/s in GLDAS v1 that is 3-hr avg,
             # so multiply by 3 hr (ex. 3*3600). Assumed same
             # for others (ex. 1*3600).
             # If combining files, need to take average of these,
             # so divide by number of files
+            # MPG: if reduction is a sum (e.g. over a
+            # 3-hourly period), we do not modify the
+            # conversion factor.
             conversion_factor *= \
                 self.simulation_time_step_seconds / \
                 num_nc_files
@@ -331,7 +339,8 @@ class CreateInflowFileFromGriddedRunoff(object):
 
     def execute(self, nc_file_list, index_list, in_weight_table,
                 out_nc, grid_type, mp_lock, steps_per_file=1,
-                convert_one_hour_to_three=False):
+                convert_one_hour_to_three=False,
+                reduction='mean'):
 
         """The source code of the tool."""
         if not os.path.exists(out_nc):
@@ -351,7 +360,7 @@ class CreateInflowFileFromGriddedRunoff(object):
         self.read_in_weight_table(in_weight_table)
 
         conversion_factor = self.get_conversion_factor(demo_file_list[0],
-                                                       len(demo_file_list))
+                                                       len(demo_file_list, reduction))
 
         # get indices of subset of data
         lon_ind_all = [int(i) for i in self.dict_list[self.header_wt[2]]]

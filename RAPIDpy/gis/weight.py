@@ -373,7 +373,8 @@ def CreateWeightTableLDAS(in_ldas_nc,
                           in_connectivity_file,
                           out_weight_table,
                           area_id=None,
-                          file_geodatabase=None):
+                          file_geodatabase=None,
+                          in_land_area_fraction_var=None):
     """
     Create Weight Table for NLDAS, GLDAS grids as well as for 2D Joules,
     or LIS Grids
@@ -432,7 +433,19 @@ def CreateWeightTableLDAS(in_ldas_nc,
     ldas_lat = data_ldas_nc.variables[in_nc_lat_var][:]  # assume [-90,90]
     data_ldas_nc.close()
 
+    if in_land_area_fraction_var is not None:
+        if in_land_area_fraction_var in variables_list:
+            land_area_fraction = data_ldas_nc.variables[in_ecmwf_mask_var][0,:,:]
+        else:
+            print('Variable "{}" not found in {}.'.format(
+                in_land_area_fraction_var, in_ldas_nc))
+            print('Continuing with no land area fraction correction.')
+            land_area_fraction = None
+    else:
+        land_area_fraction = None
+
     rtree_create_weight_table(ldas_lat, ldas_lon,
                               in_catchment_shapefile, river_id,
                               in_connectivity_file, out_weight_table,
-                              file_geodatabase, area_id)
+                              file_geodatabase, area_id,
+                              lsm_grid_mask=land_area_fraction)

@@ -264,7 +264,8 @@ def test_qout_same():
 
     assert (compare_qout_files(input_qout_file, input_qout_file_cf))
 
-@pytest.mark.skipif(not os.path.exists(RAPID_EXE_PATH), reason='Only run if RAPID installed')
+#@pytest.mark.skipif(not os.path.exists(RAPID_EXE_PATH), reason='Only run if RAPID installed')
+@pytest.mark.skip(reason="Test will not complete on Onyx")
 def test_run_rapid_simulation():
     """
     Test Running RAPID Simulation
@@ -478,7 +479,7 @@ def test_generate_qinit_file():
                  qinit_cf_rapid_qout
                  )
 
-
+@pytest.mark.skip(reason="Test depends on accessibility of USGS server.")
 def test_download_usgs_daily_avg():
     """
     This tests downloading USGS daily avg data

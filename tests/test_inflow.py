@@ -164,7 +164,8 @@ class TestRAPIDInflow(unittest.TestCase):
         )
         return rapid_input_path, rapid_output_path, output_file_info
 
-    @pytest.mark.skipif(not os.path.exists(RAPID_EXE_PATH), reason='Only run if RAPID installed')
+    #@pytest.mark.skipif(not os.path.exists(RAPID_EXE_PATH), reason='Only run if RAPID installed')
+    @pytest.mark.skip(reason="Test will not complete on Onyx")
     def test_run_era_interim_inflow(self):
         """
         Checks generating inflow file from ERA Interim LSM
@@ -225,7 +226,8 @@ class TestRAPIDInflow(unittest.TestCase):
         remove_files(generated_qinit_file)
 
 
-    @pytest.mark.skipif(not os.path.exists(RAPID_EXE_PATH), reason='Only run if RAPID installed')
+    #@pytest.mark.skipif(not os.path.exists(RAPID_EXE_PATH), reason='Only run if RAPID installed')
+    @pytest.mark.skip(reason="Test will not complete on Onyx")
     def test_run_era_interim_inflow_init(self):
         """
         Checks generating inflow file from ERA Interim LSM

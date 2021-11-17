@@ -298,28 +298,38 @@ class CreateInflowFileFromGriddedRunoff(object):
 
     def get_conversion_factor(self, in_nc, num_nc_files):
         """get conversion_factor"""
-        data_in_nc = Dataset(in_nc)
+       
+        # MPG: Adding conversion factor specific to u_of_a datasets.
+        # units for runoff are mm/s. The native time step is hourly.
+        # We convert to m.
+
+        seconds_per_time_step = 3600
+        m_per_mm = 0.001
+        conversion_factor = m_per_mm * seconds_per_time_step
+
+        # MPG: Commenting out below.
+        #data_in_nc = Dataset(in_nc)
 
         # convert from kg/m^2 (i.e. mm) to m
-        conversion_factor = 0.001
-
+        #conversion_factor = 0.001
+        
         # ECMWF units are in m
-        if data_in_nc.variables[self.runoff_vars[0]] \
-                .getncattr("units") == "m":
-            conversion_factor = 1
+        #if data_in_nc.variables[self.runoff_vars[0]] \
+        #        .getncattr("units") == "m":
+        #    conversion_factor = 1
 
         # ftp://hydro1.sci.gsfc.nasa.gov/data/s4pa/GLDAS_V1/README.GLDAS.pdf
-        if "s" in data_in_nc.variables[self.runoff_vars[0]] \
-                .getncattr("units"):
+        #if "s" in data_in_nc.variables[self.runoff_vars[0]] \
+        #        .getncattr("units"):
             # that means kg/m^2/s in GLDAS v1 that is 3-hr avg,
             # so multiply by 3 hr (ex. 3*3600). Assumed same
             # for others (ex. 1*3600).
             # If combining files, need to take average of these,
             # so divide by number of files
-            conversion_factor *= \
-                self.simulation_time_step_seconds / \
-                num_nc_files
-        data_in_nc.close()
+        #    conversion_factor *= \
+        #        self.simulation_time_step_seconds / \
+        #        num_nc_files
+        #data_in_nc.close()
 
         return conversion_factor
 
@@ -352,6 +362,11 @@ class CreateInflowFileFromGriddedRunoff(object):
 
         conversion_factor = self.get_conversion_factor(demo_file_list[0],
                                                        len(demo_file_list))
+
+        # MPG DEBUG:
+        #print('conversion_factor')
+        #print(conversion_factor)
+        #sys.exit(0)
 
         # get indices of subset of data
         lon_ind_all = [int(i) for i in self.dict_list[self.header_wt[2]]]
@@ -539,10 +554,20 @@ class CreateInflowFileFromGriddedRunoff(object):
                 pointer += npoints
                 
             if convert_one_hour_to_three:
+               #MPG DEBUG:
+               #print('converting hourly runoff to three-hour increment')
+               #print('original inflow shape:')
+               #print(inflow_data.shape)
+               #print('original inflow first three entries:')
+               #print(inflow_data[:3])
                inflow_data = self.sum_inflow_over_time_increment(
                    inflow_data, 1, 3, steps_per_file)
                len_time_subset /= 3
-            
+               # MPG DEBUG:
+               #print('processed inflow shape:')
+               #print(inflow_data.shape)
+               #print('processed inflow first entry:')
+               #print(inflow_data[0])
             start_idx = int(index*len_time_subset)
             end_idx = int((index+1)*len_time_subset)   
             # only one process is allowed to write at a time to netcdf file

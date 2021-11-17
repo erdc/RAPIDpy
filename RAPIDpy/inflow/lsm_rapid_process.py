@@ -11,6 +11,7 @@ import multiprocessing
 import os
 import re
 import traceback
+import sys
 
 # external packages
 import pandas as pd
@@ -577,14 +578,16 @@ def determine_start_end_timestep(lsm_file_list,
 
         # determine the start time from the existing files
         actual_simulation_start_datetime = \
-            datetime.strptime(file_re_match.search(lsm_file_list[0]).group(0),
+            datetime.strptime(file_re_match.search(
+                lsm_file_list[0].split('/')[-1]).group(0),
                               file_datetime_pattern)
 
         # check to see if the time step matches expected
         if len(lsm_file_list) > 1:
+            filename = lsm_file_list[1].split('/')[-1]
             time_step = \
                 int((datetime.strptime(
-                    file_re_match.search(lsm_file_list[1]).group(0),
+                    file_re_match.search(filename).group(0),
                     file_datetime_pattern) -
                     actual_simulation_start_datetime).total_seconds()
                     / float(file_size_time))
@@ -598,7 +601,9 @@ def determine_start_end_timestep(lsm_file_list,
 
         # determine the end datetime
         actual_simulation_end_datetime = \
-            datetime.strptime(file_re_match.search(lsm_file_list[-1]).group(0),
+            datetime.strptime(
+                    file_re_match.search(
+                        lsm_file_list[-1].split('/')[-1]).group(0),
                               file_datetime_pattern) \
             + timedelta(seconds=(file_size_time-1) * time_step)
     else:
@@ -641,6 +646,8 @@ def determine_start_end_timestep(lsm_file_list,
 # ------------------------------------------------------------------------------
 def run_lsm_rapid_process(rapid_executable_location,
                           lsm_data_location,
+                          # MPG: Added parameter weight_table_file.
+                          weight_table_file,
                           rapid_io_files_location=None,
                           rapid_input_location=None,
                           rapid_output_location=None,
@@ -893,7 +900,8 @@ def run_lsm_rapid_process(rapid_executable_location,
             print("Filtering files by datetime ...")
             lsm_file_list_subset = []
             for lsm_file in lsm_file_list:
-                match = file_re_match.search(lsm_file)
+                filename = lsm_file.split('/')[-1]
+                match = file_re_match.search(filename)
                 file_date = datetime.strptime(match.group(0),
                                               file_datetime_pattern)
                 if file_date > simulation_end_datetime:
@@ -918,13 +926,21 @@ def run_lsm_rapid_process(rapid_executable_location,
 
         steps_per_file = int(total_num_time_steps / len(lsm_file_list))
         file_timestep_is_hourly = (time_step == 3600)
-        file_time_hours = time_step / 3600.0
+        file_time_hours = int(steps_per_file*time_step / 3600.0)
         file_time_divisible_by_three = (steps_per_file % 3 == 0)
         convert_one_hour_to_three_within_file = False
-        
+       
+        #MPG DEBUG:
+        #print('time_step:')
+        #print(time_step)
+        #print('file_timestep_is_hourly:')
+        #print(file_timestep_is_hourly)
+        #sys.exit(0)
+
         # VALIDATING INPUT IF DIVIDING BY 3
         if convert_one_hour_to_three:
-            if (lsm_file_data['grid_type'] in ('nldas', 'lis', 'joules')):
+            if (lsm_file_data['grid_type'] in ('nldas', 'lis', 'joules') and
+                    file_time_hours == 1):
                 num_extra_files = total_num_time_steps % 3
                 if num_extra_files != 0:
                     print(
@@ -933,6 +949,13 @@ def run_lsm_rapid_process(rapid_executable_location,
                     print("This means your simulation will be truncated")
                 total_num_time_steps /= 3
                 time_step *= 3
+                print("Grouping {0} in threes"
+                      .format(lsm_file_data['grid_type']))
+                lsm_file_list = [lsm_file_list[nldas_index:nldas_index+3]
+                                 for nldas_index in
+                                 range(0, len(lsm_file_list), 3)
+                                 if len(lsm_file_list[
+                                        nldas_index:nldas_index+3]) == 3]
             elif file_timestep_is_hourly and file_time_divisible_by_three:
                 # MPG: The above code handles the case where each file contains
                 # values for a single hourly timestep. We must also consider 
@@ -940,6 +963,12 @@ def run_lsm_rapid_process(rapid_executable_location,
                 convert_one_hour_to_three_within_file = True
                 total_num_time_steps /= 3
                 time_step *= 3
+                # MPG DEBUG:
+                #print('total_num_time_steps:')
+                #print(total_num_time_steps)
+                #print('time_step:')
+                #print(time_step)
+                #sys.exit(0)
             elif not file_timestep_is_hourly:
                 raise ValueError(
                     "{0} data has timestep of {1} hour(s). " 
@@ -978,9 +1007,11 @@ def run_lsm_rapid_process(rapid_executable_location,
                 os.path.join(master_watershed_output_directory,
                              'm3_riv_bas_{0}'.format(out_file_ending))
 
-            weight_table_file = \
-                case_insensitive_file_search(master_watershed_input_directory,
-                                             lsm_file_data['weight_file_name'])
+            # MPG: commenting out below to allow user to specify 
+            # weight_table_file as function parameter.
+            # weight_table_file = \
+            #    case_insensitive_file_search(master_watershed_input_directory,
+            #                                 lsm_file_data['weight_file_name'])
 
             try:
                 in_rivid_lat_lon_z_file = \
@@ -994,6 +1025,17 @@ def run_lsm_rapid_process(rapid_executable_location,
 
             print("Writing inflow file to: {0}"
                   .format(master_rapid_runoff_file))
+
+            # MPG DEBUG:
+            #print('Running generateOutputInflowFile with the following arguments:')
+            #print('out_nc')
+            #print(master_rapid_runoff_file)
+            #print('number_of_timesteps')
+            #print(total_num_time_steps)
+            #print('simulation_time_step')
+            #print(time_step)
+            #sys.exit(0)
+
             lsm_file_data['rapid_inflow_tool'].generateOutputInflowFile(
                 out_nc=master_rapid_runoff_file,
                 start_datetime_utc=actual_simulation_start_datetime,
@@ -1008,15 +1050,24 @@ def run_lsm_rapid_process(rapid_executable_location,
             )
 
             job_combinations = []
-            if (lsm_file_data['grid_type'] in ('nldas', 'lis', 'joules')) \
-                    and convert_one_hour_to_three:
-                print("Grouping {0} in threes"
-                      .format(lsm_file_data['grid_type']))
-                lsm_file_list = [lsm_file_list[nldas_index:nldas_index+3]
-                                 for nldas_index in
-                                 range(0, len(lsm_file_list), 3)
-                                 if len(lsm_file_list[
-                                        nldas_index:nldas_index+3]) == 3]
+            # MPG: Moved below to section marked 
+            # "VALIDATING INPUT IF DIVIDING BY 3"
+            #if (lsm_file_data['grid_type'] in ('nldas', 'lis', 'joules')) \
+            #        and convert_one_hour_to_three:
+            #    print("Grouping {0} in threes"
+            #          .format(lsm_file_data['grid_type']))
+            #    lsm_file_list = [lsm_file_list[nldas_index:nldas_index+3]
+            #                     for nldas_index in
+            #                     range(0, len(lsm_file_list), 3)
+            #                     if len(lsm_file_list[
+            #                            nldas_index:nldas_index+3]) == 3]
+
+            # MPG DEBUG:
+            #print('steps_per_file')
+            #print(steps_per_file)
+            #print('convert_one_hour_to_three_within_file')
+            #print(convert_one_hour_to_three_within_file)
+            #sys.exit(0)
 
             if len(lsm_file_list) < num_cpus:
                 num_cpus = len(lsm_file_list)
@@ -1037,17 +1088,17 @@ def run_lsm_rapid_process(rapid_executable_location,
                         mp_lock,
                         steps_per_file,
                         convert_one_hour_to_three_within_file))
-                   # COMMENTED CODE IS FOR DEBUGGING
-                   # generate_inflows_from_runoff((
-                   #    cpu_grouped_file_list,
-                   #    partition_index_list[loop_index],
-                   #    weight_table_file,
-                   #    lsm_file_data['grid_type'],
-                   #    master_rapid_runoff_file,
-                   #    lsm_file_data['rapid_inflow_tool'],
-                   #    mp_lock,
-                   #    steps_per_file,
-                   #    convert_one_hour_to_three_within_file))
+                    # COMMENTED CODE IS FOR DEBUGGING
+                    #generate_inflows_from_runoff((
+                    #   cpu_grouped_file_list,
+                    #   partition_index_list[loop_index],
+                    #   weight_table_file,
+                    #   lsm_file_data['grid_type'],
+                    #   master_rapid_runoff_file,
+                    #   lsm_file_data['rapid_inflow_tool'],
+                    #   mp_lock,
+                    #   steps_per_file,
+                    #   convert_one_hour_to_three_within_file))
             pool = multiprocessing.Pool(num_cpus)
             pool.map(generate_inflows_from_runoff,
                      job_combinations)
@@ -1102,7 +1153,7 @@ def run_lsm_rapid_process(rapid_executable_location,
 
             if generate_rapid_namelist_file:
                 rapid_manager.generate_namelist_file(
-                    os.path.join(master_watershed_input_directory,
+                    os.path.join(master_watershed_output_directory,
                                  "rapid_namelist_{}"
                                  .format(out_file_ending[:-3])))
             if run_rapid_simulation:

@@ -24,6 +24,8 @@ from .CreateInflowFileFromERAInterimRunoff import \
     CreateInflowFileFromERAInterimRunoff
 from .CreateInflowFileFromERA5Runoff import \
     CreateInflowFileFromERA5Runoff
+from .CreateInflowFileFromERA5_9kmRunoff import \
+    CreateInflowFileFromERA5_9kmRunoff
 from .CreateInflowFileFromLDASRunoff import CreateInflowFileFromLDASRunoff
 from .CreateInflowFileFromWRFHydroRunoff import \
     CreateInflowFileFromWRFHydroRunoff
@@ -327,7 +329,6 @@ def identify_lsm_grid(lsm_grid_path):
 
     runoff_vars = [surface_runoff_var, subsurface_runoff_var]
 
-    print('Checking grid type.',total_runoff_var.lower(),institution)
     if institution == "European Centre for Medium-Range Weather Forecasts" \
             or total_runoff_var.lower() == "ro":
         # these are the ECMWF models
@@ -376,6 +377,17 @@ def identify_lsm_grid(lsm_grid_path):
             lsm_file_data["weight_file_name"] = r'weight_era5\.csv'
             lsm_file_data["model_name"] = "era5"
             lsm_file_data["grid_type"] = 'era5'
+        elif lat_dim_size == 1801 and lon_dim_size == 3600:
+            print("Runoff file identified as ERA5 9 km lat lon 0.1 degree GRID")
+            # E) ERA5 9 km (lat lon tenth degree) - 1hr
+            # Downloaded as 0.1 degree grid
+            #  dimensions:
+            #   longitude = 3600 ;
+            #   latitude = 1801 ;
+            lsm_file_data["description"] = "ERA5 9 km"
+            lsm_file_data["weight_file_name"] = r'weight_era5\.csv'
+            lsm_file_data["model_name"] = "era5_9km"
+            lsm_file_data["grid_type"] = 'era5_9km'
         elif lat_dim_size == 9 and lon_dim_size == 21:
             # MPG: including this to allow the use of a smaller ERA5 runoff
             # file for testing purposes.
@@ -402,7 +414,9 @@ def identify_lsm_grid(lsm_grid_path):
             lsm_example_file.close()
             raise Exception("Unsupported ECMWF grid.")
 
-        if "ERA5" in lsm_file_data["model_name"].upper():
+        if "ERA5_9KM" in lsm_file_data["model_name"].upper():
+            lsm_file_data["rapid_inflow_tool"] = CreateInflowFileFromERA5_9kmRunoff()
+        elif "ERA5" in lsm_file_data["model_name"].upper():
             lsm_file_data["rapid_inflow_tool"] = CreateInflowFileFromERA5Runoff()
         else:
             lsm_file_data["rapid_inflow_tool"] = \
@@ -901,6 +915,7 @@ def run_lsm_rapid_process(rapid_executable_location,
         file_timestep_is_hourly = (time_step == 3600)
         file_time_hours = time_step / 3600.0
         file_time_divisible_by_three = (steps_per_file % 3 == 0)
+        original_time_step = time_step
         convert_one_hour_to_three_within_file = False
         
         # VALIDATING INPUT IF DIVIDING BY 3
@@ -914,6 +929,10 @@ def run_lsm_rapid_process(rapid_executable_location,
                     print("This means your simulation will be truncated")
                 total_num_time_steps /= 3
                 time_step *= 3
+                start_datetime_increment_seconds = (
+                        time_step - original_time_step)
+                actual_simulation_start_datetime += timedelta(
+                        seconds=start_datetime_increment_seconds)
             elif file_timestep_is_hourly and file_time_divisible_by_three:
                 # MPG: The above code handles the case where each file contains
                 # values for a single hourly timestep. We must also consider 
@@ -921,6 +940,10 @@ def run_lsm_rapid_process(rapid_executable_location,
                 convert_one_hour_to_three_within_file = True
                 total_num_time_steps /= 3
                 time_step *= 3
+                start_datetime_increment_seconds = (
+                        time_step - original_time_step)
+                actual_simulation_start_datetime += timedelta(
+                        seconds=start_datetime_increment_seconds)
             elif not file_timestep_is_hourly:
                 raise ValueError(
                     "{0} data has timestep of {1} hour(s). " 

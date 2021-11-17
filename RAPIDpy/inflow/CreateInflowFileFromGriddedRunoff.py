@@ -523,6 +523,14 @@ class CreateInflowFileFromGriddedRunoff(object):
                             np.concatenate([ro_first_half, ro_second_half]),
                             area_sqm_npoints)
 
+                elif grid_type == 'era5_9km':
+                    # MPG: Need to establish structure of input file.
+                    # ERA5 9 km (0.1 degree lat lon grid)
+                    ro_stream = np.zeros(data_goal.shape)
+                    ro_stream[0] = data_goal[0]
+                    ro_stream[1:] = np.diff(data_goal, axis=0)
+                    ro_stream = np.multiply(ro_stream, area_sqm_npoints)
+
                 else:
                     ro_stream = data_goal * area_sqm_npoints * \
                                 conversion_factor

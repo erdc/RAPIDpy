@@ -79,11 +79,11 @@ or from https://conda.io/miniconda.html.
 
 This is how you get the most up-to-date version of the code.
 
-.. note:: If you don't have git, you can download the code from https://github.com/erdc-cm/RAPIDpy
+.. note:: If you don't have git, you can download the code from https://github.com/erdc/RAPIDpy
 
 ::
 
-    $ git clone https://github.com/erdc-cm/RAPIDpy.git
+    $ git clone https://github.com/erdc/RAPIDpy.git
     $ cd RAPIDpy
     $ conda env create -f rapidpy_env.yml
     $ conda activate rapidpy_env
@@ -93,7 +93,7 @@ To develop on the latest version:
 
 ::
 
-    $ git clone https://github.com/erdc-cm/RAPIDpy.git
+    $ git clone https://github.com/erdc/RAPIDpy.git
     $ cd RAPIDpy
     $ conda env create -f rapidpy_env.yml
     $ conda activate rapidpy_env

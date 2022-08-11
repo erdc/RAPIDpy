@@ -88,14 +88,14 @@ Developer Installation
 
 This is how you get the most up-to-date version of the code.
 
-See: https://github.com/erdc-cm/RAPIDpy/blob/master/.travis.yml for a more detailed
+See: https://github.com/erdc/RAPIDpy/blob/master/.travis.yml for a more detailed
 list of installation steps.
 
-.. note:: If you don't have git, you can download the code from https://github.com/erdc-cm/RAPIDpy
+.. note:: If you don't have git, you can download the code from https://github.com/erdc/RAPIDpy
 
 ::
 
-    $ git clone https://github.com/erdc-cm/RAPIDpy.git
+    $ git clone https://github.com/erdc/RAPIDpy.git
     $ cd RAPIDpy
     $ python setup.py install
 
@@ -103,6 +103,6 @@ To develop on the latest version:
 
 ::
 
-    $ git clone https://github.com/erdc-cm/RAPIDpy.git
+    $ git clone https://github.com/erdc/RAPIDpy.git
     $ cd RAPIDpy
     $ python setup.py develop

@@ -17,16 +17,16 @@ https://github.com/c-h-david/rapid.
 
 |License (3-Clause BSD)|
 
-.. |DOI| image:: https://zenodo.org/badge/19918/erdc-cm/RAPIDpy.svg
-   :target: https://zenodo.org/badge/latestdoi/19918/erdc-cm/RAPIDpy
+.. |DOI| image:: https://zenodo.org/badge/19918/erdc/RAPIDpy.svg
+   :target: https://zenodo.org/badge/latestdoi/19918/erdc/RAPIDpy
 .. |PyPI version| image:: https://badge.fury.io/py/RAPIDpy.svg
    :target: https://badge.fury.io/py/RAPIDpy
-.. |Build Status| image:: https://travis-ci.org/erdc-cm/RAPIDpy.svg?branch=master
-   :target: https://travis-ci.org/erdc-cm/RAPIDpy
-.. |Coverage Status| image:: https://coveralls.io/repos/github/erdc-cm/RAPIDpy/badge.svg?branch=master
-   :target: https://coveralls.io/github/erdc-cm/RAPIDpy
+.. |Build Status| image:: https://travis-ci.org/erdc/RAPIDpy.svg?branch=master
+   :target: https://travis-ci.org/erdc/RAPIDpy
+.. |Coverage Status| image:: https://coveralls.io/repos/github/erdc/RAPIDpy/badge.svg?branch=master
+   :target: https://coveralls.io/github/erdc/RAPIDpy
 .. |License (3-Clause BSD)| image:: https://img.shields.io/badge/license-BSD%203--Clause-yellow.svg
-   :target: https://github.com/erdc-cm/RAPIDpy/blob/master/LICENSE
+   :target: https://github.com/erdc/RAPIDpy/blob/master/LICENSE
    
 Publications:
 =============

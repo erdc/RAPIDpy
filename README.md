@@ -7,7 +7,7 @@ More information about installation and the input parameters for RAPID can be fo
 
 The source code for RAPID is located at https://github.com/c-h-david/rapid/.
 
-[![DOI](https://zenodo.org/badge/19918/erdc/RAPIDpy.svg)](https://zenodo.org/badge/latestdoi/19918/erdc-cm/RAPIDpy)
+[![DOI](https://zenodo.org/badge/19918/erdc/RAPIDpy.svg)](https://zenodo.org/badge/latestdoi/19918/erdc/RAPIDpy)
 
 [![License (3-Clause BSD)](https://img.shields.io/badge/license-BSD%203--Clause-yellow.svg)](https://github.com/erdc/RAPIDpy/blob/master/LICENSE)
 

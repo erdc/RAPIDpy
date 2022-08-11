@@ -26,7 +26,7 @@ https://github.com/c-h-david/rapid.
 .. |Coverage Status| image:: https://coveralls.io/repos/github/erdc/RAPIDpy/badge.svg?branch=master
    :target: https://coveralls.io/github/erdc/RAPIDpy
 .. |License (3-Clause BSD)| image:: https://img.shields.io/badge/license-BSD%203--Clause-yellow.svg
-   :target: https://github.com/erdc-cm/RAPIDpy/blob/master/LICENSE
+   :target: https://github.com/erdc/RAPIDpy/blob/master/LICENSE
 
 Contents:
 
@@ -90,7 +90,7 @@ Other tools to prepare input for RAPID
 ---------------------------------------
 
 - For ESRI users: https://github.com/Esri/python-toolbox-for-rapid
-- Modified version of the ESRI RAPID Toolbox: https://github.com/erdc-cm/python-toolbox-for-rapid
+- Modified version of the ESRI RAPID Toolbox: https://github.com/erdc/python-toolbox-for-rapid
 - For the NHDPlus dataset: https://github.com/c-h-david/RRR
 
 

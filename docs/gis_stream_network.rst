@@ -7,7 +7,7 @@ Using ArcHydro to Generate Stream Network
 See: 
 
 - https://github.com/Esri/python-toolbox-for-rapid
-- https://github.com/erdc-cm/python-toolbox-for-rapid
+- https://github.com/erdc/python-toolbox-for-rapid
 
 Using TauDEM to Generate Stream Network
 ---------------------------------------

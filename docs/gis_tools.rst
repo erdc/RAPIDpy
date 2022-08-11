@@ -11,7 +11,7 @@ These tools generate the RAPID input files and weight table files from the GIS s
 There are also tools by Esri for ArcMap located here:
 
 - https://github.com/Esri/python-toolbox-for-rapid
-- https://github.com/erdc-cm/python-toolbox-for-rapid
+- https://github.com/erdc/python-toolbox-for-rapid
 
 Workflows
 ---------

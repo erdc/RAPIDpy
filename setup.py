@@ -11,12 +11,12 @@ setup(
          'parameters for RAPID can be found at http://rapid-hub.org.'
          ' The source code for RAPID is located at '
          'https://github.com/c-h-david/rapid/. \n\n'
-         '.. image:: https://zenodo.org/badge/19918/erdc-cm/RAPIDpy.svg \n'
-         '   :target: https://zenodo.org/badge/latestdoi/19918/erdc-cm/RAPIDpy',
+         '.. image:: https://zenodo.org/badge/19918/erdc/RAPIDpy.svg \n'
+         '   :target: https://zenodo.org/badge/latestdoi/19918/erdc/RAPIDpy',
     keywords='RAPID',
     author='Alan Dee Snow',
     author_email='alan.d.snow@usace.army.mil',
-    url='https://github.com/erdc-cm/RAPIDpy',
+    url='https://github.com/erdc/RAPIDpy',
     license='BSD 3-Clause',
     packages=find_packages(),
     package_data={'': ['gis/lsm_grids/*.nc']},

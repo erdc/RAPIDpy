@@ -6,6 +6,7 @@
     Created by Alan D Snow, 2015.
 """
 import csv
+import netCDF4 as nc
 from os import remove
 from sys import version_info
 
@@ -68,6 +69,14 @@ def csv_to_list(csv_file, delimiter=','):
         else:
             reader = csv.reader(csv_con, delimiter=delimiter)
         return list(reader)
+
+def netcdf_to_list(netcdf_file):
+    """
+    Reads in a netCDF file and returns the contents as list
+    """
+    with nc.Dataset(netcdf_file, 'r') as nc_con:
+        netcdf_list = [[i] for i in nc_con['Qout'][0][:]]
+        return netcdf_list
 
 
 def compare_csv_decimal_files(file1, file2, header=True, timeseries=False):

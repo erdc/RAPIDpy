@@ -64,7 +64,7 @@ from pytz import utc
 # local
 from ..dataset import RAPIDDataset
 from ..helper_functions import (add_latlon_metadata, csv_to_list,
-                                remove_files, log)
+                                netcdf_to_list, remove_files, log)
 
 
 class ConvertRAPIDOutputToCF(object):
@@ -477,7 +477,10 @@ class ConvertRAPIDOutputToCF(object):
             lookup_comids = np.array([int(float(row[0])) for row
                                       in lookup_table])
 
-            init_flow_table = csv_to_list(self.qinit_file)
+            if self.qinit_file.endswith(".csv"):
+                init_flow_table = csv_to_list(self.qinit_file)
+            else:
+                init_flow_table = netcdf_to_list(self.qinit_file)
 
             for index, comid in enumerate(
                     self.cf_nc.variables[self.output_id_dim_name][:]):

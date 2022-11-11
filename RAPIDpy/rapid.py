@@ -17,6 +17,7 @@ from time import gmtime
 from dateutil.parser import parse
 import numpy as np
 from requests import get
+import netCDF4 as nc
 import xarray
 
 from .dataset import RAPIDDataset
@@ -870,9 +871,16 @@ class RAPID(object):
 
         log("Writing to file ...",
             "INFO")
-        with open_csv(qinit_file, 'w') as qinit_out:
-            for init_flow in init_flows_array:
-                qinit_out.write('{0}\n'.format(init_flow))
+        if qinit_file.endswith(".csv"):
+            with open_csv(qinit_file, 'w') as qinit_out:
+                for init_flow in init_flows_array:
+                    qinit_out.write('{0}\n'.format(init_flow))
+        else:
+            with nc.Dataset(qinit_file, "w", format="NETCDF3_CLASSIC") as qinit_out:
+                qinit_out.createDimension('Time', 1)
+                qinit_out.createDimension('rivid', stream_id_array.size)
+                var_Qout = qinit_out.createVariable('Qout', 'f8', ('Time', 'rivid',))
+                var_Qout[:] = init_flows_array
 
         self.Qinit_file = qinit_file
         self.BS_opt_Qinit = True

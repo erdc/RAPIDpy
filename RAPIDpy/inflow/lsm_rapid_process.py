@@ -53,7 +53,7 @@ def generate_inflows_from_runoff(args):
     mp_lock = args[6]
     steps_per_file = args[7]
     convert_one_hour_to_three = args[8]
-    
+
     time_start_all = datetime.utcnow()
 
     if not isinstance(runoff_file_list, list):
@@ -680,7 +680,7 @@ def run_lsm_rapid_process(rapid_executable_location,
         Various defaults used by each model.
     initial_flows_file: str, optional
         If given, this is the path to a file with initial flows
-        for the simulaion.
+        for the simulation.
     ensemble_list: list, optional
         This is the expexted ensemble name appended to the end of the
         file name.
@@ -858,7 +858,7 @@ def run_lsm_rapid_process(rapid_executable_location,
 
         # IDENTIFY THE GRID
         lsm_file_data = identify_lsm_grid(lsm_file_list[0])
- 
+
         # load in the datetime pattern
         if file_datetime_pattern is None or file_datetime_re_pattern is None:
             file_datetime_re_pattern = \
@@ -902,7 +902,7 @@ def run_lsm_rapid_process(rapid_executable_location,
         file_time_hours = time_step / 3600.0
         file_time_divisible_by_three = (steps_per_file % 3 == 0)
         convert_one_hour_to_three_within_file = False
-        
+
         # VALIDATING INPUT IF DIVIDING BY 3
         if convert_one_hour_to_three:
             if (lsm_file_data['grid_type'] in ('nldas', 'lis', 'joules')):
@@ -916,19 +916,19 @@ def run_lsm_rapid_process(rapid_executable_location,
                 time_step *= 3
             elif file_timestep_is_hourly and file_time_divisible_by_three:
                 # MPG: The above code handles the case where each file contains
-                # values for a single hourly timestep. We must also consider 
+                # values for a single hourly timestep. We must also consider
                 # the case where files contain multiple timesteps.
                 convert_one_hour_to_three_within_file = True
                 total_num_time_steps /= 3
                 time_step *= 3
             elif not file_timestep_is_hourly:
                 raise ValueError(
-                    "{0} data has timestep of {1} hour(s). " 
-                    .format(lsm_file_data['model_name'], file_time_hours) + 
+                    "{0} data has timestep of {1} hour(s). "
+                    .format(lsm_file_data['model_name'], file_time_hours) +
                     "Cannot perform conversion to three-hourly timestep")
             elif not file_time_divisible_by_three:
                 raise ValueError(
-                    "{0} files contain {1} hour(s) of data. " 
+                    "{0} files contain {1} hour(s) of data. "
                     .format(lsm_file_data['model_name'], file_time_hours) +
                     "Cannot perform conversion to three-hourly timestep")
             else:
@@ -1130,7 +1130,7 @@ def run_lsm_rapid_process(rapid_executable_location,
                         lsm_rapid_output_file:
                     seasonal_qinit_file = os.path.join(
                         master_watershed_input_directory,
-                        'seasonal_qinit_{0}.csv'.format(out_file_ending[:-3]))
+                        'seasonal_qinit_{0}.nc'.format(out_file_ending[:-3]))
                     rapid_manager.generate_seasonal_intitialization(
                         seasonal_qinit_file)
 

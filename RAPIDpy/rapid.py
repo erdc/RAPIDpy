@@ -734,6 +734,8 @@ class RAPID(object):
         if not rapid_namelist_file or not os.path.exists(rapid_namelist_file):
             # generate input file if it does not exist
             self.generate_namelist_file(temp_rapid_namelist_file)
+            with open(temp_rapid_namelist_file, 'r') as file_:
+                log(file_.read(), "INFO")
         else:
             # update existing file
             self.update_namelist_file(rapid_namelist_file,
